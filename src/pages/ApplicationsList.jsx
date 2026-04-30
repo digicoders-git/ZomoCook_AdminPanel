@@ -1,4 +1,3 @@
-import React from 'react';
 import {
   Box, Flex, Text, HStack, VStack, Table, Thead, Tbody, Tr, Th, Td,
   Badge, Button, Icon, Checkbox, Avatar,

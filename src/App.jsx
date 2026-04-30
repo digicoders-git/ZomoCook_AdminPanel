@@ -1,6 +1,4 @@
-import React from 'react';
 import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
-import { Box, Text } from '@chakra-ui/react';
 import Layout from './components/Layout';
 import Dashboard from './pages/Dashboard';
 import CustomerList from './pages/CustomerList';
@@ -29,13 +27,6 @@ import RejectedCandidatesList from './pages/RejectedCandidatesList';
 import OnHoldCandidatesList from './pages/OnHoldCandidatesList';
 import NotInterestedCandidatesList from './pages/NotInterestedCandidatesList';
 import HiredCandidatesList from './pages/HiredCandidatesList';
-
-// Placeholder components for other pages
-const Placeholder = ({ title }) => (
-  <Box>
-    <Text color="white" fontSize="2xl" fontWeight="bold">{title} Page Coming Soon</Text>
-  </Box>
-);
 
 function App() {
   return (
