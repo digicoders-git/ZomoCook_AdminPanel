@@ -1,0 +1,42 @@
+{
+  "name": "frontend",
+  "private": true,
+  "version": "0.0.0",
+  "type": "module",
+  "scripts": {
+    "dev": "vite",
+    "build": "vite build",
+    "lint": "eslint .",
+    "preview": "vite preview"
+  },
+  "dependencies": {
+    "@chakra-ui/react": "^2.10.9",
+    "@emotion/react": "^11.14.0",
+    "@emotion/styled": "^11.14.1",
+    "apexcharts": "^5.10.6",
+    "axios": "^1.15.2",
+    "framer-motion": "^12.38.0",
+    "highcharts": "^12.6.0",
+    "highcharts-react-official": "^3.2.3",
+    "lucide-react": "^1.12.0",
+    "react": "^19.2.5",
+    "react-apexcharts": "^2.1.0",
+    "react-dom": "^19.2.5",
+    "react-quill-new": "^3.8.3",
+    "react-router-dom": "^7.14.2"
+  },
+  "devDependencies": {
+    "@eslint/js": "^10.0.1",
+    "@types/react": "^19.2.14",
+    "@types/react-dom": "^19.2.3",
+    "@vitejs/plugin-react": "^6.0.1",
+    "autoprefixer": "^10.5.0",
+    "eslint": "^10.2.1",
+    "eslint-plugin-react-hooks": "^7.1.1",
+    "eslint-plugin-react-refresh": "^0.5.2",
+    "globals": "^17.5.0",
+    "postcss": "^8.5.12",
+    "tailwindcss": "^3.4.19",
+    "vite": "^8.0.10"
+  }
+}

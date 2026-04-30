@@ -1,0 +1,95 @@
+@import url('https://fonts.googleapis.com/css2?family=Outfit:wght@100;200;300;400;500;600;700;800;900&display=swap');
+
+:root {
+  --brand: #004aad;
+  --accent: #ed1c24;
+  --sidebar-bg: #ffffff;
+  --main-bg: #f4f7fb;
+  --glass-border: rgba(0, 74, 173, 0.08);
+}
+
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+body {
+  font-family: 'Outfit', sans-serif;
+  background-color: var(--main-bg);
+  color: #1e293b;
+  overflow-x: hidden;
+}
+
+/* Scrollbar Styling */
+::-webkit-scrollbar {
+  width: 6px;
+}
+
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+::-webkit-scrollbar-thumb {
+  background: #e2e8f0;
+  border-radius: 10px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: #cbd5e1;
+}
+
+/* Glassmorphism Styles */
+.glass-panel {
+  background: white !important;
+  backdrop-filter: blur(10px);
+  border: 1px solid var(--glass-border) !important;
+  box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.05) !important;
+}
+
+.glass-sidebar {
+  background: white !important;
+  border-right: 1px solid var(--glass-border) !important;
+  box-shadow: 4px 0 24px rgba(0, 74, 173, 0.06) !important;
+}
+
+.glass-navbar {
+  background: rgba(255, 255, 255, 0.92) !important;
+  backdrop-filter: blur(12px);
+  border-bottom: 1px solid var(--glass-border) !important;
+  box-shadow: 0 2px 12px rgba(0, 74, 173, 0.05) !important;
+}
+
+/* Animations */
+@keyframes slideIn {
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.animate-slide-in {
+  animation: slideIn 0.4s ease-out forwards;
+}
+
+/* React Quill Light Theme Overrides */
+.ql-toolbar.ql-snow {
+  background: #f8fafc !important;
+  border: none !important;
+  border-bottom: 1px solid #e2e8f0 !important;
+}
+
+.ql-container.ql-snow {
+  border: none !important;
+  font-family: 'Outfit', sans-serif !important;
+  font-size: 14px !important;
+}
+
+.ql-editor {
+  min-height: 150px;
+  color: #334155 !important;
+}
