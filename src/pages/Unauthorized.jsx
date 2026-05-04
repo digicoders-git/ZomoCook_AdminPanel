@@ -1,4 +1,4 @@
-import { Box, VStack, Text, Button, HStack, Icon } from '@chakra-ui/react';
+import { Box, Text, Button, HStack, Icon } from '@chakra-ui/react';
 import { ShieldX, ArrowLeft, Home } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 

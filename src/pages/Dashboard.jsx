@@ -1,17 +1,17 @@
-import React, { useState, useEffect } from 'react';
+import { useState, useEffect } from 'react';
 import {
   Box, SimpleGrid, Text, Flex, Icon, HStack, VStack,
   Table, Thead, Tbody, Tr, Th, Td, Button, Select, Input,
   FormControl, FormLabel, Breadcrumb, BreadcrumbItem, BreadcrumbLink,
   Badge, IconButton, Skeleton, useToast, Spinner, Collapse,
-  Modal, ModalOverlay, ModalContent, ModalHeader, ModalBody, ModalCloseButton,
-  useDisclosure, Divider
+  Modal, ModalOverlay, ModalContent, ModalHeader, ModalBody,
+  useDisclosure,
 } from '@chakra-ui/react';
 import {
   LayoutDashboard, Users, Briefcase, Calendar, CalendarClock,
   XCircle, PauseCircle, CircleSlash, UserCheck, Search, RotateCcw,
-  ChevronRight, Filter, FileText, UserPlus, Clock, Eye,
-  Activity, PieChart as PieIcon, BarChart2, TrendingUp, AlertCircle, X
+  ChevronRight, Filter, FileText, UserPlus, Clock,
+  Activity, PieChart as PieIcon, TrendingUp, AlertCircle, X
 } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import Chart from 'react-apexcharts';
