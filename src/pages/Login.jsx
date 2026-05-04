@@ -1,10 +1,11 @@
 import { useState } from 'react';
 import {
-  Box, VStack, HStack, Text, Heading, Button, Link as ChakraLink,
-  useToast, Flex, Icon,
+  Box, VStack, HStack, Text, Heading, Button, Link,
+  useToast, Flex, Icon, Input, InputGroup, InputRightElement, IconButton,
 } from '@chakra-ui/react';
 import { Eye, EyeOff, ArrowRight, UtensilsCrossed, ShieldCheck, Zap } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
+import axios from 'axios';
 
 const BRAND = '#004aad';
 const ACCENT = '#ed1c24';
@@ -17,41 +18,99 @@ const Login = () => {
   const navigate = useNavigate();
   const toast = useToast();
 
-  const handleLogin = (e) => {
+  const handleLogin = async (e) => {
     e.preventDefault();
     setIsLoading(true);
-    setTimeout(() => {
-      setIsLoading(false);
+    
+    try {
+      const apiUrl = import.meta.env.VITE_API_URL;
+      const response = await axios.post(`${apiUrl}/admin/login`, {
+        email,
+        password
+      });
+
+      if (response.data.success) {
+        localStorage.setItem('adminToken', response.data.token);
+        localStorage.setItem('adminData', JSON.stringify(response.data));
+
+        toast({
+          title: 'Login Successful',
+          description: `Welcome back, ${response.data.name}`,
+          status: 'success',
+          duration: 3000,
+          isClosable: true,
+          position: 'top',
+        });
+        
+        navigate('/');
+      }
+    } catch (error) {
       toast({
-        title: 'Login Successful',
-        description: 'Welcome back to ZomoCook Admin Panel.',
-        status: 'success',
-        duration: 3000,
+        title: 'Login Failed',
+        description: error.response?.data?.message || 'Something went wrong. Please try again.',
+        status: 'error',
+        duration: 4000,
         isClosable: true,
         position: 'top',
       });
-      navigate('/');
-    }, 1500);
+    } finally {
+      setIsLoading(false);
+    }
   };
 
   return (
-    <Box minH="100vh" display="flex" bg="#f4f7fb" position="relative">
-      {/* Mobile Split Background */}
-      <Box 
-        display={{ base: 'block', lg: 'none' }} 
-        position="absolute" 
-        top="0" 
-        left="0" 
-        w="full" 
-        h="40vh" 
-        zIndex="0"
+    <Box
+      minH="100dvh"
+      w="100vw"
+      display="flex"
+      flexDirection={{ base: 'column', lg: 'row' }}
+      bg="#f4f7fb"
+      position="relative"
+      overflowX="hidden"
+    >
+      {/* ── Mobile Top: Blue Header ── */}
+      <Box
+        display={{ base: 'flex', lg: 'none' }}
+        flexDirection="column"
+        alignItems="center"
+        justifyContent="center"
         bg={`linear-gradient(145deg, ${BRAND} 0%, #0062e6 100%)`}
-        borderBottomRadius="30px"
+        borderBottomRadius="24px"
+        position="relative"
+        py="6"
+        px="4"
+        w="100%"
+        flexShrink={0}
       >
-        <Box position="absolute" top="-40px" right="-40px" w="150px" h="150px" borderRadius="full" bg="rgba(255,255,255,0.06)" />
+        {/* Decorative circles */}
+        <Box position="absolute" top="-20px" right="-20px" w="100px" h="100px" borderRadius="full" bg="rgba(255,255,255,0.07)" />
+        <Box position="absolute" bottom="-15px" left="-15px" w="70px" h="70px" borderRadius="full" bg="rgba(255,255,255,0.05)" />
+
+        <Flex justify="center" mb="3" position="relative" zIndex="1">
+          <Box
+            w="52px"
+            h="52px"
+            p="2"
+            borderRadius="14px"
+            bg="white"
+            overflow="hidden"
+            display="flex"
+            alignItems="center"
+            justifyContent="center"
+            boxShadow="0 6px 20px rgba(0,0,0,0.18)"
+          >
+            <img src="/logo.jpg" alt="ZomoCook" style={{ width: '100%', height: '100%', objectFit: 'contain' }} />
+          </Box>
+        </Flex>
+        <Text fontSize="lg" fontWeight="900" color="white" lineHeight="1.1" letterSpacing="-0.3px" position="relative" zIndex="1">
+          ZomoCook
+        </Text>
+        <Text fontSize="9px" color="rgba(255,255,255,0.85)" fontWeight="600" mt="0.5" letterSpacing="1px" textTransform="uppercase" position="relative" zIndex="1">
+          Admin Portal
+        </Text>
       </Box>
 
-      {/* Left Panel (Desktop only) */}
+      {/* ── Desktop Left Panel ── */}
       <Box
         display={{ base: 'none', lg: 'flex' }}
         w="45%"
@@ -61,8 +120,8 @@ const Login = () => {
         overflow="hidden"
         p="12"
         justifyContent="space-between"
+        minH="100vh"
       >
-        {/* Background decorative circles */}
         <Box position="absolute" top="-80px" right="-80px" w="320px" h="320px" borderRadius="full" bg="rgba(255,255,255,0.05)" />
         <Box position="absolute" bottom="-60px" left="-60px" w="260px" h="260px" borderRadius="full" bg="rgba(255,255,255,0.04)" />
         <Box position="absolute" top="40%" left="60%" w="180px" h="180px" borderRadius="full" bg="rgba(237,28,36,0.12)" />
@@ -106,7 +165,6 @@ const Login = () => {
             </Text>
           </Box>
 
-          {/* Feature pills */}
           <VStack align="flex-start" spacing="3">
             {[
               { icon: UtensilsCrossed, text: 'Manage cooking jobs & candidates' },
@@ -123,185 +181,122 @@ const Login = () => {
           </VStack>
         </VStack>
 
-        {/* Bottom tagline */}
         <Text fontSize="xs" color="rgba(255,255,255,0.4)" position="relative" zIndex="1">
-          © 2026 ZomoCook. All rights reserved. Crafted with ❤️ by <a href="https://digicoders.in/" target="_blank" rel="noopener noreferrer" style={{ color: 'rgb(255, 0, 0)', textDecoration: 'underline', fontWeight: 'bold',fontSize: '14px' }}>Team Digicoders</a>
+          © 2026 ZomoCook. All rights reserved. Crafted with ❤️ by <a href="https://digicoders.in/" target="_blank" rel="noopener noreferrer" style={{ color: 'rgb(255, 0, 0)', textDecoration: 'underline', fontWeight: 'bold', fontSize: '14px' }}>Team Digicoders</a>
         </Text>
       </Box>
 
-      {/* Right Panel — Login Form */}
+      {/* ── Right Panel: Login Form ── */}
       <Flex
         flex="1"
-        alignItems={{ base: 'flex-start', lg: 'center' }}
+        w="full"
+        alignItems="center"
         justifyContent="center"
-        px={{ base: '4', sm: '10', md: '12' }}
-        py={{ base: '20', md: '12' }}
-        bg="transparent"
-        minH="100vh"
+        px="4"
+        py="6"
+        bg={{ base: '#f4f7fb', lg: 'transparent' }}
         position="relative"
         zIndex="1"
+        minH={{ base: 'auto', lg: '100vh' }}
       >
-        <Box w="full" maxW={{ base: 'full', sm: '420px' }}>
-
-          {/* Mobile Header */}
-          <Box display={{ base: 'block', lg: 'none' }} textAlign="center" mb="10">
-            <Flex justify="center" mb="5">
-              <Box w="84px" h="84px" p="2.5" borderRadius="24px" bg="white" overflow="hidden" display="flex" alignItems="center" justifyContent="center" boxShadow="0 12px 40px rgba(0,0,0,0.25)">
-                <img src="/logo.jpg" alt="ZomoCook" style={{ width: '100%', height: '100%', objectFit: 'contain' }} />
-              </Box>
-            </Flex>
-            <Text fontSize="3xl" fontWeight="900" color="white" lineHeight="1.1" letterSpacing="-1px">ZomoCook</Text>
-            <Text fontSize="13px" color="rgba(255,255,255,0.9)" fontWeight="600" mt="2" letterSpacing="1.5px" textTransform="uppercase">Admin Portal</Text>
-          </Box>
+        <Box w="full" maxW="420px">
 
           {/* Card */}
           <Box
             bg="white"
-            borderRadius={{ base: '3xl', lg: '2xl' }}
+            borderRadius="2xl"
             overflow="hidden"
-            boxShadow={{ base: '0 30px 70px rgba(0,0,0,0.15)', lg: '0 8px 40px rgba(0,74,173,0.1)' }}
+            boxShadow={{ base: '0 4px 16px rgba(0,74,173,0.08)', lg: '0 8px 40px rgba(0,74,173,0.1)' }}
             border="1px solid #e8edf5"
             position="relative"
+            w="full"
           >
             {/* Top gradient bar */}
-            <Box h="6px" bgGradient={`linear(to-r, ${BRAND}, ${ACCENT})`} />
+            <Box h="5px" bgGradient={`linear(to-r, ${BRAND}, ${ACCENT})`} />
 
-            <Box px={{ base: '7', sm: '10' }} pt="10" pb="10">
+            <Box px="5" pt="7" pb="7">
 
               {/* Heading */}
-              <Box mb="8">
-                <Heading fontSize={{ base: '2xl', sm: '2xl' }} fontWeight="900" color="#1e293b" mb="2" letterSpacing="-0.5px">Welcome Back</Heading>
-                <Text fontSize="md" color="#64748b" fontWeight="500">Sign in to continue to admin</Text>
+              <Box mb="6">
+                <Heading fontSize="xl" fontWeight="900" color="#1e293b" mb="1.5" letterSpacing="-0.3px">Welcome Back</Heading>
+                <Text fontSize="sm" color="#64748b" fontWeight="500" lineHeight="1.4">Sign in to continue to admin</Text>
               </Box>
 
               <form onSubmit={handleLogin}>
 
                 {/* Email */}
                 <Box mb="5">
-                  <Text fontSize="xs" fontWeight="700" color="#475569" textTransform="uppercase" letterSpacing="1px" mb="2">
+                  <Text fontSize="xs" fontWeight="700" color="#475569" textTransform="uppercase" letterSpacing="0.8px" mb="2">
                     Email Address
                   </Text>
-                  <Box
-                    as="input"
+                  <Input
                     type="email"
                     placeholder="admin@zomocook.in"
                     value={email}
                     onChange={(e) => setEmail(e.target.value)}
                     required
-                    style={{
-                      width: '100%',
-                      height: '48px',
-                      padding: '0 16px',
-                      fontSize: '14px',
-                      color: '#1e293b',
-                      background: '#f8faff',
-                      border: '1.5px solid #dde6f5',
-                      borderRadius: '12px',
-                      outline: 'none',
-                      transition: 'all 0.18s',
-                      fontFamily: 'inherit',
-                    }}
-                    onFocus={(e) => {
-                      e.target.style.background = '#fff';
-                      e.target.style.borderColor = BRAND;
-                      e.target.style.boxShadow = `0 0 0 3px ${BRAND}20`;
-                    }}
-                    onBlur={(e) => {
-                      e.target.style.background = '#f8faff';
-                      e.target.style.borderColor = '#dde6f5';
-                      e.target.style.boxShadow = 'none';
-                    }}
+                    h="44px"
+                    fontSize="14px"
+                    color="#1e293b"
+                    bg="#f8faff"
+                    border="1.5px solid"
+                    borderColor="#dde6f5"
+                    borderRadius="10px"
+                    _focus={{ bg: 'white', borderColor: BRAND, boxShadow: `0 0 0 3px ${BRAND}20` }}
+                    _hover={{ borderColor: '#aec6ef' }}
+                    transition="all 0.18s"
                   />
                 </Box>
 
                 {/* Password */}
-                <Box mb="5">
-                  <Text fontSize="xs" fontWeight="700" color="#475569" textTransform="uppercase" letterSpacing="1px" mb="2">
+                <Box mb="6">
+                  <Text fontSize="xs" fontWeight="700" color="#475569" textTransform="uppercase" letterSpacing="0.8px" mb="2">
                     Password
                   </Text>
-                  <Box position="relative">
-                    <Box
-                      as="input"
+                  <InputGroup>
+                    <Input
                       type={showPassword ? 'text' : 'password'}
                       placeholder="••••••••"
                       value={password}
                       onChange={(e) => setPassword(e.target.value)}
                       required
-                      style={{
-                        width: '100%',
-                        height: '48px',
-                        padding: '0 48px 0 16px',
-                        fontSize: '14px',
-                        color: '#1e293b',
-                        background: '#f8faff',
-                        border: '1.5px solid #dde6f5',
-                        borderRadius: '12px',
-                        outline: 'none',
-                        transition: 'all 0.18s',
-                        fontFamily: 'inherit',
-                      }}
-                      onFocus={(e) => {
-                        e.target.style.background = '#fff';
-                        e.target.style.borderColor = BRAND;
-                        e.target.style.boxShadow = `0 0 0 3px ${BRAND}20`;
-                      }}
-                      onBlur={(e) => {
-                        e.target.style.background = '#f8faff';
-                        e.target.style.borderColor = '#dde6f5';
-                        e.target.style.boxShadow = 'none';
-                      }}
+                      h="44px"
+                      fontSize="14px"
+                      color="#1e293b"
+                      bg="#f8faff"
+                      border="1.5px solid"
+                      borderColor="#dde6f5"
+                      borderRadius="10px"
+                      pr="44px"
+                      _focus={{ bg: 'white', borderColor: BRAND, boxShadow: `0 0 0 3px ${BRAND}20` }}
+                      _hover={{ borderColor: '#aec6ef' }}
+                      transition="all 0.18s"
                     />
-                    <Box
-                      position="absolute"
-                      right="14px"
-                      top="50%"
-                      transform="translateY(-50%)"
-                      cursor="pointer"
-                      color="#94a3b8"
-                      onClick={() => setShowPassword(!showPassword)}
-                      _hover={{ color: BRAND }}
-                      display="flex"
-                      alignItems="center"
-                    >
-                      {showPassword ? <EyeOff size={17} /> : <Eye size={17} />}
-                    </Box>
-                  </Box>
+                    <InputRightElement h="44px" w="44px">
+                      <IconButton
+                        aria-label="Toggle password"
+                        icon={showPassword ? <EyeOff size={16} /> : <Eye size={16} />}
+                        variant="ghost"
+                        size="sm"
+                        color="#94a3b8"
+                        _hover={{ color: BRAND, bg: 'transparent' }}
+                        onClick={() => setShowPassword(!showPassword)}
+                      />
+                    </InputRightElement>
+                  </InputGroup>
                 </Box>
-
-                {/* Remember + Forgot */}
-                {/* <Flex justify="space-between" align="center" mb="6">
-                  <HStack spacing="2" cursor="pointer" onClick={() => {}}>
-                    <Box
-                      w="16px" h="16px"
-                      borderRadius="4px"
-                      border={`2px solid #cbd5e1`}
-                      bg="white"
-                      flexShrink={0}
-                    />
-                    <Text fontSize="sm" color="#64748b">Remember me</Text>
-                  </HStack>
-                  <ChakraLink */}
-                    {/* fontSize="sm"
-                    fontWeight="600"
-                    color={BRAND}
-                    _hover={{ color: ACCENT, textDecoration: 'none' }}
-                    transition="color 0.18s"
-                  >
-                    Forgot password?
-                  </ChakraLink>
-                </Flex> */}
 
                 {/* Submit Button */}
                 <Button
                   type="submit"
                   w="full"
-                  h="12"
+                  h="44px"
                   fontSize="sm"
                   fontWeight="700"
                   bg={BRAND}
                   color="white"
-                  borderRadius="xl"
-                  rightIcon={<ArrowRight size={18} />}
+                  borderRadius="10px"
+                  rightIcon={<ArrowRight size={16} />}
                   isLoading={isLoading}
                   loadingText="Signing In..."
                   _hover={{ bg: '#003d91', transform: 'translateY(-1px)', boxShadow: `0 8px 24px ${BRAND}40` }}
@@ -313,13 +308,6 @@ const Login = () => {
                 </Button>
 
               </form>
-
-              {/* Footer dots */}
-              {/* <HStack justify="center" spacing="2" mt="7" pt="6" borderTop="1px solid #f1f5f9">
-                <Box w="6px" h="6px" borderRadius="full" bg={BRAND} />
-                <Text fontSize="xs" color="#94a3b8" fontWeight="500">ZomoCook Admin v1.0</Text>
-                <Box w="6px" h="6px" borderRadius="full" bg={ACCENT} />
-              </HStack> */}
 
             </Box>
           </Box>

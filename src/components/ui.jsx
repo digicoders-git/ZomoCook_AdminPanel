@@ -1,8 +1,9 @@
 // Shared UI constants and components used across all pages
-import React from 'react';
-import {
-  Box, Flex, Text, HStack, VStack, Icon, Button, Select, Input,
+import { 
+  Box, Flex, Text, HStack, VStack, Icon, Button, Select, Input, 
   Breadcrumb, BreadcrumbItem, BreadcrumbLink, Badge,
+  AlertDialog, AlertDialogBody, AlertDialogFooter, AlertDialogHeader, 
+  AlertDialogContent, AlertDialogOverlay 
 } from '@chakra-ui/react';
 import { ChevronRight, LayoutDashboard, Filter, Plus } from 'lucide-react';
 import { Link } from 'react-router-dom';
@@ -12,8 +13,8 @@ export const ACCENT = '#ed1c24';
 
 // Page header with breadcrumb + title + optional action buttons
 export const PageHeader = ({ title, breadcrumb, actions }) => (
-  <Flex align="center" justify="space-between" mb="6" wrap="wrap" gap="3">
-    <VStack align="start" spacing="1">
+  <Flex align={{ base: 'flex-start', md: 'center' }} justify="space-between" mb="6" wrap="wrap" gap="4" direction={{ base: 'column', md: 'row' }}>
+    <VStack align="start" spacing="1" w="full" maxW="100%">
       <Breadcrumb spacing="6px" separator={<ChevronRight size={11} color="#94a3b8" />} fontSize="xs" color="#94a3b8">
         <BreadcrumbItem>
           <BreadcrumbLink as={Link} to="/" display="flex" alignItems="center" gap="1" _hover={{ color: BRAND }}>
@@ -26,12 +27,16 @@ export const PageHeader = ({ title, breadcrumb, actions }) => (
           </BreadcrumbItem>
         )}
       </Breadcrumb>
-      <HStack spacing="3" align="center">
-        <Box w="4px" h="26px" bg={`linear-gradient(180deg, ${BRAND}, ${ACCENT})`} borderRadius="full" />
-        <Text fontSize="2xl" fontWeight="800" color="#1e293b">{title}</Text>
+      <HStack spacing="3" align="flex-start" w="full">
+        <Box w="4px" minW="4px" h={{ base: '22px', md: '26px' }} bg={`linear-gradient(180deg, ${BRAND}, ${ACCENT})`} borderRadius="full" mt={{ base: '2px', md: '0' }} />
+        <Text fontSize={{ base: 'xl', md: '2xl' }} fontWeight="800" color="#1e293b" lineHeight="1.2">{title}</Text>
       </HStack>
     </VStack>
-    {actions && <HStack spacing="2">{actions}</HStack>}
+    {actions && (
+      <HStack spacing="2" w={{ base: 'full', md: 'auto' }} justify={{ base: 'flex-start', md: 'flex-end' }}>
+        {actions}
+      </HStack>
+    )}
   </Flex>
 );
 
@@ -43,22 +48,44 @@ export const TableCard = ({ children }) => (
 );
 
 // Table controls bar (show entries + search)
-export const TableControls = ({ defaultEntries = "10", searchPlaceholder = "Search..." }) => (
-  <Flex px="5" py="4" justify="space-between" align="center" direction={{ base: 'column', md: 'row' }} gap="3" borderBottom="1px solid #f1f5f9">
+export const TableControls = ({ 
+  entries = "10", 
+  onEntriesChange, 
+  search = "", 
+  onSearch, 
+  searchPlaceholder = "Search..." 
+}) => (
+  <Flex px="5" py="4" justify="space-between" align={{ base: 'flex-start', md: 'center' }} direction={{ base: 'column', md: 'row' }} gap="4" borderBottom="1px solid #f1f5f9">
     <HStack spacing="2">
-      <Text fontSize="sm" color="#64748b">Show</Text>
-      <Select size="sm" w="70px" bg="#f8faff" border="1.5px solid #dde6f5" borderRadius="lg" defaultValue={defaultEntries}
+      <Text fontSize="sm" color="#64748b" whiteSpace="nowrap">Show</Text>
+      <Select 
+        size="sm" 
+        w="70px" 
+        bg="#f8faff" 
+        border="1.5px solid #dde6f5" 
+        borderRadius="lg" 
+        value={entries}
+        onChange={(e) => onEntriesChange && onEntriesChange(e.target.value)}
         _focus={{ borderColor: BRAND }}>
         <option value="10">10</option>
         <option value="25">25</option>
         <option value="50">50</option>
+        <option value="100">100</option>
       </Select>
-      <Text fontSize="sm" color="#64748b">entries</Text>
+      <Text fontSize="sm" color="#64748b" whiteSpace="nowrap">entries</Text>
     </HStack>
-    <HStack spacing="2">
-      <Text fontSize="sm" color="#64748b">Search:</Text>
-      <Input size="sm" w={{ base: 'full', md: '220px' }} placeholder={searchPlaceholder}
-        bg="#f8faff" border="1.5px solid #dde6f5" borderRadius="lg"
+    <HStack spacing="2" w={{ base: 'full', md: 'auto' }}>
+      <Text fontSize="sm" color="#64748b" whiteSpace="nowrap">Search:</Text>
+      <Input 
+        size="sm" 
+        w="full"
+        maxW={{ base: 'full', md: '220px' }}
+        placeholder={searchPlaceholder}
+        value={search}
+        onChange={(e) => onSearch && onSearch(e.target.value)}
+        bg="#f8faff" 
+        border="1.5px solid #dde6f5" 
+        borderRadius="lg"
         _focus={{ borderColor: BRAND, boxShadow: `0 0 0 2px ${BRAND}20` }} />
     </HStack>
   </Flex>
@@ -86,13 +113,34 @@ export const tdStyle = {
 export const trHover = { _hover: { bg: '#f8fafc' }, transition: 'background 0.1s', borderBottom: '1px solid #e2e8f0' };
 
 // Table pagination footer
-export const TableFooter = ({ showing, total }) => (
-  <Flex justify="space-between" align="center" px="5" py="3" borderTop="1px solid #f1f5f9" bg="#fafbfc">
+export const TableFooter = ({ showing, total, currentPage = 1, onPageChange }) => (
+  <Flex justify={{ base: 'center', md: 'space-between' }} align="center" px="5" py="4" borderTop="1px solid #f1f5f9" bg="#fafbfc" wrap="wrap" gap="4" direction={{ base: 'column', md: 'row' }}>
     <Text fontSize="xs" color="#94a3b8">Showing {showing} of {total} entries</Text>
     <HStack spacing="1">
-      <Button size="xs" variant="ghost" color="#64748b" borderRadius="md" _hover={{ bg: '#f0f5ff', color: BRAND }}>Previous</Button>
-      <Button size="xs" bg={BRAND} color="white" borderRadius="md" _hover={{ bg: '#003d91' }} minW="7">1</Button>
-      <Button size="xs" variant="ghost" color="#64748b" borderRadius="md" _hover={{ bg: '#f0f5ff', color: BRAND }}>Next</Button>
+      <Button 
+        size="xs" 
+        variant="ghost" 
+        color="#64748b" 
+        borderRadius="md" 
+        _hover={{ bg: '#f0f5ff', color: BRAND }}
+        disabled={currentPage === 1}
+        onClick={() => onPageChange && onPageChange(currentPage - 1)}
+      >
+        Previous
+      </Button>
+      <Button size="xs" bg={BRAND} color="white" borderRadius="md" _hover={{ bg: '#003d91' }} minW="7">
+        {currentPage}
+      </Button>
+      <Button 
+        size="xs" 
+        variant="ghost" 
+        color="#64748b" 
+        borderRadius="md" 
+        _hover={{ bg: '#f0f5ff', color: BRAND }}
+        onClick={() => onPageChange && onPageChange(currentPage + 1)}
+      >
+        Next
+      </Button>
     </HStack>
   </Flex>
 );
@@ -163,6 +211,72 @@ export const StatusBadge = ({ active }) => (
     {active ? 'Active' : 'Inactive'}
   </Badge>
 );
+
+// Premium Confirmation Modal
+import { AlertTriangle, Info } from 'lucide-react';
+import { useRef } from 'react';
+
+export const ConfirmationModal = ({ 
+  isOpen, 
+  onClose, 
+  onConfirm, 
+  title = "Are you sure?", 
+  description = "This action cannot be undone.", 
+  confirmLabel = "Confirm", 
+  confirmColor = ACCENT,
+  isLoading = false,
+  type = 'danger' // 'danger' or 'info'
+}) => {
+  const cancelRef = useRef();
+
+  return (
+    <AlertDialog
+      isOpen={isOpen}
+      leastDestructiveRef={cancelRef}
+      onClose={onClose}
+      isCentered
+    >
+      <AlertDialogOverlay backdropFilter="blur(8px) saturate(180%)" bg="blackAlpha.300">
+        <AlertDialogContent borderRadius="2xl" border="1px solid #e8edf5" boxShadow="0 25px 50px -12px rgba(0,0,0,0.25)">
+          <AlertDialogHeader fontSize="lg" fontWeight="800" color="#1e293b" pb="2">
+            <HStack spacing="3">
+              <Box p="2" bg={type === 'danger' ? '#fff0f0' : '#e6eeff'} borderRadius="lg">
+                <Icon as={type === 'danger' ? AlertTriangle : Info} color={type === 'danger' ? ACCENT : BRAND} boxSize={5} />
+              </Box>
+              <Text>{title}</Text>
+            </HStack>
+          </AlertDialogHeader>
+
+          <AlertDialogBody color="#64748b" fontSize="sm" py="4">
+            {description}
+          </AlertDialogBody>
+
+          <AlertDialogFooter pb="6" pt="2" gap="3">
+            <Button ref={cancelRef} onClick={onClose} variant="ghost" size="sm" borderRadius="lg" fontSize="xs" fontWeight="700" color="#64748b">
+              Cancel
+            </Button>
+            <Button 
+              bg={confirmColor} 
+              color="white" 
+              onClick={onConfirm} 
+              size="sm" 
+              borderRadius="lg" 
+              fontSize="xs" 
+              fontWeight="700" 
+              px="6"
+              isLoading={isLoading}
+              _hover={{ bg: confirmColor === ACCENT ? '#c8151c' : '#003d91', transform: 'translateY(-1px)' }}
+              _active={{ transform: 'translateY(0)' }}
+              boxShadow={`0 4px 12px ${confirmColor}40`}
+            >
+              {confirmLabel}
+            </Button>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialogOverlay>
+    </AlertDialog>
+  );
+};
 
 // Page footer
 export const PageFooter = () => (

@@ -20,82 +20,82 @@ const BRAND = '#004aad';
 const ACCENT = '#ed1c24';
 
 const navItems = [
-  { name: 'Dashboard', icon: LayoutDashboard, path: '/' },
+  { name: 'Dashboard', icon: LayoutDashboard, path: '/', permission: 'Dashboard' },
   {
-    name: 'Customer/Client', icon: Users, path: '/customers',
+    name: 'Customer/Client', icon: Users, path: '/customers', permission: 'Customer/Client',
     children: [
-      { name: 'Customer List', path: '/customers/list' },
-      { name: 'Add Customer', path: '/customers/add' },
+      { name: 'Customer List', path: '/customers/list', permission: 'Customer/Client List' },
+      { name: 'Add Customer', path: '/customers/add', permission: 'Add Customer/Client' },
     ]
   },
   {
-    name: 'Job Management', icon: Briefcase, path: '/jobs',
+    name: 'Job Management', icon: Briefcase, path: '/jobs', permission: 'Jobs',
     children: [
-      { name: 'Job List', path: '/jobs/list' },
-      { name: 'Add Job', path: '/jobs/add' },
+      { name: 'Job List', path: '/jobs/list', permission: 'Job List' },
+      { name: 'Add Job', path: '/jobs/add', permission: 'Add Job' },
     ]
   },
   {
-    name: 'Candidates', icon: UserSquare2, path: '/candidates',
+    name: 'Candidates', icon: UserSquare2, path: '/candidates', permission: 'Candidates',
     children: [
-      { name: 'Candidate List', path: '/candidates/list' },
-      { name: 'Add Candidate', path: '/candidates/add' },
-      { name: 'Applied Candidates', path: '/candidates/applied' },
-      { name: 'Shortlisted Candidates', path: '/candidates/shortlisted' },
-      { name: 'Demo Scheduled', path: '/candidates/demo-scheduled' },
-      { name: 'Rejected Candidates', path: '/candidates/rejected' },
-      { name: 'On Hold Candidates', path: '/candidates/on-hold' },
-      { name: 'Not Interested', path: '/candidates/not-interested' },
-      { name: 'Hired Candidates', path: '/candidates/hired' },
+      { name: 'Candidate List', path: '/candidates/list', permission: 'Candidate List' },
+      { name: 'Add Candidate', path: '/candidates/add', permission: 'Add Candidate' },
+      { name: 'Applied Candidates', path: '/candidates/applied', permission: 'Applied Candidates List' },
+      { name: 'Shortlisted Candidates', path: '/candidates/shortlisted', permission: 'Shortlisted Candidate List' },
+      { name: 'Demo Scheduled', path: '/candidates/demo-scheduled', permission: 'Candidates' },
+      { name: 'Rejected Candidates', path: '/candidates/rejected', permission: 'Candidates' },
+      { name: 'On Hold Candidates', path: '/candidates/on-hold', permission: 'Candidates' },
+      { name: 'Not Interested', path: '/candidates/not-interested', permission: 'Candidates' },
+      { name: 'Hired Candidates', path: '/candidates/hired', permission: 'Candidates' },
     ]
   },
   {
-    name: 'Notifications', icon: Bell, path: '/notifications',
+    name: 'Notifications', icon: Bell, path: '/notifications', permission: 'Notifications',
     children: [
-      { name: 'Notification List', path: '/notifications/list' },
-      { name: 'Add Notification', path: '/notifications/add' },
+      { name: 'Notification List', path: '/notifications/list', permission: 'Notification List' },
+      { name: 'Add Notification', path: '/notifications/add', permission: 'Add Notification' },
     ]
   },
-  { name: 'Query History', icon: MessageSquare, path: '/queries' },
+  { name: 'Query History', icon: MessageSquare, path: '/queries', permission: 'Query History' },
   {
-    name: 'Roles & Permissions', icon: ShieldCheck, path: '/roles',
+    name: 'Roles & Permissions', icon: ShieldCheck, path: '/roles', permission: 'Roles',
     children: [
-      { name: 'Add Role', path: '/roles/add' },
-      { name: 'Role List', path: '/roles/list' },
-      { name: 'Add User', path: '/users/add' },
-      { name: 'User List', path: '/users/list' },
+      { name: 'Add Role', path: '/roles/add', permission: 'Add Role' },
+      { name: 'Role List', path: '/roles/list', permission: 'Role List' },
+      { name: 'Add User', path: '/users/add', permission: 'Add User' },
+      { name: 'User List', path: '/users/list', permission: 'User List' },
     ]
   },
   {
-    name: 'Masters', icon: Database, path: '/masters',
+    name: 'Masters', icon: Database, path: '/masters', permission: 'Masters',
     children: [
-      { name: 'Job Menu Items', icon: ListMenu, path: '/masters/job-menu', children: [{ name: 'Add Job Menu Item', icon: Plus, path: '/masters/job-menu/add' }, { name: 'Job Menu Item List', icon: ListIcon, path: '/masters/job-menu/list' }] },
-      { name: 'Skill Categories', icon: Layers, path: '/masters/skill-categories', children: [{ name: 'Add Skill Category', icon: Plus, path: '/masters/skill-categories/add' }, { name: 'Skill Category List', icon: ListIcon, path: '/masters/skill-categories/list' }] },
-      { name: 'Skills', icon: Wrench, path: '/masters/skills', children: [{ name: 'Add Skill', icon: Plus, path: '/masters/skills/add' }, { name: 'Skill List', icon: ListIcon, path: '/masters/skills/list' }] },
-      { name: 'Job Types', icon: Briefcase, path: '/masters/job-types', children: [{ name: 'Add Job Type', icon: Plus, path: '/masters/job-types/add' }, { name: 'Job Type List', icon: ListIcon, path: '/masters/job-types/list' }] },
-      { name: 'Job Positions', icon: Star, path: '/masters/job-positions', children: [{ name: 'Add Job Position', icon: Plus, path: '/masters/job-positions/add' }, { name: 'Job Position List', icon: ListIcon, path: '/masters/job-positions/list' }] },
-      { name: 'Experience Ranges', icon: Briefcase, path: '/masters/experience-ranges', children: [{ name: 'Add Experience Range', icon: Plus, path: '/masters/experience-ranges/add' }, { name: 'Experience Range List', icon: ListIcon, path: '/masters/experience-ranges/list' }] },
-      { name: 'Salary Ranges', icon: Banknote, path: '/masters/salary-ranges', children: [{ name: 'Add Salary Range', icon: Plus, path: '/masters/salary-ranges/add' }, { name: 'Salary Range List', icon: ListIcon, path: '/masters/salary-ranges/list' }] },
-      { name: 'Time Ranges', icon: Clock, path: '/masters/time-ranges', children: [{ name: 'Add Time Range', icon: Plus, path: '/masters/time-ranges/add' }, { name: 'Time Range List', icon: ListIcon, path: '/masters/time-ranges/list' }] },
-      { name: 'Cooking Categories', icon: UtensilsCrossed, path: '/masters/cooking-categories', children: [{ name: 'Add Cooking Category', icon: Plus, path: '/masters/cooking-categories/add' }, { name: 'Cooking Category List', icon: ListIcon, path: '/masters/cooking-categories/list' }] },
-      { name: 'Events', icon: Calendar, path: '/masters/events', children: [{ name: 'Add Event', icon: Plus, path: '/masters/events/add' }, { name: 'Event List', icon: ListIcon, path: '/masters/events/list' }] },
-      { name: 'Cooking Preferences', icon: Heart, path: '/masters/cooking-preferences', children: [{ name: 'Add Cooking Preference', icon: Plus, path: '/masters/cooking-preferences/add' }, { name: 'Cooking Preference List', icon: ListIcon, path: '/masters/cooking-preferences/list' }] },
-      { name: 'Facilities', icon: Building2, path: '/masters/facilities', children: [{ name: 'Add Facility', icon: Plus, path: '/masters/facilities/add' }, { name: 'Facility List', icon: ListIcon, path: '/masters/facilities/list' }] },
-      { name: 'Benefits', icon: Gift, path: '/masters/benefits', children: [{ name: 'Add Benefit', icon: Plus, path: '/masters/benefits/add' }, { name: 'Benefit List', icon: ListIcon, path: '/masters/benefits/list' }] },
-      { name: 'Property Categories', icon: Layers, path: '/masters/property-categories', children: [{ name: 'Add Property Category', icon: Plus, path: '/masters/property-categories/add' }, { name: 'Property Category List', icon: ListIcon, path: '/masters/property-categories/list' }] },
-      { name: 'Sliders', icon: ImageIcon, path: '/masters/sliders', children: [{ name: 'Add Slider', icon: Plus, path: '/masters/sliders/add' }, { name: 'Slider List', icon: ListIcon, path: '/masters/sliders/list' }] },
-      { name: 'Videos', icon: Film, path: '/masters/videos', children: [{ name: 'Add Video', icon: Plus, path: '/masters/videos/add' }, { name: 'Video List', icon: ListIcon, path: '/masters/videos/list' }] },
-      { name: 'CMS', icon: Globe, path: '/masters/cms', children: [{ name: 'Add CMS', icon: Plus, path: '/masters/cms/add' }, { name: 'CMS List', icon: ListIcon, path: '/masters/cms/list' }] },
+      { name: 'Job Menu Items', icon: ListMenu, path: '/masters/job-menu', permission: 'Menu Item', children: [{ name: 'Add Job Menu Item', icon: Plus, path: '/masters/job-menu/add', permission: 'Add Menu Item' }, { name: 'Job Menu Item List', icon: ListIcon, path: '/masters/job-menu/list', permission: 'Menu Item List' }] },
+      { name: 'Skill Categories', icon: Layers, path: '/masters/skill-categories', permission: 'Skill Category', children: [{ name: 'Add Skill Category', icon: Plus, path: '/masters/skill-categories/add', permission: 'Add Skill Category' }, { name: 'Skill Category List', icon: ListIcon, path: '/masters/skill-categories/list', permission: 'Skill Category List' }] },
+      { name: 'Skills', icon: Wrench, path: '/masters/skills', permission: 'Skill', children: [{ name: 'Add Skill', icon: Plus, path: '/masters/skills/add', permission: 'Add Skill' }, { name: 'Skill List', icon: ListIcon, path: '/masters/skills/list', permission: 'Skill List' }] },
+      { name: 'Job Types', icon: Briefcase, path: '/masters/job-types', permission: 'Job Type', children: [{ name: 'Add Job Type', icon: Plus, path: '/masters/job-types/add', permission: 'Add Job Type' }, { name: 'Job Type List', icon: ListIcon, path: '/masters/job-types/list', permission: 'Job Type List' }] },
+      { name: 'Job Positions', icon: Star, path: '/masters/job-positions', permission: 'Position', children: [{ name: 'Add Job Position', icon: Plus, path: '/masters/job-positions/add', permission: 'Add Position' }, { name: 'Job Position List', icon: ListIcon, path: '/masters/job-positions/list', permission: 'Position List' }] },
+      { name: 'Experience Ranges', icon: Briefcase, path: '/masters/experience-ranges', permission: 'Experience Range', children: [{ name: 'Add Experience Range', icon: Plus, path: '/masters/experience-ranges/add', permission: 'Add Experience Range' }, { name: 'Experience Range List', icon: ListIcon, path: '/masters/experience-ranges/list', permission: 'Experience Range List' }] },
+      { name: 'Salary Ranges', icon: Banknote, path: '/masters/salary-ranges', permission: 'Salary Range', children: [{ name: 'Add Salary Range', icon: Plus, path: '/masters/salary-ranges/add', permission: 'Add Salary Range' }, { name: 'Salary Range List', icon: ListIcon, path: '/masters/salary-ranges/list', permission: 'Salary Range List' }] },
+      { name: 'Time Ranges', icon: Clock, path: '/masters/time-ranges', permission: 'Time Range', children: [{ name: 'Add Time Range', icon: Plus, path: '/masters/time-ranges/add', permission: 'Add Time Range' }, { name: 'Time Range List', icon: ListIcon, path: '/masters/time-ranges/list', permission: 'Time Range List' }] },
+      { name: 'Cooking Categories', icon: UtensilsCrossed, path: '/masters/cooking-categories', permission: 'Cooking Category', children: [{ name: 'Add Cooking Category', icon: Plus, path: '/masters/cooking-categories/add', permission: 'Add Cooking Category' }, { name: 'Cooking Category List', icon: ListIcon, path: '/masters/cooking-categories/list', permission: 'Cooking Category List' }] },
+      { name: 'Events', icon: Calendar, path: '/masters/events', permission: 'Event', children: [{ name: 'Add Event', icon: Plus, path: '/masters/events/add', permission: 'Add Event' }, { name: 'Event List', icon: ListIcon, path: '/masters/events/list', permission: 'Event List' }] },
+      { name: 'Cooking Preferences', icon: Heart, path: '/masters/cooking-preferences', permission: 'Cooking Preference', children: [{ name: 'Add Cooking Preference', icon: Plus, path: '/masters/cooking-preferences/add', permission: 'Add Cooking Preference' }, { name: 'Cooking Preference List', icon: ListIcon, path: '/masters/cooking-preferences/list', permission: 'Cooking Preference List' }] },
+      { name: 'Facilities', icon: Building2, path: '/masters/facilities', permission: 'Facility', children: [{ name: 'Add Facility', icon: Plus, path: '/masters/facilities/add', permission: 'Add Facility' }, { name: 'Facility List', icon: ListIcon, path: '/masters/facilities/list', permission: 'Facility List' }] },
+      { name: 'Benefits', icon: Gift, path: '/masters/benefits', permission: 'Benefits', children: [{ name: 'Add Benefit', icon: Plus, path: '/masters/benefits/add', permission: 'Add Benefit' }, { name: 'Benefit List', icon: ListIcon, path: '/masters/benefits/list', permission: 'Benefit List' }] },
+      { name: 'Property Categories', icon: Layers, path: '/masters/property-categories', permission: 'Property Category', children: [{ name: 'Add Property Category', icon: Plus, path: '/masters/property-categories/add', permission: 'Add Property Category' }, { name: 'Property Category List', icon: ListIcon, path: '/masters/property-categories/list', permission: 'Property Category List' }] },
+      { name: 'Sliders', icon: ImageIcon, path: '/masters/sliders', permission: 'Sliders', children: [{ name: 'Add Slider', icon: Plus, path: '/masters/sliders/add', permission: 'Add Slider' }, { name: 'Slider List', icon: ListIcon, path: '/masters/sliders/list', permission: 'Slider List' }] },
+      { name: 'Videos', icon: Film, path: '/masters/videos', permission: 'Videos', children: [{ name: 'Add Video', icon: Plus, path: '/masters/videos/add', permission: 'Add Video' }, { name: 'Video List', icon: ListIcon, path: '/masters/videos/list', permission: 'Video List' }] },
+      { name: 'CMS', icon: Globe, path: '/masters/cms', permission: 'CMS', children: [{ name: 'Add CMS', icon: Plus, path: '/masters/cms/add', permission: 'Add CMS' }, { name: 'CMS List', icon: ListIcon, path: '/masters/cms/list', permission: 'CMS List' }] },
       {
-        name: 'Location', icon: MapPin, path: '/masters/location',
+        name: 'Location', icon: MapPin, path: '/masters/location', permission: 'States',
         children: [
-          { name: 'State List', icon: ListIcon, path: '/masters/states/list' },
-          { name: 'City List', icon: ListIcon, path: '/masters/cities/list' },
+          { name: 'State List', icon: ListIcon, path: '/masters/states/list', permission: 'State List' },
+          { name: 'City List', icon: ListIcon, path: '/masters/cities/list', permission: 'City List' },
         ]
       },
     ]
   },
-  { name: 'Web Settings', icon: Settings, path: '/settings' },
+  { name: 'Web Settings', icon: Settings, path: '/settings', permission: 'Web Settings' },
 ];
 
 const SidebarItem = ({ item, isCollapsed, onClose, depth = 0 }) => {
@@ -293,9 +293,49 @@ const SidebarContent = ({ isCollapsed, onClose, onLogoutOpen, ...rest }) => (
       }}
     >
       <VStack align="stretch" spacing="0.5">
-        {navItems.map((item) => (
-          <SidebarItem key={item.name} item={item} isCollapsed={isCollapsed} onClose={onClose} />
-        ))}
+        {navItems.map((item) => {
+          const adminData = JSON.parse(localStorage.getItem('adminData') || '{}');
+          const userPermissions = adminData.role?.permissions || [];
+          const isSuperAdmin = adminData.type === 'admin';
+
+          if (isSuperAdmin) {
+            return <SidebarItem key={item.name} item={item} isCollapsed={isCollapsed} onClose={onClose} />;
+          }
+
+          // Function to check if user has permission for item or any of its children recursively
+          const hasAccess = (navItem) => {
+            // Check direct permission
+            if (navItem.permission && userPermissions.includes(navItem.permission)) return true;
+            
+            // Check if any child has permission
+            if (navItem.children) {
+              return navItem.children.some(child => hasAccess(child));
+            }
+            
+            // If no permission specified, it might be public or dependent on others
+            // For now, if no permission is set, we can decide to show or hide
+            return false;
+          };
+
+          if (!hasAccess(item)) return null;
+
+          // Recursively filter children to only show those the user has access to
+          const getFilteredChildren = (children) => {
+            return children
+              .filter(child => hasAccess(child))
+              .map(child => ({
+                ...child,
+                children: child.children ? getFilteredChildren(child.children) : undefined
+              }));
+          };
+
+          const filteredItem = {
+            ...item,
+            children: item.children ? getFilteredChildren(item.children) : undefined
+          };
+
+          return <SidebarItem key={item.name} item={filteredItem} isCollapsed={isCollapsed} onClose={onClose} />;
+        })}
       </VStack>
     </Box>
 
@@ -472,8 +512,12 @@ const Navbar = ({ onOpen, toggleCollapse, isCollapsed, onLogoutOpen }) => {
                 boxShadow={`0 0 0 2px ${BRAND}20`}
               />
               <VStack display={{ base: 'none', md: 'flex' }} alignItems="flex-start" spacing="0" ml="0.5">
-                <Text fontSize="sm" fontWeight="700" color="#1e293b" lineHeight="1.2">Admin User</Text>
-                <Text fontSize="10px" color="#64748b" fontWeight="600" letterSpacing="0.3px">System Admin</Text>
+                <Text fontSize="sm" fontWeight="700" color="#1e293b" lineHeight="1.2">
+                  {JSON.parse(localStorage.getItem('adminData') || '{}').name || 'Admin User'}
+                </Text>
+                <Text fontSize="10px" color="#64748b" fontWeight="600" letterSpacing="0.3px">
+                  {JSON.parse(localStorage.getItem('adminData') || '{}').type === 'admin' ? 'Super Admin' : (JSON.parse(localStorage.getItem('adminData') || '{}').role?.name || 'Staff User')}
+                </Text>
               </VStack>
               <Box display={{ base: 'none', md: 'flex' }} color="#94a3b8">
                 <ChevronDown size={14} />
@@ -540,6 +584,8 @@ const Layout = ({ children }) => {
   const [isCollapsed, setIsCollapsed] = useState(false);
 
   const handleLogout = () => {
+    localStorage.removeItem('adminToken');
+    localStorage.removeItem('adminData');
     onLogoutClose();
     navigate('/login');
   };

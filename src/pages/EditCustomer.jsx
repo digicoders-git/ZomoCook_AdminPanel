@@ -1,15 +1,17 @@
-import React, { useState } from 'react';
-import { Box, SimpleGrid, FormControl, FormLabel, Input, Select, Textarea, HStack, Button } from '@chakra-ui/react';
+import React, { useState, useEffect } from 'react';
+import { Box, SimpleGrid, FormControl, FormLabel, Input, Select, Textarea, HStack, Button, Spinner, Center } from '@chakra-ui/react';
 import { Send, RotateCcw } from 'lucide-react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useParams } from 'react-router-dom';
 import { useToast } from '@chakra-ui/react';
-import { PageHeader, FormCard, FileUploadField, PageFooter, BRAND, ACCENT, inputStyle, selectStyle, labelStyle } from '../components/ui';
+import { PageHeader, FormCard, PageFooter, BRAND, ACCENT, inputStyle, selectStyle, labelStyle } from '../components/ui';
 import axios from 'axios';
 
-const AddCustomer = () => {
+const EditCustomer = () => {
+  const { id } = useParams();
   const navigate = useNavigate();
   const toast = useToast();
   const [isLoading, setIsLoading] = useState(false);
+  const [isFetching, setIsFetching] = useState(true);
 
   const [formData, setFormData] = useState({
     name: '',
@@ -23,6 +25,28 @@ const AddCustomer = () => {
     accountStatus: 'active',
   });
   const [profilePic, setProfilePic] = useState(null);
+
+  useEffect(() => {
+    const fetchCustomer = async () => {
+      try {
+        const apiUrl = import.meta.env.VITE_API_URL;
+        const token = localStorage.getItem('adminToken');
+        const response = await axios.get(`${apiUrl}/customers/${id}`, {
+          headers: { 'Authorization': `Bearer ${token}` }
+        });
+        if (response.data.success) {
+          const { password, ...rest } = response.data.customer;
+          setFormData({ ...rest, password: '' }); // Don't show hashed password
+        }
+      } catch (error) {
+        toast({ title: 'Error', description: 'Failed to fetch customer data.', status: 'error', duration: 3000, position: 'top-right' });
+        navigate('/customers/list');
+      } finally {
+        setIsFetching(false);
+      }
+    };
+    fetchCustomer();
+  }, [id]);
 
   const handleChange = (e) => {
     const { name, value } = e.target;
@@ -44,10 +68,13 @@ const AddCustomer = () => {
       const token = localStorage.getItem('adminToken');
       
       const data = new FormData();
-      Object.keys(formData).forEach(key => data.append(key, formData[key]));
+      Object.keys(formData).forEach(key => {
+        if (key === 'password' && !formData[key]) return; // Don't send empty password
+        data.append(key, formData[key]);
+      });
       if (profilePic) data.append('profilePic', profilePic);
 
-      const response = await axios.post(`${apiUrl}/customers`, data, {
+      const response = await axios.put(`${apiUrl}/customers/${id}`, data, {
         headers: {
           'Authorization': `Bearer ${token}`,
           'Content-Type': 'multipart/form-data'
@@ -55,13 +82,13 @@ const AddCustomer = () => {
       });
 
       if (response.data.success) {
-        toast({ title: 'Success', description: 'Customer record has been added successfully.', status: 'success', duration: 3000, isClosable: true, position: 'top-right' });
+        toast({ title: 'Success', description: 'Customer record updated successfully.', status: 'success', duration: 3000, isClosable: true, position: 'top-right' });
         navigate('/customers/list');
       }
     } catch (error) {
       toast({
         title: 'Error',
-        description: error.response?.data?.message || 'Failed to add customer.',
+        description: error.response?.data?.message || 'Failed to update customer.',
         status: 'error',
         duration: 4000,
         isClosable: true,
@@ -72,12 +99,20 @@ const AddCustomer = () => {
     }
   };
 
+  if (isFetching) {
+    return (
+      <Center h="60vh">
+        <Spinner size="xl" color={BRAND} thickness="4px" />
+      </Center>
+    );
+  }
+
   return (
     <Box pb="10">
-      <PageHeader title="Add Customer/Client Record" breadcrumb="Add Customer/Client Record" />
+      <PageHeader title="Edit Customer/Client Record" breadcrumb="Edit Customer/Client Record" />
 
       <form onSubmit={handleSubmit}>
-        <FormCard headerTitle="Add Customer Details" backTo="/customers/list">
+        <FormCard headerTitle="Edit Customer Details" backTo="/customers/list">
           <SimpleGrid columns={{ base: 1, md: 3 }} spacingX="6" spacingY="5">
             <FormControl isRequired>
               <FormLabel {...labelStyle}>Customer/Client Name</FormLabel>
@@ -98,9 +133,9 @@ const AddCustomer = () => {
               <FormLabel {...labelStyle}>Email ID</FormLabel>
               <Input name="email" value={formData.email} onChange={handleChange} type="email" placeholder="Enter Email ID" {...inputStyle} />
             </FormControl>
-            <FormControl isRequired>
-              <FormLabel {...labelStyle}>Password</FormLabel>
-              <Input name="password" value={formData.password} onChange={handleChange} type="password" placeholder="Enter Password" {...inputStyle} />
+            <FormControl>
+              <FormLabel {...labelStyle}>Password (Leave blank to keep current)</FormLabel>
+              <Input name="password" value={formData.password} onChange={handleChange} type="password" placeholder="Enter New Password" {...inputStyle} />
             </FormControl>
             <FormControl isRequired>
               <FormLabel {...labelStyle}>Contact Name</FormLabel>
@@ -117,7 +152,7 @@ const AddCustomer = () => {
               </FormControl>
             </Box>
             <FormControl>
-              <FormLabel {...labelStyle}>Profile Pic</FormLabel>
+              <FormLabel {...labelStyle}>Update Profile Pic</FormLabel>
               <Input type="file" onChange={handleFileChange} p="1" {...inputStyle} />
             </FormControl>
             <FormControl isRequired>
@@ -138,9 +173,9 @@ const AddCustomer = () => {
 
           <HStack justify="flex-end" mt="8" spacing="3">
             <Button leftIcon={<RotateCcw size={15} />} variant="outline" borderColor="#dde6f5" color="#64748b" borderRadius="lg" size="sm"
-              _hover={{ borderColor: BRAND, color: BRAND }} onClick={() => navigate('/customers/list')}>Reset</Button>
+              _hover={{ borderColor: BRAND, color: BRAND }} onClick={() => navigate('/customers/list')}>Cancel</Button>
             <Button type="submit" isLoading={isLoading} leftIcon={<Send size={15} />} bg={BRAND} color="white" borderRadius="lg" size="sm" px="6"
-              _hover={{ bg: '#003d91' }} boxShadow={`0 4px 12px ${BRAND}30`}>Submit Details</Button>
+              _hover={{ bg: '#003d91' }} boxShadow={`0 4px 12px ${BRAND}30`}>Update Details</Button>
           </HStack>
         </FormCard>
       </form>
@@ -149,4 +184,4 @@ const AddCustomer = () => {
   );
 };
 
-export default AddCustomer;
+export default EditCustomer;

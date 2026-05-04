@@ -3,15 +3,17 @@ import {
   Box, SimpleGrid, FormControl, FormLabel, Input, Select, HStack, Button, 
   useToast, Spinner, Text, Divider, Flex, Icon
 } from '@chakra-ui/react';
-import { Send, RotateCcw, List, Upload, Save } from 'lucide-react';
-import { useNavigate, Link } from 'react-router-dom';
+import { Save, RotateCcw, List, Upload } from 'lucide-react';
+import { useNavigate, Link, useParams } from 'react-router-dom';
 import { PageHeader, FormCard, PageFooter, BRAND, ACCENT, inputStyle, selectStyle, labelStyle } from '../components/ui';
 import axios from 'axios';
 
-const AddUser = () => {
+const EditUser = () => {
+  const { id } = useParams();
   const navigate = useNavigate();
   const toast = useToast();
   const [isLoading, setIsLoading] = useState(false);
+  const [isFetching, setIsFetching] = useState(true);
   const [roles, setRoles] = useState([]);
   const [formData, setFormData] = useState({
     name: '',
@@ -25,22 +27,42 @@ const AddUser = () => {
   const [profilePic, setProfilePic] = useState(null);
 
   useEffect(() => {
-    const fetchRoles = async () => {
+    const fetchData = async () => {
+      setIsFetching(true);
       try {
         const apiUrl = import.meta.env.VITE_API_URL;
         const token = localStorage.getItem('adminToken');
-        const response = await axios.get(`${apiUrl}/roles`, {
+        
+        // Fetch Roles
+        const rolesRes = await axios.get(`${apiUrl}/roles`, {
           headers: { 'Authorization': `Bearer ${token}` }
         });
-        if (response.data.success) {
-          setRoles(response.data.roles);
+        if (rolesRes.data.success) setRoles(rolesRes.data.roles);
+
+        // Fetch User details
+        const userRes = await axios.get(`${apiUrl}/admin/users/${id}`, {
+          headers: { 'Authorization': `Bearer ${token}` }
+        });
+        if (userRes.data.success) {
+          const user = userRes.data.user;
+          setFormData({
+            name: user.name,
+            email: user.email,
+            phone: user.phone,
+            password: '', // Password stays empty unless updating
+            role: user.role?._id || user.role,
+            jobActions: user.jobActions || '',
+            status: user.status
+          });
         }
       } catch (error) {
-        console.error('Failed to fetch roles');
+        toast({ title: 'Error', description: 'Failed to fetch details', status: 'error' });
+      } finally {
+        setIsFetching(false);
       }
     };
-    fetchRoles();
-  }, []);
+    fetchData();
+  }, [id]);
 
   const handleChange = (e) => {
     const { name, value } = e.target;
@@ -49,36 +71,39 @@ const AddUser = () => {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    if (!formData.role) return toast({ title: 'Error', description: 'Please select a role', status: 'error' });
-    
     setIsLoading(true);
     try {
       const apiUrl = import.meta.env.VITE_API_URL;
       const token = localStorage.getItem('adminToken');
       const data = new FormData();
-      Object.keys(formData).forEach(key => data.append(key, formData[key]));
+      Object.keys(formData).forEach(key => {
+        if (key === 'password' && !formData[key]) return; // Don't send empty password
+        data.append(key, formData[key]);
+      });
       if (profilePic) data.append('profilePic', profilePic);
 
-      const response = await axios.post(`${apiUrl}/admin/users`, data, {
+      const response = await axios.put(`${apiUrl}/admin/users/${id}`, data, {
         headers: { 'Authorization': `Bearer ${token}`, 'Content-Type': 'multipart/form-data' }
       });
 
       if (response.data.success) {
-        toast({ title: 'Success', description: 'New system user created.', status: 'success' });
+        toast({ title: 'Success', description: 'User updated successfully.', status: 'success' });
         navigate('/users/list');
       }
     } catch (error) {
-      toast({ title: 'Error', description: error.response?.data?.message || 'Creation failed', status: 'error' });
+      toast({ title: 'Error', description: error.response?.data?.message || 'Update failed', status: 'error' });
     } finally {
       setIsLoading(false);
     }
   };
 
+  if (isFetching) return <Flex h="80vh" align="center" justify="center"><Spinner size="xl" color={BRAND} thickness="4px" /></Flex>;
+
   return (
     <Box pb="10">
       <PageHeader 
-        title="Add User Record" 
-        breadcrumb="Add User Record" 
+        title="Edit User Record" 
+        breadcrumb="Edit User Record" 
         actions={[
           <Button 
             key="list" 
@@ -96,7 +121,7 @@ const AddUser = () => {
         ]}
       />
       <form onSubmit={handleSubmit}>
-        <FormCard headerTitle="Add User Record">
+        <FormCard headerTitle={`Edit User: ${formData.name}`}>
           <SimpleGrid columns={{ base: 1, md: 3 }} spacing="6" mb="6">
             <FormControl isRequired>
               <FormLabel {...labelStyle}>Name</FormLabel>
@@ -122,12 +147,12 @@ const AddUser = () => {
               </Select>
             </FormControl>
             <FormControl>
-              <FormLabel {...labelStyle}>Profile Pic</FormLabel>
+              <FormLabel {...labelStyle}>Update Profile Pic</FormLabel>
               <Input type="file" p="1" {...inputStyle} onChange={(e) => setProfilePic(e.target.files[0])} />
             </FormControl>
-            <FormControl isRequired>
-              <FormLabel {...labelStyle}>Password</FormLabel>
-              <Input name="password" type="password" value={formData.password} onChange={handleChange} placeholder="Enter Password" {...inputStyle} />
+            <FormControl>
+              <FormLabel {...labelStyle}>New Password (Optional)</FormLabel>
+              <Input name="password" type="password" value={formData.password} onChange={handleChange} placeholder="Leave blank to keep current" {...inputStyle} />
             </FormControl>
           </SimpleGrid>
 
@@ -161,7 +186,7 @@ const AddUser = () => {
               _hover={{ bg: '#3a5a66' }} 
               onClick={() => navigate('/users/list')}
             >
-              Reset
+              Cancel
             </Button>
             <Button 
               type="submit" 
@@ -174,7 +199,7 @@ const AddUser = () => {
               px="8" 
               _hover={{ bg: '#ea580c' }}
             >
-              Submit
+              Update
             </Button>
           </HStack>
         </FormCard>
@@ -184,4 +209,4 @@ const AddUser = () => {
   );
 };
 
-export default AddUser;
+export default EditUser;

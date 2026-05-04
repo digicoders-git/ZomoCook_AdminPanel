@@ -1,53 +1,49 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import {
   Box, Flex, Text, VStack, Table, Thead, Tbody, Tr, Th, Td,
-  Badge, Button, Checkbox, Avatar,
+  Badge, Button, Checkbox, Avatar, Spinner, useToast, Icon
 } from '@chakra-ui/react';
 import {
   Filter, FileText, ArrowLeft, Calendar, Clock, CheckCircle2, CalendarClock,
 } from 'lucide-react';
-import { Link } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import {
   PageHeader, TableCard, TableControls, TableFooter, PageFooter,
   BRAND, tableHeadStyle, thStyle, tdStyle, trHover,
 } from '../components/ui';
+import axios from 'axios';
 
 const RescheduleRequestsList = () => {
-  const candidates = [
-    {
-      id: 1,
-      candidateImage: null,
-      name: 'Rahul Kumar',
-      gender: 'Male',
-      email: 'rahul.k@example.com',
-      phone: '9876543210',
-      state: 'Delhi',
-      city: 'New Delhi',
-      preferredCities: ['Gurugram', 'Noida'],
-      jobTitle: 'Assistant Cook',
-      jobCategory: 'Home Cook Job',
-      jobType: 'Full Time',
-      jobPosition: 'Helper',
-      vacancy: 2,
-      joiningType: 'Immediate',
-      salaryRange: 'INR 12000 - 15000',
-      experienceRange: '2 - 3 Years',
-      clientName: 'Private Residence',
-      jobState: 'Delhi',
-      jobCity: 'New Delhi',
-      demoPersonName: 'Amit Sharma',
-      demoPersonPhone: '9988776655',
-      demoPersonAddress: 'Sector 45, Gurugram',
-      demoDate: '05 Apr 2026',
-      demoTime: '11:00 AM',
-      scheduledAt: '30 Mar 2026 02:30 PM',
-      rescheduleRequested: 'Yes',
-      applyDate: '28 Mar 2026, 11:31 AM',
-      shortlistDate: '29 Mar 2026, 10:00 AM',
-      demoAt: '30 Mar 2026, 02:30 PM',
-      status: 'Reschedule Requested',
-    },
-  ];
+  const navigate = useNavigate();
+  const toast = useToast();
+  const [applications, setApplications] = useState([]);
+  const [isLoading, setIsLoading] = useState(true);
+  const [searchTerm, setSearchTerm] = useState('');
+
+  const fetchApplications = async () => {
+    setIsLoading(true);
+    try {
+      const apiUrl = import.meta.env.VITE_API_URL;
+      const token = localStorage.getItem('adminToken');
+      const response = await axios.get(`${apiUrl}/candidates/applications`, {
+        params: { status: 'Reschedule Requested', search: searchTerm },
+        headers: { 'Authorization': `Bearer ${token}` }
+      });
+      if (response.data.success) {
+        setApplications(response.data.applications);
+      }
+    } catch (error) {
+      toast({ title: 'Error', description: 'Failed to load reschedule requests.', status: 'error' });
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    fetchApplications();
+  }, [searchTerm]);
+
+  const apiUrl = import.meta.env.VITE_API_URL;
 
   return (
     <Box pb="10">
@@ -55,10 +51,7 @@ const RescheduleRequestsList = () => {
         title="Reschedule Requests Candidates Records"
         breadcrumb="Reschedule Requests Candidates Records"
         actions={[
-          <Button key="filter" leftIcon={<Filter size={14} />} size="sm" variant="outline" borderColor="#dde6f5" color="#64748b" borderRadius="lg" _hover={{ borderColor: BRAND, color: BRAND }}>
-            Filter
-          </Button>,
-          <Button key="back" as={Link} to="/" leftIcon={<ArrowLeft size={14} />} size="sm" variant="outline" borderColor={BRAND} color={BRAND} borderRadius="lg" _hover={{ bg: '#f0f5ff' }}>
+          <Button key="back" as={Link} to="/candidates/list" leftIcon={<ArrowLeft size={14} />} size="sm" variant="outline" borderColor={BRAND} color={BRAND} borderRadius="lg" _hover={{ bg: '#f0f5ff' }}>
             Back
           </Button>,
         ]}
@@ -70,155 +63,65 @@ const RescheduleRequestsList = () => {
           <Text fontSize="sm" fontWeight="700" color="#1e293b">Reschedule Requests Candidates Records</Text>
         </Flex>
 
-        <TableControls defaultEntries="50" searchPlaceholder="Search..." />
+        <TableControls searchPlaceholder="Search..." onSearch={setSearchTerm} />
 
         <Box overflowX="auto">
-          <Table variant="simple" size="sm">
-            <Thead {...tableHeadStyle}>
-              <Tr>
-                <Th {...thStyle} w="40px"><Checkbox colorScheme="blue" /></Th>
-                <Th {...thStyle} minW="60px">NO.</Th>
-                <Th {...thStyle} minW="150px">CANDIDATE IMAGE</Th>
-                <Th {...thStyle} minW="280px">CANDIDATE DETAILS</Th>
-                <Th {...thStyle} minW="300px">JOB DETAILS</Th>
-                <Th {...thStyle} minW="220px">DEMO PERSON DETAILS</Th>
-                <Th {...thStyle} minW="220px">DEMO DETAILS</Th>
-                <Th {...thStyle} minW="120px">SHOW IN APP</Th>
-                <Th {...thStyle} minW="280px">APPLY DATE & STATUS</Th>
-              </Tr>
-            </Thead>
-            <Tbody>
-              {candidates.map((c, index) => (
-                <Tr key={c.id} {...trHover}>
-                  <Td {...tdStyle} textAlign="center"><Checkbox colorScheme="blue" /></Td>
-                  <Td {...tdStyle} color="#475569" fontWeight="600" textAlign="center">{index + 1}</Td>
-                  <Td {...tdStyle} textAlign="center">
-                    <VStack spacing="3" align="center">
-                      <Avatar size="lg" name={c.name} border="2px solid #f8faff" />
-                      <Button size="xs" leftIcon={<FileText size={12} />} bg="#f97316" color="white" _hover={{ bg: '#ea580c' }} borderRadius="4px" px="6" py="3">CV</Button>
-                    </VStack>
-                  </Td>
-                  <Td {...tdStyle}>
-                    <VStack align="start" spacing="1.5">
-                      <Text fontSize="13px" color="#1e293b"><Box as="span" color="#475569">Name: </Box>{c.name}</Text>
-                      <Text fontSize="13px" color="#1e293b"><Box as="span" color="#475569">Gender: </Box>{c.gender}</Text>
-                      <Text fontSize="13px" color="#1e293b"><Box as="span" color="#475569">Email ID: </Box>{c.email}</Text>
-                      <Text fontSize="13px" color="#1e293b"><Box as="span" color="#475569">Phone No.: </Box>{c.phone}</Text>
-                      <Text fontSize="13px" color="#1e293b"><Box as="span" color="#475569">State: </Box>{c.state}</Text>
-                      <Text fontSize="13px" color="#1e293b"><Box as="span" color="#475569">City: </Box>{c.city}</Text>
-                      <Flex align="start" pt="1">
-                        <Text fontSize="13px" fontWeight="700" color="#1e293b" mr="2" whiteSpace="nowrap">Preferred Cities:</Text>
-                        <VStack align="start" spacing="1">
-                          {c.preferredCities.map(city => (
-                            <Badge key={city} bg="#ff6b00" color="white" borderRadius="4px" px="2" py="1" fontSize="11px" textTransform="none" fontWeight="600" minW="80px" textAlign="center">{city}</Badge>
-                          ))}
-                        </VStack>
-                      </Flex>
-                    </VStack>
-                  </Td>
-                  <Td {...tdStyle}>
-                    <VStack align="start" spacing="1.5">
-                      <Text fontWeight="700" color="#0000ff" fontSize="15px" mb="1" _hover={{ textDecoration: 'underline', cursor: 'pointer' }}>{c.jobTitle}</Text>
-                      <Text fontSize="13px" color="#1e293b"><Box as="span" color="#475569">Job Category: </Box>{c.jobCategory}</Text>
-                      <Text fontSize="13px" color="#1e293b"><Box as="span" color="#475569">Job Type: </Box>{c.jobType}</Text>
-                      <Text fontSize="13px" color="#1e293b"><Box as="span" color="#475569">Job Position: </Box>{c.jobPosition}</Text>
-                      <Text fontSize="13px" color="#1e293b"><Box as="span" color="#475569">No. Of Vacancy: </Box>{c.vacancy}</Text>
-                      <Text fontSize="13px" color="#1e293b"><Box as="span" color="#475569">Joining Type: </Box>{c.joiningType}</Text>
-                      <Text fontSize="13px" color="#1e293b"><Box as="span" color="#475569">Salary Range: </Box>{c.salaryRange}</Text>
-                      <Text fontSize="13px" color="#1e293b"><Box as="span" color="#475569">Experience Range: </Box>{c.experienceRange}</Text>
-                      <Text fontSize="13px" color="#1e293b"><Box as="span" color="#475569">Customer/Client Name: </Box>{c.clientName}</Text>
-                      <Text fontSize="13px" color="#1e293b"><Box as="span" color="#475569">State: </Box>{c.jobState}</Text>
-                      <Text fontSize="13px" color="#1e293b"><Box as="span" color="#475569">City: </Box>{c.jobCity}</Text>
-                    </VStack>
-                  </Td>
-                  <Td {...tdStyle}>
-                    <VStack align="start" spacing="2">
-                      <Text fontSize="13px" color="#1e293b"><Box as="span" color="#475569">Name: </Box>{c.demoPersonName}</Text>
-                      <Text fontSize="13px" color="#1e293b"><Box as="span" color="#475569">Phone No: </Box>{c.demoPersonPhone}</Text>
-                      <Text fontSize="13px" color="#1e293b"><Box as="span" color="#475569">Address: </Box>{c.demoPersonAddress}</Text>
-                    </VStack>
-                  </Td>
-                  <Td {...tdStyle}>
-                    <VStack align="start" spacing="2">
-                      <Text fontSize="13px" color="#1e293b"><Box as="span" color="#475569">Demo Date: </Box>{c.demoDate}</Text>
-                      <Text fontSize="13px" color="#1e293b"><Box as="span" color="#475569">Demo Time: </Box>{c.demoTime}</Text>
-                      <Text fontSize="13px" color="#1e293b"><Box as="span" color="#475569">Scheduled At: </Box>{c.scheduledAt}</Text>
-                      <Text fontSize="13px" color="#1e293b"><Box as="span" color="#475569">Reschedule Requested: </Box>{c.rescheduleRequested}</Text>
-                    </VStack>
-                  </Td>
-                  <Td {...tdStyle} textAlign="center" verticalAlign="middle">—</Td>
-                  <Td {...tdStyle} textAlign="center">
-                    <VStack spacing="3" align="center">
-                      <Button leftIcon={<CalendarClock size={14} fill="white" />} size="sm" bg="#06b6d4" color="white" _hover={{ bg: '#0891b2' }} borderRadius="4px" px="10" py="4" fontSize="13px" fontWeight="700" textTransform="none">
-                        Reschedule Requested
-                      </Button>
-                      <VStack spacing="1.5" w="full">
-                        <Badge
-                          variant="outline"
-                          borderRadius="full"
-                          px="4"
-                          py="1.5"
-                          w="full"
-                          fontSize="11px"
-                          display="flex"
-                          alignItems="center"
-                          gap="2"
-                          borderColor="#06b6d4"
-                          color="#06b6d4"
-                          bg="transparent"
-                          textTransform="none"
-                          fontWeight="600"
-                          border="1px solid #06b6d4"
-                        >
-                          <Clock size={12} /> Applied: {c.applyDate}
-                        </Badge>
-                        <Badge
-                          variant="outline"
-                          borderRadius="full"
-                          px="4"
-                          py="1.5"
-                          w="full"
-                          fontSize="11px"
-                          display="flex"
-                          alignItems="center"
-                          gap="2"
-                          borderColor="#06b6d4"
-                          color="#06b6d4"
-                          bg="transparent"
-                          textTransform="none"
-                          fontWeight="600"
-                          border="1px solid #06b6d4"
-                        >
-                          <CheckCircle2 size={12} /> Shortlisted: {c.shortlistDate}
-                        </Badge>
-                        <Badge
-                          variant="outline"
-                          borderRadius="full"
-                          px="4"
-                          py="1.5"
-                          w="full"
-                          fontSize="11px"
-                          display="flex"
-                          alignItems="center"
-                          gap="2"
-                          borderColor="#06b6d4"
-                          color="#06b6d4"
-                          bg="transparent"
-                          textTransform="none"
-                          fontWeight="600"
-                          border="1px solid #06b6d4"
-                        >
-                          <Calendar size={12} /> Demo: {c.demoAt}
+          {isLoading ? (
+            <Flex justify="center" py="10"><Spinner color={BRAND} /></Flex>
+          ) : (
+            <Table variant="simple" size="sm">
+              <Thead {...tableHeadStyle}>
+                <Tr>
+                  <Th {...thStyle} w="60px">NO.</Th>
+                  <Th {...thStyle} minW="150px">CANDIDATE IMAGE</Th>
+                  <Th {...thStyle} minW="280px">CANDIDATE DETAILS</Th>
+                  <Th {...thStyle} minW="300px">JOB DETAILS</Th>
+                  <Th {...thStyle} minW="280px">APPLY DATE & STATUS</Th>
+                </Tr>
+              </Thead>
+              <Tbody>
+                {applications.map((app, index) => (
+                  <Tr key={app._id} {...trHover}>
+                    <Td {...tdStyle} color="#475569" fontWeight="600" textAlign="center">{index + 1}</Td>
+                    <Td {...tdStyle} textAlign="center">
+                      <VStack spacing="3" align="center">
+                        <Avatar size="lg" name={app.candidateName} src={`${apiUrl}/${app.profileImage}`} border="2px solid #f8faff" />
+                        <Button size="xs" leftIcon={<FileText size={12} />} bg="#f97316" color="white" _hover={{ bg: '#ea580c' }} borderRadius="4px" px="6" py="3" onClick={() => window.open(`${apiUrl}/${app.candidateCV}`, '_blank')}>CV</Button>
+                      </VStack>
+                    </Td>
+                    <Td {...tdStyle}>
+                      <VStack align="start" spacing="1.5">
+                        <Text fontSize="13px" color="#1e293b"><Box as="span" color="#475569" fontWeight="600">Name: </Box>{app.candidateName}</Text>
+                        <Text fontSize="13px" color="#1e293b"><Box as="span" color="#475569" fontWeight="600">Phone No.: </Box>{app.candidatePhone}</Text>
+                        <Text fontSize="13px" color="#1e293b"><Box as="span" color="#475569" fontWeight="600">City: </Box>{app.candidateCity}</Text>
+                      </VStack>
+                    </Td>
+                    <Td {...tdStyle}>
+                      <VStack align="start" spacing="1.5">
+                        <Text fontWeight="700" color="#0000ff" fontSize="15px" mb="1" onClick={() => navigate(`/jobs/view/${app.jobId}`)} cursor="pointer" _hover={{ textDecoration: 'underline' }}>{app.jobTitle}</Text>
+                        <Badge colorScheme="blue" variant="subtle" fontSize="10px">{app.jobCategory}</Badge>
+                      </VStack>
+                    </Td>
+                    <Td {...tdStyle} textAlign="center">
+                      <VStack spacing="3" align="center">
+                        <Button leftIcon={<CalendarClock size={14} fill="white" />} size="sm" bg="#06b6d4" color="white" borderRadius="4px" px="6" py="4" fontSize="12px" fontWeight="700">
+                          Reschedule Requested
+                        </Button>
+                        <Badge variant="outline" borderRadius="full" px="4" py="1.5" fontSize="10px" borderColor="#06b6d4" color="#06b6d4" border="1px solid">
+                          Applied: {new Date(app.appliedDate).toLocaleDateString()}
                         </Badge>
                       </VStack>
-                    </VStack>
-                  </Td>
-                </Tr>
-              ))}
-            </Tbody>
-          </Table>
+                    </Td>
+                  </Tr>
+                ))}
+                {!isLoading && applications.length === 0 && (
+                  <Tr><Td colSpan={5} py="10" textAlign="center" color="#94a3b8">No reschedule requests found.</Td></Tr>
+                )}
+              </Tbody>
+            </Table>
+          )}
         </Box>
-        <TableFooter showing={`1 to ${candidates.length}`} total={candidates.length} />
+        <TableFooter showing={`1 to ${applications.length}`} total={applications.length} />
       </TableCard>
       <PageFooter />
     </Box>
