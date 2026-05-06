@@ -1,9 +1,9 @@
-import React, { useState } from 'react';
+import { useState } from 'react';
 import { Box, SimpleGrid, FormControl, FormLabel, Input, Select, Textarea, HStack, Button } from '@chakra-ui/react';
 import { Send, RotateCcw } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { useToast } from '@chakra-ui/react';
-import { PageHeader, FormCard, FileUploadField, PageFooter, BRAND, ACCENT, inputStyle, selectStyle, labelStyle } from '../components/ui';
+import { PageHeader, FormCard, PageFooter, BRAND, inputStyle, selectStyle, labelStyle } from '../components/ui';
 import axios from 'axios';
 
 const AddCustomer = () => {
