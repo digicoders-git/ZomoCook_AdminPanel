@@ -26,7 +26,7 @@ import {
 import { Search, Plus, MoreHorizontal, Filter, Download, Edit2, Trash2, Eye } from 'lucide-react';
 
 const BRAND = '#004aad';
-const ACCENT = '#ed1c24';
+const ACCENT = '#f59e0b';
 
 const DataTable = ({ 
   columns, 

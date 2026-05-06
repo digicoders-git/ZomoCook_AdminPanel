@@ -8,7 +8,7 @@ import { useNavigate } from 'react-router-dom';
 import axios from 'axios';
 
 const BRAND = '#004aad';
-const ACCENT = '#ed1c24';
+const ACCENT = '#f59e0b'; // Soothing Amber color instead of aggressive red
 
 const Login = () => {
   const [showPassword, setShowPassword] = useState(false);
@@ -182,7 +182,7 @@ const Login = () => {
         </VStack>
 
         <Text fontSize="xs" color="rgba(255,255,255,0.4)" position="relative" zIndex="1">
-          © 2026 ZomoCook. All rights reserved. Crafted with ❤️ by <a href="https://digicoders.in/" target="_blank" rel="noopener noreferrer" style={{ color: 'rgb(255, 0, 0)', textDecoration: 'underline', fontWeight: 'bold', fontSize: '14px' }}>Team Digicoders</a>
+          © 2026 ZomoCook. All rights reserved. Crafted with ❤️ by <a href="https://digicoders.in/" target="_blank" rel="noopener noreferrer" style={{ color: ACCENT, textDecoration: 'underline', fontWeight: 'bold', fontSize: '14px' }}>Team Digicoders</a>
         </Text>
       </Box>
 

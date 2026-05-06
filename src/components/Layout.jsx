@@ -17,7 +17,7 @@ import { Link, useLocation, useNavigate } from 'react-router-dom';
 import React from 'react';
 
 const BRAND = '#004aad';
-const ACCENT = '#ed1c24';
+const ACCENT = '#f59e0b';
 
 const navItems = [
   { name: 'Dashboard', icon: LayoutDashboard, path: '/', permission: 'Dashboard' },

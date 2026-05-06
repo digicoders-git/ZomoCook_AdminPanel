@@ -9,7 +9,7 @@ import { ChevronRight, LayoutDashboard, Filter, Plus } from 'lucide-react';
 import { Link } from 'react-router-dom';
 
 export const BRAND = '#004aad';
-export const ACCENT = '#ed1c24';
+export const ACCENT = '#f59e0b'; // Soothing Amber color instead of aggressive red
 
 // Page header with breadcrumb + title + optional action buttons
 export const PageHeader = ({ title, breadcrumb, actions }) => (
@@ -283,7 +283,7 @@ export const PageFooter = () => (
   <Flex justify="center" pt="8" pb="2">
     <HStack spacing="2">
       <Box w="5px" h="5px" borderRadius="full" bg={BRAND} />
-      <Text fontSize="xs" color="#94a3b8" fontWeight="500">© 2026 ZomoCook. All rights reserved.Crefted with ❤️ by <a href="https://digicoders.in/" target="_blank" rel="noopener noreferrer" style={{ color: 'rgb(255, 0, 0)', textDecoration: 'underline', fontWeight: 'bold',fontSize: '14px' }}>Team Digicoders</a></Text>
+      <Text fontSize="xs" color="#94a3b8" fontWeight="500">© 2026 ZomoCook. All rights reserved. Crafted with ❤️ by <a href="https://digicoders.in/" target="_blank" rel="noopener noreferrer" style={{ color: ACCENT, textDecoration: 'underline', fontWeight: 'bold', fontSize: '14px' }}>Team Digicoders</a></Text>
       <Box w="5px" h="5px" borderRadius="full" bg={ACCENT} />
     </HStack>
   </Flex>

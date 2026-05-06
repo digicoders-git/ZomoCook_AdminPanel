@@ -3,7 +3,7 @@ import { ShieldX, ArrowLeft, Home } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 
 const BRAND = '#004aad';
-const ACCENT = '#ed1c24';
+const ACCENT = '#f59e0b';
 
 const Unauthorized = () => {
   const navigate = useNavigate();

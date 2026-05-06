@@ -18,7 +18,7 @@ import Chart from 'react-apexcharts';
 import axios from 'axios';
 
 const BRAND = '#004aad';
-const ACCENT = '#ed1c24';
+const ACCENT = '#f59e0b';
 
 const StatCard = ({ title, value, icon, color, iconBg, link }) => (
   <Box
