@@ -20,6 +20,9 @@ const JobList = () => {
   const [jobs, setJobs] = useState([]);
   const [isLoading, setIsLoading] = useState(true);
   
+  const apiUrl = import.meta.env.VITE_API_URL;
+  const token = localStorage.getItem('adminToken');
+  
   // Confirmation State
   const [confirmConfig, setConfirmConfig] = useState({
     title: '',
@@ -44,8 +47,6 @@ const JobList = () => {
 
   const fetchJobs = async () => {
     try {
-      const apiUrl = import.meta.env.VITE_API_URL;
-      const token = localStorage.getItem('adminToken');
       const response = await axios.get(`${apiUrl}/jobs`, {
         headers: { 'Authorization': `Bearer ${token}` }
       });
@@ -81,8 +82,6 @@ const JobList = () => {
       type: 'danger',
       onConfirm: async () => {
         try {
-          const apiUrl = import.meta.env.VITE_API_URL;
-          const token = localStorage.getItem('adminToken');
           await axios.delete(`${apiUrl}/jobs/${id}`, {
             headers: { 'Authorization': `Bearer ${token}` }
           });
@@ -105,8 +104,6 @@ const JobList = () => {
       type: 'info',
       onConfirm: async () => {
         try {
-          const apiUrl = import.meta.env.VITE_API_URL;
-          const token = localStorage.getItem('adminToken');
           const response = await axios.patch(`${apiUrl}/jobs/${id}/status`, {}, {
             headers: { 'Authorization': `Bearer ${token}` }
           });
@@ -217,6 +214,7 @@ const JobList = () => {
                 <Th {...thStyle} border="1px solid #edf2f7" minW="300px">Job Details</Th>
                 <Th {...thStyle} border="1px solid #edf2f7" minW="250px">Job Overview</Th>
                 <Th {...thStyle} border="1px solid #edf2f7" w="150px" textAlign="center">Status</Th>
+                <Th {...thStyle} border="1px solid #edf2f7" textAlign="center" w="120px">Toggle Status</Th>
                 <Th {...thStyle} border="1px solid #edf2f7" textAlign="center" w="100px">Action</Th>
               </Tr>
             </Thead>
@@ -280,15 +278,20 @@ const JobList = () => {
                             fontWeight="600"
                             onClick={async () => {
                               try {
-                                const apiUrl = import.meta.env.VITE_API_URL;
-                                const token = localStorage.getItem('adminToken');
                                 await axios.patch(`${apiUrl}/jobs/${row._id}/status-string`, { status: s }, {
                                   headers: { 'Authorization': `Bearer ${token}` }
                                 });
-                                toast({ title: 'Success', description: 'Status updated', status: 'success', duration: 2000 });
+                                toast({ title: 'Success', description: `Status updated to ${s}`, status: 'success', duration: 2000, position: 'top-right' });
                                 fetchJobs();
                               } catch (error) {
-                                toast({ title: 'Error', status: 'error' });
+                                console.error('Status update error:', error);
+                                toast({ 
+                                  title: 'Error', 
+                                  description: error.response?.data?.message || 'Status update failed.', 
+                                  status: 'error', 
+                                  duration: 3000, 
+                                  position: 'top-right' 
+                                });
                               }
                             }}
                             _hover={{ bg: '#f8faff', color: BRAND }}
@@ -298,6 +301,15 @@ const JobList = () => {
                         ))}
                       </MenuList>
                     </Menu>
+                  </Td>
+                  
+                  {/* Toggle Status Switch */}
+                  <Td py="4" border="1px solid #edf2f7" textAlign="center">
+                    <Switch 
+                      isChecked={row.isActive} 
+                      onChange={() => confirmToggleStatus(row._id, row.isActive)}
+                      sx={{ '.chakra-switch__track[data-checked]': { bg: BRAND } }} 
+                    />
                   </Td>
                   
                   <Td py="4" border="1px solid #edf2f7" textAlign="center">
