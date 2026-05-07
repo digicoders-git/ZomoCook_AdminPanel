@@ -12,6 +12,7 @@ import {
   PageHeader, TableCard, TableControls, TableFooter, PageFooter, BRAND, ACCENT,
   thStyle, trHover, ConfirmationModal } from '../components/ui';
 import axios from 'axios';
+import API_BASE_URL from '../apiConfig';
 
 const CandidateList = () => {
   const navigate = useNavigate();
@@ -32,9 +33,8 @@ const CandidateList = () => {
   const fetchCandidates = async () => {
     setIsLoading(true);
     try {
-      const apiUrl = import.meta.env.VITE_API_URL;
       const token = localStorage.getItem('adminToken');
-      const response = await axios.get(`${apiUrl}/candidates`, {
+      const response = await axios.get(`${API_BASE_URL}/candidates`, {
         params: { search: searchTerm, profileStatus: statusFilter },
         headers: { 'Authorization': `Bearer ${token}` }
       });
@@ -65,9 +65,7 @@ const CandidateList = () => {
       type: 'danger',
       onConfirm: async () => {
         try {
-          const apiUrl = import.meta.env.VITE_API_URL;
-          const token = localStorage.getItem('adminToken');
-          await axios.delete(`${apiUrl}/candidates/${id}`, { headers: { 'Authorization': `Bearer ${token}` } });
+          await axios.delete(`${API_BASE_URL}/candidates/${id}`, { headers: { 'Authorization': `Bearer ${token}` } });
           setCandidates(prev => prev.filter(c => c._id !== id));
           toast({ title: 'Candidate Deleted', status: 'success' });
         } catch (error) {
@@ -131,11 +129,11 @@ const CandidateList = () => {
                     <Td py="4" border="1px solid #edf2f7" verticalAlign="top" fontSize="xs" color="#475569">{indexOfFirstRecord + index + 1}</Td>
                     <Td py="4" border="1px solid #edf2f7" verticalAlign="middle" textAlign="center">
                       <VStack spacing="3">
-                        <Avatar size="md" src={`${apiUrl}/${c.profileImage}`} name={c.name} border="2px solid #f0f5ff" />
+                        <Avatar size="md" src={`${API_BASE_URL}/${c.profileImage}`} name={c.name} border="2px solid #f0f5ff" />
                         <Button 
                             size="xs" bg="#ff6b00" color="white" leftIcon={<Icon as={FileType} size={12} />} 
                             px="3" borderRadius="md" fontSize="10px"
-                            isDisabled={!c.cv} onClick={() => c.cv && window.open(`${apiUrl}/${c.cv}`, '_blank')}
+                            isDisabled={!c.cv} onClick={() => c.cv && window.open(`${API_BASE_URL}/${c.cv}`, '_blank')}
                         >CV</Button>
                       </VStack>
                     </Td>

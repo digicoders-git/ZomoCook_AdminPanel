@@ -13,6 +13,8 @@ import {
 } from '../components/ui';
 import axios from 'axios';
 
+import API_BASE_URL from '../apiConfig';
+
 const CandidateStatusList = ({ status, title }) => {
   const navigate = useNavigate();
   const toast = useToast();
@@ -24,14 +26,13 @@ const CandidateStatusList = ({ status, title }) => {
   const [currentPage, setCurrentPage] = useState(1);
   const [entriesPerPage, setEntriesPerPage] = useState(10);
 
-  const apiUrl = import.meta.env.VITE_API_URL;
-  const apiBase = apiUrl.replace('/api', '');
+  const apiBase = API_BASE_URL.replace('/api', '');
 
   const fetchApplications = async () => {
     setIsLoading(true);
     try {
       const token = localStorage.getItem('adminToken');
-      const response = await axios.get(`${apiUrl}/candidates/applications`, {
+      const response = await axios.get(`${API_BASE_URL}/candidates/applications`, {
         params: { status, search: searchTerm },
         headers: { 'Authorization': `Bearer ${token}` }
       });

@@ -1,17 +1,18 @@
-import React, { useState, useEffect } from 'react';
+import { useState, useEffect } from 'react';
 import { 
-  Box, Badge, HStack, Text, Icon, VStack, Button, Switch, IconButton, 
-  useToast, useDisclosure, Avatar, Collapse, Flex, SimpleGrid, 
-  FormControl, FormLabel, Select, Input, Table, Thead, Tbody, Tr, Th, Td,
+  Box, HStack, Text, VStack, Button, Switch, IconButton, 
+  useToast, useDisclosure, Collapse, Flex, 
+  FormLabel, Select, Input, Table, Thead, Tbody, Tr, Th, Td,
   Menu, MenuButton, MenuList, MenuItem
 } from '@chakra-ui/react';
-import { MapPin, Clock, IndianRupee, Plus, Filter, Edit3, Trash2, RotateCcw, Search, Eye, ChevronDown } from 'lucide-react';
+import { Plus, Filter, Edit3, RotateCcw, Search, Eye, ChevronDown } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { 
   PageHeader, PageFooter, BRAND, ACCENT, TableCard, TableControls, 
-  TableFooter, tableHeadStyle, thStyle, trHover, ConfirmationModal 
+  TableFooter, thStyle, trHover, ConfirmationModal 
 } from '../components/ui';
 import axios from 'axios';
+import API_BASE_URL from '../apiConfig';
 
 const JobList = () => {
   const navigate = useNavigate();
@@ -20,7 +21,6 @@ const JobList = () => {
   const [jobs, setJobs] = useState([]);
   const [isLoading, setIsLoading] = useState(true);
   
-  const apiUrl = import.meta.env.VITE_API_URL;
   const token = localStorage.getItem('adminToken');
   
   // Confirmation State
@@ -47,7 +47,7 @@ const JobList = () => {
 
   const fetchJobs = async () => {
     try {
-      const response = await axios.get(`${apiUrl}/jobs`, {
+      const response = await axios.get(`${API_BASE_URL}/jobs`, {
         headers: { 'Authorization': `Bearer ${token}` }
       });
       if (response.data.success) {
@@ -82,7 +82,7 @@ const JobList = () => {
       type: 'danger',
       onConfirm: async () => {
         try {
-          await axios.delete(`${apiUrl}/jobs/${id}`, {
+          await axios.delete(`${API_BASE_URL}/jobs/${id}`, {
             headers: { 'Authorization': `Bearer ${token}` }
           });
           toast({ title: 'Deleted', description: 'Job record removed.', status: 'success', duration: 3000, position: 'top-right' });
@@ -104,7 +104,7 @@ const JobList = () => {
       type: 'info',
       onConfirm: async () => {
         try {
-          const response = await axios.patch(`${apiUrl}/jobs/${id}/status`, {}, {
+          const response = await axios.patch(`${API_BASE_URL}/jobs/${id}/status`, {}, {
             headers: { 'Authorization': `Bearer ${token}` }
           });
           if (response.data.success) {
@@ -278,7 +278,7 @@ const JobList = () => {
                             fontWeight="600"
                             onClick={async () => {
                               try {
-                                await axios.patch(`${apiUrl}/jobs/${row._id}/status-string`, { status: s }, {
+                                await axios.patch(`${API_BASE_URL}/jobs/${row._id}/status-string`, { status: s }, {
                                   headers: { 'Authorization': `Bearer ${token}` }
                                 });
                                 toast({ title: 'Success', description: `Status updated to ${s}`, status: 'success', duration: 2000, position: 'top-right' });

@@ -6,6 +6,8 @@ import ReactQuill from 'react-quill-new';
 import 'react-quill-new/dist/quill.snow.css';
 import { PageHeader, PageFooter, BRAND, inputStyle, labelStyle } from '../components/ui';
 
+import API_BASE_URL from '../apiConfig';
+
 const SectionTitle = ({ children }) => (
   <HStack spacing="3" mb="5">
     <Box w="3px" h="18px" bg={BRAND} borderRadius="full" />
@@ -42,7 +44,6 @@ const WebSettings = () => {
   const logoInputRef = useRef();
   const faviconInputRef = useRef();
   const toast = useToast();
-  const API_BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:5000/api';
 
   useEffect(() => {
     fetchSettings();

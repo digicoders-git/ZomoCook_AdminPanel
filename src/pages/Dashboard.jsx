@@ -17,6 +17,8 @@ import { Link } from 'react-router-dom';
 import Chart from 'react-apexcharts';
 import axios from 'axios';
 
+import API_BASE_URL from '../apiConfig';
+
 const BRAND = '#004aad';
 const ACCENT = '#f59e0b';
 
@@ -88,7 +90,6 @@ const Dashboard = () => {
   });
 
   const toast = useToast();
-  const API_BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:5000/api';
   const token = localStorage.getItem('adminToken');
 
   const fetchData = async () => {

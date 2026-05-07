@@ -7,6 +7,8 @@ import { Eye, EyeOff, ArrowRight, UtensilsCrossed, ShieldCheck, Zap } from 'luci
 import { useNavigate } from 'react-router-dom';
 import axios from 'axios';
 
+import API_BASE_URL from '../apiConfig';
+
 const BRAND = '#004aad';
 const ACCENT = '#f59e0b'; // Soothing Amber color instead of aggressive red
 
@@ -23,8 +25,7 @@ const Login = () => {
     setIsLoading(true);
     
     try {
-      const apiUrl = import.meta.env.VITE_API_URL;
-      const response = await axios.post(`${apiUrl}/admin/login`, {
+      const response = await axios.post(`${API_BASE_URL}/admin/login`, {
         email,
         password
       });
