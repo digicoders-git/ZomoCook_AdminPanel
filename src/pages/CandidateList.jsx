@@ -10,7 +10,7 @@ import {
 import { Link, useNavigate } from 'react-router-dom';
 import { 
   PageHeader, TableCard, TableControls, TableFooter, PageFooter, BRAND, ACCENT,
-  thStyle, trHover, ConfirmationModal } from '../components/ui';
+  thStyle, ConfirmationModal } from '../components/ui';
 import axios from 'axios';
 import API_BASE_URL from '../apiConfig';
 
