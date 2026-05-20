@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import { 
   Box, Flex, Text, HStack, Table, Thead, Tbody, Tr, Th, Td, Switch, 
-  IconButton, Avatar, Spinner, useToast, Button, useDisclosure, Icon 
+  IconButton, Avatar, Spinner, useToast, Button, useDisclosure 
 } from '@chakra-ui/react';
 import { Edit3, Trash2, Filter, Plus } from 'lucide-react';
 import { Link, useNavigate } from 'react-router-dom';
@@ -100,7 +100,6 @@ const UserList = () => {
         title="User Record List"
         breadcrumb="User Record List"
         actions={[
-          <Button key="permissions" as={Link} to="/roles/permissions" leftIcon={<Icon as={Plus} boxSize={3} />} variant="outline" borderColor="#dde6f5" color="#1e293b" borderRadius="md" size="sm" _hover={{ bg: '#f8faff' }}>Assign Permissions</Button>,
           <Button key="filter" leftIcon={<Filter size={14} />} size="sm" bg="#4a707e" color="white" borderRadius="md" _hover={{ bg: '#3a5a66' }}>Filter</Button>,
           <Button key="add" as={Link} to="/users/add" leftIcon={<Plus size={14} />} size="sm" bg={BRAND} color="white" borderRadius="md" _hover={{ bg: '#ea580c' }}>Add</Button>,
         ]}
