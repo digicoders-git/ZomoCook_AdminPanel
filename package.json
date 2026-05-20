@@ -15,6 +15,7 @@
     "@emotion/styled": "^11.14.1",
     "apexcharts": "^5.10.6",
     "axios": "^1.15.2",
+    "firebase": "^12.13.0",
     "framer-motion": "^12.38.0",
     "highcharts": "^12.6.0",
     "highcharts-react-official": "^3.2.3",
