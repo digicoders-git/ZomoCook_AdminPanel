@@ -1,5 +1,7 @@
 import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
+import { useEffect } from 'react';
 import axios from 'axios';
+import { requestFCMToken, onForegroundMessage } from './firebase';
 import Layout from './components/Layout';
 import Dashboard from './pages/Dashboard';
 import CustomerList from './pages/CustomerList';
@@ -98,6 +100,30 @@ axios.interceptors.response.use(
 );
 
 function App() {
+  useEffect(() => {
+    const token = localStorage.getItem('adminToken');
+    if (!token) return;
+
+    requestFCMToken().then(fcmToken => {
+      if (!fcmToken) return;
+      const apiUrl = import.meta.env.VITE_API_URL;
+      axios.post(`${apiUrl}/notifications/save-token`, { token: fcmToken }, {
+        headers: { Authorization: `Bearer ${token}` }
+      }).catch(() => {});
+    });
+
+    const unsubscribe = onForegroundMessage((payload) => {
+      if (Notification.permission === 'granted') {
+        new Notification(payload.notification.title, {
+          body: payload.notification.body,
+          icon: '/logo.jpg'
+        });
+      }
+    });
+
+    return () => unsubscribe();
+  }, []);
+
   return (
     <Router>
       <Routes>
