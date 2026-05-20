@@ -34,6 +34,17 @@ const Login = () => {
         localStorage.setItem('adminToken', response.data.token);
         localStorage.setItem('adminData', JSON.stringify(response.data));
 
+        // FCM token save karo login ke baad
+        try {
+          const { requestFCMToken } = await import('../firebase');
+          const fcmToken = await requestFCMToken();
+          if (fcmToken) {
+            await axios.post(`${API_BASE_URL}/notifications/save-token`, { token: fcmToken }, {
+              headers: { Authorization: `Bearer ${response.data.token}` }
+            });
+          }
+        } catch (e) { console.error('FCM setup error:', e); }
+
         toast({
           title: 'Login Successful',
           description: `Welcome back, ${response.data.name}`,
