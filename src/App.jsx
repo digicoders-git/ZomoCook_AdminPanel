@@ -113,12 +113,10 @@ function App() {
     });
 
     const unsubscribe = onForegroundMessage((payload) => {
-      if (Notification.permission === 'granted') {
-        new Notification(payload.notification.title, {
-          body: payload.notification.body,
-          icon: '/logo.jpg'
-        });
-      }
+      const { title, body } = payload.notification;
+      navigator.serviceWorker.ready.then(reg => {
+        reg.showNotification(title, { body, icon: '/logo.jpg' });
+      });
     });
 
     return () => unsubscribe();
