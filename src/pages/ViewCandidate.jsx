@@ -21,11 +21,13 @@ const ViewCandidate = () => {
   const [candidate, setCandidate] = useState(null);
   const [isLoading, setIsLoading] = useState(true);
   const [activeTab, setActiveTab] = useState(0);
+  const [viewFilter, setViewFilter] = useState(null);
 
   useEffect(() => {
     // Read query params for initial tab
     const params = new URLSearchParams(location.search);
     const view = params.get('view');
+    setViewFilter(view);
     if (view === 'applied' || view === 'shortlisted' || view === 'demo') {
       setActiveTab(8); // Application History tab
     } else if (view === 'details') {
@@ -47,10 +49,15 @@ const ViewCandidate = () => {
       }
     };
     fetchCandidate();
-  }, [id]);
+  }, [id, location.search]);
 
-  if (isLoading) return <Flex h="80vh" align="center" justify="center"><Spinner size="xl" color={BRAND} thickness="4px" /></Flex>;
-  if (!candidate) return <Box p="10" textAlign="center">Candidate not found.</Box>;
+  const filterApplicationsByStatus = (app) => {
+    if (!viewFilter) return true;
+    if (viewFilter === 'applied') return true;
+    if (viewFilter === 'shortlisted') return app.status === 'shortlisted';
+    if (viewFilter === 'demo') return app.status === 'demo_scheduled';
+    return true;
+  };
 
   const apiUrl = import.meta.env.VITE_API_URL;
   const apiBase = apiUrl.replace('/api', '');
@@ -69,6 +76,9 @@ const ViewCandidate = () => {
   );
 
   const tabs = ['Basic Profile', 'Job Preference', 'Cooking Skills', 'Work Experience', 'Career Highlights', 'Documents Upload', 'Social Media', 'Photo Gallery', 'Application History'];
+
+  if (isLoading) return <Flex h="80vh" align="center" justify="center"><Spinner size="xl" color={BRAND} thickness="4px" /></Flex>;
+  if (!candidate) return <Box p="10" textAlign="center">Candidate not found.</Box>;
 
   return (
     <Box pb="10">
@@ -107,7 +117,7 @@ const ViewCandidate = () => {
                 <Tbody>
                   <DetailRow label="Job Category" value={candidate.jobPreference?.jobCategory?.join(', ')} />
                   <DetailRow label="Job Type" value={candidate.jobPreference?.jobType?.join(', ')} />
-                  <DetailRow label="Experience" value={`${candidate.jobPreference?.experience?.value} ${candidate.jobPreference?.experience?.unit}`} />
+                  <DetailRow label="Experience" value={candidate.jobPreference?.experience?.value ? (candidate.jobPreference.experience.value.toLowerCase().includes('year') || candidate.jobPreference.experience.value.toLowerCase().includes('month') || candidate.jobPreference.experience.value.toLowerCase() === 'fresher' ? candidate.jobPreference.experience.value : `${candidate.jobPreference.experience.value} ${candidate.jobPreference.experience.unit || 'years'}`) : '-'} />
                   <DetailRow label="Current Salary" value={`₹${candidate.jobPreference?.currentSalary}`} />
                   <DetailRow label="Expected Salary" value={`₹${candidate.jobPreference?.expectedSalary}`} />
                   <DetailRow label="Preferred Cities" value={candidate.jobPreference?.preferredCities?.join(', ')} />
@@ -170,7 +180,7 @@ const ViewCandidate = () => {
                         <Td py="3" px="6">
                             {candidate.documents?.[doc] ? (
                                 <HStack spacing="4">
-                                    <ChakraLink href={`${apiUrl}/${candidate.documents[doc]}`} isExternal color="#ff6b00" fontWeight="600" fontSize="sm">View Document</ChakraLink>
+                                    <ChakraLink href={`${apiBase}/${candidate.documents[doc]}`} isExternal color="#ff6b00" fontWeight="600" fontSize="sm">View Document</ChakraLink>
                                     <Badge colorScheme="green">Verified</Badge>
                                 </HStack>
                             ) : <Text fontSize="sm" color="red.400">Not Uploaded</Text>}
@@ -197,8 +207,8 @@ const ViewCandidate = () => {
             <TabPanel p="5">
                <SimpleGrid columns={{ base: 2, md: 4, lg: 6 }} spacing="4">
                   {candidate.photoGallery?.map((url, i) => (
-                    <Box key={i} borderRadius="lg" overflow="hidden" h="150px" border="1px solid #f1f5f9" cursor="pointer" onClick={() => window.open(`${apiUrl}/${url}`, '_blank')}>
-                      <Image src={`${apiUrl}/${url}`} alt="gallery" objectFit="cover" w="100%" h="100%" />
+                    <Box key={i} borderRadius="lg" overflow="hidden" h="150px" border="1px solid #f1f5f9" cursor="pointer" onClick={() => window.open(`${apiBase}/${url}`, '_blank')}>
+                      <Image src={`${apiBase}/${url}`} alt="gallery" objectFit="cover" w="100%" h="100%" />
                     </Box>
                   ))}
                </SimpleGrid>
@@ -212,12 +222,14 @@ const ViewCandidate = () => {
                   <Thead bg="#f8faff"><Tr><Th {...thStyle}>Job Title</Th><Th {...thStyle}>Status</Th><Th {...thStyle}>Applied Date</Th><Th {...thStyle}>Action</Th></Tr></Thead>
                   <Tbody>
                     {candidate.applications?.map(app => (
-                      <Tr key={app._id} {...trHover}>
-                        <Td {...tdStyle} fontWeight="700">{app.job?.title}</Td>
-                        <Td {...tdStyle}><Badge colorScheme="blue">{app.status}</Badge></Td>
-                        <Td {...tdStyle}>{new Date(app.appliedDate).toLocaleDateString()}</Td>
-                        <Td {...tdStyle}><Button size="xs" colorScheme="blue" variant="ghost">View Job</Button></Td>
-                      </Tr>
+                      (activeTab !== 8 || filterApplicationsByStatus(app)) && (
+                        <Tr key={app._id} {...trHover}>
+                          <Td {...tdStyle} fontWeight="700">{app.job?.title}</Td>
+                          <Td {...tdStyle}><Badge colorScheme="blue">{app.status}</Badge></Td>
+                          <Td {...tdStyle}>{new Date(app.appliedDate).toLocaleDateString()}</Td>
+                          <Td {...tdStyle}><Button size="xs" colorScheme="blue" variant="ghost">View Job</Button></Td>
+                        </Tr>
+                      )
                     ))}
                   </Tbody>
                 </Table>

@@ -76,8 +76,8 @@ const AddCandidate = () => {
     fetchMasterData('job-types', 'jobTypes');
     fetchMasterData('skill-categories', 'skillCategories');
     fetchMasterData('cooking-preferences', 'cookingPreferences');
-    fetchMasterData('salary-ranges', 'salaryRanges');
-    fetchMasterData('experience-ranges', 'experienceRanges');
+    fetchMasterData('salaries', 'salaryRanges');
+    fetchMasterData('experiences', 'experienceRanges');
   }, []);
 
   useEffect(() => {
@@ -214,12 +214,12 @@ const AddCandidate = () => {
                   {masters.jobPositions.map(m => <option key={m._id} value={m.name}>{m.name}</option>)}
                 </Select></FormControl>
                 <HStack spacing="2" align="flex-end">
-                   <FormControl><FormLabel {...labelStyle}>Experience</FormLabel><Select name="experienceValue" onChange={handleChange} {...selectStyle} placeholder="Select Experience">
-                     {masters.experienceRanges.map(m => <option key={m._id} value={`${m.experienceFrom}-${m.experienceTo}`}>{m.experienceFrom}-{m.experienceTo} Years</option>)}
-                   </Select></FormControl>
+                    <FormControl><FormLabel {...labelStyle}>Experience</FormLabel><Select name="experienceValue" onChange={handleChange} {...selectStyle} placeholder="Select Experience">
+                      {masters.experienceRanges.map(m => <option key={m._id} value={m.name}>{m.name}</option>)}
+                    </Select></FormControl>
                 </HStack>
                 <FormControl><FormLabel {...labelStyle}>Expected Salary</FormLabel><Select name="expectedSalary" onChange={handleChange} {...selectStyle} placeholder="Select Salary">
-                  {masters.salaryRanges.map(m => <option key={m._id} value={`${m.salaryFrom}-${m.salaryTo}`}>{m.salaryFrom}-{m.salaryTo}</option>)}
+                  {masters.salaryRanges.map(m => <option key={m._id} value={m.name}>{m.name}</option>)}
                 </Select></FormControl>
               </SimpleGrid>
               <HStack justify="space-between"><Button onClick={() => setActiveTab(0)} variant="outline" size="sm" px="6">Previous</Button><Button onClick={() => setActiveTab(2)} bg={BRAND} color="white" size="sm" px="6">Next</Button></HStack>

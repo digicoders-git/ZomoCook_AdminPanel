@@ -113,7 +113,7 @@ export const tdStyle = {
 export const trHover = { _hover: { bg: '#f8fafc' }, transition: 'background 0.1s', borderBottom: '1px solid #e2e8f0' };
 
 // Table pagination footer
-export const TableFooter = ({ showing, total, currentPage = 1, onPageChange }) => (
+export const TableFooter = ({ showing, total, currentPage = 1, totalPages = 1, onPageChange }) => (
   <Flex justify={{ base: 'center', md: 'space-between' }} align="center" px="5" py="4" borderTop="1px solid #f1f5f9" bg="#fafbfc" wrap="wrap" gap="4" direction={{ base: 'column', md: 'row' }}>
     <Text fontSize="xs" color="#94a3b8">Showing {showing} of {total} entries</Text>
     <HStack spacing="1">
@@ -137,6 +137,7 @@ export const TableFooter = ({ showing, total, currentPage = 1, onPageChange }) =
         color="#64748b" 
         borderRadius="md" 
         _hover={{ bg: '#f0f5ff', color: BRAND }}
+        disabled={currentPage >= totalPages}
         onClick={() => onPageChange && onPageChange(currentPage + 1)}
       >
         Next

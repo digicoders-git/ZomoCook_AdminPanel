@@ -82,13 +82,15 @@ const JobList = () => {
       type: 'danger',
       onConfirm: async () => {
         try {
-          await axios.delete(`${API_BASE_URL}/jobs/${id}`, {
+          const response = await axios.delete(`${API_BASE_URL}/jobs/${id}`, {
             headers: { 'Authorization': `Bearer ${token}` }
           });
-          toast({ title: 'Deleted', description: 'Job record removed.', status: 'success', duration: 3000, position: 'top-right' });
-          fetchJobs();
+          if (response.data.success) {
+            setJobs(prev => prev.filter(j => j._id !== id));
+            toast({ title: 'Deleted', description: 'Job record removed.', status: 'success', duration: 3000, position: 'top-right' });
+          }
         } catch (error) {
-          toast({ title: 'Error', description: 'Failed to delete job.', status: 'error', duration: 3000, position: 'top-right' });
+          toast({ title: 'Error', description: error.response?.data?.message || 'Failed to delete job.', status: 'error', duration: 3000, position: 'top-right' });
         }
         onClose();
       }

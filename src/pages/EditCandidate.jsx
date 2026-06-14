@@ -89,8 +89,8 @@ const EditCandidate = () => {
           fetchMasterData('job-types', 'jobTypes'),
           fetchMasterData('skill-categories', 'skillCategories'),
           fetchMasterData('cooking-preferences', 'cookingPreferences'),
-          fetchMasterData('salary-ranges', 'salaryRanges'),
-          fetchMasterData('experience-ranges', 'experienceRanges')
+          fetchMasterData('salaries', 'salaryRanges'),
+          fetchMasterData('experiences', 'experienceRanges')
         ]);
 
         if (response.data.success) {
@@ -317,11 +317,11 @@ const EditCandidate = () => {
                 </Select></FormControl>
                 <HStack spacing="2" align="flex-end">
                    <FormControl><FormLabel {...labelStyle}>Experience</FormLabel><Select name="experienceValue" value={formData.experienceValue} onChange={handleChange} {...selectStyle} placeholder="Select Experience">
-                     {masters.experienceRanges.map(m => <option key={m._id} value={`${m.experienceFrom}-${m.experienceTo}`}>{m.experienceFrom}-{m.experienceTo} Years</option>)}
+                     {masters.experienceRanges.map(m => <option key={m._id} value={m.name}>{m.name}</option>)}
                    </Select></FormControl>
                 </HStack>
                 <FormControl><FormLabel {...labelStyle}>Expected Salary</FormLabel><Select name="expectedSalary" value={formData.expectedSalary} onChange={handleChange} {...selectStyle} placeholder="Select Salary">
-                  {masters.salaryRanges.map(m => <option key={m._id} value={`${m.salaryFrom}-${m.salaryTo}`}>{m.salaryFrom}-{m.salaryTo}</option>)}
+                  {masters.salaryRanges.map(m => <option key={m._id} value={m.name}>{m.name}</option>)}
                 </Select></FormControl>
                 <FormControl><FormLabel {...labelStyle}>Preferred Cities</FormLabel><Select placeholder="Select City" value={formData.preferredCities[0]} onChange={(e) => handleMultiSelect('preferredCities', e.target.value)} {...selectStyle}>
                   {masters.cities.map(m => <option key={m._id} value={m.name}>{m.name}</option>)}

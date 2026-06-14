@@ -44,6 +44,7 @@ const PERMISSION_MODULES = [
   { name: 'Sliders', permissions: ['Add Slider', 'Slider List'] },
   { name: 'Videos', permissions: ['Add Video', 'Video List'] },
   { name: 'Menu Item', permissions: ['Add Menu Item', 'Menu Item List'] },
+  { name: 'Job Category', permissions: ['Add Job Category', 'Job Category List'] },
   { name: 'Skill Category', permissions: ['Add Skill Category', 'Skill Category List'] },
   { name: 'Skill', permissions: ['Add Skill', 'Skill List'] },
   { name: 'Query History', permissions: [] },
@@ -121,13 +122,15 @@ const RoleList = () => {
         try {
           const apiUrl = import.meta.env.VITE_API_URL;
           const token = localStorage.getItem('adminToken');
-          await axios.delete(`${apiUrl}/roles/${id}`, {
+          const response = await axios.delete(`${apiUrl}/roles/${id}`, {
             headers: { 'Authorization': `Bearer ${token}` }
           });
-          setRoles(prev => prev.filter(r => r._id !== id));
-          toast({ title: 'Role Deleted', status: 'success' });
+          if (response.data.success) {
+            setRoles(prev => prev.filter(r => r._id !== id));
+            toast({ title: 'Role Deleted', status: 'success' });
+          }
         } catch (error) {
-          toast({ title: 'Error', status: 'error' });
+          toast({ title: 'Error', description: error.response?.data?.message || 'Failed to delete role.', status: 'error' });
         }
         onConfirmClose();
       }

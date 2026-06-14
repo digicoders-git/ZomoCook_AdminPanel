@@ -26,6 +26,7 @@ const AddJob = () => {
     experienceRanges: [],
     salaryRanges: [],
     joiningTypes: [],
+    travelCharges: [],
     events: []
   });
 
@@ -58,6 +59,7 @@ const AddJob = () => {
     salaryRange: '',
     experienceRange: '',
     joiningType: '',
+    travelCharges: '',
     dateOfEvent: '',
   });
   const [jobImage, setJobImage] = useState(null);
@@ -93,8 +95,10 @@ const AddJob = () => {
         fetchMasterData('cooking-preferences', 'foodPreferences');
         fetchMasterData('cooking-categories', 'cookingCategories');
         fetchMasterData('facilities', 'facilities');
-        fetchMasterData('experience-ranges', 'experienceRanges');
-        fetchMasterData('salary-ranges', 'salaryRanges');
+        fetchMasterData('experiences', 'experienceRanges');
+        fetchMasterData('salaries', 'salaryRanges');
+        fetchMasterData('joining-types', 'joiningTypes');
+        fetchMasterData('travel-charges', 'travelCharges');
         fetchMasterData('events', 'events');
       } catch (error) {
         console.error('Initial fetch failed', error);
@@ -148,6 +152,7 @@ const AddJob = () => {
       salaryRange: '',
       experienceRange: '',
       joiningType: '',
+      travelCharges: '',
       dateOfEvent: '',
       benefits: ''
     }));
@@ -174,9 +179,9 @@ const AddJob = () => {
       const commonFields = ['title', 'customer', 'overview', 'responsibilities', 'requirements', 'status', 'jobType', 'jobPosition'];
       let categorySpecificFields = [];
       if (jobCategory === 'hotel') {
-        categorySpecificFields = ['propertyCategory', 'state', 'city', 'basicFacility', 'otherFacilities', 'packageOrGuestOrVacancy', 'allowedLeave', 'salaryRange', 'experienceRange', 'joiningType', 'benefits'];
+        categorySpecificFields = ['propertyCategory', 'state', 'city', 'basicFacility', 'otherFacilities', 'packageOrGuestOrVacancy', 'allowedLeave', 'salaryRange', 'experienceRange', 'joiningType', 'travelCharges', 'benefits'];
       } else if (jobCategory === 'home') {
-        categorySpecificFields = ['propertyCategory', 'state', 'city', 'foodPreference', 'basicFacility', 'otherFacilities', 'cookingCategory', 'packageOrGuestOrVacancy', 'allowedLeave', 'salaryRange', 'experienceRange', 'joiningType', 'benefits'];
+        categorySpecificFields = ['propertyCategory', 'state', 'city', 'foodPreference', 'basicFacility', 'otherFacilities', 'cookingCategory', 'packageOrGuestOrVacancy', 'allowedLeave', 'salaryRange', 'experienceRange', 'joiningType', 'travelCharges', 'benefits'];
       } else if (jobCategory === 'daily') {
         categorySpecificFields = ['state', 'city', 'event', 'foodPreference', 'mealPreference', 'servingTime', 'menuDetails', 'package', 'noOfGuests', 'dateOfEvent', 'benefits'];
       }
@@ -335,12 +340,17 @@ const AddJob = () => {
               {jobCategory !== 'daily' ? (
                 <>
                   <FormControl isRequired><FormLabel {...labelStyle}>Salary Range</FormLabel><Select name="salaryRange" value={formData.salaryRange} onChange={handleChange} {...selectStyle} placeholder="Select Salary Range">
-                    {masters.salaryRanges.map(m => <option key={m._id} value={`${m.salaryFrom} - ${m.salaryTo}`}>{m.salaryFrom} - {m.salaryTo}</option>)}
+                    {masters.salaryRanges.map(m => <option key={m._id} value={m.name}>{m.name}</option>)}
                   </Select></FormControl>
                   <FormControl isRequired><FormLabel {...labelStyle}>Experience Range</FormLabel><Select name="experienceRange" value={formData.experienceRange} onChange={handleChange} {...selectStyle} placeholder="Select Experience Range">
-                    {masters.experienceRanges.map(m => <option key={m._id} value={`${m.experienceFrom} - ${m.experienceTo} Years`}>{m.experienceFrom} - {m.experienceTo} Years</option>)}
+                    {masters.experienceRanges.map(m => <option key={m._id} value={m.name}>{m.name}</option>)}
                   </Select></FormControl>
-                  <FormControl isRequired><FormLabel {...labelStyle}>Joining Type</FormLabel><Select name="joiningType" value={formData.joiningType} onChange={handleChange} {...selectStyle} placeholder="Select Joining Type"><option value="Immediate">Immediate</option><option value="15 Days">15 Days</option><option value="1 Month">1 Month</option></Select></FormControl>
+                  <FormControl isRequired><FormLabel {...labelStyle}>Joining Type</FormLabel><Select name="joiningType" value={formData.joiningType} onChange={handleChange} {...selectStyle} placeholder="Select Joining Type">
+                    {masters.joiningTypes.map(m => <option key={m._id} value={m.name}>{m.name}</option>)}
+                  </Select></FormControl>
+                  <FormControl><FormLabel {...labelStyle}>Travel Charges</FormLabel><Select name="travelCharges" value={formData.travelCharges} onChange={handleChange} {...selectStyle} placeholder="Select Travel Charges">
+                    {masters.travelCharges.map(m => <option key={m._id} value={m.name}>{m.name}</option>)}
+                  </Select></FormControl>
                 </>
               ) : (
                 <FormControl isRequired><FormLabel {...labelStyle}>Date of Event</FormLabel><Input name="dateOfEvent" value={formData.dateOfEvent} onChange={handleChange} type="date" {...inputStyle} /></FormControl>

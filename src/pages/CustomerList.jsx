@@ -137,7 +137,7 @@ const CustomerList = () => {
             toast({ title: 'Success', description: 'Customer deleted successfully.', status: 'success', duration: 2000, position: 'top-right' });
           }
         } catch (error) {
-          toast({ title: 'Error', description: 'Failed to delete customer.', status: 'error', duration: 2000, position: 'top-right' });
+          toast({ title: 'Error', description: error.response?.data?.message || 'Failed to delete customer.', status: 'error', duration: 2000, position: 'top-right' });
         }
         onClose();
       }
@@ -304,6 +304,7 @@ const CustomerList = () => {
           showing={`${filteredCustomers.length > 0 ? startIndex + 1 : 0} to ${Math.min(startIndex + parseInt(entries), filteredCustomers.length)}`} 
           total={filteredCustomers.length}
           currentPage={currentPage}
+          totalPages={totalPages}
           onPageChange={(p) => { if(p > 0 && p <= totalPages) setCurrentPage(p); }}
         />
       </TableCard>

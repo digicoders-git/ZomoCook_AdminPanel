@@ -161,11 +161,12 @@ const MasterPage = () => {
   const getColumns = () => {
     switch (category) {
       case 'job-menu': return ['Sr.No.', 'Position', 'Menu Name', 'Status', 'Action'];
+      case 'job-categories': return ['Sr.No.', 'Category Name', 'Status', 'Action'];
       case 'skill-categories': return ['Sr.No.', 'Position', 'Category Name', 'Status', 'Action'];
       case 'skills': return ['Sr.No.', 'Category', 'Skill Name', 'Status', 'Action'];
       case 'job-positions': return ['Sr.No.', 'Position Name', 'Color', 'Status', 'Action'];
-      case 'experience-ranges': return ['Sr.No.', 'Type', 'Experience From', 'Experience To', 'Status', 'Action'];
-      case 'salary-ranges': return ['Sr.No.', 'Currency Type', 'Salary From', 'Salary To', 'Status', 'Action'];
+      case 'experiences': return ['Sr.No.', 'Experience Required', 'Status', 'Action'];
+      case 'salaries': return ['Sr.No.', 'Offered Salary', 'Status', 'Action'];
       case 'time-ranges': return ['Sr.No.', 'From Time', 'To Time', 'Status', 'Action'];
       case 'cooking-preferences': return ['Sr.No.', 'Type', 'Preference Name', 'Status', 'Action'];
       case 'facilities': return ['Sr.No.', 'Type', 'Facility Name', 'Status', 'Action'];
@@ -180,6 +181,7 @@ const MasterPage = () => {
 
   const renderAddForm = () => {
     const isJobMenu = category === 'job-menu';
+    const isJobCategory = category === 'job-categories';
     const isSkillCategory = category === 'skill-categories';
     const isSkills = category === 'skills';
     const isPosition = category === 'job-positions';
@@ -216,7 +218,7 @@ const MasterPage = () => {
               
               {!isTimeRange && (
                 <FormControl isRequired>
-                  <FormLabel {...labelStyle}>{isCMS ? 'Pagename' : (isSlider || isVideo) ? 'Title' : isSalaryRange ? 'Currency Type' : isExpRange ? 'Type' : isJobMenu ? 'Menu Name' : isPosition ? 'Position Name' : isCity ? 'City Name' : isFacility ? 'Facility Name' : 'Name'}</FormLabel>
+                  <FormLabel {...labelStyle}>{isCMS ? 'Pagename' : (isSlider || isVideo) ? 'Title' : category === 'experiences' ? 'Experience Required' : category === 'salaries' ? 'Offered Salary' : isSalaryRange ? 'Currency Type' : isExpRange ? 'Type' : isJobMenu ? 'Menu Name' : isPosition ? 'Position Name' : isCity ? 'City Name' : isFacility ? 'Facility Name' : isJobCategory ? 'Category Name' : 'Name'}</FormLabel>
                   {isCMS ? (
                     <Select {...selectStyle} placeholder="Select Pagename" value={formData.name} onChange={(e) => setFormData({...formData, name: e.target.value})}>
                       <option value="About Us">About Us</option>
@@ -225,7 +227,7 @@ const MasterPage = () => {
                       <option value="Contact Us">Contact Us</option>
                     </Select>
                   ) : (
-                    <Input {...inputStyle} placeholder={(isSlider || isVideo) ? 'Enter Title' : isSalaryRange ? 'Enter Currency Type' : isExpRange ? 'Enter Type' : isFacility ? 'Enter Facility Name' : 'Enter Name'} value={formData.name} onChange={(e) => setFormData({...formData, name: e.target.value})} />
+                    <Input {...inputStyle} placeholder={(isSlider || isVideo) ? 'Enter Title' : category === 'experiences' ? 'Enter Experience Required (e.g., Fresher, 1 – 2 years)' : category === 'salaries' ? 'Enter Offered Salary (e.g., ₹35,000 – ₹50,000/month)' : isSalaryRange ? 'Enter Currency Type' : isExpRange ? 'Enter Type' : isFacility ? 'Enter Facility Name' : isJobCategory ? 'Enter Category Name' : 'Enter Name'} value={formData.name} onChange={(e) => setFormData({...formData, name: e.target.value})} />
                   )}
                 </FormControl>
               )}
