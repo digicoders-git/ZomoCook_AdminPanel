@@ -40,6 +40,7 @@ const navItems = [
     children: [
       { name: 'Candidate List', path: '/candidates/list', permission: 'Candidate List' },
       { name: 'Add Candidate', path: '/candidates/add', permission: 'Add Candidate' },
+      { name: 'All Applications', path: '/applications/all', permission: 'Candidates' },
       { name: 'Applied Candidates', path: '/candidates/applied', permission: 'Applied Candidates List' },
       { name: 'Shortlisted Candidates', path: '/candidates/shortlisted', permission: 'Shortlisted Candidate List' },
       { name: 'Demo Scheduled', path: '/candidates/demo-scheduled', permission: 'Candidates' },
@@ -54,8 +55,11 @@ const navItems = [
     children: [
       { name: 'Plan List', path: '/plans/list', permission: 'Plans' },
       { name: 'Add Plan', path: '/plans/add', permission: 'Plans' },
+      { name: 'Subscription History', path: '/plans/subscriptions', permission: 'Plans' },
     ]
   },
+  { name: 'Offers', icon: Gift, path: '/offers', permission: 'Offers' },
+  { name: 'Banners', icon: ImageIcon, path: '/banners', permission: 'Banners' },
   {
     name: 'Notifications', icon: Bell, path: '/notifications', permission: 'Notifications',
     children: [
@@ -112,11 +116,21 @@ const navItems = [
 
 const SidebarItem = ({ item, isCollapsed, onClose, depth = 0 }) => {
   const { pathname } = useLocation();
+  const navigate = useNavigate();
   const [isOpen, setIsOpen] = useState(false);
   const hasChildren = item.children && item.children.length > 0;
   const isActive = pathname === item.path || (hasChildren && item.children.some(child =>
     pathname === child.path || (child.children && child.children.some(sub => pathname === sub.path))
   ));
+
+  const handleClick = () => {
+    if (hasChildren) {
+      setIsOpen(!isOpen);
+    } else {
+      navigate(item.path);
+      if (onClose) onClose();
+    }
+  };
 
   const itemContent = (
     <Flex
@@ -126,9 +140,7 @@ const SidebarItem = ({ item, isCollapsed, onClose, depth = 0 }) => {
       mx={depth === 0 ? '3' : '0'}
       borderRadius="lg"
       cursor="pointer"
-      onClick={hasChildren ? () => setIsOpen(!isOpen) : (onClose || undefined)}
-      as={hasChildren ? 'div' : Link}
-      to={hasChildren ? undefined : item.path}
+      onClick={handleClick}
       position="relative"
       bg={isActive && !hasChildren ? `${BRAND}18` : 'transparent'}
       transition="all 0.18s"
@@ -420,6 +432,10 @@ const Navbar = ({ onOpen, toggleCollapse, isCollapsed, onLogoutOpen }) => {
     if (pathname.includes('/masters')) return 'Master Data';
     if (pathname.includes('/settings')) return 'Web Settings';
     if (pathname.includes('/profile')) return 'Profile';
+    if (pathname.includes('/offers')) return 'Manage Offers';
+    if (pathname.includes('/banners')) return 'Manage Banners';
+    if (pathname.includes('/subscriptions')) return 'Subscription History';
+    if (pathname.includes('/plans')) return 'Plans Management';
     return 'ZomoCook Admin';
   };
 

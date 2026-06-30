@@ -41,6 +41,9 @@ import HiredCandidatesList from './pages/HiredCandidatesList';
 import PlanList from './pages/PlanList';
 import AddPlan from './pages/AddPlan';
 import EditPlan from './pages/EditPlan';
+import SubscriptionList from './pages/SubscriptionList';
+import OfferList from './pages/OfferList';
+import BannerList from './pages/BannerList';
 
 // ─── Helper: Get current logged-in user's data ──────────────────────────────
 const getAdminData = () => {
@@ -266,6 +269,21 @@ function App() {
         <Route path="/plans/edit/:id" element={
           <PermissionRoute permission="Plans">
             <Layout><EditPlan /></Layout>
+          </PermissionRoute>
+        } />
+        <Route path="/subscriptions/list" element={
+          <PermissionRoute permission="Subscriptions">
+            <Layout><SubscriptionList /></Layout>
+          </PermissionRoute>
+        } />
+        <Route path="/offers" element={
+          <PermissionRoute permission="Offers">
+            <Layout><OfferList /></Layout>
+          </PermissionRoute>
+        } />
+        <Route path="/banners" element={
+          <PermissionRoute permission="Banners">
+            <Layout><BannerList /></Layout>
           </PermissionRoute>
         } />
 

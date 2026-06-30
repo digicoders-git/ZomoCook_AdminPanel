@@ -47,6 +47,7 @@ const PERMISSION_MODULES = [
   { name: 'Skill Category', permissions: ['Add Skill Category', 'Skill Category List'] },
   { name: 'Skill', permissions: ['Add Skill', 'Skill List'] },
   { name: 'Query History', permissions: [] },
+  { name: 'Offers', permissions: ['Add Offer', 'Offer List'] },
 ];
 
 const AssignPermissions = () => {
