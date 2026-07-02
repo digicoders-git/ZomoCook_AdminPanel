@@ -1,10 +1,9 @@
-import React, { useState } from 'react';
+import React, { useState, useRef, useEffect } from 'react';
 import {
   Box, FormControl, FormLabel, Input, Select, Textarea, HStack, Button,
-  SimpleGrid, CheckboxGroup, Checkbox, Wrap, WrapItem, Text, Divider, Tag,
-  TagLabel, TagCloseButton, Flex
+  SimpleGrid, Wrap, WrapItem, Text, Divider, Tag, TagLabel, TagCloseButton, Flex, Icon
 } from '@chakra-ui/react';
-import { Send, RotateCcw } from 'lucide-react';
+import { Send, RotateCcw, MapPin, Briefcase, Settings, FileText, ChevronDown, X, Check } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { useToast } from '@chakra-ui/react';
 import { PageHeader, FormCard, PageFooter, BRAND, ACCENT, inputStyle, selectStyle, labelStyle } from '../components/ui';
@@ -18,10 +17,112 @@ const INDIA_STATES = [
   'Uttarakhand','West Bengal','Delhi','Jammu & Kashmir','Ladakh'
 ];
 
-const JOB_CATEGORIES = ['hotel', 'home', 'daily'];
+const JOB_CATEGORIES = [
+  { value: 'hotel', label: 'Hotel / Restaurant' },
+  { value: 'home', label: 'Home Cook' },
+  { value: 'daily', label: 'Daily Job' },
+];
+
 const SERVICE_CATEGORIES = ['Full Time', 'Part Time', 'Live-in', 'Event Cook', 'Tiffin Service'];
 
-const TagInput = ({ placeholder, tags, onAdd, onRemove }) => {
+// Searchable dropdown for states
+const SearchableStateDropdown = ({ selected, onAdd, onRemove }) => {
+  const [search, setSearch] = useState('');
+  const [open, setOpen] = useState(false);
+  const ref = useRef();
+
+  const filtered = INDIA_STATES.filter(s =>
+    s.toLowerCase().includes(search.toLowerCase()) && !selected.includes(s)
+  );
+
+  useEffect(() => {
+    const handler = (e) => { if (ref.current && !ref.current.contains(e.target)) setOpen(false); };
+    document.addEventListener('mousedown', handler);
+    return () => document.removeEventListener('mousedown', handler);
+  }, []);
+
+  return (
+    <Box ref={ref} position="relative">
+      <Flex
+        align="center"
+        bg="#f8faff"
+        border="1.5px solid #dde6f5"
+        borderRadius="lg"
+        px="3"
+        py="2"
+        cursor="pointer"
+        onClick={() => setOpen(o => !o)}
+        _hover={{ borderColor: BRAND }}
+        justify="space-between"
+      >
+        <Flex align="center" gap="2">
+          <Icon as={MapPin} size={14} color="#94a3b8" />
+          <Input
+            variant="unstyled"
+            fontSize="sm"
+            placeholder="Search state..."
+            value={search}
+            onChange={e => { setSearch(e.target.value); setOpen(true); }}
+            onClick={e => { e.stopPropagation(); setOpen(true); }}
+            color="#1e293b"
+            _placeholder={{ color: '#94a3b8' }}
+          />
+        </Flex>
+        <Icon as={ChevronDown} size={14} color="#94a3b8" />
+      </Flex>
+
+      {open && filtered.length > 0 && (
+        <Box
+          position="absolute"
+          top="100%"
+          left="0"
+          right="0"
+          zIndex="100"
+          bg="white"
+          border="1.5px solid #dde6f5"
+          borderRadius="lg"
+          boxShadow="0 8px 24px rgba(0,74,173,0.10)"
+          maxH="200px"
+          overflowY="auto"
+          mt="1"
+        >
+          {filtered.map(s => (
+            <Flex
+              key={s}
+              px="3" py="2"
+              fontSize="sm"
+              color="#1e293b"
+              cursor="pointer"
+              align="center"
+              gap="2"
+              _hover={{ bg: '#f0f5ff', color: BRAND }}
+              onClick={() => { onAdd(s); setSearch(''); setOpen(false); }}
+            >
+              <Icon as={MapPin} size={12} color={BRAND} />
+              {s}
+            </Flex>
+          ))}
+        </Box>
+      )}
+
+      {selected.filter(r => INDIA_STATES.includes(r)).length > 0 && (
+        <Wrap spacing="1.5" mt="2">
+          {selected.filter(r => INDIA_STATES.includes(r)).map(r => (
+            <WrapItem key={r}>
+              <Tag size="sm" bg="#e6eeff" color={BRAND} borderRadius="full">
+                <TagLabel>{r}</TagLabel>
+                <TagCloseButton onClick={() => onRemove(r)} />
+              </Tag>
+            </WrapItem>
+          ))}
+        </Wrap>
+      )}
+    </Box>
+  );
+};
+
+// City tag input
+const CityTagInput = ({ tags, onAdd, onRemove }) => {
   const [input, setInput] = useState('');
   const handleKey = (e) => {
     if ((e.key === 'Enter' || e.key === ',') && input.trim()) {
@@ -33,6 +134,7 @@ const TagInput = ({ placeholder, tags, onAdd, onRemove }) => {
   return (
     <Box border="1.5px solid #dde6f5" borderRadius="lg" bg="#f8faff" p="2" minH="42px">
       <Flex wrap="wrap" gap="1.5" align="center">
+        <Icon as={MapPin} size={14} color="#94a3b8" mt="1" />
         {tags.map(t => (
           <Tag key={t} size="sm" bg="#e6eeff" color={BRAND} borderRadius="full">
             <TagLabel>{t}</TagLabel>
@@ -42,13 +144,13 @@ const TagInput = ({ placeholder, tags, onAdd, onRemove }) => {
         <Input
           variant="unstyled"
           size="sm"
-          placeholder={placeholder}
+          placeholder="Type city & press Enter..."
           value={input}
           onChange={e => setInput(e.target.value)}
           onKeyDown={handleKey}
           fontSize="sm"
           color="#1e293b"
-          minW="120px"
+          minW="140px"
           flex="1"
           _placeholder={{ color: '#94a3b8' }}
         />
@@ -68,7 +170,6 @@ const AddNotification = () => {
   const [isLoading, setIsLoading] = useState(false);
   const [formData, setFormData] = useState(INITIAL);
   const [image, setImage] = useState(null);
-  const [cityInput, setCityInput] = useState('');
 
   const handleChange = (e) => {
     const { name, value } = e.target;
@@ -124,8 +225,6 @@ const AddNotification = () => {
     }
   };
 
-  const isSelectiveTarget = formData.target === 'candidates' || formData.target === 'all';
-
   return (
     <Box pb="10">
       <PageHeader title="Add Notification Record" breadcrumb="Add Notification Record" />
@@ -170,39 +269,25 @@ const AddNotification = () => {
 
             {/* Region Wise */}
             <Box>
-              <Text fontSize="xs" fontWeight="700" color="#475569" textTransform="uppercase" letterSpacing="0.8px" mb="3">
-                🌍 Region Wise Targeting
-                <Text as="span" fontSize="10px" fontWeight="400" color="#94a3b8" ml="2" textTransform="none">(leave empty = send to all regions)</Text>
-              </Text>
+              <HStack mb="3" spacing="2">
+                <Icon as={MapPin} size={15} color={BRAND} />
+                <Text fontSize="xs" fontWeight="700" color="#475569" textTransform="uppercase" letterSpacing="0.8px">
+                  Region Wise Targeting
+                </Text>
+                <Text fontSize="10px" fontWeight="400" color="#94a3b8">(leave empty = all regions)</Text>
+              </HStack>
               <SimpleGrid columns={{ base: 1, md: 2 }} spacing="4">
                 <FormControl>
-                  <FormLabel {...labelStyle}>Select States</FormLabel>
-                  <Select
-                    placeholder="-- Select a State --"
-                    {...selectStyle}
-                    onChange={e => { if (e.target.value) addRegion(e.target.value); e.target.value = ''; }}
-                  >
-                    {INDIA_STATES.map(s => (
-                      <option key={s} value={s}>{s}</option>
-                    ))}
-                  </Select>
-                  <Box mt="2">
-                    <Wrap spacing="1.5">
-                      {formData.targetRegions.filter(r => INDIA_STATES.includes(r)).map(r => (
-                        <WrapItem key={r}>
-                          <Tag size="sm" bg="#e6eeff" color={BRAND} borderRadius="full">
-                            <TagLabel>{r}</TagLabel>
-                            <TagCloseButton onClick={() => removeRegion(r)} />
-                          </Tag>
-                        </WrapItem>
-                      ))}
-                    </Wrap>
-                  </Box>
+                  <FormLabel {...labelStyle}>Search & Select States</FormLabel>
+                  <SearchableStateDropdown
+                    selected={formData.targetRegions}
+                    onAdd={addRegion}
+                    onRemove={removeRegion}
+                  />
                 </FormControl>
                 <FormControl>
-                  <FormLabel {...labelStyle}>Add Cities (type & press Enter)</FormLabel>
-                  <TagInput
-                    placeholder="e.g. Lucknow, Delhi..."
+                  <FormLabel {...labelStyle}>Add Cities (press Enter)</FormLabel>
+                  <CityTagInput
                     tags={formData.targetRegions.filter(r => !INDIA_STATES.includes(r))}
                     onAdd={addRegion}
                     onRemove={removeRegion}
@@ -215,33 +300,41 @@ const AddNotification = () => {
 
             {/* Job Category Wise */}
             <Box>
-              <Text fontSize="xs" fontWeight="700" color="#475569" textTransform="uppercase" letterSpacing="0.8px" mb="3">
-                👨‍🍳 Job Category Wise
-                <Text as="span" fontSize="10px" fontWeight="400" color="#94a3b8" ml="2" textTransform="none">(leave empty = all categories)</Text>
-              </Text>
+              <HStack mb="3" spacing="2">
+                <Icon as={Briefcase} size={15} color={BRAND} />
+                <Text fontSize="xs" fontWeight="700" color="#475569" textTransform="uppercase" letterSpacing="0.8px">
+                  Job Category Wise
+                </Text>
+                <Text fontSize="10px" fontWeight="400" color="#94a3b8">(leave empty = all categories)</Text>
+              </HStack>
               <Wrap spacing="3">
-                {JOB_CATEGORIES.map(cat => (
-                  <WrapItem key={cat}>
-                    <Box
-                      as="button"
-                      type="button"
-                      px="4" py="2"
-                      borderRadius="full"
-                      fontSize="sm"
-                      fontWeight="600"
-                      border="1.5px solid"
-                      borderColor={formData.targetJobCategories.includes(cat) ? BRAND : '#dde6f5'}
-                      bg={formData.targetJobCategories.includes(cat) ? '#e6eeff' : '#f8faff'}
-                      color={formData.targetJobCategories.includes(cat) ? BRAND : '#64748b'}
-                      onClick={() => toggleItem('targetJobCategories', cat)}
-                      transition="all 0.15s"
-                      _hover={{ borderColor: BRAND, color: BRAND }}
-                      textTransform="capitalize"
-                    >
-                      {cat === 'hotel' ? '🏨 Hotel/Restaurant' : cat === 'home' ? '🏠 Home Cook' : '📅 Daily Job'}
-                    </Box>
-                  </WrapItem>
-                ))}
+                {JOB_CATEGORIES.map(cat => {
+                  const active = formData.targetJobCategories.includes(cat.value);
+                  return (
+                    <WrapItem key={cat.value}>
+                      <Flex
+                        as="button"
+                        type="button"
+                        align="center"
+                        gap="2"
+                        px="4" py="2"
+                        borderRadius="full"
+                        fontSize="sm"
+                        fontWeight="600"
+                        border="1.5px solid"
+                        borderColor={active ? BRAND : '#dde6f5'}
+                        bg={active ? '#e6eeff' : '#f8faff'}
+                        color={active ? BRAND : '#64748b'}
+                        onClick={() => toggleItem('targetJobCategories', cat.value)}
+                        transition="all 0.15s"
+                        _hover={{ borderColor: BRAND, color: BRAND }}
+                      >
+                        {active && <Icon as={Check} size={13} />}
+                        {cat.label}
+                      </Flex>
+                    </WrapItem>
+                  );
+                })}
               </Wrap>
             </Box>
 
@@ -249,47 +342,68 @@ const AddNotification = () => {
 
             {/* Service Category Wise */}
             <Box>
-              <Text fontSize="xs" fontWeight="700" color="#475569" textTransform="uppercase" letterSpacing="0.8px" mb="3">
-                🛎️ Service Category Wise
-                <Text as="span" fontSize="10px" fontWeight="400" color="#94a3b8" ml="2" textTransform="none">(leave empty = all services)</Text>
-              </Text>
+              <HStack mb="3" spacing="2">
+                <Icon as={Settings} size={15} color={ACCENT} />
+                <Text fontSize="xs" fontWeight="700" color="#475569" textTransform="uppercase" letterSpacing="0.8px">
+                  Service Category Wise
+                </Text>
+                <Text fontSize="10px" fontWeight="400" color="#94a3b8">(leave empty = all services)</Text>
+              </HStack>
               <Wrap spacing="3">
-                {SERVICE_CATEGORIES.map(cat => (
-                  <WrapItem key={cat}>
-                    <Box
-                      as="button"
-                      type="button"
-                      px="4" py="2"
-                      borderRadius="full"
-                      fontSize="sm"
-                      fontWeight="600"
-                      border="1.5px solid"
-                      borderColor={formData.targetServiceCategories.includes(cat) ? ACCENT : '#dde6f5'}
-                      bg={formData.targetServiceCategories.includes(cat) ? '#fff7ed' : '#f8faff'}
-                      color={formData.targetServiceCategories.includes(cat) ? ACCENT : '#64748b'}
-                      onClick={() => toggleItem('targetServiceCategories', cat)}
-                      transition="all 0.15s"
-                      _hover={{ borderColor: ACCENT, color: ACCENT }}
-                    >
-                      {cat}
-                    </Box>
-                  </WrapItem>
-                ))}
+                {SERVICE_CATEGORIES.map(cat => {
+                  const active = formData.targetServiceCategories.includes(cat);
+                  return (
+                    <WrapItem key={cat}>
+                      <Flex
+                        as="button"
+                        type="button"
+                        align="center"
+                        gap="2"
+                        px="4" py="2"
+                        borderRadius="full"
+                        fontSize="sm"
+                        fontWeight="600"
+                        border="1.5px solid"
+                        borderColor={active ? ACCENT : '#dde6f5'}
+                        bg={active ? '#fff7ed' : '#f8faff'}
+                        color={active ? ACCENT : '#64748b'}
+                        onClick={() => toggleItem('targetServiceCategories', cat)}
+                        transition="all 0.15s"
+                        _hover={{ borderColor: ACCENT, color: ACCENT }}
+                      >
+                        {active && <Icon as={Check} size={13} />}
+                        {cat}
+                      </Flex>
+                    </WrapItem>
+                  );
+                })}
               </Wrap>
             </Box>
 
             {/* Summary */}
             {(formData.targetRegions.length > 0 || formData.targetJobCategories.length > 0 || formData.targetServiceCategories.length > 0) && (
               <Box bg="#f0f5ff" border="1px solid #c7d9f8" borderRadius="lg" p="3">
-                <Text fontSize="xs" fontWeight="700" color={BRAND} mb="1.5">📋 Targeting Summary</Text>
+                <HStack mb="1.5" spacing="2">
+                  <Icon as={FileText} size={13} color={BRAND} />
+                  <Text fontSize="xs" fontWeight="700" color={BRAND}>Targeting Summary</Text>
+                </HStack>
                 {formData.targetRegions.length > 0 && (
-                  <Text fontSize="xs" color="#475569">🌍 Regions: <b>{formData.targetRegions.join(', ')}</b></Text>
+                  <HStack spacing="1.5" mb="1">
+                    <Icon as={MapPin} size={11} color="#475569" />
+                    <Text fontSize="xs" color="#475569">Regions: <b>{formData.targetRegions.join(', ')}</b></Text>
+                  </HStack>
                 )}
                 {formData.targetJobCategories.length > 0 && (
-                  <Text fontSize="xs" color="#475569">👨‍🍳 Job Categories: <b>{formData.targetJobCategories.join(', ')}</b></Text>
+                  <HStack spacing="1.5" mb="1">
+                    <Icon as={Briefcase} size={11} color="#475569" />
+                    <Text fontSize="xs" color="#475569">Job Categories: <b>{formData.targetJobCategories.join(', ')}</b></Text>
+                  </HStack>
                 )}
                 {formData.targetServiceCategories.length > 0 && (
-                  <Text fontSize="xs" color="#475569">🛎️ Service Categories: <b>{formData.targetServiceCategories.join(', ')}</b></Text>
+                  <HStack spacing="1.5">
+                    <Icon as={Settings} size={11} color="#475569" />
+                    <Text fontSize="xs" color="#475569">Service Categories: <b>{formData.targetServiceCategories.join(', ')}</b></Text>
+                  </HStack>
                 )}
               </Box>
             )}
