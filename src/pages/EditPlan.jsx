@@ -10,6 +10,8 @@ import {
   VStack,
   HStack,
   Switch,
+  Checkbox,
+  SimpleGrid,
   useToast,
   Textarea,
   Spinner,
@@ -36,7 +38,8 @@ const EditPlan = () => {
     features: '',
     isPopular: false,
     isBestValue: false,
-    isActive: true
+    isActive: true,
+    allowedJobCategories: ['hotel', 'home', 'daily']
   });
 
   useEffect(() => {
@@ -59,7 +62,8 @@ const EditPlan = () => {
             features: plan.features ? plan.features.join('\n') : '',
             isPopular: plan.isPopular || false,
             isBestValue: plan.isBestValue || false,
-            isActive: plan.isActive ?? true
+            isActive: plan.isActive ?? true,
+            allowedJobCategories: plan.allowedJobCategories?.length ? plan.allowedJobCategories : ['hotel', 'home', 'daily']
           });
         }
       } catch (err) {
@@ -87,6 +91,24 @@ const EditPlan = () => {
     }));
   };
 
+  const handleCategoryToggle = (cat) => {
+    setFormData((prev) => {
+      const cats = prev.allowedJobCategories.includes(cat)
+        ? prev.allowedJobCategories.filter(c => c !== cat)
+        : [...prev.allowedJobCategories, cat];
+      return { ...prev, allowedJobCategories: cats };
+    });
+  };
+
+  const handleCategoryToggle = (cat) => {
+    setFormData((prev) => {
+      const cats = prev.allowedJobCategories.includes(cat)
+        ? prev.allowedJobCategories.filter(c => c !== cat)
+        : [...prev.allowedJobCategories, cat];
+      return { ...prev, allowedJobCategories: cats };
+    });
+  };
+
   const handleSubmit = async (e) => {
     e.preventDefault();
     setIsSubmitting(true);
@@ -102,6 +124,7 @@ const EditPlan = () => {
         jobPostLimit: Number(formData.jobPostLimit),
         hiringLimit: Number(formData.hiringLimit),
         features: formData.features.split('\n').map(f => f.trim()).filter(f => f),
+        allowedJobCategories: formData.allowedJobCategories,
       };
 
       const res = await axios.put(`${apiUrl}/plans/${id}`, payload, {
@@ -183,6 +206,42 @@ const EditPlan = () => {
                 rows={5}
                 placeholder="Contact & Chat with Cook&#10;Priority Listing&#10;Replacement Support" 
               />
+            </FormControl>
+
+            <FormControl isRequired>
+              <FormLabel>Allowed Job Categories</FormLabel>
+              <Text fontSize="sm" color="gray.500" mb={3}>Select which job types are included in this plan</Text>
+              <SimpleGrid columns={3} spacing={4}>
+                {[
+                  { value: 'hotel', label: 'Commercial', color: 'blue' },
+                  { value: 'home', label: 'Domestic', color: 'green' },
+                  { value: 'daily', label: 'Daily Job', color: 'orange' },
+                ].map(({ value, label, color }) => (
+                  <Box
+                    key={value}
+                    border="2px solid"
+                    borderColor={formData.allowedJobCategories.includes(value) ? `${color}.400` : 'gray.200'}
+                    borderRadius="lg"
+                    p={4}
+                    cursor="pointer"
+                    bg={formData.allowedJobCategories.includes(value) ? `${color}.50` : 'white'}
+                    onClick={() => handleCategoryToggle(value)}
+                    transition="all 0.2s"
+                  >
+                    <HStack spacing={3}>
+                      <Checkbox
+                        isChecked={formData.allowedJobCategories.includes(value)}
+                        colorScheme={color}
+                        onChange={() => handleCategoryToggle(value)}
+                        onClick={e => e.stopPropagation()}
+                      />
+                      <Text fontWeight="semibold" color={formData.allowedJobCategories.includes(value) ? `${color}.700` : 'gray.600'}>
+                        {label}
+                      </Text>
+                    </HStack>
+                  </Box>
+                ))}
+              </SimpleGrid>
             </FormControl>
 
             <HStack spacing={10}>
