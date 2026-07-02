@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import axios from 'axios';
+import API_BASE_URL from '../apiConfig';
 import {
   Box, Button, Table, Thead, Tbody, Tr, Th, Td, IconButton,
   useToast, Modal, ModalOverlay, ModalContent, ModalHeader,
@@ -31,11 +32,10 @@ const BannerList = () => {
   const [saving, setSaving] = useState(false);
   const toast = useToast();
   const token = localStorage.getItem('adminToken');
-  const apiUrl = import.meta.env.VITE_API_URL;
 
   const fetchBanners = async () => {
     try {
-      const res = await axios.get(`${apiUrl}/banners`, {
+      const res = await axios.get(`${API_BASE_URL}/banners`, {
         headers: { Authorization: `Bearer ${token}` }
       });
       if (res.data.success) setBanners(res.data.banners);
@@ -55,7 +55,7 @@ const BannerList = () => {
         status: banner.status,
         targetAudience: banner.targetAudience || 'both',
       });
-      setImagePreview(banner.image ? `${apiUrl.replace('/api', '')}/${banner.image}` : '');
+      setImagePreview(banner.image ? `${API_BASE_URL.replace('/api', '')}/${banner.image}` : '');
     } else {
       setCurrentBanner(null);
       setFormData({ title: '', link: '', status: 'active', targetAudience: 'both' });
@@ -93,12 +93,12 @@ const BannerList = () => {
       if (imageFile) data.append('image', imageFile);
 
       if (currentBanner) {
-        await axios.put(`${apiUrl}/banners/${currentBanner._id}`, data, {
+        await axios.put(`${API_BASE_URL}/banners/${currentBanner._id}`, data, {
           headers: { Authorization: `Bearer ${token}`, 'Content-Type': 'multipart/form-data' }
         });
         toast({ title: 'Banner updated', status: 'success', isClosable: true });
       } else {
-        await axios.post(`${apiUrl}/banners`, data, {
+        await axios.post(`${API_BASE_URL}/banners`, data, {
           headers: { Authorization: `Bearer ${token}`, 'Content-Type': 'multipart/form-data' }
         });
         toast({ title: 'Banner created', status: 'success', isClosable: true });
@@ -115,7 +115,7 @@ const BannerList = () => {
   const handleDelete = async (id) => {
     if (!window.confirm('Delete this banner?')) return;
     try {
-      await axios.delete(`${apiUrl}/banners/${id}`, {
+      await axios.delete(`${API_BASE_URL}/banners/${id}`, {
         headers: { Authorization: `Bearer ${token}` }
       });
       toast({ title: 'Banner deleted', status: 'success', isClosable: true });
@@ -131,7 +131,7 @@ const BannerList = () => {
       const data = new FormData();
       data.append('status', newStatus);
       data.append('targetAudience', banner.targetAudience || 'both');
-      await axios.put(`${apiUrl}/banners/${banner._id}`, data, {
+      await axios.put(`${API_BASE_URL}/banners/${banner._id}`, data, {
         headers: { Authorization: `Bearer ${token}`, 'Content-Type': 'multipart/form-data' }
       });
       fetchBanners();
@@ -143,7 +143,7 @@ const BannerList = () => {
   const getImageUrl = (imgPath) => {
     if (!imgPath) return '';
     if (imgPath.startsWith('http')) return imgPath;
-    return `${apiUrl.replace('/api', '')}/${imgPath}`;
+    return `${API_BASE_URL.replace('/api', '')}/${imgPath}`;
   };
 
   return (

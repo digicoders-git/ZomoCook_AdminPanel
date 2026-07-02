@@ -10,6 +10,7 @@ import {
   tableHeadStyle, thStyle, trHover, ConfirmationModal 
 } from '../components/ui';
 import axios from 'axios';
+import API_BASE_URL from '../apiConfig';
 
 const NotificationList = () => {
   const [notifications, setNotifications] = useState([]);
@@ -22,9 +23,8 @@ const NotificationList = () => {
   const fetchNotifications = async () => {
     setIsLoading(true);
     try {
-      const apiUrl = import.meta.env.VITE_API_URL;
       const token = localStorage.getItem('adminToken');
-      const response = await axios.get(`${apiUrl}/notifications`, {
+      const response = await axios.get(`${API_BASE_URL}/notifications`, {
         params: { search: searchTerm },
         headers: { 'Authorization': `Bearer ${token}` }
       });
@@ -49,10 +49,9 @@ const NotificationList = () => {
       type: 'info',
       onConfirm: async () => {
         try {
-          const apiUrl = import.meta.env.VITE_API_URL;
           const token = localStorage.getItem('adminToken');
           const newStatus = currentStatus === 'active' ? 'inactive' : 'active';
-          await axios.patch(`${apiUrl}/notifications/${id}/status`, { status: newStatus }, {
+          await axios.patch(`${API_BASE_URL}/notifications/${id}/status`, { status: newStatus }, {
             headers: { 'Authorization': `Bearer ${token}` }
           });
           setNotifications(prev => prev.map(n => n._id === id ? { ...n, status: newStatus } : n));
@@ -73,9 +72,8 @@ const NotificationList = () => {
       type: 'danger',
       onConfirm: async () => {
         try {
-          const apiUrl = import.meta.env.VITE_API_URL;
           const token = localStorage.getItem('adminToken');
-          await axios.delete(`${apiUrl}/notifications/${id}`, {
+          await axios.delete(`${API_BASE_URL}/notifications/${id}`, {
             headers: { 'Authorization': `Bearer ${token}` }
           });
           setNotifications(prev => prev.filter(n => n._id !== id));
@@ -88,8 +86,6 @@ const NotificationList = () => {
     });
     onOpen();
   };
-
-  const apiUrl = import.meta.env.VITE_API_URL;
 
   return (
     <Box pb="10">
@@ -133,7 +129,7 @@ const NotificationList = () => {
                     <Td py="4">
                       <Box w="45px" h="45px" borderRadius="lg" overflow="hidden" border="1px solid #e8edf5" bg="#f8faff">
                         {n.image ? (
-                          <Image src={`${apiUrl}/${n.image}`} alt={n.title} w="full" h="full" objectFit="cover" />
+                          <Image src={`${API_BASE_URL}/${n.image}`} alt={n.title} w="full" h="full" objectFit="cover" />
                         ) : (
                           <Flex w="full" h="full" align="center" justify="center" bg="#f1f5f9"><Plus size={14} color="#94a3b8" /></Flex>
                         )}

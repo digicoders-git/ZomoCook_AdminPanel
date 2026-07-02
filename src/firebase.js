@@ -15,19 +15,19 @@ const messaging = getMessaging(app);
 
 export const requestFCMToken = async () => {
     try {
+        if (!('serviceWorker' in navigator) || !('Notification' in window)) return null;
+
         const permission = await Notification.requestPermission();
-        console.log('Notification permission:', permission);
         if (permission !== 'granted') return null;
 
-        // Service worker register karo aur ready hone ka wait karo
+        // Register SW aur active hone ka wait karo
         const swReg = await navigator.serviceWorker.register('/firebase-messaging-sw.js');
-        console.log('SW registered:', swReg);
+        await navigator.serviceWorker.ready;
 
         const token = await getToken(messaging, {
             vapidKey: import.meta.env.VITE_FIREBASE_VAPID_KEY,
             serviceWorkerRegistration: swReg
         });
-        console.log('FCM Token:', token);
         return token;
     } catch (error) {
         console.error('FCM Token error:', error);

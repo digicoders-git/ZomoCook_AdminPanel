@@ -93,6 +93,10 @@ const Dashboard = () => {
   const token = localStorage.getItem('adminToken');
 
   const fetchData = async () => {
+    if (!token) {
+      toast({ title: 'Not authenticated', description: 'Please login first', status: 'error', duration: 3000 });
+      return;
+    }
     setIsLoading(true);
     try {
       const params = new URLSearchParams();
@@ -108,7 +112,8 @@ const Dashboard = () => {
         setData(response.data);
       }
     } catch (error) {
-      toast({ title: 'Error fetching dashboard data', status: 'error', duration: 3000 });
+      console.error('Dashboard fetch error:', error.response?.status, error.message);
+      toast({ title: 'Error fetching dashboard data', description: error.response?.data?.message || error.message, status: 'error', duration: 3000 });
     } finally {
       setIsLoading(false);
     }

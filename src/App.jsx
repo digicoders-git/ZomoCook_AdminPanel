@@ -1,6 +1,7 @@
 import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
 import { useEffect } from 'react';
 import axios from 'axios';
+import API_BASE_URL from './apiConfig';
 import { requestFCMToken, onForegroundMessage } from './firebase';
 import Layout from './components/Layout';
 import Dashboard from './pages/Dashboard';
@@ -107,16 +108,16 @@ axios.interceptors.response.use(
 
 function App() {
   useEffect(() => {
-    const token = localStorage.getItem('adminToken');
-    if (!token) return;
-
-    requestFCMToken().then(fcmToken => {
+    const initFCM = async () => {
+      const fcmToken = await requestFCMToken();
       if (!fcmToken) return;
-      const apiUrl = import.meta.env.VITE_API_URL;
-      axios.post(`${apiUrl}/notifications/save-token`, { token: fcmToken }, {
+      const token = localStorage.getItem('adminToken');
+      axios.post(`${API_BASE_URL}/notifications/save-token`, { token: fcmToken }, {
         headers: { Authorization: `Bearer ${token}` }
       }).catch(() => {});
-    });
+    };
+
+    initFCM();
 
     const unsubscribe = onForegroundMessage((payload) => {
       const { title, body } = payload.notification;

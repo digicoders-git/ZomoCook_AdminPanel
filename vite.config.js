@@ -1,10 +1,17 @@
-import { defineConfig } from 'vite'
+import { defineConfig, loadEnv } from 'vite'
 import react from '@vitejs/plugin-react'
 
-// https://vite.dev/config/
-export default defineConfig({
-  plugins: [react()],
-  optimizeDeps: {
-    include: ['react-quill-new'],
-  },
+export default defineConfig(({ mode }) => {
+  const env = loadEnv(mode, process.cwd(), '')
+  const apiUrl = env.VITE_API_URL || 'https://zomocook-backend.onrender.com/api'
+
+  return {
+    plugins: [react()],
+    optimizeDeps: {
+      include: ['react-quill-new'],
+    },
+    define: {
+      'import.meta.env.VITE_API_URL': JSON.stringify(apiUrl),
+    }
+  }
 })
