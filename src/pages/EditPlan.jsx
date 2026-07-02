@@ -52,6 +52,7 @@ const EditPlan = () => {
         console.log('Fetching plan with ID:', id);
         console.log('API URL:', apiUrl);
         console.log('Token exists:', !!token);
+        console.log('Full URL:', `${apiUrl}/plans/${id}`);
         
         if (!token) {
           toast({
@@ -89,7 +90,11 @@ const EditPlan = () => {
         console.error('Error response:', err.response);
         
         let errorMessage = err.response?.data?.message || err.message;
-        if (err.response?.status === 404) {
+        
+        // Check if response is HTML (backend route not found)
+        if (err.response?.data && typeof err.response.data === 'string' && err.response.data.includes('<!DOCTYPE html>')) {
+          errorMessage = 'Backend API route not found. Please check backend deployment.';
+        } else if (err.response?.status === 404) {
           errorMessage = 'Plan not found. It may have been deleted or the ID is incorrect.';
         } else if (err.response?.status === 401) {
           errorMessage = 'Authentication failed. Please login again.';
