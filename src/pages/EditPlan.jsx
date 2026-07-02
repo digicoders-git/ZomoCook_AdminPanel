@@ -100,15 +100,6 @@ const EditPlan = () => {
     });
   };
 
-  const handleCategoryToggle = (cat) => {
-    setFormData((prev) => {
-      const cats = prev.allowedJobCategories.includes(cat)
-        ? prev.allowedJobCategories.filter(c => c !== cat)
-        : [...prev.allowedJobCategories, cat];
-      return { ...prev, allowedJobCategories: cats };
-    });
-  };
-
   const handleSubmit = async (e) => {
     e.preventDefault();
     setIsSubmitting(true);
