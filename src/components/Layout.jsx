@@ -41,6 +41,7 @@ const navItems = [
       { name: 'Candidate List', path: '/candidates/list', permission: 'Candidate List' },
       { name: 'Add Candidate', path: '/candidates/add', permission: 'Add Candidate' },
       { name: 'All Applications', path: '/applications/all', permission: 'Candidates' },
+      { name: 'Bookings', path: '/bookings', permission: 'Candidates' },
       { name: 'Applied Candidates', path: '/candidates/applied', permission: 'Applied Candidates List' },
       { name: 'Shortlisted Candidates', path: '/candidates/shortlisted', permission: 'Shortlisted Candidate List' },
       { name: 'Demo Scheduled', path: '/candidates/demo-scheduled', permission: 'Candidates' },

@@ -118,8 +118,8 @@ const ViewCandidate = () => {
                   <DetailRow label="Job Category" value={candidate.jobPreference?.jobCategory?.join(', ')} />
                   <DetailRow label="Job Type" value={candidate.jobPreference?.jobType?.join(', ')} />
                   <DetailRow label="Experience" value={candidate.jobPreference?.experience?.value ? (candidate.jobPreference.experience.value.toLowerCase().includes('year') || candidate.jobPreference.experience.value.toLowerCase().includes('month') || candidate.jobPreference.experience.value.toLowerCase() === 'fresher' ? candidate.jobPreference.experience.value : `${candidate.jobPreference.experience.value} ${candidate.jobPreference.experience.unit || 'years'}`) : '-'} />
-                  <DetailRow label="Current Salary" value={`₹${candidate.jobPreference?.currentSalary}`} />
-                  <DetailRow label="Expected Salary" value={`₹${candidate.jobPreference?.expectedSalary}`} />
+                  <DetailRow label="Current Salary" value={candidate.jobPreference?.currentSalary ? `₹${candidate.jobPreference.currentSalary}` : 'N/A'} />
+                  <DetailRow label="Expected Salary" value={candidate.jobPreference?.expectedSalary ? `₹${candidate.jobPreference.expectedSalary}` : 'N/A'} />
                   <DetailRow label="Preferred Cities" value={candidate.jobPreference?.preferredCities?.join(', ')} />
                   <DetailRow label="Job Positions" value={candidate.jobPreference?.jobPositions?.join(', ')} />
                 </Tbody>

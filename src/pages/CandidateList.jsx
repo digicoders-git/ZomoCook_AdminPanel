@@ -154,15 +154,24 @@ const CandidateList = () => {
                     <Td py="4" border="1px solid #edf2f7" verticalAlign="top">
                       <VStack align="start" spacing="2">
                         <Text fontSize="xs" color="#475569"><b>Job Category :</b> {c.jobPreference?.jobCategory?.join(', ') || 'N/A'}</Text>
-                        <Text fontSize="xs" color="#475569"><b>Job Type :</b> {c.jobType?.join(', ') || 'N/A'}</Text>
+                        <Text fontSize="xs" color="#475569"><b>Job Type :</b> {c.jobPreference?.jobType?.join(', ') || 'N/A'}</Text>
                         <HStack spacing="2" align="center">
-                            <Text fontSize="xs" color="#475569"><b>Job Position :</b> {c.jobPreference?.jobPositions?.[0]}</Text>
+                            <Text fontSize="xs" color="#475569"><b>Job Position :</b> {c.jobPreference?.jobPositions?.[0] || 'N/A'}</Text>
                             {c.jobPreference?.jobPositions?.length > 1 && <Badge bg="#ff6b00" color="white" fontSize="9px" px="1">+{c.jobPreference.jobPositions.length - 1}</Badge>}
                         </HStack>
                         <Text fontSize="xs" color="#475569"><b>Preferred Cities :</b> {c.jobPreference?.preferredCities?.join(', ')}</Text>
                       </VStack>
                     </Td>
-                    <Td py="4" border="1px solid #edf2f7" verticalAlign="top"><Text fontSize="xs" color="#94a3b8">N/A</Text></Td>
+                    <Td py="4" border="1px solid #edf2f7" verticalAlign="top">
+                      <Text fontSize="xs" color="#475569">
+                        {c.workExperience?.lastCompany?.name ? (
+                          <>
+                            <b>Company:</b> {c.workExperience.lastCompany.name}<br />
+                            {c.workExperience.lastCompany.role && <><b>Role:</b> {c.workExperience.lastCompany.role}</>}
+                          </>
+                        ) : 'N/A'}
+                      </Text>
+                    </Td>
                     <Td py="4" border="1px solid #edf2f7" verticalAlign="top">
                       <VStack align="start" spacing="1">
                         <Text fontSize="xs" color="#475569"><b>KYC Status :</b> {c.kycStatus}</Text>

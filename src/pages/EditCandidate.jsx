@@ -98,7 +98,7 @@ const EditCandidate = () => {
           setFormData({
             ...c,
             dob: c.dob ? new Date(c.dob).toISOString().split('T')[0] : '',
-            languages: c.languages?.join(', ') || '',
+            languages: Array.isArray(c.languages) ? c.languages.join(', ') : (c.languages || ''),
             jobCategory: c.jobPreference?.jobCategory || [],
             jobType: c.jobPreference?.jobType || [],
             experienceValue: c.jobPreference?.experience?.value || '',
@@ -282,26 +282,26 @@ const EditCandidate = () => {
             {/* 0. Basic Profile */}
             <TabPanel p="0">
               <SimpleGrid columns={{ base: 1, md: 2, lg: 3 }} spacingX="6" spacingY="5" mb="5">
-                <FormControl isRequired><FormLabel {...labelStyle}>Name</FormLabel><Input name="name" value={formData.name} onChange={handleChange} {...inputStyle} /></FormControl>
-                <FormControl><FormLabel {...labelStyle}>Email ID</FormLabel><Input name="email" value={formData.email} onChange={handleChange} {...inputStyle} /></FormControl>
-                <FormControl isRequired><FormLabel {...labelStyle}>Phone Number</FormLabel><Input name="phone" value={formData.phone} onChange={handleChange} {...inputStyle} /></FormControl>
-                <FormControl><FormLabel {...labelStyle}>Alternate Phone No</FormLabel><Input name="altPhone" value={formData.altPhone} onChange={handleChange} {...inputStyle} /></FormControl>
-                <FormControl isRequired><FormLabel {...labelStyle}>Date of Birth</FormLabel><Input name="dob" value={formData.dob} onChange={handleChange} type="date" {...inputStyle} /></FormControl>
-                <FormControl isRequired><FormLabel {...labelStyle}>Gender</FormLabel><Select name="gender" value={formData.gender} onChange={handleChange} {...selectStyle} placeholder="Select Gender"><option value="male">Male</option><option value="female">Female</option></Select></FormControl>
-                <FormControl isRequired><FormLabel {...labelStyle}>Marital Status</FormLabel><Select name="maritalStatus" value={formData.maritalStatus} onChange={handleChange} {...selectStyle}><option value="single">Single</option><option value="married">Married</option></Select></FormControl>
-                <FormControl isRequired><FormLabel {...labelStyle}>State</FormLabel><Select name="state" value={formData.state} onChange={handleChange} {...selectStyle} placeholder="Select State">
+                <FormControl isRequired><FormLabel {...labelStyle}>Name</FormLabel><Input name="name" value={formData.name || ''} onChange={handleChange} {...inputStyle} /></FormControl>
+                <FormControl><FormLabel {...labelStyle}>Email ID</FormLabel><Input name="email" value={formData.email || ''} onChange={handleChange} {...inputStyle} /></FormControl>
+                <FormControl isRequired><FormLabel {...labelStyle}>Phone Number</FormLabel><Input name="phone" value={formData.phone || ''} onChange={handleChange} {...inputStyle} /></FormControl>
+                <FormControl><FormLabel {...labelStyle}>Alternate Phone No</FormLabel><Input name="altPhone" value={formData.altPhone || ''} onChange={handleChange} {...inputStyle} /></FormControl>
+                <FormControl isRequired><FormLabel {...labelStyle}>Date of Birth</FormLabel><Input name="dob" value={formData.dob || ''} onChange={handleChange} type="date" {...inputStyle} /></FormControl>
+                <FormControl isRequired><FormLabel {...labelStyle}>Gender</FormLabel><Select name="gender" value={formData.gender || ''} onChange={handleChange} {...selectStyle} placeholder="Select Gender"><option value="male">Male</option><option value="female">Female</option></Select></FormControl>
+                <FormControl isRequired><FormLabel {...labelStyle}>Marital Status</FormLabel><Select name="maritalStatus" value={formData.maritalStatus || ''} onChange={handleChange} {...selectStyle} placeholder="Select Marital Status"><option value="single">Single</option><option value="married">Married</option></Select></FormControl>
+                <FormControl isRequired><FormLabel {...labelStyle}>State</FormLabel><Select name="state" value={formData.state || ''} onChange={handleChange} {...selectStyle} placeholder="Select State">
                   {masters.states.map(m => <option key={m._id} value={m.name}>{m.name}</option>)}
                 </Select></FormControl>
-                <FormControl isRequired><FormLabel {...labelStyle}>City</FormLabel><Select name="city" value={formData.city} onChange={handleChange} {...selectStyle} placeholder="Select City" isDisabled={!formData.state}>
+                <FormControl isRequired><FormLabel {...labelStyle}>City</FormLabel><Select name="city" value={formData.city || ''} onChange={handleChange} {...selectStyle} placeholder="Select City" isDisabled={!formData.state}>
                   {masters.cities.map(m => <option key={m._id} value={m.name}>{m.name}</option>)}
                 </Select></FormControl>
               </SimpleGrid>
-              <FormControl mb="5" isRequired><FormLabel {...labelStyle}>Full Address</FormLabel><Textarea name="address" value={formData.address} onChange={handleChange} {...inputStyle} minH="90px" /></FormControl>
-              <FormControl mb="5" isRequired><FormLabel {...labelStyle}>Languages (Comma separated)</FormLabel><Input name="languages" value={formData.languages} onChange={handleChange} {...inputStyle} /></FormControl>
+              <FormControl mb="5" isRequired><FormLabel {...labelStyle}>Full Address</FormLabel><Textarea name="address" value={formData.address || ''} onChange={handleChange} {...inputStyle} minH="90px" /></FormControl>
+              <FormControl mb="5" isRequired><FormLabel {...labelStyle}>Languages (Comma separated)</FormLabel><Input name="languages" value={formData.languages || ''} onChange={handleChange} {...inputStyle} /></FormControl>
               <SimpleGrid columns={{ base: 1, md: 3 }} spacing="6" mb="6">
                 <FormControl><FormLabel {...labelStyle}>Profile Image</FormLabel><Input type="file" onChange={(e) => handleFileChange('image', e)} p="1" {...inputStyle} /></FormControl>
-                <FormControl isRequired><FormLabel {...labelStyle}>KYC Status</FormLabel><Select name="kycStatus" value={formData.kycStatus} onChange={handleChange} {...selectStyle}><option value="pending">Pending</option><option value="approved">Approved</option></Select></FormControl>
-                <FormControl isRequired><FormLabel {...labelStyle}>Profile Status</FormLabel><Select name="profileStatus" value={formData.profileStatus} onChange={handleChange} {...selectStyle}><option value="active">Active</option><option value="inactive">Inactive</option></Select></FormControl>
+                <FormControl isRequired><FormLabel {...labelStyle}>KYC Status</FormLabel><Select name="kycStatus" value={formData.kycStatus || 'pending'} onChange={handleChange} {...selectStyle}><option value="pending">Pending</option><option value="approved">Approved</option></Select></FormControl>
+                <FormControl isRequired><FormLabel {...labelStyle}>Profile Status</FormLabel><Select name="profileStatus" value={formData.profileStatus || 'active'} onChange={handleChange} {...selectStyle}><option value="active">Active</option><option value="inactive">Inactive</option></Select></FormControl>
               </SimpleGrid>
               <HStack justify="flex-end"><Button onClick={() => setActiveTab(1)} bg={BRAND} color="white" size="sm" px="6">Next</Button></HStack>
             </TabPanel>
@@ -309,24 +309,27 @@ const EditCandidate = () => {
             {/* 1. Job Preference */}
             <TabPanel p="0">
               <SimpleGrid columns={{ base: 1, md: 3 }} spacingX="6" spacingY="5" mb="5">
-                <FormControl><FormLabel {...labelStyle}>Job Category</FormLabel><Select placeholder="Select Category" value={formData.jobCategory[0]} onChange={(e) => handleMultiSelect('jobCategory', e.target.value)} {...selectStyle}>
+                <FormControl><FormLabel {...labelStyle}>Job Category</FormLabel><Select placeholder="Select Category" value={formData.jobCategory?.[0] || ''} onChange={(e) => handleMultiSelect('jobCategory', e.target.value)} {...selectStyle}>
                   <option value="hotel">Hotel Job</option><option value="home">Home Cook Job</option><option value="daily">Daily Pay Job</option>
                 </Select></FormControl>
-                <FormControl><FormLabel {...labelStyle}>Job Type</FormLabel><Select placeholder="Select Type" value={formData.jobType[0]} onChange={(e) => handleMultiSelect('jobType', e.target.value)} {...selectStyle}>
+                <FormControl><FormLabel {...labelStyle}>Job Type</FormLabel><Select placeholder="Select Type" value={formData.jobType?.[0] || ''} onChange={(e) => handleMultiSelect('jobType', e.target.value)} {...selectStyle}>
                   {masters.jobTypes.map(m => <option key={m._id} value={m.name}>{m.name}</option>)}
                 </Select></FormControl>
                 <HStack spacing="2" align="flex-end">
-                   <FormControl><FormLabel {...labelStyle}>Experience</FormLabel><Select name="experienceValue" value={formData.experienceValue} onChange={handleChange} {...selectStyle} placeholder="Select Experience">
+                   <FormControl><FormLabel {...labelStyle}>Experience</FormLabel><Select name="experienceValue" value={formData.experienceValue || ''} onChange={handleChange} {...selectStyle} placeholder="Select Experience">
                      {masters.experienceRanges.map(m => <option key={m._id} value={m.name}>{m.name}</option>)}
                    </Select></FormControl>
                 </HStack>
-                <FormControl><FormLabel {...labelStyle}>Expected Salary</FormLabel><Select name="expectedSalary" value={formData.expectedSalary} onChange={handleChange} {...selectStyle} placeholder="Select Salary">
+                <FormControl><FormLabel {...labelStyle}>Current Salary</FormLabel><Select name="currentSalary" value={formData.currentSalary || ''} onChange={handleChange} {...selectStyle} placeholder="Select Salary">
                   {masters.salaryRanges.map(m => <option key={m._id} value={m.name}>{m.name}</option>)}
                 </Select></FormControl>
-                <FormControl><FormLabel {...labelStyle}>Preferred Cities</FormLabel><Select placeholder="Select City" value={formData.preferredCities[0]} onChange={(e) => handleMultiSelect('preferredCities', e.target.value)} {...selectStyle}>
+                <FormControl><FormLabel {...labelStyle}>Expected Salary</FormLabel><Select name="expectedSalary" value={formData.expectedSalary || ''} onChange={handleChange} {...selectStyle} placeholder="Select Salary">
+                  {masters.salaryRanges.map(m => <option key={m._id} value={m.name}>{m.name}</option>)}
+                </Select></FormControl>
+                <FormControl><FormLabel {...labelStyle}>Preferred Cities</FormLabel><Select placeholder="Select City" value={formData.preferredCities?.[0] || ''} onChange={(e) => handleMultiSelect('preferredCities', e.target.value)} {...selectStyle}>
                   {masters.cities.map(m => <option key={m._id} value={m.name}>{m.name}</option>)}
                 </Select></FormControl>
-                <FormControl><FormLabel {...labelStyle}>Job Positions</FormLabel><Select placeholder="Select Position" value={formData.jobPositions[0]} onChange={(e) => handleMultiSelect('jobPositions', e.target.value)} {...selectStyle}>
+                <FormControl><FormLabel {...labelStyle}>Job Positions</FormLabel><Select placeholder="Select Position" value={formData.jobPositions?.[0] || ''} onChange={(e) => handleMultiSelect('jobPositions', e.target.value)} {...selectStyle}>
                   {masters.jobPositions.map(m => <option key={m._id} value={m.name}>{m.name}</option>)}
                 </Select></FormControl>
               </SimpleGrid>
@@ -335,13 +338,13 @@ const EditCandidate = () => {
 
             {/* 2. Cooking Skills */}
             <TabPanel p="0">
-              <FormControl mb="5"><FormLabel {...labelStyle}>Cooking Preference</FormLabel><Select name="cookingPreference" value={formData.cookingPreference} onChange={handleChange} {...selectStyle} placeholder="Select Preference">
+              <FormControl mb="5"><FormLabel {...labelStyle}>Cooking Preference</FormLabel><Select name="cookingPreference" value={formData.cookingPreference || ''} onChange={handleChange} {...selectStyle} placeholder="Select Preference">
                 {masters.cookingPreferences.map(m => <option key={m._id} value={m.name}>{m.name}</option>)}
               </Select></FormControl>
               <Box border="1px solid #e8edf5" borderRadius="xl" p="5" mb="6" bg="#f8faff">
                 <Text fontSize="sm" fontWeight="700" mb="4">Add Skills</Text>
                 <SimpleGrid columns={{ base: 1, md: 2 }} spacing="4" mb="4">
-                  <FormControl><FormLabel {...labelStyle}>Category</FormLabel><Select value={tempSkill.category} onChange={(e) => setTempSkill({...tempSkill, category: e.target.value})} {...selectStyle} placeholder="Select Category">
+                  <FormControl><FormLabel {...labelStyle}>Category</FormLabel><Select value={tempSkill.category || ''} onChange={(e) => setTempSkill({...tempSkill, category: e.target.value})} {...selectStyle} placeholder="Select Category">
                     {masters.skillCategories.map(m => <option key={m._id} value={m.name}>{m.name}</option>)}
                   </Select></FormControl>
                   <FormControl><FormLabel {...labelStyle}>Skills</FormLabel><Input value={tempSkill.skills} onChange={(e) => setTempSkill({...tempSkill, skills: e.target.value})} {...inputStyle} /></FormControl>
@@ -364,12 +367,12 @@ const EditCandidate = () => {
               <Box mb="8">
                 <Text fontSize="sm" fontWeight="800" mb="4">Last / Previous Company</Text>
                 <SimpleGrid columns={{ base: 1, md: 2 }} spacing="5" mb="5">
-                  <FormControl><FormLabel {...labelStyle}>Company Name</FormLabel><Input name="name" value={formData.lastCompany.name} onChange={handleLastCompanyChange} {...inputStyle} /></FormControl>
-                  <FormControl><FormLabel {...labelStyle}>Workplace Type</FormLabel><Select name="workplaceType" value={formData.lastCompany.workplaceType} onChange={handleLastCompanyChange} {...selectStyle} placeholder="Select"><option value="Hotel">Hotel</option><option value="Restaurant">Restaurant</option><option value="Home">Home</option></Select></FormControl>
-                  <FormControl><FormLabel {...labelStyle}>Role</FormLabel><Input name="role" value={formData.lastCompany.role} onChange={handleLastCompanyChange} {...inputStyle} /></FormControl>
-                  <FormControl><FormLabel {...labelStyle}>Duration</FormLabel><Input name="duration" value={formData.lastCompany.duration} onChange={handleLastCompanyChange} {...inputStyle} /></FormControl>
+                  <FormControl><FormLabel {...labelStyle}>Company Name</FormLabel><Input name="name" value={formData.lastCompany.name || ''} onChange={handleLastCompanyChange} {...inputStyle} /></FormControl>
+                  <FormControl><FormLabel {...labelStyle}>Workplace Type</FormLabel><Select name="workplaceType" value={formData.lastCompany.workplaceType || ''} onChange={handleLastCompanyChange} {...selectStyle} placeholder="Select"><option value="Hotel">Hotel</option><option value="Restaurant">Restaurant</option><option value="Home">Home</option></Select></FormControl>
+                  <FormControl><FormLabel {...labelStyle}>Role</FormLabel><Input name="role" value={formData.lastCompany.role || ''} onChange={handleLastCompanyChange} {...inputStyle} /></FormControl>
+                  <FormControl><FormLabel {...labelStyle}>Duration</FormLabel><Input name="duration" value={formData.lastCompany.duration || ''} onChange={handleLastCompanyChange} {...inputStyle} /></FormControl>
                 </SimpleGrid>
-                <FormControl><FormLabel {...labelStyle}>Reason for Leaving</FormLabel><Textarea name="reasonForLeaving" value={formData.lastCompany.reasonForLeaving} onChange={handleLastCompanyChange} {...inputStyle} /></FormControl>
+                <FormControl><FormLabel {...labelStyle}>Reason for Leaving</FormLabel><Textarea name="reasonForLeaving" value={formData.lastCompany.reasonForLeaving || ''} onChange={handleLastCompanyChange} {...inputStyle} /></FormControl>
               </Box>
               <Box mb="8">
                 <Text fontSize="sm" fontWeight="800" mb="4">Work Experience History</Text>
@@ -409,7 +412,7 @@ const EditCandidate = () => {
             {/* 5. Documents Upload */}
             <TabPanel p="0">
               <SimpleGrid columns={{ base: 1, md: 3 }} spacing="6" mb="8">
-                <FormControl><FormLabel {...labelStyle}>ID Type</FormLabel><Select value={formData.idProofType} onChange={(e) => setFormData({...formData, idProofType: e.target.value})} {...selectStyle} placeholder="Select"><option value="Aadhar">Aadhar</option><option value="PAN">PAN</option></Select></FormControl>
+                <FormControl><FormLabel {...labelStyle}>ID Type</FormLabel><Select value={formData.idProofType || 'Aadhar'} onChange={(e) => setFormData({...formData, idProofType: e.target.value})} {...selectStyle} placeholder="Select"><option value="Aadhar">Aadhar</option><option value="PAN">PAN</option></Select></FormControl>
                 <FormControl><FormLabel {...labelStyle}>ID Proof</FormLabel><Input type="file" onChange={(e) => handleFileChange('idProof', e)} p="1" {...inputStyle} /></FormControl>
                 <FormControl><FormLabel {...labelStyle}>Address Proof</FormLabel><Input type="file" onChange={(e) => handleFileChange('addressProof', e)} p="1" {...inputStyle} /></FormControl>
                 <FormControl><FormLabel {...labelStyle}>Resume</FormLabel><Input type="file" onChange={(e) => handleFileChange('cv', e)} p="1" {...inputStyle} /></FormControl>
@@ -423,7 +426,7 @@ const EditCandidate = () => {
             <TabPanel p="0">
               <Box border="1px solid #e8edf5" borderRadius="xl" p="5" mb="6" bg="#f8faff">
                 <SimpleGrid columns={{ base: 1, md: 2 }} spacing="5" mb="4">
-                  <Select value={tempSocial.platform} onChange={(e) => setTempSocial({...tempSocial, platform: e.target.value})} {...selectStyle} placeholder="Platform"><option value="Facebook">Facebook</option><option value="Instagram">Instagram</option><option value="LinkedIn">LinkedIn</option><option value="Twitter">Twitter</option></Select>
+                  <Select value={tempSocial.platform || ''} onChange={(e) => setTempSocial({...tempSocial, platform: e.target.value})} {...selectStyle} placeholder="Platform"><option value="Facebook">Facebook</option><option value="Instagram">Instagram</option><option value="LinkedIn">LinkedIn</option><option value="Twitter">Twitter</option></Select>
                   <Input value={tempSocial.url} onChange={(e) => setTempSocial({...tempSocial, url: e.target.value})} placeholder="URL" {...inputStyle} />
                 </SimpleGrid>
                 <Button size="sm" bg="#10b981" color="white" onClick={() => { if(tempSocial.platform && tempSocial.url) { setFormData(prev => ({...prev, socialMedia: [...prev.socialMedia, tempSocial]})); setTempSocial({platform:'', url:''}); } }}>Add Link</Button>

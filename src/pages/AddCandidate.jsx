@@ -4,7 +4,7 @@ import {
   Button, Tabs, TabList, Tab, TabPanels, TabPanel, Text, VStack, 
   IconButton, useToast
 } from '@chakra-ui/react';
-import { Trash2, Save, X } from 'lucide-react';
+import { Trash2, Save, X, Plus } from 'lucide-react';
 import { useNavigate, Link } from 'react-router-dom';
 import { PageHeader, PageFooter, BRAND, inputStyle, selectStyle, labelStyle } from '../components/ui';
 import axios from 'axios';
@@ -31,8 +31,8 @@ const AddCandidate = () => {
 
   // Form State
   const [formData, setFormData] = useState({
-    name: '', email: '', phone: '', altPhone: '', dob: '', gender: '', maritalStatus: '', state: '', city: '', address: '',
-    languages: [], kycStatus: 'pending', profileStatus: 'active',
+    name: '', email: '', phone: '', altPhone: '', dob: '', gender: '', maritalStatus: 'single', state: '', city: '', address: '',
+    languages: '', kycStatus: 'pending', profileStatus: 'active',
     jobCategory: [], jobType: [], experienceValue: '', experienceUnit: 'years', currentSalary: '', expectedSalary: '', preferredCities: [], jobPositions: [],
     cookingPreference: '', cookingSkills: [],
     lastCompany: { name: '', workplaceType: '', role: '', duration: '', experienceType: '', reasonForLeaving: '' },
@@ -47,6 +47,7 @@ const AddCandidate = () => {
   const [tempExp, setTempExp] = useState({ position: '', from: '', to: '', jobProfile: '', shortDetail: '' });
   const [tempEdu, setTempEdu] = useState({ title: '', from: '', to: '', shortDetail: '' });
   const [tempHighlight, setTempHighlight] = useState('');
+  const [tempReason, setTempReason] = useState('');
   const [tempSocial, setTempSocial] = useState({ platform: '', url: '' });
 
   // File states
@@ -125,6 +126,33 @@ const AddCandidate = () => {
     }));
   };
 
+  // Add/Remove Helpers
+  const addToList = (listKey, item, setter) => {
+    if (!item) return;
+    setFormData(prev => ({ ...prev, [listKey]: [...prev[listKey], item] }));
+    setter(typeof item === 'string' ? '' : { position: '', from: '', to: '', jobProfile: '', shortDetail: '' });
+  };
+
+  const addToCareerList = (field, item, setter) => {
+    if (!item) return;
+    setFormData(prev => ({
+      ...prev,
+      careerHighlights: { ...prev.careerHighlights, [field]: [...prev.careerHighlights[field], item] }
+    }));
+    setter('');
+  };
+
+  const removeFromList = (listKey, index) => {
+    setFormData(prev => ({ ...prev, [listKey]: prev[listKey].filter((_, i) => i !== index) }));
+  };
+
+  const removeFromCareerList = (field, index) => {
+    setFormData(prev => ({
+      ...prev,
+      careerHighlights: { ...prev.careerHighlights, [field]: prev.careerHighlights[field].filter((_, i) => i !== index) }
+    }));
+  };
+
   const handleSubmit = async (e) => {
     if (e) e.preventDefault();
     setIsLoading(true);
@@ -132,10 +160,10 @@ const AddCandidate = () => {
       const data = new FormData();
       const skipFields = ['languages', 'jobPreference', 'cookingSkills', 'workExperience', 'education', 'careerHighlights', 'socialMedia', 'jobCategory', 'jobType', 'experienceValue', 'experienceUnit', 'currentSalary', 'expectedSalary', 'preferredCities', 'jobPositions', 'cookingPreference'];
       Object.keys(formData).forEach(key => {
-        if (!skipFields.includes(key) && formData[key]) data.append(key, formData[key]);
+        if (!skipFields.includes(key) && formData[key] !== undefined && formData[key] !== null) data.append(key, formData[key]);
       });
 
-      data.append('languages', JSON.stringify(formData.languages));
+      data.append('languages', JSON.stringify(typeof formData.languages === 'string' ? formData.languages.split(',').map(s => s.trim()) : formData.languages));
       data.append('jobPreference', JSON.stringify({
         jobCategory: formData.jobCategory, jobType: formData.jobType,
         experience: { value: formData.experienceValue || 0, unit: formData.experienceUnit },
@@ -183,9 +211,12 @@ const AddCandidate = () => {
             <TabPanel p="0">
               <SimpleGrid columns={{ base: 1, md: 2, lg: 3 }} spacingX="6" spacingY="5" mb="5">
                 <FormControl isRequired><FormLabel {...labelStyle}>Name</FormLabel><Input name="name" value={formData.name} onChange={handleChange} placeholder="Full Name" {...inputStyle} /></FormControl>
+                <FormControl><FormLabel {...labelStyle}>Email ID</FormLabel><Input name="email" value={formData.email} onChange={handleChange} placeholder="Email Address" {...inputStyle} /></FormControl>
                 <FormControl isRequired><FormLabel {...labelStyle}>Phone</FormLabel><Input name="phone" value={formData.phone} onChange={handleChange} placeholder="Phone Number" {...inputStyle} /></FormControl>
+                <FormControl><FormLabel {...labelStyle}>Alternate Phone No</FormLabel><Input name="altPhone" value={formData.altPhone} onChange={handleChange} placeholder="Alternate Phone" {...inputStyle} /></FormControl>
                 <FormControl isRequired><FormLabel {...labelStyle}>DOB</FormLabel><Input name="dob" value={formData.dob} onChange={handleChange} type="date" {...inputStyle} /></FormControl>
                 <FormControl isRequired><FormLabel {...labelStyle}>Gender</FormLabel><Select name="gender" value={formData.gender} onChange={handleChange} {...selectStyle} placeholder="Select"><option value="male">Male</option><option value="female">Female</option></Select></FormControl>
+                <FormControl isRequired><FormLabel {...labelStyle}>Marital Status</FormLabel><Select name="maritalStatus" value={formData.maritalStatus} onChange={handleChange} {...selectStyle} placeholder="Select Marital Status"><option value="single">Single</option><option value="married">Married</option></Select></FormControl>
                 <FormControl isRequired><FormLabel {...labelStyle}>State</FormLabel><Select name="state" value={formData.state} onChange={handleChange} {...selectStyle} placeholder="Select State">
                   {masters.states.map(m => <option key={m._id} value={m.name}>{m.name}</option>)}
                 </Select></FormControl>
@@ -194,39 +225,46 @@ const AddCandidate = () => {
                 </Select></FormControl>
               </SimpleGrid>
               <FormControl mb="5" isRequired><FormLabel {...labelStyle}>Full Address</FormLabel><Textarea name="address" value={formData.address} onChange={handleChange} {...inputStyle} /></FormControl>
-              <FormControl mb="5"><FormLabel {...labelStyle}>Languages Known</FormLabel><Input placeholder="e.g. Hindi, English" onChange={(e) => handleMultiSelect('languages', e.target.value.split(','))} {...inputStyle} /></FormControl>
+              <FormControl mb="5"><FormLabel {...labelStyle}>Languages (Comma separated)</FormLabel><Input name="languages" value={formData.languages} onChange={handleChange} placeholder="e.g. Hindi, English" {...inputStyle} /></FormControl>
               <SimpleGrid columns={{ base: 1, md: 3 }} spacing="6" mb="6">
                 <FormControl><FormLabel {...labelStyle}>Profile Image</FormLabel><Input type="file" onChange={(e) => handleFileChange('image', e)} p="1" {...inputStyle} /></FormControl>
                 <FormControl isRequired><FormLabel {...labelStyle}>KYC Status</FormLabel><Select name="kycStatus" value={formData.kycStatus} onChange={handleChange} {...selectStyle}><option value="pending">Pending</option><option value="approved">Approved</option></Select></FormControl>
+                <FormControl isRequired><FormLabel {...labelStyle}>Profile Status</FormLabel><Select name="profileStatus" value={formData.profileStatus} onChange={handleChange} {...selectStyle}><option value="active">Active</option><option value="inactive">Inactive</option></Select></FormControl>
               </SimpleGrid>
               <HStack justify="flex-end"><Button onClick={() => setActiveTab(1)} bg={BRAND} color="white" size="sm" px="6">Next</Button></HStack>
             </TabPanel>
 
             <TabPanel p="0">
               <SimpleGrid columns={{ base: 1, md: 2, lg: 3 }} spacingX="6" spacingY="5" mb="5">
-                <FormControl><FormLabel {...labelStyle}>Job Category</FormLabel><Select placeholder="Select Category" onChange={(e) => handleMultiSelect('jobCategory', e.target.value)} {...selectStyle}>
+                <FormControl><FormLabel {...labelStyle}>Job Category</FormLabel><Select placeholder="Select Category" value={formData.jobCategory?.[0] || ''} onChange={(e) => handleMultiSelect('jobCategory', e.target.value)} {...selectStyle}>
                   <option value="hotel">Hotel Job</option><option value="home">Home Cook Job</option><option value="daily">Daily Pay Job</option>
                 </Select></FormControl>
-                <FormControl><FormLabel {...labelStyle}>Job Type</FormLabel><Select placeholder="Select Type" onChange={(e) => handleMultiSelect('jobType', e.target.value)} {...selectStyle}>
+                <FormControl><FormLabel {...labelStyle}>Job Type</FormLabel><Select placeholder="Select Type" value={formData.jobType?.[0] || ''} onChange={(e) => handleMultiSelect('jobType', e.target.value)} {...selectStyle}>
                   {masters.jobTypes.map(m => <option key={m._id} value={m.name}>{m.name}</option>)}
                 </Select></FormControl>
-                <FormControl><FormLabel {...labelStyle}>Position</FormLabel><Select placeholder="Select Position" onChange={(e) => handleMultiSelect('jobPositions', e.target.value)} {...selectStyle}>
+                <FormControl><FormLabel {...labelStyle}>Position</FormLabel><Select placeholder="Select Position" value={formData.jobPositions?.[0] || ''} onChange={(e) => handleMultiSelect('jobPositions', e.target.value)} {...selectStyle}>
                   {masters.jobPositions.map(m => <option key={m._id} value={m.name}>{m.name}</option>)}
                 </Select></FormControl>
                 <HStack spacing="2" align="flex-end">
-                    <FormControl><FormLabel {...labelStyle}>Experience</FormLabel><Select name="experienceValue" onChange={handleChange} {...selectStyle} placeholder="Select Experience">
+                    <FormControl><FormLabel {...labelStyle}>Experience</FormLabel><Select name="experienceValue" value={formData.experienceValue || ''} onChange={handleChange} {...selectStyle} placeholder="Select Experience">
                       {masters.experienceRanges.map(m => <option key={m._id} value={m.name}>{m.name}</option>)}
                     </Select></FormControl>
                 </HStack>
-                <FormControl><FormLabel {...labelStyle}>Expected Salary</FormLabel><Select name="expectedSalary" onChange={handleChange} {...selectStyle} placeholder="Select Salary">
+                <FormControl><FormLabel {...labelStyle}>Current Salary</FormLabel><Select name="currentSalary" value={formData.currentSalary || ''} onChange={handleChange} {...selectStyle} placeholder="Select Salary">
                   {masters.salaryRanges.map(m => <option key={m._id} value={m.name}>{m.name}</option>)}
+                </Select></FormControl>
+                <FormControl><FormLabel {...labelStyle}>Expected Salary</FormLabel><Select name="expectedSalary" value={formData.expectedSalary || ''} onChange={handleChange} {...selectStyle} placeholder="Select Salary">
+                  {masters.salaryRanges.map(m => <option key={m._id} value={m.name}>{m.name}</option>)}
+                </Select></FormControl>
+                <FormControl><FormLabel {...labelStyle}>Preferred Cities</FormLabel><Select placeholder="Select City" value={formData.preferredCities?.[0] || ''} onChange={(e) => handleMultiSelect('preferredCities', e.target.value)} {...selectStyle}>
+                  {masters.cities.map(m => <option key={m._id} value={m.name}>{m.name}</option>)}
                 </Select></FormControl>
               </SimpleGrid>
               <HStack justify="space-between"><Button onClick={() => setActiveTab(0)} variant="outline" size="sm" px="6">Previous</Button><Button onClick={() => setActiveTab(2)} bg={BRAND} color="white" size="sm" px="6">Next</Button></HStack>
             </TabPanel>
 
             <TabPanel p="0">
-              <FormControl mb="5"><FormLabel {...labelStyle}>Cooking Preference</FormLabel><Select name="cookingPreference" value={formData.cookingPreference} onChange={handleChange} {...selectStyle} placeholder="Select Preference">
+              <FormControl mb="5"><FormLabel {...labelStyle}>Cooking Preference</FormLabel><Select name="cookingPreference" value={formData.cookingPreference || ''} onChange={handleChange} {...selectStyle} placeholder="Select Preference">
                 {masters.cookingPreferences.map(m => <option key={m._id} value={m.name}>{m.name}</option>)}
               </Select></FormControl>
               <Box border="1px solid #e8edf5" borderRadius="xl" p="5" mb="6" bg="#f8faff">
@@ -238,24 +276,54 @@ const AddCandidate = () => {
                 </SimpleGrid>
                 <Button size="sm" bg="#10b981" color="white" onClick={() => { if(tempSkill.category && tempSkill.skills) { setFormData(prev => ({...prev, cookingSkills: [...prev.cookingSkills, tempSkill]})); setTempSkill({category:'', skills:''}); } }}>Add Skill</Button>
                 <VStack align="stretch" mt="4" spacing="2">
-                  {formData.cookingSkills.map((s, i) => (<HStack key={i} justify="space-between" bg="white" p="3" border="1px solid #e2e8f0"><Text fontSize="xs">{s.category}: {s.skills}</Text><IconButton size="xs" colorScheme="red" icon={<Trash2 size={14} />} onClick={() => setFormData(prev => ({...prev, cookingSkills: prev.cookingSkills.filter((_, idx) => idx !== i)}))} /></HStack>))}
+                  {formData.cookingSkills.map((s, i) => (<HStack key={i} justify="space-between" bg="white" p="3" border="1px solid #e2e8f0"><Text fontSize="xs">{s.category}: {s.skills}</Text><IconButton size="xs" colorScheme="red" icon={<Trash2 size={14} />} onClick={() => removeFromList('cookingSkills', i)} /></HStack>))}
                 </VStack>
               </Box>
               <HStack justify="space-between"><Button onClick={() => setActiveTab(1)} variant="outline" size="sm" px="6">Previous</Button><Button onClick={() => setActiveTab(3)} bg={BRAND} color="white" size="sm" px="6">Next</Button></HStack>
             </TabPanel>
 
             <TabPanel p="0">
-              <Box mb="8"><Text fontSize="sm" fontWeight="800" mb="4">Last Company Details</Text>
-                <SimpleGrid columns={{ base: 1, md: 2 }} spacing="5">
+              <Box mb="8">
+                <Text fontSize="sm" fontWeight="800" mb="4">Last / Previous Company Details</Text>
+                <SimpleGrid columns={{ base: 1, md: 2 }} spacing="5" mb="5">
                   <FormControl><FormLabel {...labelStyle}>Company Name</FormLabel><Input name="name" value={formData.lastCompany.name} onChange={handleLastCompanyChange} placeholder="Company Name" {...inputStyle} /></FormControl>
+                  <FormControl><FormLabel {...labelStyle}>Workplace Type</FormLabel><Select name="workplaceType" value={formData.lastCompany.workplaceType || ''} onChange={handleLastCompanyChange} {...selectStyle} placeholder="Select"><option value="Hotel">Hotel</option><option value="Restaurant">Restaurant</option><option value="Home">Home</option></Select></FormControl>
                   <FormControl><FormLabel {...labelStyle}>Role</FormLabel><Input name="role" value={formData.lastCompany.role} onChange={handleLastCompanyChange} placeholder="Job Role" {...inputStyle} /></FormControl>
+                  <FormControl><FormLabel {...labelStyle}>Duration</FormLabel><Input name="duration" value={formData.lastCompany.duration} onChange={handleLastCompanyChange} placeholder="Duration (e.g. 2 years)" {...inputStyle} /></FormControl>
                 </SimpleGrid>
+                <FormControl><FormLabel {...labelStyle}>Reason for Leaving</FormLabel><Textarea name="reasonForLeaving" value={formData.lastCompany.reasonForLeaving} onChange={handleLastCompanyChange} placeholder="Reason for leaving..." {...inputStyle} /></FormControl>
+              </Box>
+              <Box mb="8">
+                <Text fontSize="sm" fontWeight="800" mb="4">Work Experience History</Text>
+                <Box border="1px solid #e8edf5" borderRadius="xl" p="5" mb="5" bg="#f8faff">
+                  <SimpleGrid columns={{ base: 1, md: 3 }} spacing="4" mb="4">
+                    <FormControl><Input value={tempExp.position} onChange={(e) => setTempExp({...tempExp, position: e.target.value})} placeholder="Position" {...inputStyle} /></FormControl>
+                    <FormControl><Input value={tempExp.from} onChange={(e) => setTempExp({...tempExp, from: e.target.value})} placeholder="From" {...inputStyle} /></FormControl>
+                    <FormControl><Input value={tempExp.to} onChange={(e) => setTempExp({...tempExp, to: e.target.value})} placeholder="To" {...inputStyle} /></FormControl>
+                  </SimpleGrid>
+                  <Button leftIcon={<Plus size={16} />} size="sm" bg="#10b981" color="white" onClick={() => addToList('experiences', tempExp, setTempExp)}>Add Experience</Button>
+                  <VStack align="stretch" mt="4" spacing="2">
+                    {formData.experiences.map((exp, i) => (
+                      <HStack key={i} justify="space-between" bg="white" p="3" borderRadius="lg" border="1px solid #e2e8f0"><Text fontSize="xs">{exp.position} ({exp.from}-{exp.to})</Text><IconButton size="xs" colorScheme="red" icon={<Trash2 size={14} />} onClick={() => removeFromList('experiences', i)} /></HStack>
+                    ))}
+                  </VStack>
+                </Box>
               </Box>
               <HStack justify="space-between"><Button onClick={() => setActiveTab(2)} variant="outline" size="sm" px="6">Previous</Button><Button onClick={() => setActiveTab(4)} bg={BRAND} color="white" size="sm" px="6">Next</Button></HStack>
             </TabPanel>
 
             <TabPanel p="0">
-              <FormControl mb="4"><FormLabel {...labelStyle}>About Me</FormLabel><Textarea name="aboutMe" value={formData.careerHighlights.aboutMe} onChange={handleHighlightChange} placeholder="Write something about the candidate..." {...inputStyle} minH="120px" /></FormControl>
+              <Box mb="6"><FormLabel {...labelStyle}>About Me</FormLabel><Textarea name="aboutMe" value={formData.careerHighlights.aboutMe} onChange={handleHighlightChange} placeholder="Write something about the candidate..." {...inputStyle} minH="120px" /></Box>
+              <Box mb="6">
+                <Text fontSize="sm" fontWeight="800" mb="2">Highlights</Text>
+                <HStack mb="4"><Input value={tempHighlight} onChange={(e) => setTempHighlight(e.target.value)} placeholder="Highlight" {...inputStyle} /><Button size="sm" bg="#10b981" color="white" onClick={() => addToCareerList('highlights', tempHighlight, setTempHighlight)}>Add</Button></HStack>
+                {formData.careerHighlights.highlights?.map((h, i) => (<HStack key={i} bg="#f8faff" p="2" borderRadius="md" justify="space-between" mb="2"><Text fontSize="xs">{h}</Text><IconButton size="xs" colorScheme="red" icon={<Trash2 size={12} />} onClick={() => removeFromCareerList('highlights', i)} /></HStack>))}
+              </Box>
+              <Box mb="8">
+                <Text fontSize="sm" fontWeight="800" mb="2">Why Choose Me</Text>
+                <HStack mb="4"><Input value={tempReason} onChange={(e) => setTempReason(e.target.value)} placeholder="Reason" {...inputStyle} /><Button size="sm" bg="#10b981" color="white" onClick={() => addToCareerList('whyChooseMe', tempReason, setTempReason)}>Add</Button></HStack>
+                {formData.careerHighlights.whyChooseMe?.map((r, i) => (<HStack key={i} bg="#f8faff" p="2" borderRadius="md" justify="space-between" mb="2"><Text fontSize="xs">{r}</Text><IconButton size="xs" colorScheme="red" icon={<Trash2 size={12} />} onClick={() => removeFromCareerList('whyChooseMe', i)} /></HStack>))}
+              </Box>
               <HStack justify="space-between"><Button onClick={() => setActiveTab(3)} variant="outline" size="sm" px="6">Previous</Button><Button onClick={() => setActiveTab(5)} bg={BRAND} color="white" size="sm" px="6">Next</Button></HStack>
             </TabPanel>
 
@@ -263,7 +331,10 @@ const AddCandidate = () => {
               <SimpleGrid columns={{ base: 1, md: 3 }} spacing="6" mb="8">
                 <FormControl><FormLabel {...labelStyle}>ID Type</FormLabel><Select name="idProofType" value={formData.idProofType} onChange={handleChange} {...selectStyle}><option value="Aadhar">Aadhar Card</option><option value="PAN">PAN Card</option><option value="Voter ID">Voter ID</option><option value="Passport">Passport</option></Select></FormControl>
                 <FormControl><FormLabel {...labelStyle}>ID Proof (Upload)</FormLabel><Input type="file" onChange={(e) => handleFileChange('idProof', e)} p="1" {...inputStyle} /></FormControl>
+                <FormControl><FormLabel {...labelStyle}>Address Proof</FormLabel><Input type="file" onChange={(e) => handleFileChange('addressProof', e)} p="1" {...inputStyle} /></FormControl>
                 <FormControl><FormLabel {...labelStyle}>Resume/CV</FormLabel><Input type="file" onChange={(e) => handleFileChange('cv', e)} p="1" {...inputStyle} /></FormControl>
+                <FormControl><FormLabel {...labelStyle}>Academic Certificate</FormLabel><Input type="file" onChange={(e) => handleFileChange('academicCertificate', e)} p="1" {...inputStyle} /></FormControl>
+                <FormControl><FormLabel {...labelStyle}>Experience Cert</FormLabel><Input type="file" onChange={(e) => handleFileChange('experienceCertificate', e)} p="1" {...inputStyle} /></FormControl>
               </SimpleGrid>
               <HStack justify="space-between"><Button onClick={() => setActiveTab(4)} variant="outline" size="sm" px="6">Previous</Button><Button onClick={() => setActiveTab(6)} bg={BRAND} color="white" size="sm" px="6">Next</Button></HStack>
             </TabPanel>
