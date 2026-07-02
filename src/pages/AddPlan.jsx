@@ -35,7 +35,7 @@ const AddPlan = () => {
     isPopular: false,
     isBestValue: false,
     isActive: true,
-    allowedJobCategories: ['hotel', 'home', 'daily']
+    allowedJobCategories: []  // Empty array by default, user can select which categories to allow
   });
 
   const handleChange = (e) => {
@@ -146,9 +146,9 @@ const AddPlan = () => {
               />
             </FormControl>
 
-            <FormControl isRequired>
-              <FormLabel>Allowed Job Categories</FormLabel>
-              <Text fontSize="sm" color="gray.500" mb={3}>Select which job types are included in this plan</Text>
+            <FormControl>
+              <FormLabel>Allowed Job Categories (Optional)</FormLabel>
+              <Text fontSize="sm" color="gray.500" mb={3}>Select which job types are included in this plan. Leave empty to allow all categories.</Text>
               <SimpleGrid columns={3} spacing={4}>
                 {[
                   { value: 'hotel', label: 'Commercial', color: 'blue' },
