@@ -132,8 +132,8 @@ const CandidateStatusList = ({ status, title }) => {
                     <Td {...tdStyle} color="#475569" fontWeight="600" textAlign="center">{indexOfFirstRecord + index + 1}</Td>
                     <Td {...tdStyle} textAlign="center">
                       <VStack spacing="3" align="center">
-                        <Avatar size="lg" name={app.candidateName} src={app.profileImage ? `${apiBase}/${app.profileImage}` : ''} border="2px solid #f8faff" />
-                        {app.candidateCV && <Button size="xs" leftIcon={<FileText size={12} />} bg="#f97316" color="white" _hover={{ bg: '#ea580c' }} borderRadius="4px" px="6" py="3" onClick={() => window.open(`${apiBase}/${app.candidateCV}`, '_blank')}>CV</Button>}
+                        <Avatar size="lg" name={app.candidateName} src={`${apiBase}/${app.profileImage}`} border="2px solid #f8faff" />
+                        <Button size="xs" leftIcon={<FileText size={12} />} bg="#f97316" color="white" _hover={{ bg: '#ea580c' }} borderRadius="4px" px="6" py="3" onClick={() => window.open(`${apiBase}/${app.candidateCV}`, '_blank')}>CV</Button>
                       </VStack>
                     </Td>
                     <Td {...tdStyle}>
