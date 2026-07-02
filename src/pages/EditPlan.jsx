@@ -47,6 +47,24 @@ const EditPlan = () => {
       try {
         const token = localStorage.getItem('adminToken');
         const apiUrl = import.meta.env.VITE_API_URL;
+        
+        // Debug logging
+        console.log('Fetching plan with ID:', id);
+        console.log('API URL:', apiUrl);
+        console.log('Token exists:', !!token);
+        
+        if (!token) {
+          toast({
+            title: 'Authentication required',
+            description: 'Please login again',
+            status: 'error',
+            duration: 3000,
+            isClosable: true,
+          });
+          navigate('/login');
+          return;
+        }
+        
         const res = await axios.get(`${apiUrl}/plans/${id}`, {
           headers: { Authorization: `Bearer ${token}` }
         });
@@ -67,9 +85,22 @@ const EditPlan = () => {
           });
         }
       } catch (err) {
+        console.error('Error fetching plan:', err);
+        console.error('Error response:', err.response);
+        
+        let errorMessage = err.response?.data?.message || err.message;
+        if (err.response?.status === 404) {
+          errorMessage = 'Plan not found. It may have been deleted or the ID is incorrect.';
+        } else if (err.response?.status === 401) {
+          errorMessage = 'Authentication failed. Please login again.';
+          localStorage.removeItem('adminToken');
+          navigate('/login');
+          return;
+        }
+        
         toast({
           title: 'Error fetching plan',
-          description: err.response?.data?.message || err.message,
+          description: errorMessage,
           status: 'error',
           duration: 3000,
           isClosable: true,
