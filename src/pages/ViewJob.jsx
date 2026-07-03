@@ -1,19 +1,24 @@
 import React, { useState, useEffect } from 'react';
 import {
   Box, VStack, HStack, Text, Badge, Icon, Flex,
-  Button, Spinner, useToast, Image, Table, Thead, Tbody, Tr, Th, Td, Divider
+  Button, Spinner, useToast, Image, Table, Thead, Tbody, Tr, Th, Td, Divider,
+  useDisclosure
 } from '@chakra-ui/react';
-import { ArrowLeft, LayoutList, FileText, CheckCircle2 } from 'lucide-react';
+import { ArrowLeft, LayoutList, FileText, CheckCircle2, Users } from 'lucide-react';
 import { useParams, useNavigate } from 'react-router-dom';
 import axios from 'axios';
 import { PageHeader, PageFooter, BRAND, ACCENT, thStyle, tdStyle } from '../components/ui';
+import JobApplicantsModal from './JobApplicantsModal';
 
 const ViewJob = () => {
+  const { isOpen, onOpen, onClose } = useDisclosure();
   const { id } = useParams();
   const navigate = useNavigate();
   const toast = useToast();
   const [job, setJob] = useState(null);
   const [isLoading, setIsLoading] = useState(true);
+  const [appliedCount, setAppliedCount] = useState(0);
+  const [assignedCount, setAssignedCount] = useState(0);
 
   const fetchJob = async () => {
     setIsLoading(true);
@@ -23,8 +28,18 @@ const ViewJob = () => {
       const response = await axios.get(`${apiUrl}/jobs/${id}`, {
         headers: { 'Authorization': `Bearer ${token}` }
       });
+      const appsResponse = await axios.get(`${apiUrl}/applications`, {
+        params: { jobId: id },
+        headers: { 'Authorization': `Bearer ${token}` }
+      });
+
       if (response.data.success) {
         setJob(response.data.job);
+      }
+      if (appsResponse.data.success && Array.isArray(appsResponse.data.applications)) {
+        const apps = appsResponse.data.applications;
+        setAppliedCount(apps.length);
+        setAssignedCount(apps.filter(app => app.status === 'Applied').length);
       }
     } catch (error) {
       toast({ title: 'Error', description: 'Failed to fetch job details', status: 'error' });
@@ -163,7 +178,43 @@ const ViewJob = () => {
             </Tbody>
           </Table>
         </Box>
+        {/* Candidate Responses Section */}
+        <Box bg="white" borderRadius="xl" border="1px solid #e8edf5" boxShadow="sm" p="5">
+          <Flex justify="space-between" align="center" mb="4">
+            <HStack spacing="2">
+              <Icon as={Users} color={BRAND} />
+              <Text fontSize="sm" fontWeight="800" color="#1e293b">Candidate Responses</Text>
+            </HStack>
+            <Button
+              size="sm"
+              bg={BRAND}
+              color="white"
+              onClick={onOpen}
+              _hover={{ bg: '#003d91' }}
+              borderRadius="lg"
+            >
+              View All Applicants
+            </Button>
+          </Flex>
+          <HStack spacing="4">
+            <Box bg="#f8faff" border="1px solid #dde6f5" p="4" borderRadius="xl" flex="1" textAlign="center" cursor="pointer" onClick={onOpen} _hover={{ boxShadow: 'sm' }} transition="all 0.2s">
+              <Text fontSize="2xl" fontWeight="800" color={BRAND}>{appliedCount}</Text>
+              <Text fontSize="xs" fontWeight="700" color="#64748b">Applied Candidates</Text>
+            </Box>
+            <Box bg="#f0fdf4" border="1px solid #c6f6d5" p="4" borderRadius="xl" flex="1" textAlign="center" cursor="pointer" onClick={onOpen} _hover={{ boxShadow: 'sm' }} transition="all 0.2s">
+              <Text fontSize="2xl" fontWeight="800" color="green.600">{assignedCount}</Text>
+              <Text fontSize="xs" fontWeight="700" color="#64748b">Assigned Candidates</Text>
+            </Box>
+          </HStack>
+        </Box>
       </VStack>
+
+      <JobApplicantsModal 
+        isOpen={isOpen}
+        onClose={onClose}
+        jobId={job._id}
+        jobTitle={job.title}
+      />
 
       <PageFooter />
     </Box>

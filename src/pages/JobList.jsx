@@ -1,11 +1,11 @@
 import { useState, useEffect } from 'react';
 import { 
   Box, HStack, Text, VStack, Button, Switch, IconButton, 
-  useToast, useDisclosure, Collapse, Flex, 
+  useToast, useDisclosure, Collapse, Flex, Badge,
   FormLabel, Select, Input, Table, Thead, Tbody, Tr, Th, Td,
   Menu, MenuButton, MenuList, MenuItem
 } from '@chakra-ui/react';
-import { Plus, Filter, Edit3, RotateCcw, Search, Eye, ChevronDown } from 'lucide-react';
+import { Plus, Filter, Edit3, RotateCcw, Search, Eye, ChevronDown, Users } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { 
   PageHeader, PageFooter, BRAND, ACCENT, TableCard, TableControls, 
@@ -13,11 +13,14 @@ import {
 } from '../components/ui';
 import axios from 'axios';
 import API_BASE_URL from '../apiConfig';
+import JobApplicantsModal from './JobApplicantsModal';
 
 const JobList = () => {
   const navigate = useNavigate();
   const toast = useToast();
   const { isOpen, onOpen, onClose } = useDisclosure();
+  const { isOpen: isApplicantsOpen, onOpen: onApplicantsOpen, onClose: onApplicantsClose } = useDisclosure();
+  const [selectedJob, setSelectedJob] = useState(null);
   const [jobs, setJobs] = useState([]);
   const [isLoading, setIsLoading] = useState(true);
   
@@ -42,7 +45,9 @@ const JobList = () => {
   const [filters, setFilters] = useState({
     category: '',
     city: '',
-    status: ''
+    status: '',
+    datePreset: '',
+    customDate: ''
   });
 
   const fetchJobs = async () => {
@@ -50,8 +55,31 @@ const JobList = () => {
       const response = await axios.get(`${API_BASE_URL}/jobs`, {
         headers: { 'Authorization': `Bearer ${token}` }
       });
+      
+      const appResponse = await axios.get(`${API_BASE_URL}/candidates/applications`, {
+        headers: { 'Authorization': `Bearer ${token}` }
+      });
+
       if (response.data.success) {
-        setJobs(response.data.jobs);
+        let fetchedJobs = response.data.jobs || [];
+        let fetchedApps = [];
+        if (appResponse.data.success && Array.isArray(appResponse.data.applications)) {
+          fetchedApps = appResponse.data.applications;
+        }
+
+        // Compute counts on client-side dynamically so it works with Render production backend
+        const enrichedJobs = fetchedJobs.map(job => {
+          const jobApps = fetchedApps.filter(app => (app.jobId === job._id || (app.job && app.job._id === job._id)));
+          const appliedCount = jobApps.length;
+          const assignedCount = jobApps.filter(app => app.status === 'Applied').length;
+          return {
+            ...job,
+            appliedCount,
+            assignedCount
+          };
+        });
+
+        setJobs(enrichedJobs);
       }
     } catch (error) {
       console.error('Error fetching jobs:', error);
@@ -69,7 +97,7 @@ const JobList = () => {
   };
 
   const resetFilters = () => {
-    setFilters({ category: '', city: '', status: '' });
+    setFilters({ category: '', city: '', status: '', datePreset: '', customDate: '' });
     setSearch('');
     setCurrentPage(1);
   };
@@ -133,7 +161,32 @@ const JobList = () => {
     const matchesCity = !filters.city || job.city.toLowerCase().includes(filters.city.toLowerCase());
     const matchesStatus = !filters.status || (filters.status === 'active' ? job.isActive : !job.isActive);
 
-    return matchesSearch && matchesCategory && matchesCity && matchesStatus;
+    // Date matching logic
+    let matchesDate = true;
+    if (filters.customDate) {
+      const jobDate = new Date(job.createdAt).toDateString();
+      const filterDate = new Date(filters.customDate).toDateString();
+      matchesDate = jobDate === filterDate;
+    } else if (filters.datePreset) {
+      const jobTime = new Date(job.createdAt).getTime();
+      const now = new Date().getTime();
+      const diffMs = now - jobTime;
+      const diffDays = diffMs / (1000 * 60 * 60 * 24);
+
+      if (filters.datePreset === 'today') {
+        matchesDate = new Date(job.createdAt).toDateString() === new Date().toDateString();
+      } else if (filters.datePreset === 'yesterday') {
+        const yesterday = new Date();
+        yesterday.setDate(yesterday.getDate() - 1);
+        matchesDate = new Date(job.createdAt).toDateString() === yesterday.toDateString();
+      } else if (filters.datePreset === 'weekly') {
+        matchesDate = diffDays <= 7;
+      } else if (filters.datePreset === 'monthly') {
+        matchesDate = diffDays <= 30;
+      }
+    }
+
+    return matchesSearch && matchesCategory && matchesCity && matchesStatus && matchesDate;
   });
 
   const totalPages = Math.ceil(filteredJobs.length / parseInt(entries));
@@ -186,6 +239,19 @@ const JobList = () => {
                 <option value="inactive">Inactive</option>
               </Select>
             </Box>
+            <Box flex="1" minW="200px">
+              <FormLabel fontSize="xs" fontWeight="700" color="#475569" mb="2">Date Range</FormLabel>
+              <Select size="sm" h="40px" borderRadius="lg" bg="#f8faff" border="1.5px solid #dde6f5" placeholder="All Dates" value={filters.datePreset} onChange={(e) => handleFilterChange('datePreset', e.target.value)}>
+                <option value="today">Today</option>
+                <option value="yesterday">Yesterday</option>
+                <option value="weekly">Last 7 Days</option>
+                <option value="monthly">Last 30 Days</option>
+              </Select>
+            </Box>
+            <Box flex="1" minW="200px">
+              <FormLabel fontSize="xs" fontWeight="700" color="#475569" mb="2">Specific Date</FormLabel>
+              <Input type="date" size="sm" h="40px" borderRadius="lg" bg="#f8faff" border="1.5px solid #dde6f5" value={filters.customDate} onChange={(e) => handleFilterChange('customDate', e.target.value)} />
+            </Box>
             <HStack spacing="3">
               <Button h="40px" px="8" bg={ACCENT} color="white" leftIcon={<Search size={16} />} _hover={{ bg: '#c8151c' }} borderRadius="lg" fontSize="sm" fontWeight="700" onClick={() => setCurrentPage(1)}>Search</Button>
               <Button h="40px" px="8" variant="outline" color="#475569" borderColor="#dde6f5" leftIcon={<RotateCcw size={16} />} _hover={{ bg: '#f1f5f9' }} borderRadius="lg" fontSize="sm" fontWeight="700" onClick={resetFilters}>Reset</Button>
@@ -215,6 +281,8 @@ const JobList = () => {
                 <Th {...thStyle} border="1px solid #edf2f7" minW="150px">Job Code</Th>
                 <Th {...thStyle} border="1px solid #edf2f7" minW="300px">Job Details</Th>
                 <Th {...thStyle} border="1px solid #edf2f7" minW="250px">Job Overview</Th>
+                <Th {...thStyle} border="1px solid #edf2f7" w="100px" textAlign="center">Applied</Th>
+                <Th {...thStyle} border="1px solid #edf2f7" w="100px" textAlign="center">Assigned</Th>
                 <Th {...thStyle} border="1px solid #edf2f7" w="150px" textAlign="center">Status</Th>
                 <Th {...thStyle} border="1px solid #edf2f7" textAlign="center" w="120px">Toggle Status</Th>
                 <Th {...thStyle} border="1px solid #edf2f7" textAlign="center" w="100px">Action</Th>
@@ -247,12 +315,46 @@ const JobList = () => {
                     </VStack>
                   </Td>
 
-                  {/* Job Overview */}
+                   {/* Job Overview */}
                   <Td py="4" border="1px solid #edf2f7">
                     <VStack align="start" spacing="2">
                       <Text fontSize="xs" fontWeight="700" color="#1e293b">{row.jobPosition} : <Box as="span" color="#475569" fontWeight="500">{row.packageOrGuestOrVacancy} {row.jobCategory === 'hotel' ? 'Vacancy' : 'Guests'}</Box></Text>
                       <Text fontSize="xs" fontWeight="700" color="#0000ff">Total Vacancy: {row.packageOrGuestOrVacancy || '1'}</Text>
                     </VStack>
+                  </Td>
+
+                  {/* Applied Candidates Column */}
+                  <Td py="4" border="1px solid #edf2f7" textAlign="center">
+                    <Badge
+                      colorScheme="blue"
+                      variant="solid"
+                      px="3" py="1"
+                      borderRadius="full"
+                      fontSize="xs"
+                      cursor="pointer"
+                      onClick={() => { setSelectedJob(row); onApplicantsOpen(); }}
+                      _hover={{ transform: 'scale(1.1)', opacity: 0.9 }}
+                      transition="all 0.15s"
+                    >
+                      {row.appliedCount ?? row.applied ?? 0}
+                    </Badge>
+                  </Td>
+
+                  {/* Assigned Candidates Column */}
+                  <Td py="4" border="1px solid #edf2f7" textAlign="center">
+                    <Badge
+                      colorScheme="green"
+                      variant="solid"
+                      px="3" py="1"
+                      borderRadius="full"
+                      fontSize="xs"
+                      cursor="pointer"
+                      onClick={() => { setSelectedJob(row); onApplicantsOpen(); }}
+                      _hover={{ transform: 'scale(1.1)', opacity: 0.9 }}
+                      transition="all 0.15s"
+                    >
+                      {row.assignedCount ?? row.assigned ?? 0}
+                    </Badge>
                   </Td>
 
                   {/* Status Dropdown */}
@@ -346,6 +448,16 @@ const JobList = () => {
         type={confirmConfig.type}
         confirmColor={confirmConfig.type === 'danger' ? ACCENT : BRAND}
       />
+
+      {/* Job Applicants Modal */}
+      {selectedJob && (
+        <JobApplicantsModal
+          isOpen={isApplicantsOpen}
+          onClose={onApplicantsClose}
+          jobId={selectedJob._id}
+          jobTitle={selectedJob.title}
+        />
+      )}
       
       <PageFooter />
     </Box>
