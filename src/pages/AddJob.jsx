@@ -61,8 +61,10 @@ const AddJob = () => {
     joiningType: '',
     travelCharges: '',
     dateOfEvent: '',
+    leadManager: '',
   });
   const [jobImage, setJobImage] = useState(null);
+  const [managers, setManagers] = useState([]);
 
   const apiUrl = import.meta.env.VITE_API_URL;
   const token = localStorage.getItem('adminToken');
@@ -86,6 +88,14 @@ const AddJob = () => {
       try {
         const custRes = await axios.get(`${apiUrl}/customers`, { headers: { 'Authorization': `Bearer ${token}` } });
         if (custRes.data.success) setCustomers(custRes.data.customers);
+
+        // Fetch managers
+        try {
+          const mgrRes = await axios.get(`${apiUrl}/admin/users`, { headers: { 'Authorization': `Bearer ${token}` } });
+          if (mgrRes.data.success) setManagers(mgrRes.data.users || []);
+        } catch (err) {
+          console.error('Error fetching managers:', err);
+        }
         
         // Fetch all necessary masters
         fetchMasterData('job-positions', 'jobPositions');
@@ -176,7 +186,7 @@ const AddJob = () => {
     try {
       const data = new FormData();
       data.set('jobCategory', jobCategory);
-      const commonFields = ['title', 'customer', 'overview', 'responsibilities', 'requirements', 'status', 'jobType', 'jobPosition'];
+      const commonFields = ['title', 'customer', 'overview', 'responsibilities', 'requirements', 'status', 'jobType', 'jobPosition', 'leadManager'];
       let categorySpecificFields = [];
       if (jobCategory === 'hotel') {
         categorySpecificFields = ['propertyCategory', 'state', 'city', 'basicFacility', 'otherFacilities', 'packageOrGuestOrVacancy', 'allowedLeave', 'salaryRange', 'experienceRange', 'joiningType', 'travelCharges', 'benefits'];
@@ -305,6 +315,11 @@ const AddJob = () => {
               <option value="Inactive">Inactive</option>
               <option value="Cancelled">Cancelled</option>
               <option value="Expired">Expired</option>
+            </Select></FormControl>
+            <FormControl><FormLabel {...labelStyle}>Lead Manager</FormLabel><Select name="leadManager" value={formData.leadManager || ''} onChange={handleChange} {...selectStyle} placeholder="Select Lead Manager">
+              {managers.map(mgr => (
+                <option key={mgr._id} value={mgr.name}>{mgr.name}</option>
+              ))}
             </Select></FormControl>
           </SimpleGrid>
 

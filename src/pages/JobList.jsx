@@ -1,19 +1,43 @@
 import { useState, useEffect } from 'react';
-import { 
-  Box, HStack, Text, VStack, Button, Switch, IconButton, 
+import {
+  Box, HStack, Text, VStack, Button, Switch, IconButton,
   useToast, useDisclosure, Collapse, Flex, Badge,
   FormLabel, Select, Input, Table, Thead, Tbody, Tr, Th, Td,
-  Menu, MenuButton, MenuList, MenuItem
+  Menu, MenuButton, MenuList, MenuItem, Link as ChakraLink
 } from '@chakra-ui/react';
-import { Plus, Filter, Edit3, RotateCcw, Search, Eye, ChevronDown, Users } from 'lucide-react';
+import { Plus, Filter, Edit3, RotateCcw, Search, Eye, ChevronDown, Users, Trash2, Calendar } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
-import { 
-  PageHeader, PageFooter, BRAND, ACCENT, TableCard, TableControls, 
-  TableFooter, thStyle, trHover, ConfirmationModal 
+import {
+  PageHeader, PageFooter, BRAND, ACCENT, TableCard, TableControls,
+  ConfirmationModal
 } from '../components/ui';
 import axios from 'axios';
 import API_BASE_URL from '../apiConfig';
 import JobApplicantsModal from './JobApplicantsModal';
+
+const darkThStyle = {
+  color: 'white',
+  bg: '#0f2343', // Dark navy blue header from Picture 1
+  fontSize: 'xs',
+  fontWeight: '800',
+  py: '4',
+  px: '4',
+  border: '1px solid #1a365d',
+  textAlign: 'center',
+  textTransform: 'none', // Display exact casing
+  letterSpacing: '0.5px'
+};
+
+const customTdStyle = {
+  py: '4',
+  px: '4',
+  border: '1px solid #edf2f7',
+  fontSize: 'xs',
+  fontWeight: '600',
+  color: '#2d3748',
+  textAlign: 'center',
+  verticalAlign: 'middle'
+};
 
 const JobList = () => {
   const navigate = useNavigate();
@@ -23,14 +47,14 @@ const JobList = () => {
   const [selectedJob, setSelectedJob] = useState(null);
   const [jobs, setJobs] = useState([]);
   const [isLoading, setIsLoading] = useState(true);
-  
+
   const token = localStorage.getItem('adminToken');
-  
+
   // Confirmation State
   const [confirmConfig, setConfirmConfig] = useState({
     title: '',
     description: '',
-    onConfirm: () => {},
+    onConfirm: () => { },
     type: 'danger',
     confirmLabel: 'Confirm'
   });
@@ -41,13 +65,13 @@ const JobList = () => {
   const [currentPage, setCurrentPage] = useState(1);
 
   // Filter states
-  const [showFilters, setShowFilters] = useState(false);
+  const [showCustomDate, setShowCustomDate] = useState(false);
   const [filters, setFilters] = useState({
     category: '',
     city: '',
     status: '',
-    datePreset: '',
-    customDate: ''
+    startDate: '',
+    endDate: ''
   });
 
   const fetchJobs = async () => {
@@ -55,7 +79,7 @@ const JobList = () => {
       const response = await axios.get(`${API_BASE_URL}/jobs`, {
         headers: { 'Authorization': `Bearer ${token}` }
       });
-      
+
       const appResponse = await axios.get(`${API_BASE_URL}/candidates/applications`, {
         headers: { 'Authorization': `Bearer ${token}` }
       });
@@ -97,9 +121,32 @@ const JobList = () => {
   };
 
   const resetFilters = () => {
-    setFilters({ category: '', city: '', status: '', datePreset: '', customDate: '' });
+    setFilters({
+      category: '',
+      city: '',
+      status: '',
+      startDate: '',
+      endDate: ''
+    });
     setSearch('');
+    setShowCustomDate(false);
     setCurrentPage(1);
+    toast({
+      title: 'Filters Reset',
+      status: 'info',
+      duration: 1500,
+      position: 'top-right'
+    });
+  };
+
+  const handleApplyFilters = () => {
+    setCurrentPage(1);
+    toast({
+      title: 'Filters Applied',
+      status: 'success',
+      duration: 1500,
+      position: 'top-right'
+    });
   };
 
   const confirmDelete = (id) => {
@@ -150,39 +197,88 @@ const JobList = () => {
     onOpen();
   };
 
+  const getStatusColors = (status) => {
+    const s = (status || '').toLowerCase();
+    if (s === 'active' || s === 'open') return { bg: '#e6fcf5', color: '#0ca678' }; // Green
+    if (s === 'new') return { bg: '#e7f5ff', color: '#1c7ed6' }; // Blue
+    if (s === 'urgent') return { bg: '#fff5f5', color: '#e03131' }; // Red
+    if (s === 'in progress' || s === 'inprogress') return { bg: '#e7f5ff', color: '#1c7ed6' }; // Blue
+    if (s === 'hold' || s === 'onhold') return { bg: '#fff4e6', color: '#f76707' }; // Orange
+    return { bg: '#f1f3f5', color: '#868e96' }; // Grey (Inactive, Cancelled, Expired)
+  };
+
+  const formatCategory = (cat) => {
+    const c = (cat || '').toLowerCase();
+    if (c === 'home') return 'Home Cook';
+    if (c === 'hotel') return 'Hotel';
+    if (c === 'daily') return 'Daily Basis';
+    return cat || 'N/A';
+  };
+
+  const formatSalary = (row) => {
+    if (row.jobCategory === 'daily') {
+      return row.package ? `₹${row.package}/Day` : 'N/A';
+    }
+    return row.salaryRange ? `₹${row.salaryRange}` : 'N/A';
+  };
+
+  const getUniqueCities = () => {
+    const list = Array.from(new Set(jobs.map(j => j.city).filter(Boolean)));
+    const defaults = ['Lucknow', 'Kanpur', 'Barabanki', 'Patna'];
+    return Array.from(new Set([...list, ...defaults]));
+  };
+
+  const formatDate = (dateStr) => {
+    if (!dateStr) return 'N/A';
+    const date = new Date(dateStr);
+    return date.toLocaleDateString('en-GB', {
+      day: '2-digit',
+      month: 'short',
+      year: 'numeric'
+    });
+  };
+
   // Filter and Paginate Data
   const filteredJobs = jobs.filter(job => {
-    const matchesSearch = 
+    const matchesSearch =
       job.title.toLowerCase().includes(search.toLowerCase()) ||
-      (job.customer?.name || '').toLowerCase().includes(search.toLowerCase()) ||
-      job.city.toLowerCase().includes(search.toLowerCase());
-    
+      job.city.toLowerCase().includes(search.toLowerCase()) ||
+      (job.jobCode || '').toLowerCase().includes(search.toLowerCase());
+
     const matchesCategory = !filters.category || job.jobCategory === filters.category;
-    const matchesCity = !filters.city || job.city.toLowerCase().includes(filters.city.toLowerCase());
-    const matchesStatus = !filters.status || (filters.status === 'active' ? job.isActive : !job.isActive);
+    const matchesCity = !filters.city || job.city.toLowerCase() === filters.city.toLowerCase();
+    const matchesStatus = !filters.status || (job.status || '').toLowerCase() === filters.status.toLowerCase();
 
     // Date matching logic
     let matchesDate = true;
-    if (filters.customDate) {
-      const jobDate = new Date(job.createdAt).toDateString();
-      const filterDate = new Date(filters.customDate).toDateString();
-      matchesDate = jobDate === filterDate;
+    const jobTime = new Date(job.createdAt).getTime();
+
+    if (showCustomDate) {
+      if (filters.startDate) {
+        const start = new Date(filters.startDate);
+        start.setHours(0, 0, 0, 0);
+        matchesDate = matchesDate && jobTime >= start.getTime();
+      }
+      if (filters.endDate) {
+        const end = new Date(filters.endDate);
+        end.setHours(23, 59, 59, 999);
+        matchesDate = matchesDate && jobTime <= end.getTime();
+      }
     } else if (filters.datePreset) {
-      const jobTime = new Date(job.createdAt).getTime();
-      const now = new Date().getTime();
-      const diffMs = now - jobTime;
-      const diffDays = diffMs / (1000 * 60 * 60 * 24);
+      const now = new Date();
+      const todayStart = new Date(now.getFullYear(), now.getMonth(), now.getDate()).getTime();
 
       if (filters.datePreset === 'today') {
-        matchesDate = new Date(job.createdAt).toDateString() === new Date().toDateString();
+        matchesDate = jobTime >= todayStart;
       } else if (filters.datePreset === 'yesterday') {
-        const yesterday = new Date();
-        yesterday.setDate(yesterday.getDate() - 1);
-        matchesDate = new Date(job.createdAt).toDateString() === yesterday.toDateString();
+        const yesterdayStart = todayStart - 24 * 60 * 60 * 1000;
+        matchesDate = jobTime >= yesterdayStart && jobTime < todayStart;
       } else if (filters.datePreset === 'weekly') {
-        matchesDate = diffDays <= 7;
+        const sevenDaysAgo = todayStart - 7 * 24 * 60 * 60 * 1000;
+        matchesDate = jobTime >= sevenDaysAgo;
       } else if (filters.datePreset === 'monthly') {
-        matchesDate = diffDays <= 30;
+        const thirtyDaysAgo = todayStart - 30 * 24 * 60 * 60 * 1000;
+        matchesDate = jobTime >= thirtyDaysAgo;
       }
     }
 
@@ -195,250 +291,343 @@ const JobList = () => {
 
   return (
     <Box pb="10">
-      <PageHeader
-        title="Job Management"
-        breadcrumb="Job Management"
-        actions={[
-          <Button 
-            key="filter" 
-            leftIcon={<Filter size={14} />} 
-            size="sm" 
-            variant={showFilters ? "solid" : "outline"}
-            bg={showFilters ? BRAND : "transparent"}
-            color={showFilters ? "white" : "#64748b"}
-            borderColor="#dde6f5" 
-            borderRadius="lg" 
-            _hover={{ borderColor: BRAND, color: showFilters ? "white" : BRAND }}
-            onClick={() => setShowFilters(!showFilters)}
-          >
-            Filter
-          </Button>,
-          <Button key="add" leftIcon={<Plus size={14} />} size="sm" bg={BRAND} color="white" borderRadius="lg" _hover={{ bg: '#003d91' }} onClick={() => navigate('/jobs/add')}>Add</Button>,
-        ]}
-      />
+      {/* Title Header Section */}
+      <Flex align="center" justify="space-between" mb="6" wrap="wrap" gap="4">
+        <VStack align="start" spacing="1">
+          <Text fontSize="2xl" fontWeight="800" color="#0B1A30">Job List</Text>
+          <Text fontSize="sm" color="#64748b">Manage all your jobs and leads</Text>
+        </VStack>
+        <Button
+          leftIcon={<Plus size={16} />}
+          size="md"
+          bg="#0f62fe"
+          color="white"
+          borderRadius="lg"
+          px="6"
+          _hover={{ bg: '#0043ce' }}
+          onClick={() => navigate('/jobs/add')}
+        >
+          Add Job
+        </Button>
+      </Flex>
 
-      <Collapse in={showFilters} animateOpacity>
-        <Box bg="white" p="5" borderRadius="xl" border="1px solid #e8edf5" mb="6" boxShadow="0 2px 12px rgba(0,74,173,0.05)">
-          <Flex align="flex-end" gap="4" wrap="wrap">
-            <Box flex="1" minW="200px">
-              <FormLabel fontSize="xs" fontWeight="700" color="#475569" mb="2">Category</FormLabel>
-              <Select size="sm" h="40px" borderRadius="lg" bg="#f8faff" border="1.5px solid #dde6f5" placeholder="Select Job Category" value={filters.category} onChange={(e) => handleFilterChange('category', e.target.value)}>
-                <option value="hotel">Hotel Job</option>
-                <option value="home">Home Cook Job</option>
-                <option value="daily">Daily Pay Job</option>
-              </Select>
-            </Box>
-            <Box flex="1" minW="200px">
-              <FormLabel fontSize="xs" fontWeight="700" color="#475569" mb="2">City</FormLabel>
-              <Input size="sm" h="40px" borderRadius="lg" bg="#f8faff" border="1.5px solid #dde6f5" placeholder="Filter by City" value={filters.city} onChange={(e) => handleFilterChange('city', e.target.value)} />
-            </Box>
-            <Box flex="1" minW="200px">
-              <FormLabel fontSize="xs" fontWeight="700" color="#475569" mb="2">Status</FormLabel>
-              <Select size="sm" h="40px" borderRadius="lg" bg="#f8faff" border="1.5px solid #dde6f5" placeholder="-- Select Status --" value={filters.status} onChange={(e) => handleFilterChange('status', e.target.value)}>
-                <option value="active">Active</option>
-                <option value="inactive">Inactive</option>
-              </Select>
-            </Box>
-            <Box flex="1" minW="200px">
-              <FormLabel fontSize="xs" fontWeight="700" color="#475569" mb="2">Date Range</FormLabel>
-              <Select size="sm" h="40px" borderRadius="lg" bg="#f8faff" border="1.5px solid #dde6f5" placeholder="All Dates" value={filters.datePreset} onChange={(e) => handleFilterChange('datePreset', e.target.value)}>
+      {/* Filters Card - Always Visible */}
+      <Box bg="white" p="6" borderRadius="xl" border="1px solid #e8edf5" mb="6" boxShadow="0 2px 12px rgba(0,74,173,0.03)">
+        <Text fontSize="md" fontWeight="800" color="#0B1A30" mb="4">Filters</Text>
+        <Flex align="flex-end" gap="4" wrap="wrap" justify="space-between">
+          <Box flex="1" minW="180px">
+            <FormLabel fontSize="xs" fontWeight="700" color="#475569" mb="2">Category</FormLabel>
+            <Select size="sm" h="40px" borderRadius="lg" bg="#f8faff" border="1.5px solid #dde6f5" value={filters.category} onChange={(e) => handleFilterChange('category', e.target.value)}>
+              <option value="">All Category</option>
+              <option value="hotel">Hotel</option>
+              <option value="home">Home Cook</option>
+              <option value="daily">Daily Basis</option>
+            </Select>
+          </Box>
+          <Box flex="1" minW="180px">
+            <FormLabel fontSize="xs" fontWeight="700" color="#475569" mb="2">City</FormLabel>
+            <Select size="sm" h="40px" borderRadius="lg" bg="#f8faff" border="1.5px solid #dde6f5" value={filters.city} onChange={(e) => handleFilterChange('city', e.target.value)}>
+              <option value="">All City</option>
+              {getUniqueCities().map(city => (
+                <option key={city} value={city}>{city}</option>
+              ))}
+            </Select>
+          </Box>
+          <Box flex="1" minW="180px">
+            <FormLabel fontSize="xs" fontWeight="700" color="#475569" mb="2">Status</FormLabel>
+            <Select size="sm" h="40px" borderRadius="lg" bg="#f8faff" border="1.5px solid #dde6f5" value={filters.status} onChange={(e) => handleFilterChange('status', e.target.value)}>
+              <option value="">All Status</option>
+              {['Urgent', 'New', 'Active', 'Inactive', 'Cancelled', 'Expired'].map(s => (
+                <option key={s} value={s}>{s}</option>
+              ))}
+            </Select>
+          </Box>
+          <Box flex="1.5" minW="240px">
+            <FormLabel fontSize="xs" fontWeight="700" color="#475569" mb="2">Date Range</FormLabel>
+            {showCustomDate ? (
+              <HStack spacing="2" w="full">
+                <Input type="date" size="sm" h="40px" borderRadius="lg" bg="#f8faff" border="1.5px solid #dde6f5" value={filters.startDate} onChange={(e) => handleFilterChange('startDate', e.target.value)} />
+                <Text fontSize="xs" color="#94a3b8">to</Text>
+                <Input type="date" size="sm" h="40px" borderRadius="lg" bg="#f8faff" border="1.5px solid #dde6f5" value={filters.endDate} onChange={(e) => handleFilterChange('endDate', e.target.value)} />
+              </HStack>
+            ) : (
+              <Select size="sm" h="40px" borderRadius="lg" bg="#f8faff" border="1.5px solid #dde6f5" value={filters.datePreset} onChange={(e) => handleFilterChange('datePreset', e.target.value)}>
+                <option value="">Select Range</option>
                 <option value="today">Today</option>
                 <option value="yesterday">Yesterday</option>
                 <option value="weekly">Last 7 Days</option>
                 <option value="monthly">Last 30 Days</option>
               </Select>
-            </Box>
-            <Box flex="1" minW="200px">
-              <FormLabel fontSize="xs" fontWeight="700" color="#475569" mb="2">Specific Date</FormLabel>
-              <Input type="date" size="sm" h="40px" borderRadius="lg" bg="#f8faff" border="1.5px solid #dde6f5" value={filters.customDate} onChange={(e) => handleFilterChange('customDate', e.target.value)} />
-            </Box>
-            <HStack spacing="3">
-              <Button h="40px" px="8" bg={ACCENT} color="white" leftIcon={<Search size={16} />} _hover={{ bg: '#c8151c' }} borderRadius="lg" fontSize="sm" fontWeight="700" onClick={() => setCurrentPage(1)}>Search</Button>
-              <Button h="40px" px="8" variant="outline" color="#475569" borderColor="#dde6f5" leftIcon={<RotateCcw size={16} />} _hover={{ bg: '#f1f5f9' }} borderRadius="lg" fontSize="sm" fontWeight="700" onClick={resetFilters}>Reset</Button>
-            </HStack>
-          </Flex>
-        </Box>
-      </Collapse>
-      
-      <TableCard>
-        <Flex px="5" py="4" borderBottom="1px solid #f1f5f9" align="center">
-          <Box w="3px" h="18px" bg={BRAND} borderRadius="full" mr="3" />
-          <Text fontSize="sm" fontWeight="700" color="#1e293b">Job Record List</Text>
+            )}
+            <ChakraLink fontSize="11px" fontWeight="700" color="#0f62fe" mt="1.5" display="inline-block" onClick={() => setShowCustomDate(!showCustomDate)}>
+              {showCustomDate ? "Use Preset Range" : "Custom Date"}
+            </ChakraLink>
+          </Box>
+          <HStack spacing="2" minW="180px" justify="flex-end" mb={showCustomDate ? "5" : "0"}>
+            <Button h="40px" px="6" variant="outline" borderColor="#dde6f5" color="#475569" _hover={{ bg: '#f1f5f9' }} borderRadius="lg" fontSize="xs" fontWeight="700" onClick={resetFilters}>Reset</Button>
+            <Button h="40px" px="6" bg="#0f62fe" color="white" _hover={{ bg: '#0043ce' }} borderRadius="lg" fontSize="xs" fontWeight="700" onClick={handleApplyFilters}>Apply</Button>
+          </HStack>
         </Flex>
+      </Box>
 
-        <TableControls 
-          search={search} 
-          onSearch={(val) => { setSearch(val); setCurrentPage(1); }} 
-          entries={entries} 
-          onEntriesChange={(val) => { setEntries(val); setCurrentPage(1); }} 
+      {/* Table Section */}
+      <TableCard>
+        <TableControls
+          search={search}
+          onSearch={(val) => { setSearch(val); setCurrentPage(1); }}
+          entries={entries}
+          onEntriesChange={(val) => { setEntries(val); setCurrentPage(1); }}
         />
 
         <Box overflowX="auto">
           <Table variant="simple" size="sm">
-            <Thead bg="#f8faff">
+            <Thead>
               <Tr>
-                <Th {...thStyle} border="1px solid #edf2f7" textAlign="center" w="60px">Sr.No.</Th>
-                <Th {...thStyle} border="1px solid #edf2f7" minW="150px">Job Code</Th>
-                <Th {...thStyle} border="1px solid #edf2f7" minW="300px">Job Details</Th>
-                <Th {...thStyle} border="1px solid #edf2f7" minW="250px">Job Overview</Th>
-                <Th {...thStyle} border="1px solid #edf2f7" w="100px" textAlign="center">Applied</Th>
-                <Th {...thStyle} border="1px solid #edf2f7" w="100px" textAlign="center">Assigned</Th>
-                <Th {...thStyle} border="1px solid #edf2f7" w="150px" textAlign="center">Status</Th>
-                <Th {...thStyle} border="1px solid #edf2f7" textAlign="center" w="120px">Toggle Status</Th>
-                <Th {...thStyle} border="1px solid #edf2f7" textAlign="center" w="100px">Action</Th>
+                <Th {...darkThStyle} w="80px">Job ID</Th>
+                <Th {...darkThStyle} minW="120px">Category</Th>
+                <Th {...darkThStyle} minW="150px">Department</Th>
+                <Th {...darkThStyle} minW="100px">City</Th>
+                <Th {...darkThStyle} minW="100px">Salary</Th>
+                <Th {...darkThStyle} w="100px">Applied</Th>
+                <Th {...darkThStyle} w="100px">Assigned</Th>
+                <Th {...darkThStyle} minW="120px">Status</Th>
+                <Th {...darkThStyle} w="120px">Toggle Status</Th>
+                <Th {...darkThStyle} minW="120px">Created Date</Th>
+                <Th {...darkThStyle} w="120px">Action</Th>
               </Tr>
             </Thead>
             <Tbody>
-              {paginatedJobs.map((row, index) => (
-                <Tr key={row._id} {...trHover}>
-                  <Td py="4" border="1px solid #edf2f7" textAlign="center" fontSize="xs" color="#475569">{startIndex + index + 1}</Td>
-                  
-                  {/* Job Code */}
-                  <Td py="4" border="1px solid #edf2f7">
-                    <VStack align="center" spacing="1">
-                      <Text fontSize="sm" fontWeight="800" color="#0000ff">{row.jobCode || 'N/A'}</Text>
-                      <Text fontSize="10px" color="#64748b" fontWeight="600">{new Date(row.createdAt).toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' })}</Text>
-                      <Text fontSize="10px" color="#64748b" fontWeight="600">{new Date(row.createdAt).toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' })}</Text>
-                    </VStack>
-                  </Td>
+              {paginatedJobs.map((row) => {
+                const statusLabel = row.status || 'New';
+                const colors = getStatusColors(statusLabel);
 
-                  {/* Job Details */}
-                  <Td py="4" border="1px solid #edf2f7">
-                    <VStack align="start" spacing="1">
-                      <Text fontSize="md" fontWeight="700" color="#0000ff" _hover={{ textDecoration: 'underline', cursor: 'pointer' }}>{row.title}</Text>
-                      <Text fontSize="xs" fontWeight="800" color="#0000ff" textTransform="uppercase">{row.jobPosition}</Text>
-                      <Text fontSize="xs" color="#1e293b">Job Category: <Box as="span" color="#475569" fontWeight="500">{row.jobCategory === 'hotel' ? 'Hotel Job' : row.jobCategory === 'home' ? 'Home Cook Job' : 'Daily Pay Job'}</Box></Text>
-                      {row.jobCategory === 'daily' && <Text fontSize="xs" color="#1e293b">Event Name: <Box as="span" color="#475569" fontWeight="500">{row.event}</Box></Text>}
-                      {row.jobCategory !== 'daily' && <Text fontSize="xs" color="#1e293b">Property Category: <Box as="span" color="#475569" fontWeight="500">{row.propertyCategory}</Box></Text>}
-                      <Text fontSize="xs" color="#1e293b">State Name: <Box as="span" color="#475569" fontWeight="500">{row.state}</Box></Text>
-                      <Text fontSize="xs" color="#1e293b">City Name: <Box as="span" color="#475569" fontWeight="500">{row.city}</Box></Text>
-                    </VStack>
-                  </Td>
+                return (
+                  <Tr key={row._id} _hover={{ bg: '#f8fafc' }} transition="background 0.1s">
+                    {/* Job ID */}
+                    <Td {...customTdStyle} fontWeight="800" color="#0B1A30">
+                      {row.jobCode || 'N/A'}
+                    </Td>
 
-                   {/* Job Overview */}
-                  <Td py="4" border="1px solid #edf2f7">
-                    <VStack align="start" spacing="2">
-                      <Text fontSize="xs" fontWeight="700" color="#1e293b">{row.jobPosition} : <Box as="span" color="#475569" fontWeight="500">{row.packageOrGuestOrVacancy} {row.jobCategory === 'hotel' ? 'Vacancy' : 'Guests'}</Box></Text>
-                      <Text fontSize="xs" fontWeight="700" color="#0000ff">Total Vacancy: {row.packageOrGuestOrVacancy || '1'}</Text>
-                    </VStack>
-                  </Td>
+                    {/* Category */}
+                    <Td {...customTdStyle}>
+                      {formatCategory(row.jobCategory)}
+                    </Td>
 
-                  {/* Applied Candidates Column */}
-                  <Td py="4" border="1px solid #edf2f7" textAlign="center">
-                    <Badge
-                      colorScheme="blue"
-                      variant="solid"
-                      px="3" py="1"
-                      borderRadius="full"
-                      fontSize="xs"
-                      cursor="pointer"
-                      onClick={() => { setSelectedJob(row); onApplicantsOpen(); }}
-                      _hover={{ transform: 'scale(1.1)', opacity: 0.9 }}
-                      transition="all 0.15s"
-                    >
-                      {row.appliedCount ?? row.applied ?? 0}
-                    </Badge>
-                  </Td>
+                    {/* Department (Job Position) */}
+                    <Td {...customTdStyle}>
+                      {row.jobPosition || 'N/A'}
+                    </Td>
 
-                  {/* Assigned Candidates Column */}
-                  <Td py="4" border="1px solid #edf2f7" textAlign="center">
-                    <Badge
-                      colorScheme="green"
-                      variant="solid"
-                      px="3" py="1"
-                      borderRadius="full"
-                      fontSize="xs"
-                      cursor="pointer"
-                      onClick={() => { setSelectedJob(row); onApplicantsOpen(); }}
-                      _hover={{ transform: 'scale(1.1)', opacity: 0.9 }}
-                      transition="all 0.15s"
-                    >
-                      {row.assignedCount ?? row.assigned ?? 0}
-                    </Badge>
-                  </Td>
+                    {/* City */}
+                    <Td {...customTdStyle}>
+                      {row.city || 'N/A'}
+                    </Td>
 
-                  {/* Status Dropdown */}
-                  <Td py="4" border="1px solid #edf2f7" textAlign="center">
-                    <Menu size="sm">
-                      <MenuButton 
-                        as={Button} 
-                        size="xs" 
-                        rightIcon={<ChevronDown size={14} />}
+                    {/* Salary */}
+                    <Td {...customTdStyle} color="#0B1A30">
+                      {formatSalary(row)}
+                    </Td>
+
+                    {/* Applied Candidates Badge */}
+                    <Td {...customTdStyle}>
+                      <Badge
+                        colorScheme="blue"
+                        variant="solid"
+                        px="3.5" py="1.5"
+                        borderRadius="full"
                         fontSize="xs"
                         fontWeight="700"
-                        bg={row.status === 'Urgent' ? '#fed7d7' : row.status === 'New' ? '#e6f6ff' : row.status === 'Active' ? '#f0fdf4' : '#f1f5f9'}
-                        color={row.status === 'Urgent' ? '#c53030' : row.status === 'New' ? '#0070f0' : row.status === 'Active' ? '#16a34a' : '#475569'}
-                        _hover={{ opacity: 0.8 }}
-                        _active={{ opacity: 0.7 }}
-                        minW="85px"
+                        cursor="pointer"
+                        onClick={() => { setSelectedJob(row); onApplicantsOpen(); }}
+                        _hover={{ transform: 'scale(1.1)', opacity: 0.9 }}
+                        transition="all 0.15s"
                       >
-                        {row.status}
-                      </MenuButton>
-                      <MenuList borderRadius="lg" border="1px solid #e8edf5" boxShadow="sm" p="1">
-                        {['Urgent', 'New', 'Active', 'Inactive', 'Cancelled', 'Expired'].map(s => (
-                          <MenuItem 
-                            key={s} 
-                            fontSize="xs" 
-                            fontWeight="600"
-                            onClick={async () => {
-                              try {
-                                await axios.patch(`${API_BASE_URL}/jobs/${row._id}/status-string`, { status: s }, {
-                                  headers: { 'Authorization': `Bearer ${token}` }
-                                });
-                                toast({ title: 'Success', description: `Status updated to ${s}`, status: 'success', duration: 2000, position: 'top-right' });
-                                fetchJobs();
-                              } catch (error) {
-                                console.error('Status update error:', error);
-                                toast({ 
-                                  title: 'Error', 
-                                  description: error.response?.data?.message || 'Status update failed.', 
-                                  status: 'error', 
-                                  duration: 3000, 
-                                  position: 'top-right' 
-                                });
-                              }
-                            }}
-                            _hover={{ bg: '#f8faff', color: BRAND }}
-                          >
-                            {s}
-                          </MenuItem>
-                        ))}
-                      </MenuList>
-                    </Menu>
-                  </Td>
-                  
-                  {/* Toggle Status Switch */}
-                  <Td py="4" border="1px solid #edf2f7" textAlign="center">
-                    <Switch 
-                      isChecked={row.isActive} 
-                      onChange={() => confirmToggleStatus(row._id, row.isActive)}
-                      sx={{ '.chakra-switch__track[data-checked]': { bg: BRAND } }} 
-                    />
-                  </Td>
-                  
-                  <Td py="4" border="1px solid #edf2f7" textAlign="center">
-                    <HStack spacing="2" justify="center">
-                      <IconButton icon={<Edit3 size={16} />} size="sm" bg="#f97316" color="white" borderRadius="md" _hover={{ bg: '#ea580c' }} aria-label="Edit" onClick={() => navigate(`/jobs/edit/${row._id}`)} />
-                      <IconButton icon={<Eye size={16} />} size="sm" bg="#1a83ff" color="white" borderRadius="md" _hover={{ bg: '#0070f0' }} aria-label="View" onClick={() => navigate(`/jobs/view/${row._id}`)} />
-                    </HStack>
-                  </Td>
-                </Tr>
-              ))}
-              {!isLoading && paginatedJobs.length === 0 && <Tr><Td colSpan={6} py="10" textAlign="center" color="#94a3b8">No records found.</Td></Tr>}
+                        {row.appliedCount ?? 0}
+                      </Badge>
+                    </Td>
+
+                    {/* Assigned Candidates Badge */}
+                    <Td {...customTdStyle}>
+                      <Badge
+                        colorScheme="green"
+                        variant="solid"
+                        px="3.5" py="1.5"
+                        borderRadius="full"
+                        fontSize="xs"
+                        fontWeight="700"
+                        cursor="pointer"
+                        onClick={() => { setSelectedJob(row); onApplicantsOpen(); }}
+                        _hover={{ transform: 'scale(1.1)', opacity: 0.9 }}
+                        transition="all 0.15s"
+                      >
+                        {row.assignedCount ?? 0}
+                      </Badge>
+                    </Td>
+
+                    {/* Status badge and toggle dropdown */}
+                    <Td {...customTdStyle}>
+                      <Menu size="sm">
+                        <MenuButton
+                          as={Button}
+                          size="xs"
+                          h="26px"
+                          px="3"
+                          borderRadius="md"
+                          bg={colors.bg}
+                          color={colors.color}
+                          _hover={{ opacity: 0.8 }}
+                          _active={{ opacity: 0.7 }}
+                          rightIcon={<ChevronDown size={12} />}
+                          fontSize="11px"
+                          fontWeight="700"
+                        >
+                          {statusLabel}
+                        </MenuButton>
+                        <MenuList borderRadius="lg" border="1px solid #e8edf5" boxShadow="sm" p="1">
+                          {['Urgent', 'New', 'Active', 'Inactive', 'Cancelled', 'Expired'].map(s => (
+                            <MenuItem
+                              key={s}
+                              fontSize="xs"
+                              fontWeight="600"
+                              onClick={async () => {
+                                try {
+                                  await axios.patch(`${API_BASE_URL}/jobs/${row._id}/status-string`, { status: s }, {
+                                    headers: { 'Authorization': `Bearer ${token}` }
+                                  });
+                                  toast({ title: 'Success', description: `Status updated to ${s}`, status: 'success', duration: 2000, position: 'top-right' });
+                                  fetchJobs();
+                                } catch (error) {
+                                  console.error('Status update error:', error);
+                                  toast({
+                                    title: 'Error',
+                                    description: error.response?.data?.message || 'Status update failed.',
+                                    status: 'error',
+                                    duration: 3000,
+                                    position: 'top-right'
+                                  });
+                                }
+                              }}
+                              _hover={{ bg: '#f8faff', color: BRAND }}
+                            >
+                              {s}
+                            </MenuItem>
+                          ))}
+                        </MenuList>
+                      </Menu>
+                    </Td>
+
+                    {/* Toggle Status Switch */}
+                    <Td {...customTdStyle}>
+                      <Switch
+                        isChecked={row.isActive}
+                        onChange={() => confirmToggleStatus(row._id, row.isActive)}
+                        sx={{ '.chakra-switch__track[data-checked]': { bg: BRAND } }}
+                      />
+                    </Td>
+
+                    {/* Created Date */}
+                    <Td {...customTdStyle}>
+                      {formatDate(row.createdAt)}
+                    </Td>
+
+                    {/* Actions */}
+                    <Td {...customTdStyle}>
+                      <HStack spacing="1" justify="center">
+                        <IconButton
+                          icon={<Eye size={15} />}
+                          size="xs"
+                          w="28px"
+                          h="28px"
+                          variant="ghost"
+                          color="#64748b"
+                          _hover={{ color: '#0f62fe', bg: '#f1f5f9' }}
+                          aria-label="View Details"
+                          onClick={() => navigate(`/jobs/view/${row._id}`)}
+                        />
+                        <IconButton
+                          icon={<Edit3 size={15} />}
+                          size="xs"
+                          w="28px"
+                          h="28px"
+                          variant="ghost"
+                          color="#64748b"
+                          _hover={{ color: '#0f62fe', bg: '#f1f5f9' }}
+                          aria-label="Edit Job"
+                          onClick={() => navigate(`/jobs/edit/${row._id}`)}
+                        />
+                        <IconButton
+                          icon={<Trash2 size={15} />}
+                          size="xs"
+                          w="28px"
+                          h="28px"
+                          variant="ghost"
+                          color="#ef4444"
+                          _hover={{ bg: '#fee2e2' }}
+                          aria-label="Delete Record"
+                          onClick={() => confirmDelete(row._id)}
+                        />
+                      </HStack>
+                    </Td>
+                  </Tr>
+                );
+              })}
+              {!isLoading && paginatedJobs.length === 0 && <Tr><Td colSpan={11} py="10" textAlign="center" color="#94a3b8">No records found.</Td></Tr>}
             </Tbody>
           </Table>
         </Box>
-        
-        <TableFooter 
-          showing={`${filteredJobs.length > 0 ? startIndex + 1 : 0} to ${Math.min(startIndex + parseInt(entries), filteredJobs.length)}`} 
-          total={filteredJobs.length}
-          currentPage={currentPage}
-          onPageChange={(p) => setCurrentPage(p)}
-          totalPages={totalPages}
-        />
+
+        {/* Custom Pagination Matching Picture 1 */}
+        <Flex justify="space-between" align="center" px="5" py="4" borderTop="1px solid #f1f5f9" bg="white" wrap="wrap" gap="4">
+          <Text fontSize="xs" color="#475569" fontWeight="600">
+            Showing {filteredJobs.length > 0 ? startIndex + 1 : 0} to {Math.min(startIndex + parseInt(entries), filteredJobs.length)} of {filteredJobs.length} entries
+          </Text>
+          {totalPages > 1 && (
+            <HStack spacing="2">
+              {Array.from({ length: totalPages }, (_, i) => i + 1).map((p) => {
+                const isCurrent = currentPage === p;
+                return (
+                  <Button
+                    key={p}
+                    size="sm"
+                    w="36px"
+                    h="36px"
+                    bg={isCurrent ? '#0f62fe' : 'white'}
+                    color={isCurrent ? 'white' : '#475569'}
+                    border="1px solid"
+                    borderColor={isCurrent ? '#0f62fe' : '#e2e8f0'}
+                    borderRadius="md"
+                    fontSize="xs"
+                    fontWeight="700"
+                    _hover={{ bg: isCurrent ? '#0043ce' : '#f1f5f9' }}
+                    onClick={() => setCurrentPage(p)}
+                  >
+                    {p}
+                  </Button>
+                );
+              })}
+              <Button
+                size="sm"
+                w="36px"
+                h="36px"
+                bg="white"
+                color="#475569"
+                border="1px solid"
+                borderColor="#e2e8f0"
+                borderRadius="md"
+                fontSize="xs"
+                fontWeight="700"
+                _hover={{ bg: '#f1f5f9' }}
+                disabled={currentPage >= totalPages}
+                onClick={() => setCurrentPage(prev => Math.min(prev + 1, totalPages))}
+              >
+                »
+              </Button>
+            </HStack>
+          )}
+        </Flex>
       </TableCard>
 
-      <ConfirmationModal 
+      <ConfirmationModal
         isOpen={isOpen}
         onClose={onClose}
         onConfirm={confirmConfig.onConfirm}
@@ -458,7 +647,7 @@ const JobList = () => {
           jobTitle={selectedJob.title}
         />
       )}
-      
+
       <PageFooter />
     </Box>
   );

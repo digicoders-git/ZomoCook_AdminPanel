@@ -330,12 +330,12 @@ const SidebarContent = ({ isCollapsed, onClose, onLogoutOpen, ...rest }) => (
           const hasAccess = (navItem) => {
             // Check direct permission
             if (navItem.permission && userPermissions.includes(navItem.permission)) return true;
-            
+
             // Check if any child has permission
             if (navItem.children) {
               return navItem.children.some(child => hasAccess(child));
             }
-            
+
             // If no permission specified, it might be public or dependent on others
             // For now, if no permission is set, we can decide to show or hide
             return false;
@@ -471,7 +471,7 @@ const Navbar = ({ onOpen, toggleCollapse, isCollapsed, onLogoutOpen }) => {
           _active={{ bg: '#003080', transform: 'scale(0.95)' }}
           boxShadow={`0 4px 12px ${BRAND}40`}
         />
-        
+
         {/* Desktop Toggle Button */}
         <IconButton
           display={{ base: 'none', md: 'flex' }}
@@ -522,9 +522,9 @@ const Navbar = ({ onOpen, toggleCollapse, isCollapsed, onLogoutOpen }) => {
 
         {/* User Profile Menu */}
         <Menu>
-          <MenuButton 
-            py="1" 
-            transition="all 0.2s" 
+          <MenuButton
+            py="1"
+            transition="all 0.2s"
             _focus={{ boxShadow: 'none' }}
             _hover={{ bg: `${BRAND}08` }}
             borderRadius="lg"
@@ -552,46 +552,46 @@ const Navbar = ({ onOpen, toggleCollapse, isCollapsed, onLogoutOpen }) => {
               </Box>
             </HStack>
           </MenuButton>
-          <MenuList 
-            bg="white" 
-            borderColor="#e8edf5" 
-            boxShadow="0 8px 30px rgba(0,74,173,0.12)" 
-            p="2" 
-            borderRadius="xl" 
+          <MenuList
+            bg="white"
+            borderColor="#e8edf5"
+            boxShadow="0 8px 30px rgba(0,74,173,0.12)"
+            p="2"
+            borderRadius="xl"
             minW="180px"
             border="1.5px solid #e8edf5"
           >
-            <MenuItem 
-              as={Link} 
-              to="/profile" 
+            <MenuItem
+              as={Link}
+              to="/profile"
               icon={<Icon as={Users} boxSize={3.5} />}
-              _hover={{ bg: `${BRAND}08`, color: BRAND }} 
-              borderRadius="md" 
-              color="#475569" 
+              _hover={{ bg: `${BRAND}08`, color: BRAND }}
+              borderRadius="md"
+              color="#475569"
               fontSize="sm"
               fontWeight="600"
             >
               Profile
             </MenuItem>
-            <MenuItem 
-              as={Link} 
-              to="/settings" 
+            <MenuItem
+              as={Link}
+              to="/settings"
               icon={<Icon as={Settings} boxSize={3.5} />}
-              _hover={{ bg: `${BRAND}08`, color: BRAND }} 
-              borderRadius="md" 
-              color="#475569" 
+              _hover={{ bg: `${BRAND}08`, color: BRAND }}
+              borderRadius="md"
+              color="#475569"
               fontSize="sm"
               fontWeight="600"
             >
               Settings
             </MenuItem>
             <MenuDivider borderColor="#f1f5f9" my="1" />
-            <MenuItem 
-              onClick={onLogoutOpen} 
+            <MenuItem
+              onClick={onLogoutOpen}
               icon={<Icon as={LogOut} boxSize={3.5} />}
-              _hover={{ bg: '#fff0f0', color: ACCENT }} 
-              borderRadius="md" 
-              color={ACCENT} 
+              _hover={{ bg: '#fff0f0', color: ACCENT }}
+              borderRadius="md"
+              color={ACCENT}
               fontSize="sm"
               fontWeight="600"
             >

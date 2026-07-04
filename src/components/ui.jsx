@@ -1,9 +1,9 @@
 // Shared UI constants and components used across all pages
-import { 
-  Box, Flex, Text, HStack, VStack, Icon, Button, Select, Input, 
+import {
+  Box, Flex, Text, HStack, VStack, Icon, Button, Select, Input,
   Breadcrumb, BreadcrumbItem, BreadcrumbLink, Badge,
-  AlertDialog, AlertDialogBody, AlertDialogFooter, AlertDialogHeader, 
-  AlertDialogContent, AlertDialogOverlay 
+  AlertDialog, AlertDialogBody, AlertDialogFooter, AlertDialogHeader,
+  AlertDialogContent, AlertDialogOverlay
 } from '@chakra-ui/react';
 import { ChevronRight, LayoutDashboard, Filter, Plus } from 'lucide-react';
 import { Link } from 'react-router-dom';
@@ -48,22 +48,22 @@ export const TableCard = ({ children }) => (
 );
 
 // Table controls bar (show entries + search)
-export const TableControls = ({ 
-  entries = "10", 
-  onEntriesChange, 
-  search = "", 
-  onSearch, 
-  searchPlaceholder = "Search..." 
+export const TableControls = ({
+  entries = "10",
+  onEntriesChange,
+  search = "",
+  onSearch,
+  searchPlaceholder = "Search..."
 }) => (
   <Flex px="5" py="4" justify="space-between" align={{ base: 'flex-start', md: 'center' }} direction={{ base: 'column', md: 'row' }} gap="4" borderBottom="1px solid #f1f5f9">
     <HStack spacing="2">
       <Text fontSize="sm" color="#64748b" whiteSpace="nowrap">Show</Text>
-      <Select 
-        size="sm" 
-        w="70px" 
-        bg="#f8faff" 
-        border="1.5px solid #dde6f5" 
-        borderRadius="lg" 
+      <Select
+        size="sm"
+        w="70px"
+        bg="#f8faff"
+        border="1.5px solid #dde6f5"
+        borderRadius="lg"
         value={entries}
         onChange={(e) => onEntriesChange && onEntriesChange(e.target.value)}
         _focus={{ borderColor: BRAND }}>
@@ -76,15 +76,15 @@ export const TableControls = ({
     </HStack>
     <HStack spacing="2" w={{ base: 'full', md: 'auto' }}>
       <Text fontSize="sm" color="#64748b" whiteSpace="nowrap">Search:</Text>
-      <Input 
-        size="sm" 
+      <Input
+        size="sm"
         w="full"
         maxW={{ base: 'full', md: '220px' }}
         placeholder={searchPlaceholder}
         value={search}
         onChange={(e) => onSearch && onSearch(e.target.value)}
-        bg="#f8faff" 
-        border="1.5px solid #dde6f5" 
+        bg="#f8faff"
+        border="1.5px solid #dde6f5"
         borderRadius="lg"
         _focus={{ borderColor: BRAND, boxShadow: `0 0 0 2px ${BRAND}20` }} />
     </HStack>
@@ -93,12 +93,12 @@ export const TableControls = ({
 
 // Table header row style
 export const tableHeadStyle = { bg: '#eef2f7', borderBottom: '1px solid #e2e8f0' };
-export const thStyle = { 
-  color: '#475569', 
-  fontSize: '11px', 
-  fontWeight: '700', 
-  letterSpacing: '0.5px', 
-  textTransform: 'uppercase', 
+export const thStyle = {
+  color: '#475569',
+  fontSize: '11px',
+  fontWeight: '700',
+  letterSpacing: '0.5px',
+  textTransform: 'uppercase',
   py: '4',
   borderRight: '1px solid #e2e8f0',
   _last: { borderRight: 'none' }
@@ -117,11 +117,11 @@ export const TableFooter = ({ showing, total, currentPage = 1, totalPages = 1, o
   <Flex justify={{ base: 'center', md: 'space-between' }} align="center" px="5" py="4" borderTop="1px solid #f1f5f9" bg="#fafbfc" wrap="wrap" gap="4" direction={{ base: 'column', md: 'row' }}>
     <Text fontSize="xs" color="#94a3b8">Showing {showing} of {total} entries</Text>
     <HStack spacing="1">
-      <Button 
-        size="xs" 
-        variant="ghost" 
-        color="#64748b" 
-        borderRadius="md" 
+      <Button
+        size="xs"
+        variant="ghost"
+        color="#64748b"
+        borderRadius="md"
         _hover={{ bg: '#f0f5ff', color: BRAND }}
         disabled={currentPage === 1}
         onClick={() => onPageChange && onPageChange(currentPage - 1)}
@@ -131,11 +131,11 @@ export const TableFooter = ({ showing, total, currentPage = 1, totalPages = 1, o
       <Button size="xs" bg={BRAND} color="white" borderRadius="md" _hover={{ bg: '#003d91' }} minW="7">
         {currentPage}
       </Button>
-      <Button 
-        size="xs" 
-        variant="ghost" 
-        color="#64748b" 
-        borderRadius="md" 
+      <Button
+        size="xs"
+        variant="ghost"
+        color="#64748b"
+        borderRadius="md"
         _hover={{ bg: '#f0f5ff', color: BRAND }}
         disabled={currentPage >= totalPages}
         onClick={() => onPageChange && onPageChange(currentPage + 1)}
@@ -217,13 +217,13 @@ export const StatusBadge = ({ active }) => (
 import { AlertTriangle, Info } from 'lucide-react';
 import { useRef } from 'react';
 
-export const ConfirmationModal = ({ 
-  isOpen, 
-  onClose, 
-  onConfirm, 
-  title = "Are you sure?", 
-  description = "This action cannot be undone.", 
-  confirmLabel = "Confirm", 
+export const ConfirmationModal = ({
+  isOpen,
+  onClose,
+  onConfirm,
+  title = "Are you sure?",
+  description = "This action cannot be undone.",
+  confirmLabel = "Confirm",
   confirmColor = ACCENT,
   isLoading = false,
   type = 'danger' // 'danger' or 'info'
@@ -256,14 +256,14 @@ export const ConfirmationModal = ({
             <Button ref={cancelRef} onClick={onClose} variant="ghost" size="sm" borderRadius="lg" fontSize="xs" fontWeight="700" color="#64748b">
               Cancel
             </Button>
-            <Button 
-              bg={confirmColor} 
-              color="white" 
-              onClick={onConfirm} 
-              size="sm" 
-              borderRadius="lg" 
-              fontSize="xs" 
-              fontWeight="700" 
+            <Button
+              bg={confirmColor}
+              color="white"
+              onClick={onConfirm}
+              size="sm"
+              borderRadius="lg"
+              fontSize="xs"
+              fontWeight="700"
               px="6"
               isLoading={isLoading}
               _hover={{ bg: confirmColor === ACCENT ? '#c8151c' : '#003d91', transform: 'translateY(-1px)' }}
