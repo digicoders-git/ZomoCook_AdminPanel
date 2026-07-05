@@ -123,7 +123,11 @@ function App() {
     const unsubscribe = onForegroundMessage((payload) => {
       const { title, body } = payload.notification;
       navigator.serviceWorker.ready.then(reg => {
-        reg.showNotification(title, { body, icon: '/logo.png' });
+        reg.showNotification(title, { 
+          body, 
+          icon: '/logo.png',
+          data: payload.data
+        });
       });
     });
 

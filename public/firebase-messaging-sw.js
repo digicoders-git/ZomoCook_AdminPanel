@@ -13,8 +13,57 @@ firebase.initializeApp({
 const messaging = firebase.messaging();
 
 messaging.onBackgroundMessage((payload) => {
-    self.registration.showNotification(payload.notification.title, {
+    const notificationTitle = payload.notification.title;
+    const notificationOptions = {
         body: payload.notification.body,
-        icon: '/logo.png'
-    });
+        icon: '/logo.png',
+        data: payload.data // Pass the data payload to the notification event
+    };
+
+    self.registration.showNotification(notificationTitle, notificationOptions);
+});
+
+self.addEventListener('notificationclick', (event) => {
+    event.notification.close();
+
+    const data = event.notification.data;
+    let urlToOpen = '/';
+
+    if (data) {
+        if (data.actionUrl && data.actionUrl !== '/') {
+            urlToOpen = data.actionUrl;
+        } else if (data.notificationType) {
+            // Fallback routing based on notificationType
+            const type = data.notificationType.toLowerCase();
+            if (type.includes('job') || type.includes('applied')) {
+                urlToOpen = '/jobs';
+            } else if (type.includes('candidate') || type.includes('cook')) {
+                urlToOpen = '/candidates';
+            } else if (type.includes('user') || type.includes('customer')) {
+                urlToOpen = '/customers';
+            } else if (type.includes('query')) {
+                urlToOpen = '/queries';
+            } else if (type.includes('payment') || type.includes('plan')) {
+                urlToOpen = '/plans';
+            }
+        }
+    }
+
+    event.waitUntil(
+        clients.matchAll({ type: 'window', includeUncontrolled: true }).then((windowClients) => {
+            // Check if there is already a window/tab open with the target URL
+            for (let i = 0; i < windowClients.length; i++) {
+                const client = windowClients[i];
+                // Focus the first available client and navigate it to urlToOpen
+                if ('focus' in client) {
+                    client.navigate(urlToOpen);
+                    return client.focus();
+                }
+            }
+            // If no window is open, open a new one
+            if (clients.openWindow) {
+                return clients.openWindow(urlToOpen);
+            }
+        })
+    );
 });
