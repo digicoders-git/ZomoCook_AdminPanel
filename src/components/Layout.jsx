@@ -32,6 +32,7 @@ const navItems = [
     name: 'Job Management', icon: Briefcase, path: '/jobs', permission: 'Jobs',
     children: [
       { name: 'Job List', path: '/jobs/list', permission: 'Job List' },
+      { name: 'Pending Jobs', path: '/pending-jobs', permission: 'Job List' },
       { name: 'Add Job', path: '/jobs/add', permission: 'Add Job' },
     ]
   },

@@ -9,6 +9,7 @@ import CustomerList from './pages/CustomerList';
 import AddCustomer from './pages/AddCustomer';
 import EditCustomer from './pages/EditCustomer';
 import JobList from './pages/JobList';
+import PendingJobs from './pages/PendingJobs';
 import AddJob from './pages/AddJob';
 import EditJob from './pages/EditJob';
 import ViewJob from './pages/ViewJob';
@@ -169,6 +170,12 @@ function App() {
         <Route path="/jobs/list" element={
           <PermissionRoute permission="Job List">
             <Layout><JobList /></Layout>
+          </PermissionRoute>
+        } />
+        
+        <Route path="/pending-jobs" element={
+          <PermissionRoute permission="Job List">
+            <Layout><PendingJobs /></Layout>
           </PermissionRoute>
         } />
         <Route path="/jobs/add" element={
