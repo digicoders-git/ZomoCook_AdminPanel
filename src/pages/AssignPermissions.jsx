@@ -5,7 +5,7 @@ import {
 } from '@chakra-ui/react';
 import { Save, X, Layers } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
-import { PageHeader, FormCard, PageFooter, BRAND, ACCENT, selectStyle } from '../components/ui';
+import { PageHeader, FormCard, PageFooter, BRAND, ACCENT, selectStyle, Loading } from '../components/ui';
 import axios from 'axios';
 
 const PERMISSION_MODULES = [
@@ -164,7 +164,7 @@ const AssignPermissions = () => {
     }
   };
 
-  if (isFetching) return <Flex h="80vh" align="center" justify="center"><Spinner size="xl" color={BRAND} thickness="4px" /></Flex>;
+  if (isFetching) return <Loading message="Loading permissions..." />;
 
   const isAllSelected = selectedPermissions.length > 0 && 
     PERMISSION_MODULES.every(m => [m.name, ...m.permissions].every(p => selectedPermissions.includes(p)));

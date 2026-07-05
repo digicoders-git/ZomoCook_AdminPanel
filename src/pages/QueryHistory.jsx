@@ -1,12 +1,12 @@
 import React, { useState, useEffect } from 'react';
-import { 
-  Box, Flex, Text, HStack, VStack, Table, Thead, Tbody, Tr, Th, Td, 
-  IconButton, Tooltip, Spinner, useToast, Avatar, useDisclosure 
+import {
+  Box, Flex, Text, HStack, VStack, Table, Thead, Tbody, Tr, Th, Td,
+  IconButton, Tooltip, Spinner, useToast, Avatar, useDisclosure
 } from '@chakra-ui/react';
 import { Trash2, RefreshCcw } from 'lucide-react';
-import { 
-  PageHeader, TableCard, TableControls, TableFooter, PageFooter, BRAND, ACCENT, 
-  tableHeadStyle, thStyle, trHover, ConfirmationModal 
+import {
+  PageHeader, TableCard, TableControls, TableFooter, PageFooter, BRAND, ACCENT,
+  tableHeadStyle, thStyle, trHover, ConfirmationModal
 } from '../components/ui';
 import axios from 'axios';
 
@@ -16,7 +16,7 @@ const QueryHistory = () => {
   const [searchTerm, setSearchTerm] = useState('');
   const toast = useToast();
   const { isOpen, onOpen, onClose } = useDisclosure();
-  const [confirmConfig, setConfirmConfig] = useState({ title: '', description: '', onConfirm: () => {}, type: 'danger' });
+  const [confirmConfig, setConfirmConfig] = useState({ title: '', description: '', onConfirm: () => { }, type: 'danger' });
 
   const fetchQueries = async () => {
     setIsLoading(true);
@@ -66,17 +66,17 @@ const QueryHistory = () => {
 
   return (
     <Box pb="10">
-      <PageHeader 
-        title="Query History List" 
+      <PageHeader
+        title="Query History List"
         breadcrumb="Query History List"
         actions={[
-          <IconButton 
-            key="refresh" 
-            icon={<RefreshCcw size={16} />} 
-            onClick={fetchQueries} 
-            size="sm" 
-            variant="outline" 
-            aria-label="Refresh" 
+          <IconButton
+            key="refresh"
+            icon={<RefreshCcw size={16} />}
+            onClick={fetchQueries}
+            size="sm"
+            variant="outline"
+            aria-label="Refresh"
           />
         ]}
       />
@@ -86,7 +86,7 @@ const QueryHistory = () => {
           <Text fontSize="sm" fontWeight="700" color="#1e293b">Query History List</Text>
         </Flex>
         <TableControls search={searchTerm} onSearch={setSearchTerm} searchPlaceholder="Search queries..." />
-        
+
         <Box overflowX="auto" sx={{ WebkitOverflowScrolling: 'touch' }}>
           {isLoading ? (
             <Flex justify="center" py="10"><Spinner color={BRAND} /></Flex>
@@ -126,15 +126,15 @@ const QueryHistory = () => {
                     </Td>
                     <Td py="4" minW="60px">
                       <Tooltip label="Delete Query">
-                        <IconButton 
-                          icon={<Trash2 size={13} />} 
-                          size="xs" 
-                          bg="#fff0f0" 
-                          color={ACCENT} 
-                          borderRadius="lg" 
-                          _hover={{ bg: ACCENT, color: 'white' }} 
+                        <IconButton
+                          icon={<Trash2 size={13} />}
+                          size="xs"
+                          bg="#fff0f0"
+                          color={ACCENT}
+                          borderRadius="lg"
+                          _hover={{ bg: ACCENT, color: 'white' }}
                           onClick={() => handleDelete(q._id)}
-                          aria-label="delete" 
+                          aria-label="delete"
                         />
                       </Tooltip>
                     </Td>
@@ -148,7 +148,7 @@ const QueryHistory = () => {
         <TableFooter showing={`1 to ${queries.length}`} total={queries.length} />
       </TableCard>
 
-      <ConfirmationModal 
+      <ConfirmationModal
         isOpen={isOpen}
         onClose={onClose}
         onConfirm={confirmConfig.onConfirm}

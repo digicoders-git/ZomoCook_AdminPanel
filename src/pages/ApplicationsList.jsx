@@ -55,7 +55,7 @@ const ApplicationsList = () => {
   const handleStatusChange = async (appId, newStatus) => {
     try {
       const token = localStorage.getItem('adminToken');
-      const response = await axios.patch(`${API_BASE_URL}/applications/${appId}/status`, 
+      const response = await axios.patch(`${API_BASE_URL}/applications/${appId}/status`,
         { status: newStatus },
         { headers: { 'Authorization': `Bearer ${token}` } }
       );
@@ -122,12 +122,12 @@ const ApplicationsList = () => {
           <Text fontSize="sm" fontWeight="700" color="#1e293b">Total Applications Record List</Text>
         </Flex>
 
-        <TableControls 
-          search={searchTerm} 
-          onSearch={setSearchTerm} 
+        <TableControls
+          search={searchTerm}
+          onSearch={setSearchTerm}
           entries={entriesPerPage}
           onEntriesChange={setEntriesPerPage}
-          searchPlaceholder="Search by name, phone or job..." 
+          searchPlaceholder="Search by name, phone or job..."
         />
 
         <Box overflowX="auto">
@@ -194,13 +194,13 @@ const ApplicationsList = () => {
                     </Td>
                     <Td {...tdStyle} textAlign="center">
                       <VStack spacing="3" align="center">
-                        <Select 
-                          size="sm" 
-                          bg={getStatusColor(c.status)} 
-                          color="white" 
-                          borderColor="transparent" 
-                          borderRadius="4px" 
-                          fontWeight="700" 
+                        <Select
+                          size="sm"
+                          bg={getStatusColor(c.status)}
+                          color="white"
+                          borderColor="transparent"
+                          borderRadius="4px"
+                          fontWeight="700"
                           value={c.status}
                           onChange={(e) => handleStatusChange(c._id, e.target.value)}
                           sx={{ '& option': { color: '#1e293b', bg: 'white' } }}
@@ -244,9 +244,9 @@ const ApplicationsList = () => {
             </Table>
           )}
         </Box>
-        <TableFooter 
-          showing={`${indexOfFirstRecord + 1} to ${Math.min(indexOfLastRecord, applications.length)}`} 
-          total={applications.length} 
+        <TableFooter
+          showing={`${indexOfFirstRecord + 1} to ${Math.min(indexOfLastRecord, applications.length)}`}
+          total={applications.length}
           currentPage={currentPage}
           onPageChange={setCurrentPage}
           totalPages={totalPages}

@@ -111,7 +111,7 @@ const Login = () => {
             justifyContent="center"
             boxShadow="0 6px 20px rgba(0,0,0,0.18)"
           >
-            <img src="/logo.jpg" alt="ZomoCook" style={{ width: '100%', height: '100%', objectFit: 'contain' }} />
+            <img src="/logo.png" alt="ZomoCook" style={{ width: '100%', height: '100%', objectFit: 'contain' }} />
           </Box>
         </Flex>
         <Text fontSize="lg" fontWeight="900" color="white" lineHeight="1.1" letterSpacing="-0.3px" position="relative" zIndex="1">
@@ -141,7 +141,7 @@ const Login = () => {
         {/* Logo */}
         <Flex align="center" gap="3" position="relative" zIndex="1">
           <Box w="48px" h="48px" borderRadius="12px" bg="white" overflow="hidden" display="flex" alignItems="center" justifyContent="center" boxShadow="0 4px 16px rgba(0,0,0,0.15)">
-            <img src="/logo.jpg" alt="ZomoCook" style={{ width: '100%', height: '100%', objectFit: 'contain' }} />
+            <img src="/logo.png" alt="ZomoCook" style={{ width: '100%', height: '100%', objectFit: 'contain' }} />
           </Box>
           <Box>
             <Text fontSize="xl" fontWeight="800" color="white" lineHeight="1.1">ZomoCook</Text>

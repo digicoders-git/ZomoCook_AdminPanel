@@ -1,13 +1,13 @@
 import React, { useState, useEffect } from 'react';
-import { 
-  Box, Flex, Text, HStack, Table, Thead, Tbody, Tr, Th, Td, Switch, 
-  IconButton, Image, Tooltip, Spinner, useToast, Button, Badge, useDisclosure 
+import {
+  Box, Flex, Text, HStack, Table, Thead, Tbody, Tr, Th, Td, Switch,
+  IconButton, Image, Tooltip, Spinner, useToast, Button, Badge, useDisclosure
 } from '@chakra-ui/react';
 import { Edit3, Trash2, Filter, Plus, RefreshCcw } from 'lucide-react';
 import { Link } from 'react-router-dom';
-import { 
-  PageHeader, TableCard, TableControls, TableFooter, PageFooter, BRAND, ACCENT, 
-  tableHeadStyle, thStyle, trHover, ConfirmationModal 
+import {
+  PageHeader, TableCard, TableControls, TableFooter, PageFooter, BRAND, ACCENT,
+  tableHeadStyle, thStyle, trHover, ConfirmationModal
 } from '../components/ui';
 import axios from 'axios';
 import API_BASE_URL from '../apiConfig';
@@ -18,7 +18,7 @@ const NotificationList = () => {
   const [searchTerm, setSearchTerm] = useState('');
   const toast = useToast();
   const { isOpen, onOpen, onClose } = useDisclosure();
-  const [confirmConfig, setConfirmConfig] = useState({ title: '', description: '', onConfirm: () => {}, type: 'danger' });
+  const [confirmConfig, setConfirmConfig] = useState({ title: '', description: '', onConfirm: () => { }, type: 'danger' });
 
   const fetchNotifications = async () => {
     setIsLoading(true);
@@ -105,7 +105,7 @@ const NotificationList = () => {
           </HStack>
           <TableControls search={searchTerm} onSearch={setSearchTerm} searchPlaceholder="Search notifications..." />
         </Flex>
-        
+
         <Box overflowX="auto">
           {isLoading ? (
             <Flex justify="center" py="10"><Spinner color={BRAND} /></Flex>
@@ -148,24 +148,24 @@ const NotificationList = () => {
                     </Td>
                     <Td py="4" color="#64748b" fontSize="xs">{new Date(n.createdAt).toLocaleDateString()}</Td>
                     <Td py="4">
-                      <Switch 
-                        isChecked={n.status === 'active'} 
+                      <Switch
+                        isChecked={n.status === 'active'}
                         onChange={() => handleToggleStatus(n._id, n.status)}
-                        sx={{ '.chakra-switch__track[data-checked]': { bg: BRAND } }} 
+                        sx={{ '.chakra-switch__track[data-checked]': { bg: BRAND } }}
                       />
                     </Td>
                     <Td py="4">
                       <HStack spacing="2">
                         <Tooltip label="Delete">
-                          <IconButton 
-                            icon={<Trash2 size={14} />} 
-                            size="xs" 
-                            bg="#fff0f0" 
-                            color={ACCENT} 
-                            borderRadius="lg" 
-                            _hover={{ bg: ACCENT, color: 'white' }} 
+                          <IconButton
+                            icon={<Trash2 size={14} />}
+                            size="xs"
+                            bg="#fff0f0"
+                            color={ACCENT}
+                            borderRadius="lg"
+                            _hover={{ bg: ACCENT, color: 'white' }}
                             onClick={() => handleDelete(n._id)}
-                            aria-label="delete" 
+                            aria-label="delete"
                           />
                         </Tooltip>
                       </HStack>
@@ -179,8 +179,8 @@ const NotificationList = () => {
         </Box>
         <TableFooter showing={`1 to ${notifications.length}`} total={notifications.length} />
       </TableCard>
-      
-      <ConfirmationModal 
+
+      <ConfirmationModal
         isOpen={isOpen}
         onClose={onClose}
         onConfirm={confirmConfig.onConfirm}

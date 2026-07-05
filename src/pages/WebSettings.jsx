@@ -102,7 +102,7 @@ const WebSettings = () => {
     try {
       const token = localStorage.getItem('adminToken');
       const formData = new FormData();
-      
+
       // Append all fields
       Object.keys(settings).forEach(key => {
         if (settings[key] !== null) {
@@ -111,7 +111,7 @@ const WebSettings = () => {
       });
 
       const { data } = await axios.put(`${API_BASE_URL}/settings`, formData, {
-        headers: { 
+        headers: {
           Authorization: `Bearer ${token}`,
           'Content-Type': 'multipart/form-data'
         }

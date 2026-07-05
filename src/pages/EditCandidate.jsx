@@ -7,7 +7,7 @@ import {
 import { Send, UserPlus, Upload, Save, Plus, Trash2, X, Briefcase, GraduationCap, Building2, UserCircle, Award, CheckCircle, FileUp, Share2, ImageIcon, RotateCcw } from 'lucide-react';
 import { useNavigate, Link, useParams } from 'react-router-dom';
 import { useToast } from '@chakra-ui/react';
-import { PageHeader, FormCard, PageFooter, BRAND, ACCENT, inputStyle, selectStyle, labelStyle } from '../components/ui';
+import { PageHeader, FormCard, PageFooter, BRAND, ACCENT, inputStyle, selectStyle, labelStyle, Loading } from '../components/ui';
 import axios from 'axios';
 
 const EditCandidate = () => {
@@ -262,7 +262,7 @@ const EditCandidate = () => {
 
   const tabs = ['Basic Profile', 'Job Preference', 'Cooking Skills', 'Work Experience', 'Career Highlights', 'Documents Upload', 'Social Media', 'Photo Gallery'];
   
-  if (isFetching) return <Flex h="80vh" align="center" justify="center"><Spinner size="xl" color={BRAND} /></Flex>;
+  if (isFetching) return <Loading message="Loading candidate profile..." />;
 
   const apiBase = import.meta.env.VITE_API_URL.replace('/api', '');
 

@@ -80,14 +80,14 @@ const ViewJob = () => {
       <PageHeader
         title="Job Details"
         actions={[
-          <Button 
-            key="back" 
-            onClick={() => navigate(-1)} 
-            leftIcon={<ArrowLeft size={16} />} 
-            size="sm" 
-            bg="#f97316" 
-            color="white" 
-            borderRadius="md" 
+          <Button
+            key="back"
+            onClick={() => navigate(-1)}
+            leftIcon={<ArrowLeft size={16} />}
+            size="sm"
+            bg="#f97316"
+            color="white"
+            borderRadius="md"
             px="6"
             _hover={{ bg: '#ea580c' }}
           >
@@ -135,7 +135,7 @@ const ViewJob = () => {
           <Box p="4" borderBottom="1px solid #f1f5f9" bg="#fcfdfe">
             <Text fontSize="sm" fontWeight="800" color="#1e293b">Job Details</Text>
           </Box>
-          
+
           <Table variant="simple">
             <Tbody>
               <Tr borderBottom="1px solid #f1f5f9">
@@ -143,9 +143,9 @@ const ViewJob = () => {
                 <Td py="5" px="6">
                   <Flex justify="center" w="full">
                     <Box borderRadius="lg" overflow="hidden" border="1px solid #edf2f7" boxShadow="sm">
-                       <Image 
-                        src={job.image ? `${apiBase}/${job.image}` : '/placeholder-job.png'} 
-                        alt="job" 
+                      <Image
+                        src={job.image ? `${apiBase}/${job.image}` : '/placeholder-job.png'}
+                        alt="job"
                         maxH="150px"
                         fallbackSrc="https://via.placeholder.com/150"
                       />
@@ -158,14 +158,14 @@ const ViewJob = () => {
               <DataRow label="Customer/Client Name" value={job.customer?.name} />
               <DataRow label="State" value={job.state} />
               <DataRow label="City" value={job.city} />
-              
+
               {job.jobCategory === 'daily' && (
                 <>
                   <DataRow label="Event" value={job.event} />
                   <DataRow label="Serving Time" value={job.servingTime} />
                 </>
               )}
-              
+
               {job.jobCategory !== 'daily' && (
                 <DataRow label="Property Category" value={job.propertyCategory} />
               )}
@@ -209,7 +209,7 @@ const ViewJob = () => {
         </Box>
       </VStack>
 
-      <JobApplicantsModal 
+      <JobApplicantsModal
         isOpen={isOpen}
         onClose={onClose}
         jobId={job._id}

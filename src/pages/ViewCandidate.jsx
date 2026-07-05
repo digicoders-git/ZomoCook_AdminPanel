@@ -1,12 +1,12 @@
 import React, { useState, useEffect } from 'react';
-import { 
-  Box, Flex, Text, HStack, VStack, Badge, Button, Avatar, Icon, Spinner, 
+import {
+  Box, Flex, Text, HStack, VStack, Badge, Button, Avatar, Icon, Spinner,
   SimpleGrid, Divider, Tag, Grid, GridItem, Menu, MenuButton, MenuList, MenuItem,
   Table, Thead, Tbody, Tr, Th, Td, Image, Link as ChakraLink, Tooltip, IconButton,
   Tabs, TabList, Tab, TabPanels, TabPanel
 } from '@chakra-ui/react';
-import { 
-  ArrowLeft, Mail, Phone, MapPin, Calendar, Briefcase, IndianRupee, Globe, 
+import {
+  ArrowLeft, Mail, Phone, MapPin, Calendar, Briefcase, IndianRupee, Globe,
   FileText, CheckCircle, Settings, Edit3, CheckSquare, CalendarDays, UserCircle, ChevronDown,
   Clock, ExternalLink, GraduationCap, Building2, Award, Download, Eye, Share2, ImageIcon
 } from 'lucide-react';
@@ -86,7 +86,7 @@ const ViewCandidate = () => {
 
       <Box bg="white" borderRadius="none" border="1px solid #e8edf5" boxShadow="sm" overflow="hidden">
         <Box p="5" borderBottom="1px solid #f1f5f9"><Text fontSize="md" fontWeight="800" color="#1e293b">Candidate Details</Text></Box>
-        
+
         <Tabs index={activeTab} onChange={setActiveTab} variant="unstyled" p="5">
           <TabList display="flex" flexWrap="wrap" gap="2" mb="8">
             {tabs.map((tab, index) => (
@@ -140,23 +140,23 @@ const ViewCandidate = () => {
 
             {/* Work Experience */}
             <TabPanel p="0">
-               <Text fontSize="sm" fontWeight="800" p="4" bg="#f8faff" borderBottom="1px solid #f1f5f9">Last Company Details</Text>
-               <Table variant="simple" border="1px solid #f1f5f9">
-                 <Tbody>
-                    <DetailRow label="Company Name" value={candidate.workExperience?.lastCompany?.name} />
-                    <DetailRow label="Role" value={candidate.workExperience?.lastCompany?.role} />
-                    <DetailRow label="Duration" value={candidate.workExperience?.lastCompany?.duration} />
-                    <DetailRow label="Reason for Leaving" value={candidate.workExperience?.lastCompany?.reasonForLeaving} />
-                 </Tbody>
-               </Table>
-               <Text fontSize="sm" fontWeight="800" p="4" bg="#f8faff" borderY="1px solid #f1f5f9" mt="6">Experience History</Text>
-               <Table variant="simple" border="1px solid #f1f5f9">
-                 <Tbody>
-                    {candidate.workExperience?.experiences?.map((exp, i) => (
-                        <DetailRow key={i} label={exp.position} value={`${exp.from} to ${exp.to}`} />
-                    ))}
-                 </Tbody>
-               </Table>
+              <Text fontSize="sm" fontWeight="800" p="4" bg="#f8faff" borderBottom="1px solid #f1f5f9">Last Company Details</Text>
+              <Table variant="simple" border="1px solid #f1f5f9">
+                <Tbody>
+                  <DetailRow label="Company Name" value={candidate.workExperience?.lastCompany?.name} />
+                  <DetailRow label="Role" value={candidate.workExperience?.lastCompany?.role} />
+                  <DetailRow label="Duration" value={candidate.workExperience?.lastCompany?.duration} />
+                  <DetailRow label="Reason for Leaving" value={candidate.workExperience?.lastCompany?.reasonForLeaving} />
+                </Tbody>
+              </Table>
+              <Text fontSize="sm" fontWeight="800" p="4" bg="#f8faff" borderY="1px solid #f1f5f9" mt="6">Experience History</Text>
+              <Table variant="simple" border="1px solid #f1f5f9">
+                <Tbody>
+                  {candidate.workExperience?.experiences?.map((exp, i) => (
+                    <DetailRow key={i} label={exp.position} value={`${exp.from} to ${exp.to}`} />
+                  ))}
+                </Tbody>
+              </Table>
             </TabPanel>
 
             {/* Career Highlights */}
@@ -176,15 +176,15 @@ const ViewCandidate = () => {
                 <Tbody>
                   {['idProof', 'addressProof', 'policeVerification', 'resume', 'academicCertificate', 'experienceCertificate'].map(doc => (
                     <Tr key={doc} borderBottom="1px solid #f1f5f9">
-                        <Td py="3" px="6" bg="#fcfdfe" w="300px" fontSize="sm" fontWeight="700" color="#475569" borderRight="1px solid #f1f5f9" textTransform="capitalize">{doc.replace(/([A-Z])/g, ' $1')}</Td>
-                        <Td py="3" px="6">
-                            {candidate.documents?.[doc] ? (
-                                <HStack spacing="4">
-                                    <ChakraLink href={`${apiBase}/${candidate.documents[doc]}`} isExternal color="#ff6b00" fontWeight="600" fontSize="sm">View Document</ChakraLink>
-                                    <Badge colorScheme="green">Verified</Badge>
-                                </HStack>
-                            ) : <Text fontSize="sm" color="red.400">Not Uploaded</Text>}
-                        </Td>
+                      <Td py="3" px="6" bg="#fcfdfe" w="300px" fontSize="sm" fontWeight="700" color="#475569" borderRight="1px solid #f1f5f9" textTransform="capitalize">{doc.replace(/([A-Z])/g, ' $1')}</Td>
+                      <Td py="3" px="6">
+                        {candidate.documents?.[doc] ? (
+                          <HStack spacing="4">
+                            <ChakraLink href={`${apiBase}/${candidate.documents[doc]}`} isExternal color="#ff6b00" fontWeight="600" fontSize="sm">View Document</ChakraLink>
+                            <Badge colorScheme="green">Verified</Badge>
+                          </HStack>
+                        ) : <Text fontSize="sm" color="red.400">Not Uploaded</Text>}
+                      </Td>
                     </Tr>
                   ))}
                 </Tbody>
@@ -195,24 +195,24 @@ const ViewCandidate = () => {
             <TabPanel p="0">
               <Table variant="simple" border="1px solid #f1f5f9">
                 <Tbody>
-                    {candidate.socialMedia?.map((s, i) => (
-                        <DetailRow key={i} label={s.platform} value={s.url} />
-                    ))}
-                    {candidate.socialMedia?.length === 0 && <Tr><Td colSpan={2} p="10" textAlign="center" color="#94a3b8">No social media links added.</Td></Tr>}
+                  {candidate.socialMedia?.map((s, i) => (
+                    <DetailRow key={i} label={s.platform} value={s.url} />
+                  ))}
+                  {candidate.socialMedia?.length === 0 && <Tr><Td colSpan={2} p="10" textAlign="center" color="#94a3b8">No social media links added.</Td></Tr>}
                 </Tbody>
               </Table>
             </TabPanel>
 
             {/* Photo Gallery */}
             <TabPanel p="5">
-               <SimpleGrid columns={{ base: 2, md: 4, lg: 6 }} spacing="4">
-                  {candidate.photoGallery?.map((url, i) => (
-                    <Box key={i} borderRadius="lg" overflow="hidden" h="150px" border="1px solid #f1f5f9" cursor="pointer" onClick={() => window.open(`${apiBase}/${url}`, '_blank')}>
-                      <Image src={`${apiBase}/${url}`} alt="gallery" objectFit="cover" w="100%" h="100%" />
-                    </Box>
-                  ))}
-               </SimpleGrid>
-               {candidate.photoGallery?.length === 0 && <Text p="10" textAlign="center" color="#94a3b8">No photos in gallery.</Text>}
+              <SimpleGrid columns={{ base: 2, md: 4, lg: 6 }} spacing="4">
+                {candidate.photoGallery?.map((url, i) => (
+                  <Box key={i} borderRadius="lg" overflow="hidden" h="150px" border="1px solid #f1f5f9" cursor="pointer" onClick={() => window.open(`${apiBase}/${url}`, '_blank')}>
+                    <Image src={`${apiBase}/${url}`} alt="gallery" objectFit="cover" w="100%" h="100%" />
+                  </Box>
+                ))}
+              </SimpleGrid>
+              {candidate.photoGallery?.length === 0 && <Text p="10" textAlign="center" color="#94a3b8">No photos in gallery.</Text>}
             </TabPanel>
 
             {/* Application History */}

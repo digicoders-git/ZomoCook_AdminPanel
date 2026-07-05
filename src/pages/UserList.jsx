@@ -1,13 +1,13 @@
 import { useState, useEffect } from 'react';
-import { 
-  Box, Flex, Text, HStack, Table, Thead, Tbody, Tr, Th, Td, Switch, 
-  IconButton, Avatar, Spinner, useToast, Button, useDisclosure 
+import {
+  Box, Flex, Text, HStack, Table, Thead, Tbody, Tr, Th, Td, Switch,
+  IconButton, Avatar, Spinner, useToast, Button, useDisclosure
 } from '@chakra-ui/react';
 import { Edit3, Trash2, Filter, Plus } from 'lucide-react';
 import { Link, useNavigate } from 'react-router-dom';
-import { 
-  PageHeader, TableCard, TableControls, TableFooter, PageFooter, BRAND, ACCENT, 
-  thStyle, trHover, ConfirmationModal 
+import {
+  PageHeader, TableCard, TableControls, TableFooter, PageFooter, BRAND, ACCENT,
+  thStyle, trHover, ConfirmationModal
 } from '../components/ui';
 import axios from 'axios';
 
@@ -18,7 +18,7 @@ const UserList = () => {
   const [searchTerm, setSearchTerm] = useState('');
   const toast = useToast();
   const { isOpen, onOpen, onClose } = useDisclosure();
-  const [confirmConfig, setConfirmConfig] = useState({ title: '', description: '', onConfirm: () => {}, type: 'danger' });
+  const [confirmConfig, setConfirmConfig] = useState({ title: '', description: '', onConfirm: () => { }, type: 'danger' });
 
   const fetchUsers = async () => {
     setIsLoading(true);
@@ -112,7 +112,7 @@ const UserList = () => {
           </HStack>
           <TableControls search={searchTerm} onSearch={setSearchTerm} searchPlaceholder="Search..." />
         </Flex>
-        
+
         <Box overflowX="auto">
           {isLoading ? (
             <Flex justify="center" py="10"><Spinner color={BRAND} /></Flex>
@@ -131,11 +131,11 @@ const UserList = () => {
                     <Td py="4" border="1px solid #edf2f7" textAlign="center" color="#64748b" fontSize="xs" fontWeight="600">{i + 1}</Td>
                     <Td py="4" border="1px solid #edf2f7" textAlign="center">
                       <Flex justify="center">
-                        <Avatar 
-                          size="md" 
-                          src={user.profilePic ? `${apiBase}/${user.profilePic}` : ''} 
-                          name={user.name} 
-                          border="1px solid #e8edf5" 
+                        <Avatar
+                          size="md"
+                          src={user.profilePic ? `${apiBase}/${user.profilePic}` : ''}
+                          name={user.name}
+                          border="1px solid #e8edf5"
                         />
                       </Flex>
                     </Td>
@@ -146,33 +146,33 @@ const UserList = () => {
                       <Text color="#475569" fontSize="xs" fontWeight="600">{user.name}</Text>
                     </Td>
                     <Td py="4" border="1px solid #edf2f7" textAlign="center">
-                      <Switch 
-                        isChecked={user.status === 'Active'} 
+                      <Switch
+                        isChecked={user.status === 'Active'}
                         onChange={() => handleToggleStatus(user._id, user.status)}
-                        sx={{ '.chakra-switch__track[data-checked]': { bg: BRAND } }} 
+                        sx={{ '.chakra-switch__track[data-checked]': { bg: BRAND } }}
                       />
                     </Td>
                     <Td py="4" border="1px solid #edf2f7" textAlign="center">
                       <HStack spacing="2" justify="center">
-                        <IconButton 
-                          icon={<Edit3 size={16} />} 
-                          size="sm" 
-                          bg="#f97316" 
-                          color="white" 
-                          borderRadius="md" 
-                          _hover={{ bg: '#ea580c' }} 
+                        <IconButton
+                          icon={<Edit3 size={16} />}
+                          size="sm"
+                          bg="#f97316"
+                          color="white"
+                          borderRadius="md"
+                          _hover={{ bg: '#ea580c' }}
                           onClick={() => navigate(`/users/edit/${user._id}`)}
-                          aria-label="edit" 
+                          aria-label="edit"
                         />
-                        <IconButton 
-                          icon={<Trash2 size={16} />} 
-                          size="sm" 
-                          bg="#e11d48" 
-                          color="white" 
-                          borderRadius="md" 
-                          _hover={{ bg: '#be123c' }} 
+                        <IconButton
+                          icon={<Trash2 size={16} />}
+                          size="sm"
+                          bg="#e11d48"
+                          color="white"
+                          borderRadius="md"
+                          _hover={{ bg: '#be123c' }}
                           onClick={() => handleDelete(user._id)}
-                          aria-label="delete" 
+                          aria-label="delete"
                         />
                       </HStack>
                     </Td>
@@ -183,13 +183,13 @@ const UserList = () => {
             </Table>
           )}
         </Box>
-        <TableFooter 
-          showing={`${users.length > 0 ? 1 : 0} to ${users.length}`} 
-          total={users.length} 
+        <TableFooter
+          showing={`${users.length > 0 ? 1 : 0} to ${users.length}`}
+          total={users.length}
         />
       </TableCard>
 
-      <ConfirmationModal 
+      <ConfirmationModal
         isOpen={isOpen}
         onClose={onClose}
         onConfirm={confirmConfig.onConfirm}

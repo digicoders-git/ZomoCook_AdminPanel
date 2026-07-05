@@ -1,34 +1,35 @@
 import { useEffect, useState } from 'react';
-import { 
-  Box, Flex, Text, HStack, VStack, Table, Thead, Tbody, Tr, Th, Td, Avatar, Switch, 
-  IconButton, Icon, useToast, Button, useDisclosure, Collapse, SimpleGrid, 
+import {
+  Box, Flex, Text, HStack, VStack, Table, Thead, Tbody, Tr, Th, Td, Avatar, Switch,
+  IconButton, Icon, useToast, Button, useDisclosure, Collapse, SimpleGrid,
   FormControl, FormLabel, Select, Input
 } from '@chakra-ui/react';
 import { Edit3, Filter, Plus, Trash2, Search, RotateCcw } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
-import { 
-  PageHeader, TableCard, TableControls, TableFooter, PageFooter, 
-  BRAND, ACCENT, tableHeadStyle, thStyle, trHover, ConfirmationModal 
+import {
+  PageHeader, TableCard, TableControls, TableFooter, PageFooter,
+  BRAND, ACCENT, tableHeadStyle, thStyle, trHover, ConfirmationModal
 } from '../components/ui';
+import PageContentLoader from '../components/PageContentLoader';
 import axios from 'axios';
 
 const CustomerList = () => {
-  const navigate = useNavigate(); 
+  const navigate = useNavigate();
   const toast = useToast();
   const { isOpen, onOpen, onClose } = useDisclosure();
-  
+
   const [customers, setCustomers] = useState([]);
   const [isLoading, setIsLoading] = useState(true);
-  
+
   // Confirmation State
   const [confirmConfig, setConfirmConfig] = useState({
     title: '',
     description: '',
-    onConfirm: () => {},
+    onConfirm: () => { },
     type: 'danger',
     confirmLabel: 'Confirm'
   });
-  
+
   // Search and Pagination states
   const [search, setSearch] = useState('');
   const [entries, setEntries] = useState('10');
@@ -75,13 +76,13 @@ const CustomerList = () => {
 
   // Filter and Paginate Data
   const filteredCustomers = customers.filter(customer => {
-    const matchesSearch = 
+    const matchesSearch =
       customer.name.toLowerCase().includes(search.toLowerCase()) ||
       customer.email.toLowerCase().includes(search.toLowerCase()) ||
       customer.contactPhone.includes(search);
-    
+
     const matchesCategory = !filters.category || customer.propertyCategory === filters.category;
-    const matchesNamePhone = !filters.namePhone || 
+    const matchesNamePhone = !filters.namePhone ||
       customer.name.toLowerCase().includes(filters.namePhone.toLowerCase()) ||
       customer.contactPhone.includes(filters.namePhone);
     const matchesStatus = !filters.status || customer.accountStatus === filters.status;
@@ -154,19 +155,23 @@ const CustomerList = () => {
 
   return (
     <Box pb="10">
-      <PageHeader
+      {isLoading ? (
+        <PageContentLoader />
+      ) : (
+        <>
+          <PageHeader
         title="Customer/Client Record List"
         breadcrumb="Customer/Client Record List"
         actions={[
-          <Button 
-            key="filter" 
-            leftIcon={<Filter size={14} />} 
-            size="sm" 
+          <Button
+            key="filter"
+            leftIcon={<Filter size={14} />}
+            size="sm"
             variant={showFilters ? "solid" : "outline"}
             bg={showFilters ? BRAND : "transparent"}
             color={showFilters ? "white" : "#64748b"}
-            borderColor="#dde6f5" 
-            borderRadius="lg" 
+            borderColor="#dde6f5"
+            borderRadius="lg"
             _hover={{ borderColor: BRAND, color: showFilters ? "white" : BRAND }}
             onClick={() => setShowFilters(!showFilters)}
           >
@@ -181,11 +186,11 @@ const CustomerList = () => {
           <Flex align={{ base: 'stretch', md: 'flex-end' }} gap="3" direction={{ base: 'column', md: 'row' }} wrap="wrap">
             <Box w={{ base: 'full', md: 'auto' }} flex={{ md: '1' }} minW={{ md: '180px' }}>
               <FormLabel fontSize="xs" fontWeight="700" color="#475569" mb="2">Category</FormLabel>
-              <Select 
-                size="sm" 
+              <Select
+                size="sm"
                 h="40px"
-                borderRadius="lg" 
-                bg="#f8faff" 
+                borderRadius="lg"
+                bg="#f8faff"
                 border="1.5px solid #dde6f5"
                 placeholder="Select Category"
                 value={filters.category}
@@ -201,11 +206,11 @@ const CustomerList = () => {
             </Box>
             <Box w={{ base: 'full', md: 'auto' }} flex={{ md: '1' }} minW={{ md: '180px' }}>
               <FormLabel fontSize="xs" fontWeight="700" color="#475569" mb="2">Customer Name/Phone</FormLabel>
-              <Input 
-                size="sm" 
+              <Input
+                size="sm"
                 h="40px"
-                borderRadius="lg" 
-                bg="#f8faff" 
+                borderRadius="lg"
+                bg="#f8faff"
                 border="1.5px solid #dde6f5"
                 placeholder="Name or Phone"
                 value={filters.namePhone}
@@ -214,11 +219,11 @@ const CustomerList = () => {
             </Box>
             <Box w={{ base: 'full', md: 'auto' }} flex={{ md: '1' }} minW={{ md: '150px' }}>
               <FormLabel fontSize="xs" fontWeight="700" color="#475569" mb="2">Status</FormLabel>
-              <Select 
-                size="sm" 
+              <Select
+                size="sm"
                 h="40px"
-                borderRadius="lg" 
-                bg="#f8faff" 
+                borderRadius="lg"
+                bg="#f8faff"
                 border="1.5px solid #dde6f5"
                 placeholder="-- Select Status --"
                 value={filters.status}
@@ -242,11 +247,11 @@ const CustomerList = () => {
           <Text fontSize="sm" fontWeight="700" color="#1e293b">Customer/Client Record List</Text>
         </Flex>
 
-        <TableControls 
-          search={search} 
-          onSearch={(val) => { setSearch(val); setCurrentPage(1); }} 
-          entries={entries} 
-          onEntriesChange={(val) => { setEntries(val); setCurrentPage(1); }} 
+        <TableControls
+          search={search}
+          onSearch={(val) => { setSearch(val); setCurrentPage(1); }}
+          entries={entries}
+          onEntriesChange={(val) => { setEntries(val); setCurrentPage(1); }}
         />
 
         <Box overflowX="auto" sx={{ WebkitOverflowScrolling: 'touch' }}>
@@ -283,10 +288,10 @@ const CustomerList = () => {
                     </Text>
                   </Td>
                   <Td py="3.5" minW="65px">
-                    <Switch 
-                      isChecked={row.accountStatus === 'active'} 
+                    <Switch
+                      isChecked={row.accountStatus === 'active'}
                       onChange={() => confirmStatusToggle(row._id, row.accountStatus)}
-                      sx={{ '.chakra-switch__track[data-checked]': { bg: BRAND } }} 
+                      sx={{ '.chakra-switch__track[data-checked]': { bg: BRAND } }}
                     />
                   </Td>
                   <Td py="3.5" minW="80px">
@@ -300,16 +305,16 @@ const CustomerList = () => {
             </Tbody>
           </Table>
         </Box>
-        <TableFooter 
-          showing={`${filteredCustomers.length > 0 ? startIndex + 1 : 0} to ${Math.min(startIndex + parseInt(entries), filteredCustomers.length)}`} 
+        <TableFooter
+          showing={`${filteredCustomers.length > 0 ? startIndex + 1 : 0} to ${Math.min(startIndex + parseInt(entries), filteredCustomers.length)}`}
           total={filteredCustomers.length}
           currentPage={currentPage}
           totalPages={totalPages}
-          onPageChange={(p) => { if(p > 0 && p <= totalPages) setCurrentPage(p); }}
+          onPageChange={(p) => { if (p > 0 && p <= totalPages) setCurrentPage(p); }}
         />
       </TableCard>
 
-      <ConfirmationModal 
+      <ConfirmationModal
         isOpen={isOpen}
         onClose={onClose}
         onConfirm={confirmConfig.onConfirm}
@@ -321,6 +326,8 @@ const CustomerList = () => {
       />
 
       <PageFooter />
+        </>
+      )}
     </Box>
   );
 };

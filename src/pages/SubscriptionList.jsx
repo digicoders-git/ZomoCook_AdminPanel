@@ -167,7 +167,7 @@ const SubscriptionList = () => {
                   subscriptionsData.map((sub) => {
                     const user = sub.user || {};
                     const plan = sub.plan || {};
-                    
+
                     return (
                       <Tr key={sub._id} _hover={{ bg: 'gray.50' }}>
                         <Td>

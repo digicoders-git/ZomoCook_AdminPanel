@@ -3,8 +3,9 @@ import {
   Box, Flex, Text, HStack, VStack, Icon, Button, Select, Input,
   Breadcrumb, BreadcrumbItem, BreadcrumbLink, Badge,
   AlertDialog, AlertDialogBody, AlertDialogFooter, AlertDialogHeader,
-  AlertDialogContent, AlertDialogOverlay
+  AlertDialogContent, AlertDialogOverlay, Spinner
 } from '@chakra-ui/react';
+import { keyframes } from '@emotion/react';
 import { ChevronRight, LayoutDashboard, Filter, Plus } from 'lucide-react';
 import { Link } from 'react-router-dom';
 
@@ -289,3 +290,57 @@ export const PageFooter = () => (
     </HStack>
   </Flex>
 );
+
+// Attractive premium loading pulse animation with purple theme
+const spinPulse = keyframes`
+  0% { transform: scale(0.9); opacity: 0.15; }
+  50% { transform: scale(1.15); opacity: 0.55; }
+  100% { transform: scale(0.9); opacity: 0.15; }
+`;
+
+export const Loading = ({ message = "Loading data, please wait...", size = "md" }) => {
+  const height = size === "sm" ? "120px" : "60vh";
+  const spinnerSize = size === "sm" ? "md" : "lg";
+  const outerBoxSize = size === "sm" ? "60px" : "100px";
+  const innerBoxSize = size === "sm" ? "50px" : "80px";
+  
+  return (
+    <Flex h={height} align="center" justify="center" direction="column" gap="4" w="full" py="5">
+      <Box position="relative" display="flex" alignItems="center" justify="center" w={outerBoxSize} h={outerBoxSize}>
+        <Box
+          position="absolute"
+          w={innerBoxSize}
+          h={innerBoxSize}
+          borderRadius="full"
+          bg="purple.500"
+          animation={`${spinPulse} 2s infinite ease-in-out`}
+        />
+        <Box
+          p={size === "sm" ? "2" : "4.5"}
+          bg="white"
+          borderRadius="full"
+          boxShadow="0 8px 30px rgba(128,90,213,0.18)"
+          position="relative"
+          zIndex="1"
+          display="flex"
+          alignItems="center"
+          justifyContent="center"
+        >
+          <Spinner
+            thickness={size === "sm" ? "3px" : "4px"}
+            speed="0.85s"
+            emptyColor="#f3e8ff"
+            color="purple.500"
+            size={spinnerSize}
+            display="block"
+          />
+        </Box>
+      </Box>
+      {message && (
+        <Text fontSize="xs" fontWeight="800" color="#64748b" textTransform="uppercase" letterSpacing="1.5px" mt="2">
+          {message}
+        </Text>
+      )}
+    </Flex>
+  );
+};

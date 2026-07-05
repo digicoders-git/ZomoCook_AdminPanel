@@ -21,7 +21,7 @@ const CandidateStatusList = ({ status, title }) => {
   const [applications, setApplications] = useState([]);
   const [isLoading, setIsLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState('');
-  
+
   // Pagination
   const [currentPage, setCurrentPage] = useState(1);
   const [entriesPerPage, setEntriesPerPage] = useState(10);
@@ -104,12 +104,12 @@ const CandidateStatusList = ({ status, title }) => {
           </HStack>
         </Flex>
 
-        <TableControls 
-          search={searchTerm} 
-          onSearch={setSearchTerm} 
+        <TableControls
+          search={searchTerm}
+          onSearch={setSearchTerm}
           entries={entriesPerPage}
           onEntriesChange={setEntriesPerPage}
-          searchPlaceholder="Search by name, phone or job..." 
+          searchPlaceholder="Search by name, phone or job..."
         />
 
         <Box overflowX="auto">
@@ -168,9 +168,9 @@ const CandidateStatusList = ({ status, title }) => {
             </Table>
           )}
         </Box>
-        <TableFooter 
-          showing={`${indexOfFirstRecord + 1} to ${Math.min(indexOfLastRecord, applications.length)}`} 
-          total={applications.length} 
+        <TableFooter
+          showing={`${indexOfFirstRecord + 1} to ${Math.min(indexOfLastRecord, applications.length)}`}
+          total={applications.length}
           currentPage={currentPage}
           onPageChange={setCurrentPage}
           totalPages={totalPages}

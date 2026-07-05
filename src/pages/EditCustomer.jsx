@@ -3,7 +3,7 @@ import { Box, SimpleGrid, FormControl, FormLabel, Input, Select, Textarea, HStac
 import { Send, RotateCcw } from 'lucide-react';
 import { useNavigate, useParams } from 'react-router-dom';
 import { useToast } from '@chakra-ui/react';
-import { PageHeader, FormCard, PageFooter, BRAND, ACCENT, inputStyle, selectStyle, labelStyle } from '../components/ui';
+import { PageHeader, FormCard, PageFooter, BRAND, ACCENT, inputStyle, selectStyle, labelStyle, Loading } from '../components/ui';
 import axios from 'axios';
 
 const EditCustomer = () => {
@@ -100,11 +100,7 @@ const EditCustomer = () => {
   };
 
   if (isFetching) {
-    return (
-      <Center h="60vh">
-        <Spinner size="xl" color={BRAND} thickness="4px" />
-      </Center>
-    );
+    return <Loading message="Loading customer details..." />;
   }
 
   return (

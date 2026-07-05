@@ -1,11 +1,11 @@
 import React, { useState, useEffect } from 'react';
-import { 
-  Box, VStack, HStack, Text, Button, Table, Thead, Tbody, Tr, Th, Td, 
-  IconButton, SimpleGrid, FormControl, FormLabel, Input, Select, Switch, 
-  Flex, useToast, Spinner, Badge, Image, useDisclosure 
+import {
+  Box, VStack, HStack, Text, Button, Table, Thead, Tbody, Tr, Th, Td,
+  IconButton, SimpleGrid, FormControl, FormLabel, Input, Select, Switch,
+  Flex, useToast, Spinner, Badge, Image, useDisclosure
 } from '@chakra-ui/react';
-import { 
-  Plus, Edit, Trash2, Save, RotateCcw, List as ListIcon, RefreshCcw, AlertTriangle 
+import {
+  Plus, Edit, Trash2, Save, RotateCcw, List as ListIcon, RefreshCcw, AlertTriangle
 } from 'lucide-react';
 import { useParams, Link, useNavigate } from 'react-router-dom';
 import ReactQuill from 'react-quill-new';
@@ -18,19 +18,19 @@ const MasterPage = () => {
   const navigate = useNavigate();
   const toast = useToast();
   const isListView = action === 'list' || !action;
-  
+
   const [data, setData] = useState([]);
   const [parents, setParents] = useState([]);
   const [isLoading, setIsLoading] = useState(true);
   const [isSaving, setIsSaving] = useState(false);
   const [searchTerm, setSearchTerm] = useState('');
-  
+
   // Confirmation Modal States
   const { isOpen, onOpen, onClose } = useDisclosure();
   const [confirmConfig, setConfirmConfig] = useState({
     title: '',
     description: '',
-    onConfirm: () => {},
+    onConfirm: () => { },
     type: 'danger',
     confirmLabel: 'Confirm'
   });
@@ -87,9 +87,9 @@ const MasterPage = () => {
   useEffect(() => {
     if (isListView) fetchData();
     else {
-        fetchParents();
-        setFormData({ name: '', value: '', parentId: '', status: 'active', link: '', heading: '', content: '', experienceFrom: '', experienceTo: '', salaryFrom: '', salaryTo: '', timeFrom: '', timeTo: '' });
-        setFile(null);
+      fetchParents();
+      setFormData({ name: '', value: '', parentId: '', status: 'active', link: '', heading: '', content: '', experienceFrom: '', experienceTo: '', salaryFrom: '', salaryTo: '', timeFrom: '', timeTo: '' });
+      setFile(null);
     }
   }, [category, action, searchTerm]);
 
@@ -100,7 +100,7 @@ const MasterPage = () => {
       const payload = new FormData();
       const submissionData = { ...formData };
       if (category === 'time-ranges' && !submissionData.name) submissionData.name = 'Time Slot';
-      
+
       Object.keys(submissionData).forEach(key => payload.append(key, submissionData[key]));
       if (file) payload.append('image', file);
       const response = await axios.post(`${apiUrl}/masters/${category}`, payload, {
@@ -194,7 +194,7 @@ const MasterPage = () => {
     const isSlider = category === 'sliders';
     const isVideo = category === 'videos';
     const isCMS = category === 'cms';
-    
+
     return (
       <Box bg="white" borderRadius="xl" border="1px solid #e8edf5" boxShadow="sm">
         <Flex justify="space-between" align="center" px="5" py="4" borderBottom="1px solid #f1f5f9">
@@ -210,24 +210,24 @@ const MasterPage = () => {
               {(isJobMenu || isSkillCategory || isSkills || isCity || isCookingPref || isFacility) && (
                 <FormControl isRequired>
                   <FormLabel {...labelStyle}>{isCity ? 'Select State' : isSkills ? 'Skill Category' : (isCookingPref || isFacility) ? 'Type' : 'Select Position'}</FormLabel>
-                  <Select {...selectStyle} placeholder={(isCookingPref || isFacility) ? 'Select Type' : 'Choose Parent'} value={formData.parentId} onChange={(e) => setFormData({...formData, parentId: e.target.value})}>
+                  <Select {...selectStyle} placeholder={(isCookingPref || isFacility) ? 'Select Type' : 'Choose Parent'} value={formData.parentId} onChange={(e) => setFormData({ ...formData, parentId: e.target.value })}>
                     {parents.map(p => <option key={p._id} value={p._id}>{p.name}</option>)}
                   </Select>
                 </FormControl>
               )}
-              
+
               {!isTimeRange && (
                 <FormControl isRequired>
                   <FormLabel {...labelStyle}>{isCMS ? 'Pagename' : (isSlider || isVideo) ? 'Title' : category === 'experiences' ? 'Experience Required' : category === 'salaries' ? 'Offered Salary' : isSalaryRange ? 'Currency Type' : isExpRange ? 'Type' : isJobMenu ? 'Menu Name' : isPosition ? 'Position Name' : isCity ? 'City Name' : isFacility ? 'Facility Name' : isJobCategory ? 'Category Name' : 'Name'}</FormLabel>
                   {isCMS ? (
-                    <Select {...selectStyle} placeholder="Select Pagename" value={formData.name} onChange={(e) => setFormData({...formData, name: e.target.value})}>
+                    <Select {...selectStyle} placeholder="Select Pagename" value={formData.name} onChange={(e) => setFormData({ ...formData, name: e.target.value })}>
                       <option value="About Us">About Us</option>
                       <option value="Privacy Policy">Privacy Policy</option>
                       <option value="Terms & Conditions">Terms & Conditions</option>
                       <option value="Contact Us">Contact Us</option>
                     </Select>
                   ) : (
-                    <Input {...inputStyle} placeholder={(isSlider || isVideo) ? 'Enter Title' : category === 'experiences' ? 'Enter Experience Required (e.g., Fresher, 1 – 2 years)' : category === 'salaries' ? 'Enter Offered Salary (e.g., ₹35,000 – ₹50,000/month)' : isSalaryRange ? 'Enter Currency Type' : isExpRange ? 'Enter Type' : isFacility ? 'Enter Facility Name' : isJobCategory ? 'Enter Category Name' : 'Enter Name'} value={formData.name} onChange={(e) => setFormData({...formData, name: e.target.value})} />
+                    <Input {...inputStyle} placeholder={(isSlider || isVideo) ? 'Enter Title' : category === 'experiences' ? 'Enter Experience Required (e.g., Fresher, 1 – 2 years)' : category === 'salaries' ? 'Enter Offered Salary (e.g., ₹35,000 – ₹50,000/month)' : isSalaryRange ? 'Enter Currency Type' : isExpRange ? 'Enter Type' : isFacility ? 'Enter Facility Name' : isJobCategory ? 'Enter Category Name' : 'Enter Name'} value={formData.name} onChange={(e) => setFormData({ ...formData, name: e.target.value })} />
                   )}
                 </FormControl>
               )}
@@ -235,7 +235,7 @@ const MasterPage = () => {
               {isCMS && (
                 <FormControl isRequired>
                   <FormLabel {...labelStyle}>Heading</FormLabel>
-                  <Input {...inputStyle} placeholder="Enter Heading" value={formData.heading} onChange={(e) => setFormData({...formData, heading: e.target.value})} />
+                  <Input {...inputStyle} placeholder="Enter Heading" value={formData.heading} onChange={(e) => setFormData({ ...formData, heading: e.target.value })} />
                 </FormControl>
               )}
 
@@ -249,41 +249,41 @@ const MasterPage = () => {
               {isVideo && (
                 <FormControl isRequired>
                   <FormLabel {...labelStyle}>Video Url</FormLabel>
-                  <Input {...inputStyle} placeholder="Enter Video Url" value={formData.link} onChange={(e) => setFormData({...formData, link: e.target.value})} />
+                  <Input {...inputStyle} placeholder="Enter Video Url" value={formData.link} onChange={(e) => setFormData({ ...formData, link: e.target.value })} />
                 </FormControl>
               )}
 
               {isTimeRange && (
                 <>
-                  <FormControl isRequired><FormLabel {...labelStyle}>From Time</FormLabel><Input {...inputStyle} placeholder="Enter From Time" value={formData.timeFrom} onChange={(e) => setFormData({...formData, timeFrom: e.target.value})} /></FormControl>
-                  <FormControl isRequired><FormLabel {...labelStyle}>To Time</FormLabel><Input {...inputStyle} placeholder="Enter To Time" value={formData.timeTo} onChange={(e) => setFormData({...formData, timeTo: e.target.value})} /></FormControl>
+                  <FormControl isRequired><FormLabel {...labelStyle}>From Time</FormLabel><Input {...inputStyle} placeholder="Enter From Time" value={formData.timeFrom} onChange={(e) => setFormData({ ...formData, timeFrom: e.target.value })} /></FormControl>
+                  <FormControl isRequired><FormLabel {...labelStyle}>To Time</FormLabel><Input {...inputStyle} placeholder="Enter To Time" value={formData.timeTo} onChange={(e) => setFormData({ ...formData, timeTo: e.target.value })} /></FormControl>
                 </>
               )}
 
               {isExpRange && (
                 <>
-                  <FormControl isRequired><FormLabel {...labelStyle}>Experience From</FormLabel><Input {...inputStyle} placeholder="Enter Range From" value={formData.experienceFrom} onChange={(e) => setFormData({...formData, experienceFrom: e.target.value})} /></FormControl>
-                  <FormControl isRequired><FormLabel {...labelStyle}>Experience To</FormLabel><Input {...inputStyle} placeholder="Enter Range To" value={formData.experienceTo} onChange={(e) => setFormData({...formData, experienceTo: e.target.value})} /></FormControl>
+                  <FormControl isRequired><FormLabel {...labelStyle}>Experience From</FormLabel><Input {...inputStyle} placeholder="Enter Range From" value={formData.experienceFrom} onChange={(e) => setFormData({ ...formData, experienceFrom: e.target.value })} /></FormControl>
+                  <FormControl isRequired><FormLabel {...labelStyle}>Experience To</FormLabel><Input {...inputStyle} placeholder="Enter Range To" value={formData.experienceTo} onChange={(e) => setFormData({ ...formData, experienceTo: e.target.value })} /></FormControl>
                 </>
               )}
 
               {isSalaryRange && (
                 <>
-                  <FormControl isRequired><FormLabel {...labelStyle}>Salary Range From</FormLabel><Input {...inputStyle} placeholder="Enter Range From" value={formData.salaryFrom} onChange={(e) => setFormData({...formData, salaryFrom: e.target.value})} /></FormControl>
-                  <FormControl isRequired><FormLabel {...labelStyle}>Salary Range To</FormLabel><Input {...inputStyle} placeholder="Enter Range To" value={formData.salaryTo} onChange={(e) => setFormData({...formData, salaryTo: e.target.value})} /></FormControl>
+                  <FormControl isRequired><FormLabel {...labelStyle}>Salary Range From</FormLabel><Input {...inputStyle} placeholder="Enter Range From" value={formData.salaryFrom} onChange={(e) => setFormData({ ...formData, salaryFrom: e.target.value })} /></FormControl>
+                  <FormControl isRequired><FormLabel {...labelStyle}>Salary Range To</FormLabel><Input {...inputStyle} placeholder="Enter Range To" value={formData.salaryTo} onChange={(e) => setFormData({ ...formData, salaryTo: e.target.value })} /></FormControl>
                 </>
               )}
 
               {isPosition && (
                 <FormControl isRequired>
                   <FormLabel {...labelStyle}>Color Code (Hex)</FormLabel>
-                  <Input {...inputStyle} placeholder="#000000" value={formData.value} onChange={(e) => setFormData({...formData, value: e.target.value})} />
+                  <Input {...inputStyle} placeholder="#000000" value={formData.value} onChange={(e) => setFormData({ ...formData, value: e.target.value })} />
                 </FormControl>
               )}
 
               <FormControl isRequired>
                 <FormLabel {...labelStyle}>Status</FormLabel>
-                <Select {...selectStyle} value={formData.status} onChange={(e) => setFormData({...formData, status: e.target.value})}>
+                <Select {...selectStyle} value={formData.status} onChange={(e) => setFormData({ ...formData, status: e.target.value })}>
                   <option value="active">Active</option>
                   <option value="inactive">Inactive</option>
                 </Select>
@@ -294,7 +294,7 @@ const MasterPage = () => {
               <FormControl isRequired mb="6">
                 <FormLabel {...labelStyle}>Description</FormLabel>
                 <Box border="1px solid #e2e8f0" borderRadius="lg" overflow="hidden">
-                  <ReactQuill theme="snow" value={formData.content} onChange={(val) => setFormData({...formData, content: val})} style={{ height: '250px', marginBottom: '40px' }} />
+                  <ReactQuill theme="snow" value={formData.content} onChange={(val) => setFormData({ ...formData, content: val })} style={{ height: '250px', marginBottom: '40px' }} />
                 </Box>
               </FormControl>
             )}
@@ -387,7 +387,7 @@ const MasterPage = () => {
       {isListView ? renderListView() : renderAddForm()}
       <PageFooter />
 
-      <ConfirmationModal 
+      <ConfirmationModal
         isOpen={isOpen}
         onClose={onClose}
         onConfirm={confirmConfig.onConfirm}

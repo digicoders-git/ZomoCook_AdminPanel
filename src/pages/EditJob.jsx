@@ -3,7 +3,7 @@ import { Box, SimpleGrid, FormControl, FormLabel, Input, Select, Textarea, HStac
 import { Send, RotateCcw, Plus, Save } from 'lucide-react';
 import { useNavigate, Link, useParams } from 'react-router-dom';
 import { useToast } from '@chakra-ui/react';
-import { PageHeader, FormCard, PageFooter, BRAND, ACCENT, inputStyle, selectStyle, labelStyle } from '../components/ui';
+import { PageHeader, FormCard, PageFooter, BRAND, ACCENT, inputStyle, selectStyle, labelStyle, Loading } from '../components/ui';
 import axios from 'axios';
 
 const EditJob = () => {
@@ -197,7 +197,7 @@ const EditJob = () => {
     }
   };
 
-  if (isFetching) return <Flex h="80vh" align="center" justify="center"><Spinner size="xl" color={BRAND} thickness="4px" /></Flex>;
+  if (isFetching) return <Loading message="Loading job details..." />;
 
   return (
     <Box pb="10">

@@ -11,6 +11,7 @@ import {
   PageHeader, PageFooter, BRAND, ACCENT, TableCard, TableControls,
   ConfirmationModal
 } from '../components/ui';
+import PageContentLoader from '../components/PageContentLoader';
 import axios from 'axios';
 import API_BASE_URL from '../apiConfig';
 import JobApplicantsModal from './JobApplicantsModal';
@@ -291,8 +292,12 @@ const JobList = () => {
 
   return (
     <Box pb="10">
-      {/* Title Header Section */}
-      <Flex align="center" justify="space-between" mb="6" wrap="wrap" gap="4">
+      {isLoading ? (
+        <PageContentLoader />
+      ) : (
+        <>
+          {/* Title Header Section */}
+          <Flex align="center" justify="space-between" mb="6" wrap="wrap" gap="4">
         <VStack align="start" spacing="1">
           <Text fontSize="2xl" fontWeight="800" color="#0B1A30">Job List</Text>
           <Text fontSize="sm" color="#64748b">Manage all your jobs and leads</Text>
@@ -649,6 +654,8 @@ const JobList = () => {
       )}
 
       <PageFooter />
+        </>
+      )}
     </Box>
   );
 };

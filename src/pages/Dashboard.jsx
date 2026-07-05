@@ -74,7 +74,7 @@ const Dashboard = () => {
   const [showFilters, setShowFilters] = useState(false);
   const [customers, setCustomers] = useState([]);
   const [positions, setPositions] = useState([]);
-  
+
   // Modal States
   const { isOpen, onOpen, onClose } = useDisclosure();
   const [selectedPosition, setSelectedPosition] = useState(null);
@@ -151,7 +151,7 @@ const Dashboard = () => {
     setIsLoading(true);
     axios.get(`${API_BASE_URL}/dashboard`, { headers: { Authorization: `Bearer ${token}` } })
       .then(res => { if (res.data.success) setData(res.data); })
-      .catch(() => {})
+      .catch(() => { })
       .finally(() => setIsLoading(false));
   };
 
@@ -528,11 +528,11 @@ const Dashboard = () => {
               </Table>
             </Box>
             <Flex justify="flex-end" px={{ base: '4', md: '6' }} py="4" borderTop="1px solid #f1f5f9" bg="#fafbfc">
-               <HStack spacing="1">
-                  <Button size="xs" variant="outline" color="#64748b" borderRadius="md">Previous</Button>
-                  <Button size="xs" bg={BRAND} color="white" borderRadius="md" px="3">1</Button>
-                  <Button size="xs" variant="outline" color="#64748b" borderRadius="md">Next</Button>
-               </HStack>
+              <HStack spacing="1">
+                <Button size="xs" variant="outline" color="#64748b" borderRadius="md">Previous</Button>
+                <Button size="xs" bg={BRAND} color="white" borderRadius="md" px="3">1</Button>
+                <Button size="xs" variant="outline" color="#64748b" borderRadius="md">Next</Button>
+              </HStack>
             </Flex>
           </ModalBody>
         </ModalContent>
@@ -548,10 +548,10 @@ const Dashboard = () => {
           <SectionHeader icon={Activity} title="Sparkline Trends" />
           <VStack spacing="4" align="stretch" pt="4">
             {[
-              { label: 'Daily Visitors',      color: '#3b82f6', data: charts?.sparklines?.dailyCandidates    },
-              { label: 'Total Applications',  color: '#10b981', data: charts?.sparklines?.dailyApplications  },
-              { label: 'Interview Success',   color: '#f59e0b', data: charts?.sparklines?.dailyDemo          },
-              { label: 'Hiring Rate',         color: '#ef4444', data: charts?.sparklines?.dailyHired         },
+              { label: 'Daily Visitors', color: '#3b82f6', data: charts?.sparklines?.dailyCandidates },
+              { label: 'Total Applications', color: '#10b981', data: charts?.sparklines?.dailyApplications },
+              { label: 'Interview Success', color: '#f59e0b', data: charts?.sparklines?.dailyDemo },
+              { label: 'Hiring Rate', color: '#ef4444', data: charts?.sparklines?.dailyHired },
             ].map(({ label, color, data }) => (
               <Flex key={label} justify="space-between" align="center">
                 <Text fontSize={{ base: 'xs', md: 'sm' }} fontWeight="600" color="#475569">{label}</Text>

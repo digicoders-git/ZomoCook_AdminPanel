@@ -1,16 +1,19 @@
 import { useState, useEffect } from 'react';
-import { 
-  Box, Flex, Text, HStack, VStack, Table, Thead, Tbody, Tr, Th, Td, Badge, 
-  Button, Menu, MenuButton, MenuList, MenuItem, Icon, Spinner, useToast, 
-  Select, Avatar, useDisclosure, MenuDivider } from '@chakra-ui/react';
-import { 
-  Plus, Settings, ChevronDown, 
+import {
+  Box, Flex, Text, HStack, VStack, Table, Thead, Tbody, Tr, Th, Td, Badge,
+  Button, Menu, MenuButton, MenuList, MenuItem, Icon, Spinner, useToast,
+  Select, Avatar, useDisclosure, MenuDivider
+} from '@chakra-ui/react';
+import {
+  Plus, Settings, ChevronDown,
   Briefcase, CalendarDays, FileType, Edit3, CheckCircle, UserCircle, Trash2
 } from 'lucide-react';
 import { Link, useNavigate } from 'react-router-dom';
-import { 
+import {
   PageHeader, TableCard, TableControls, TableFooter, PageFooter, BRAND, ACCENT,
-  thStyle, ConfirmationModal } from '../components/ui';
+  thStyle, ConfirmationModal
+} from '../components/ui';
+import PageContentLoader from '../components/PageContentLoader';
 import axios from 'axios';
 import API_BASE_URL, { UPLOAD_BASE_URL } from '../apiConfig';
 
@@ -21,10 +24,10 @@ const CandidateList = () => {
   const [isLoading, setIsLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState('');
   const [statusFilter, setStatusFilter] = useState('');
-  
+
   // Confirmation State
   const { isOpen, onOpen, onClose } = useDisclosure();
-  const [confirmConfig, setConfirmConfig] = useState({ title: '', description: '', onConfirm: () => {}, type: 'danger' });
+  const [confirmConfig, setConfirmConfig] = useState({ title: '', description: '', onConfirm: () => { }, type: 'danger' });
 
   // Pagination
   const [currentPage, setCurrentPage] = useState(1);
@@ -96,23 +99,23 @@ const CandidateList = () => {
           <HStack><Box w="3px" h="18px" bg={BRAND} borderRadius="full" mr="2" /><Text fontSize="sm" fontWeight="700" color="#1e293b">Candidate Record List</Text></HStack>
           <HStack spacing="3">
             <Select size="sm" w="150px" borderRadius="lg" value={statusFilter} onChange={(e) => setStatusFilter(e.target.value)} fontSize="xs">
-                <option value="">All Status</option>
-                <option value="active">Active</option>
-                <option value="inactive">Inactive</option>
+              <option value="">All Status</option>
+              <option value="active">Active</option>
+              <option value="inactive">Inactive</option>
             </Select>
-            <TableControls 
-              search={searchTerm} 
-              onSearch={setSearchTerm} 
-              entries={entriesPerPage} 
-              onEntriesChange={setEntriesPerPage} 
-              searchPlaceholder="Search candidates..." 
+            <TableControls
+              search={searchTerm}
+              onSearch={setSearchTerm}
+              entries={entriesPerPage}
+              onEntriesChange={setEntriesPerPage}
+              searchPlaceholder="Search candidates..."
             />
           </HStack>
         </Flex>
 
         <Box overflowX="auto">
           {isLoading ? (
-            <Flex justify="center" py="10"><Spinner color={BRAND} /></Flex>
+            <PageContentLoader />
           ) : (
             <Table variant="simple" size="sm" border="1px solid #edf2f7">
               <Thead bg="#f8faff">
@@ -133,10 +136,10 @@ const CandidateList = () => {
                     <Td py="4" border="1px solid #edf2f7" verticalAlign="middle" textAlign="center">
                       <VStack spacing="3">
                         <Avatar size="md" src={`${UPLOAD_BASE_URL}/${c.profileImage}`} name={c.name} border="2px solid #f0f5ff" />
-                        <Button 
-                            size="xs" bg="#ff6b00" color="white" leftIcon={<Icon as={FileType} size={12} />} 
-                            px="3" borderRadius="md" fontSize="10px"
-                            isDisabled={!c.cv} onClick={() => c.cv && window.open(`${UPLOAD_BASE_URL}/${c.cv}`, '_blank')}
+                        <Button
+                          size="xs" bg="#ff6b00" color="white" leftIcon={<Icon as={FileType} size={12} />}
+                          px="3" borderRadius="md" fontSize="10px"
+                          isDisabled={!c.cv} onClick={() => c.cv && window.open(`${UPLOAD_BASE_URL}/${c.cv}`, '_blank')}
                         >CV</Button>
                       </VStack>
                     </Td>
@@ -156,8 +159,8 @@ const CandidateList = () => {
                         <Text fontSize="xs" color="#475569"><b>Job Category :</b> {c.jobPreference?.jobCategory?.join(', ') || 'N/A'}</Text>
                         <Text fontSize="xs" color="#475569"><b>Job Type :</b> {c.jobPreference?.jobType?.join(', ') || 'N/A'}</Text>
                         <HStack spacing="2" align="center">
-                            <Text fontSize="xs" color="#475569"><b>Job Position :</b> {c.jobPreference?.jobPositions?.[0] || 'N/A'}</Text>
-                            {c.jobPreference?.jobPositions?.length > 1 && <Badge bg="#ff6b00" color="white" fontSize="9px" px="1">+{c.jobPreference.jobPositions.length - 1}</Badge>}
+                          <Text fontSize="xs" color="#475569"><b>Job Position :</b> {c.jobPreference?.jobPositions?.[0] || 'N/A'}</Text>
+                          {c.jobPreference?.jobPositions?.length > 1 && <Badge bg="#ff6b00" color="white" fontSize="9px" px="1">+{c.jobPreference.jobPositions.length - 1}</Badge>}
                         </HStack>
                         <Text fontSize="xs" color="#475569"><b>Preferred Cities :</b> {c.jobPreference?.preferredCities?.join(', ')}</Text>
                       </VStack>
@@ -216,7 +219,7 @@ const CandidateList = () => {
         <TableFooter showing={`${indexOfFirstRecord + 1} to ${Math.min(indexOfLastRecord, candidates.length)}`} total={candidates.length} onPageChange={setCurrentPage} currentPage={currentPage} totalPages={totalPages} />
       </TableCard>
 
-      <ConfirmationModal 
+      <ConfirmationModal
         isOpen={isOpen}
         onClose={onClose}
         onConfirm={confirmConfig.onConfirm}

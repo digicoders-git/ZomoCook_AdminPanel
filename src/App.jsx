@@ -45,6 +45,7 @@ import EditPlan from './pages/EditPlan';
 import SubscriptionList from './pages/SubscriptionList';
 import OfferList from './pages/OfferList';
 import BannerList from './pages/BannerList';
+import PendingCookApprovals from './pages/PendingCookApprovals';
 
 // ─── Helper: Get current logged-in user's data ──────────────────────────────
 const getAdminData = () => {
@@ -122,7 +123,7 @@ function App() {
     const unsubscribe = onForegroundMessage((payload) => {
       const { title, body } = payload.notification;
       navigator.serviceWorker.ready.then(reg => {
-        reg.showNotification(title, { body, icon: '/logo.jpg' });
+        reg.showNotification(title, { body, icon: '/logo.png' });
       });
     });
 
@@ -337,6 +338,13 @@ function App() {
         <Route path="/masters/:category/:action?" element={
           <PermissionRoute permission="Masters">
             <Layout><MasterPage /></Layout>
+          </PermissionRoute>
+        } />
+
+        {/* ── Cook Approvals Routes ─────────────────────────────────── */}
+        <Route path="/cook-approvals" element={
+          <PermissionRoute permission="Dashboard">
+            <Layout><PendingCookApprovals /></Layout>
           </PermissionRoute>
         } />
 

@@ -60,6 +60,7 @@ const navItems = [
   },
   { name: 'Offers', icon: Gift, path: '/offers', permission: 'Offers' },
   { name: 'Banners', icon: ImageIcon, path: '/banners', permission: 'Banners' },
+  { name: 'Cook Approvals', icon: UserSquare2, path: '/cook-approvals', permission: 'Dashboard' },
   {
     name: 'Notifications', icon: Bell, path: '/notifications', permission: 'Notifications',
     children: [
@@ -275,7 +276,7 @@ const SidebarContent = ({ isCollapsed, onClose, onLogoutOpen, ...rest }) => (
           justifyContent="center"
           boxShadow="0 2px 8px rgba(0,0,0,0.15)"
         >
-          <img src="/logo.jpg" alt="ZomoCook" style={{ width: '100%', height: '100%', objectFit: 'contain' }} />
+          <img src="/src/assets/logo.png" alt="ZomoCook" style={{ width: '100%', height: '100%', objectFit: 'contain' }} />
         </Box>
         {!isCollapsed && (
           <Box>
@@ -420,12 +421,12 @@ const Navbar = ({ onOpen, toggleCollapse, isCollapsed, onLogoutOpen }) => {
   const formatDate = (d) => d.toLocaleDateString('en-US', { weekday: 'short', day: 'numeric', month: 'short', year: 'numeric' });
   const formatTime = (d) => d.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit', second: '2-digit', hour12: true });
 
-  // Get current page title from pathname
   const getPageTitle = () => {
     if (pathname === '/') return 'Dashboard';
     if (pathname.includes('/customers')) return 'Customer Management';
     if (pathname.includes('/jobs')) return 'Job Management';
     if (pathname.includes('/candidates')) return 'Candidate Management';
+    if (pathname.includes('/cook-approvals')) return 'Cook Profile Approvals';
     if (pathname.includes('/notifications')) return 'Notifications';
     if (pathname.includes('/queries')) return 'Query History';
     if (pathname.includes('/roles') || pathname.includes('/users')) return 'Roles & Permissions';

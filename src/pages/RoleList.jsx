@@ -58,7 +58,7 @@ const RoleList = () => {
 
   // Confirm modal
   const { isOpen: isConfirmOpen, onOpen: onConfirmOpen, onClose: onConfirmClose } = useDisclosure();
-  const [confirmConfig, setConfirmConfig] = useState({ title: '', description: '', onConfirm: () => {}, type: 'danger' });
+  const [confirmConfig, setConfirmConfig] = useState({ title: '', description: '', onConfirm: () => { }, type: 'danger' });
 
   // Permission modal
   const { isOpen: isPermOpen, onOpen: onPermOpen, onClose: onPermClose } = useDisclosure();

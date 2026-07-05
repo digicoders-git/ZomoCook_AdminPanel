@@ -9,7 +9,7 @@ import { User, MapPin, Phone, Briefcase } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import axios from "axios";
 import API_BASE_URL from "../apiConfig";
-import { BRAND, ACCENT } from "../components/ui";
+import { BRAND, ACCENT, Loading } from "../components/ui";
 
 const UPLOAD_BASE = API_BASE_URL.replace("/api", "");
 
@@ -146,9 +146,7 @@ const JobApplicantsModal = ({ isOpen, onClose, jobId, jobTitle }) => {
 
         <ModalBody px="5" py="4">
           {loading ? (
-            <Flex justify="center" align="center" py="12">
-              <Spinner size="lg" color={BRAND} thickness="3px" />
-            </Flex>
+            <Loading message="Loading applicants..." size="sm" />
           ) : applications.length === 0 ? (
             <VStack py="12" spacing="3">
               <Text fontSize="3xl">??</Text>

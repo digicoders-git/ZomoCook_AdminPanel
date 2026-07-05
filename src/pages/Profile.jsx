@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
-import { 
-  Box, VStack, HStack, Text, Icon, FormControl, FormLabel, Input, SimpleGrid, 
-  Image, Flex, Button, Divider, useToast, Spinner 
+import {
+  Box, VStack, HStack, Text, Icon, FormControl, FormLabel, Input, SimpleGrid,
+  Image, Flex, Button, Divider, useToast, Spinner
 } from '@chakra-ui/react';
 import { User, Lock, Save, RotateCcw, Camera } from 'lucide-react';
 import { PageHeader, PageFooter, BRAND, ACCENT, inputStyle, labelStyle } from '../components/ui';
@@ -21,7 +21,7 @@ const Profile = () => {
   const [isLoading, setIsLoading] = useState(true);
   const [isUpdating, setIsUpdating] = useState(false);
   const [isChangingPass, setIsChangingPass] = useState(false);
-  
+
   const [profileData, setProfileData] = useState({
     name: '',
     email: '',
@@ -79,7 +79,7 @@ const Profile = () => {
       if (newProfilePic) formData.append('profilePic', newProfilePic);
 
       const response = await axios.put(`${apiUrl}/admin/profile`, formData, {
-        headers: { 
+        headers: {
           'Authorization': `Bearer ${token}`,
           'Content-Type': 'multipart/form-data'
         }
@@ -103,7 +103,7 @@ const Profile = () => {
     if (passwordData.newPassword !== passwordData.confirmPassword) {
       return toast({ title: 'Error', description: 'Passwords do not match', status: 'error' });
     }
-    
+
     setIsChangingPass(true);
     try {
       const token = localStorage.getItem('adminToken');
@@ -151,58 +151,58 @@ const Profile = () => {
                 <SimpleGrid columns={{ base: 1, md: 2 }} spacingX="8" spacingY="5">
                   <FormControl isRequired>
                     <FormLabel {...labelStyle}>Full Name</FormLabel>
-                    <Input 
-                      value={profileData.name} 
-                      onChange={(e) => setProfileData({...profileData, name: e.target.value})} 
-                      placeholder="Enter full name" 
-                      {...inputStyle} 
+                    <Input
+                      value={profileData.name}
+                      onChange={(e) => setProfileData({ ...profileData, name: e.target.value })}
+                      placeholder="Enter full name"
+                      {...inputStyle}
                     />
                   </FormControl>
                   <FormControl isRequired>
                     <FormLabel {...labelStyle}>Email Address</FormLabel>
-                    <Input 
+                    <Input
                       type="email"
-                      value={profileData.email} 
-                      onChange={(e) => setProfileData({...profileData, email: e.target.value})} 
-                      placeholder="Enter email" 
-                      {...inputStyle} 
+                      value={profileData.email}
+                      onChange={(e) => setProfileData({ ...profileData, email: e.target.value })}
+                      placeholder="Enter email"
+                      {...inputStyle}
                     />
                   </FormControl>
                   <FormControl isRequired>
                     <FormLabel {...labelStyle}>Phone No</FormLabel>
-                    <Input 
-                      value={profileData.phone} 
-                      onChange={(e) => setProfileData({...profileData, phone: e.target.value})} 
-                      placeholder="Enter phone number" 
-                      {...inputStyle} 
+                    <Input
+                      value={profileData.phone}
+                      onChange={(e) => setProfileData({ ...profileData, phone: e.target.value })}
+                      placeholder="Enter phone number"
+                      {...inputStyle}
                     />
                   </FormControl>
                   <FormControl>
                     <FormLabel {...labelStyle}>Profile Picture</FormLabel>
                     <HStack spacing="4" align="center">
-                      <Box 
-                        position="relative" 
-                        w="80px" 
-                        h="80px" 
-                        borderRadius="full" 
-                        overflow="hidden" 
+                      <Box
+                        position="relative"
+                        w="80px"
+                        h="80px"
+                        borderRadius="full"
+                        overflow="hidden"
                         border={`3px solid ${BRAND}30`}
                         boxShadow="0 2px 8px rgba(0,74,173,0.1)"
                       >
-                        <Image 
-                          src={previewUrl || 'https://via.placeholder.com/150'} 
-                          alt="profile" 
-                          objectFit="cover" 
-                          w="full" 
-                          h="full" 
+                        <Image
+                          src={previewUrl || 'https://via.placeholder.com/150'}
+                          alt="profile"
+                          objectFit="cover"
+                          w="full"
+                          h="full"
                         />
-                        <Flex 
-                          position="absolute" 
-                          bottom="0" 
-                          w="full" 
-                          h="30%" 
-                          bg="blackAlpha.600" 
-                          align="center" 
+                        <Flex
+                          position="absolute"
+                          bottom="0"
+                          w="full"
+                          h="30%"
+                          bg="blackAlpha.600"
+                          align="center"
                           justify="center"
                           cursor="pointer"
                           onClick={() => document.getElementById('profile-upload').click()}
@@ -211,37 +211,37 @@ const Profile = () => {
                         </Flex>
                       </Box>
                       <VStack align="start" spacing="1">
-                        <Button 
-                          size="xs" 
-                          variant="outline" 
+                        <Button
+                          size="xs"
+                          variant="outline"
                           onClick={() => document.getElementById('profile-upload').click()}
                         >
                           Choose File
                         </Button>
                         <Text fontSize="10px" color="#64748b">JPG, PNG or GIF. Max 1MB</Text>
                       </VStack>
-                      <Input 
-                        id="profile-upload" 
-                        type="file" 
-                        display="none" 
+                      <Input
+                        id="profile-upload"
+                        type="file"
+                        display="none"
                         accept="image/*"
                         onChange={handleFileChange}
                       />
                     </HStack>
                   </FormControl>
                 </SimpleGrid>
-                
+
                 <Flex justify="flex-end" mt="6">
-                  <Button 
+                  <Button
                     type="submit"
-                    isLoading={isUpdating} 
-                    leftIcon={<Save size={14} />} 
-                    bg={BRAND} 
-                    color="white" 
-                    borderRadius="lg" 
-                    size="sm" 
-                    px="8" 
-                    _hover={{ bg: '#003d91' }} 
+                    isLoading={isUpdating}
+                    leftIcon={<Save size={14} />}
+                    bg={BRAND}
+                    color="white"
+                    borderRadius="lg"
+                    size="sm"
+                    px="8"
+                    _hover={{ bg: '#003d91' }}
                     boxShadow={`0 4px 12px ${BRAND}30`}
                   >
                     Save Changes
@@ -259,56 +259,56 @@ const Profile = () => {
                 <SimpleGrid columns={{ base: 1, md: 3 }} spacing="5">
                   <FormControl isRequired>
                     <FormLabel {...labelStyle}>Current Password</FormLabel>
-                    <Input 
-                      type="password" 
-                      value={passwordData.currentPassword} 
-                      onChange={(e) => setPasswordData({...passwordData, currentPassword: e.target.value})} 
-                      placeholder="••••••••" 
-                      {...inputStyle} 
+                    <Input
+                      type="password"
+                      value={passwordData.currentPassword}
+                      onChange={(e) => setPasswordData({ ...passwordData, currentPassword: e.target.value })}
+                      placeholder="••••••••"
+                      {...inputStyle}
                     />
                   </FormControl>
                   <FormControl isRequired>
                     <FormLabel {...labelStyle}>New Password</FormLabel>
-                    <Input 
-                      type="password" 
-                      value={passwordData.newPassword} 
-                      onChange={(e) => setPasswordData({...passwordData, newPassword: e.target.value})} 
-                      placeholder="Enter new password" 
-                      {...inputStyle} 
+                    <Input
+                      type="password"
+                      value={passwordData.newPassword}
+                      onChange={(e) => setPasswordData({ ...passwordData, newPassword: e.target.value })}
+                      placeholder="Enter new password"
+                      {...inputStyle}
                     />
                   </FormControl>
                   <FormControl isRequired>
                     <FormLabel {...labelStyle}>Confirm New Password</FormLabel>
-                    <Input 
-                      type="password" 
-                      value={passwordData.confirmPassword} 
-                      onChange={(e) => setPasswordData({...passwordData, confirmPassword: e.target.value})} 
-                      placeholder="Confirm new password" 
-                      {...inputStyle} 
+                    <Input
+                      type="password"
+                      value={passwordData.confirmPassword}
+                      onChange={(e) => setPasswordData({ ...passwordData, confirmPassword: e.target.value })}
+                      placeholder="Confirm new password"
+                      {...inputStyle}
                     />
                   </FormControl>
                 </SimpleGrid>
 
                 <Flex justify="flex-end" mt="6">
-                  <Button 
-                    variant="outline" 
-                    borderColor="#dde6f5" 
-                    color="#64748b" 
-                    borderRadius="lg" 
-                    size="sm" 
+                  <Button
+                    variant="outline"
+                    borderColor="#dde6f5"
+                    color="#64748b"
+                    borderRadius="lg"
+                    size="sm"
                     mr="3"
                     onClick={() => setPasswordData({ currentPassword: '', newPassword: '', confirmPassword: '' })}
                   >
                     Reset
                   </Button>
-                  <Button 
+                  <Button
                     type="submit"
-                    isLoading={isChangingPass} 
-                    bg="#1e293b" 
-                    color="white" 
-                    borderRadius="lg" 
-                    size="sm" 
-                    px="8" 
+                    isLoading={isChangingPass}
+                    bg="#1e293b"
+                    color="white"
+                    borderRadius="lg"
+                    size="sm"
+                    px="8"
                     _hover={{ bg: '#0f172a' }}
                   >
                     Update Password
