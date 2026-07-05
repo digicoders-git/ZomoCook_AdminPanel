@@ -94,17 +94,24 @@ const JobList = () => {
       if (response.data.success) {
         let fetchedJobs = response.data.jobs || [];
         let fetchedApps = [];
+        
         if (appResponse.data.success && Array.isArray(appResponse.data.applications)) {
           fetchedApps = appResponse.data.applications;
         }
 
-        // Compute counts on client-side dynamically so it works with Render production backend
-        const enrichedJobs = fetchedJobs.map(job => {
+        // Sort by created date descending
+        const sortedJobs = fetchedJobs.sort((a, b) => {
+          return new Date(b.createdAt) - new Date(a.createdAt);
+        });
+        
+        // Compute counts on client-side dynamically and set default leadManager
+        const enrichedJobs = sortedJobs.map(job => {
           const jobApps = fetchedApps.filter(app => (app.jobId === job._id || (app.job && app.job._id === job._id)));
           const appliedCount = jobApps.length;
           const assignedCount = jobApps.filter(app => app.status === 'Applied').length;
           return {
             ...job,
+            leadManager: job.leadManager || 'Not Assigned',
             appliedCount,
             assignedCount
           };
@@ -132,10 +139,62 @@ const JobList = () => {
     }
   };
 
+  const fetchCustomers = async () => {
+    try {
+      const response = await axios.get(`${API_BASE_URL}/customers`, {
+        headers: { 'Authorization': `Bearer ${token}` }
+      });
+      if (response.data.success) {
+        setCustomers(response.data.customers || []);
+      }
+    } catch (error) {
+      console.error('Error fetching customers:', error);
+    }
+  };
+
   useEffect(() => {
     fetchJobs();
     fetchLeadManagers();
+    fetchCustomers();
   }, []);
+
+  const getCustomerName = (job) => {
+    if (!job) return 'N/A';
+    
+    // 1. If customer is populated as an object and has name
+    if (job.customer && typeof job.customer === 'object' && job.customer.name) {
+      return job.customer.name;
+    }
+    
+    if (job.createdBy && typeof job.createdBy === 'object' && job.createdBy.name) {
+      return job.createdBy.name;
+    }
+    
+    // Get the customer ID as string
+    const customerId = job.customer && typeof job.customer === 'object' 
+      ? job.customer._id 
+      : job.customer;
+      
+    // 2. Search in client list
+    if (customerId) {
+      const foundCust = customers.find(c => String(c._id) === String(customerId));
+      if (foundCust) return foundCust.name;
+    }
+    
+    // Get the creator ID as string
+    const creatorId = job.createdBy && typeof job.createdBy === 'object'
+      ? job.createdBy._id
+      : job.createdBy;
+      
+    const searchId = customerId || creatorId;
+    if (!searchId) return 'N/A';
+    
+    // 3. Search in users/staff list (since mobile app clients are stored in User collection)
+    const foundUser = leadManagers.find(u => String(u._id) === String(searchId));
+    if (foundUser) return foundUser.name;
+    
+    return 'N/A';
+  };
 
   const handleFilterChange = (name, value) => {
     setFilters(prev => ({ ...prev, [name]: value }));
@@ -520,7 +579,7 @@ const JobList = () => {
 
                     {/* Customer */}
                     <Td {...customTdStyle} fontWeight="700" color="#0B1A30">
-                      {row.customer?.name || 'N/A'}
+                      {getCustomerName(row)}
                     </Td>
 
                     {/* City */}
