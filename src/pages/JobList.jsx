@@ -3,9 +3,10 @@ import {
   Box, HStack, Text, VStack, Button, Switch, IconButton,
   useToast, useDisclosure, Collapse, Flex, Badge,
   FormLabel, Select, Input, Table, Thead, Tbody, Tr, Th, Td,
-  Menu, MenuButton, MenuList, MenuItem, Link as ChakraLink
+  Menu, MenuButton, MenuList, MenuItem, Link as ChakraLink,
+  Modal, ModalOverlay, ModalContent, ModalHeader, ModalFooter, ModalBody, ModalCloseButton
 } from '@chakra-ui/react';
-import { Plus, Filter, Edit3, RotateCcw, Search, Eye, ChevronDown, Users, Trash2, Calendar } from 'lucide-react';
+import { Plus, Filter, Edit3, RotateCcw, Search, Eye, ChevronDown, Users, Trash2, Calendar, UserPlus, Send } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import {
   PageHeader, PageFooter, BRAND, ACCENT, TableCard, TableControls,
@@ -45,9 +46,13 @@ const JobList = () => {
   const toast = useToast();
   const { isOpen, onOpen, onClose } = useDisclosure();
   const { isOpen: isApplicantsOpen, onOpen: onApplicantsOpen, onClose: onApplicantsClose } = useDisclosure();
+  const { isOpen: isAssignOpen, onOpen: onAssignOpen, onClose: onAssignClose } = useDisclosure();
   const [selectedJob, setSelectedJob] = useState(null);
   const [jobs, setJobs] = useState([]);
   const [isLoading, setIsLoading] = useState(true);
+  const [assignJob, setAssignJob] = useState(null);
+  const [selectedLeadManager, setSelectedLeadManager] = useState('');
+  const [leadManagers, setLeadManagers] = useState([]);
 
   const token = localStorage.getItem('adminToken');
 
@@ -72,7 +77,8 @@ const JobList = () => {
     city: '',
     status: '',
     startDate: '',
-    endDate: ''
+    endDate: '',
+    leadManager: ''
   });
 
   const fetchJobs = async () => {
@@ -113,8 +119,22 @@ const JobList = () => {
     }
   };
 
+  const fetchLeadManagers = async () => {
+    try {
+      const response = await axios.get(`${API_BASE_URL}/admin/users`, {
+        headers: { 'Authorization': `Bearer ${token}` }
+      });
+      if (response.data.success) {
+        setLeadManagers(response.data.users || []);
+      }
+    } catch (error) {
+      console.error('Error fetching lead managers:', error);
+    }
+  };
+
   useEffect(() => {
     fetchJobs();
+    fetchLeadManagers();
   }, []);
 
   const handleFilterChange = (name, value) => {
@@ -127,7 +147,8 @@ const JobList = () => {
       city: '',
       status: '',
       startDate: '',
-      endDate: ''
+      endDate: '',
+      leadManager: ''
     });
     setSearch('');
     setShowCustomDate(false);
@@ -240,6 +261,50 @@ const JobList = () => {
   };
 
   // Filter and Paginate Data
+  // Assign/change lead manager API helper
+  const handleAssignLeadManager = async () => {
+    try {
+      const response = await axios.put(`${API_BASE_URL}/jobs/${assignJob._id}`, {
+        leadManager: selectedLeadManager
+      }, {
+        headers: { 'Authorization': `Bearer ${token}` }
+      });
+      if (response.data.success) {
+        toast({ title: 'Success', description: 'Lead Manager assigned successfully.', status: 'success', duration: 3000, position: 'top-right' });
+        fetchJobs();
+        onAssignClose();
+      }
+    } catch (error) {
+      toast({ title: 'Error', description: error.response?.data?.message || 'Failed to assign Lead Manager.', status: 'error', duration: 3000, position: 'top-right' });
+    }
+  };
+
+  // Resend notification API helper
+  const resendNotification = async (jobId) => {
+    try {
+      const response = await axios.post(`${API_BASE_URL}/jobs/${jobId}/resend-notification`, {}, {
+        headers: { 'Authorization': `Bearer ${token}` }
+      });
+      if (response.data.success) {
+        toast({
+          title: 'Notification Resent',
+          description: response.data.message || 'Notification resent successfully to all cooks.',
+          status: 'success',
+          duration: 3000,
+          position: 'top-right'
+        });
+      }
+    } catch (error) {
+      toast({
+        title: 'Error',
+        description: error.response?.data?.message || 'Failed to resend notification.',
+        status: 'error',
+        duration: 3000,
+        position: 'top-right'
+      });
+    }
+  };
+
   const filteredJobs = jobs.filter(job => {
     const matchesSearch =
       job.title.toLowerCase().includes(search.toLowerCase()) ||
@@ -249,6 +314,7 @@ const JobList = () => {
     const matchesCategory = !filters.category || job.jobCategory === filters.category;
     const matchesCity = !filters.city || job.city.toLowerCase() === filters.city.toLowerCase();
     const matchesStatus = !filters.status || (job.status || '').toLowerCase() === filters.status.toLowerCase();
+    const matchesLeadManager = !filters.leadManager || job.leadManager === filters.leadManager;
 
     // Date matching logic
     let matchesDate = true;
@@ -283,7 +349,7 @@ const JobList = () => {
       }
     }
 
-    return matchesSearch && matchesCategory && matchesCity && matchesStatus && matchesDate;
+    return matchesSearch && matchesCategory && matchesCity && matchesStatus && matchesDate && matchesLeadManager;
   });
 
   const totalPages = Math.ceil(filteredJobs.length / parseInt(entries));
@@ -347,6 +413,15 @@ const JobList = () => {
               ))}
             </Select>
           </Box>
+          <Box flex="1" minW="180px">
+            <FormLabel fontSize="xs" fontWeight="700" color="#475569" mb="2">Lead Manager</FormLabel>
+            <Select size="sm" h="40px" borderRadius="lg" bg="#f8faff" border="1.5px solid #dde6f5" value={filters.leadManager} onChange={(e) => handleFilterChange('leadManager', e.target.value)}>
+              <option value="">All Lead Manager</option>
+              {leadManagers.map(lm => (
+                <option key={lm._id} value={lm.name}>{lm.name}</option>
+              ))}
+            </Select>
+          </Box>
           <Box flex="1.5" minW="240px">
             <FormLabel fontSize="xs" fontWeight="700" color="#475569" mb="2">Date Range</FormLabel>
             {showCustomDate ? (
@@ -384,21 +459,41 @@ const JobList = () => {
           onEntriesChange={(val) => { setEntries(val); setCurrentPage(1); }}
         />
 
-        <Box overflowX="auto">
+        <Box 
+          overflowX="auto"
+          sx={{
+            '&::-webkit-scrollbar': {
+              height: '8px',
+            },
+            '&::-webkit-scrollbar-track': {
+              background: '#f1f5f9',
+              borderRadius: '4px',
+            },
+            '&::-webkit-scrollbar-thumb': {
+              background: '#cbd5e1',
+              borderRadius: '4px',
+            },
+            '&::-webkit-scrollbar-thumb:hover': {
+              background: '#94a3b8',
+            },
+          }}
+        >
           <Table variant="simple" size="sm">
             <Thead>
               <Tr>
                 <Th {...darkThStyle} w="80px">Job ID</Th>
-                <Th {...darkThStyle} minW="120px">Category</Th>
-                <Th {...darkThStyle} minW="150px">Department</Th>
-                <Th {...darkThStyle} minW="100px">City</Th>
-                <Th {...darkThStyle} minW="100px">Salary</Th>
-                <Th {...darkThStyle} w="100px">Applied</Th>
-                <Th {...darkThStyle} w="100px">Assigned</Th>
-                <Th {...darkThStyle} minW="120px">Status</Th>
-                <Th {...darkThStyle} w="120px">Toggle Status</Th>
-                <Th {...darkThStyle} minW="120px">Created Date</Th>
-                <Th {...darkThStyle} w="120px">Action</Th>
+                <Th {...darkThStyle} w="100px">Category</Th>
+                <Th {...darkThStyle} w="120px">Department</Th>
+                <Th {...darkThStyle} w="100px">Customer</Th>
+                <Th {...darkThStyle} w="80px">City</Th>
+                <Th {...darkThStyle} w="120px">Salary</Th>
+                <Th {...darkThStyle} w="65px">Applied</Th>
+                <Th {...darkThStyle} w="65px">Assigned</Th>
+                <Th {...darkThStyle} w="110px">Lead Manager</Th>
+                <Th {...darkThStyle} w="90px">Status</Th>
+                <Th {...darkThStyle} w="90px">Toggle Status</Th>
+                <Th {...darkThStyle} w="100px">Created Date</Th>
+                <Th {...darkThStyle} w="150px">Action</Th>
               </Tr>
             </Thead>
             <Tbody>
@@ -421,6 +516,11 @@ const JobList = () => {
                     {/* Department (Job Position) */}
                     <Td {...customTdStyle}>
                       {row.jobPosition || 'N/A'}
+                    </Td>
+
+                    {/* Customer */}
+                    <Td {...customTdStyle} fontWeight="700" color="#0B1A30">
+                      {row.customer?.name || 'N/A'}
                     </Td>
 
                     {/* City */}
@@ -467,6 +567,11 @@ const JobList = () => {
                       >
                         {row.assignedCount ?? 0}
                       </Badge>
+                    </Td>
+
+                    {/* Lead Manager */}
+                    <Td {...customTdStyle} fontWeight="700" color={row.leadManager ? '#0B1A30' : 'gray.400'}>
+                      {row.leadManager || 'Not Assigned'}
                     </Td>
 
                     {/* Status badge and toggle dropdown */}
@@ -550,6 +655,32 @@ const JobList = () => {
                           onClick={() => navigate(`/jobs/view/${row._id}`)}
                         />
                         <IconButton
+                          icon={<UserPlus size={15} />}
+                          size="xs"
+                          w="28px"
+                          h="28px"
+                          variant="ghost"
+                          color="#64748b"
+                          _hover={{ color: '#0f62fe', bg: '#f1f5f9' }}
+                          aria-label="Edit Lead Manager"
+                          onClick={() => {
+                            setAssignJob(row);
+                            setSelectedLeadManager(row.leadManager || '');
+                            onAssignOpen();
+                          }}
+                        />
+                        <IconButton
+                          icon={<Send size={14} />}
+                          size="xs"
+                          w="28px"
+                          h="28px"
+                          variant="ghost"
+                          color="#64748b"
+                          _hover={{ color: '#10b981', bg: '#e6fcf5' }}
+                          aria-label="Resend Notification"
+                          onClick={() => resendNotification(row._id)}
+                        />
+                        <IconButton
                           icon={<Edit3 size={15} />}
                           size="xs"
                           w="28px"
@@ -576,7 +707,7 @@ const JobList = () => {
                   </Tr>
                 );
               })}
-              {!isLoading && paginatedJobs.length === 0 && <Tr><Td colSpan={11} py="10" textAlign="center" color="#94a3b8">No records found.</Td></Tr>}
+              {!isLoading && paginatedJobs.length === 0 && <Tr><Td colSpan={13} py="10" textAlign="center" color="#94a3b8">No records found.</Td></Tr>}
             </Tbody>
           </Table>
         </Box>
@@ -631,6 +762,43 @@ const JobList = () => {
           )}
         </Flex>
       </TableCard>
+
+      {/* Assign Lead Manager Modal */}
+      <Modal isOpen={isAssignOpen} onClose={onAssignClose} isCentered>
+        <ModalOverlay />
+        <ModalContent borderRadius="xl">
+          <ModalHeader fontSize="md" fontWeight="bold">Assign Lead Manager</ModalHeader>
+          <ModalCloseButton />
+          <ModalBody pb={6}>
+            <VStack spacing={4} align="stretch">
+              <Text fontSize="sm" color="gray.600">
+                Select ZomoCook team member to assign/change Lead Manager for job: <strong>{assignJob?.jobCode || 'N/A'}</strong>
+              </Text>
+              <Select 
+                placeholder="Select Lead Manager" 
+                value={selectedLeadManager} 
+                onChange={(e) => setSelectedLeadManager(e.target.value)}
+                h="45px"
+                borderRadius="lg"
+                bg="#f8faff"
+                border="1.5px solid #dde6f5"
+              >
+                {leadManagers.map(user => (
+                  <option key={user._id} value={user.name}>{user.name}</option>
+                ))}
+              </Select>
+            </VStack>
+          </ModalBody>
+          <ModalFooter borderTop="1px solid #f1f5f9">
+            <Button size="sm" variant="ghost" mr={3} onClick={onAssignClose} borderRadius="lg">
+              Cancel
+            </Button>
+            <Button size="sm" bg="#0f62fe" color="white" _hover={{ bg: '#0043ce' }} onClick={handleAssignLeadManager} borderRadius="lg">
+              Save Assignee
+            </Button>
+          </ModalFooter>
+        </ModalContent>
+      </Modal>
 
       <ConfirmationModal
         isOpen={isOpen}
