@@ -108,9 +108,13 @@ const Unauthorized = () => {
           >
             Go Back
           </Button>
+          
           <Button
             leftIcon={<Home size={15} />}
-            onClick={() => navigate('/')}
+            onClick={() => {
+              const hasDashboard = adminData?.type === 'admin' || (adminData?.role?.permissions || []).includes('Dashboard');
+              navigate(hasDashboard ? '/' : '/profile');
+            }}
             bg={BRAND}
             color="white"
             borderRadius="lg"
@@ -118,7 +122,22 @@ const Unauthorized = () => {
             _hover={{ bg: '#003d91' }}
             boxShadow={`0 4px 12px ${BRAND}30`}
           >
-            Dashboard
+            {(adminData?.type === 'admin' || (adminData?.role?.permissions || []).includes('Dashboard')) ? 'Dashboard' : 'My Profile'}
+          </Button>
+
+          <Button
+            onClick={() => {
+              localStorage.removeItem('adminToken');
+              localStorage.removeItem('adminData');
+              window.location.href = '/login';
+            }}
+            variant="ghost"
+            color="#ef4444"
+            borderRadius="lg"
+            size="sm"
+            _hover={{ bg: '#fee2e2' }}
+          >
+            Logout
           </Button>
         </HStack>
 

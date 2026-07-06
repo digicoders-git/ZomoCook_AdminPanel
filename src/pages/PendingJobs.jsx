@@ -53,6 +53,7 @@ const PendingJobs = () => {
   const [assignJob, setAssignJob] = useState(null);
   const [selectedLeadManager, setSelectedLeadManager] = useState('');
   const [leadManagers, setLeadManagers] = useState([]);
+  const [customers, setCustomers] = useState([]);
 
   const token = localStorage.getItem('adminToken');
 

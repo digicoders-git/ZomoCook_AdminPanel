@@ -68,6 +68,22 @@ const ApplicationsList = () => {
     }
   };
 
+  const handleKycStatusChange = async (candidateId, newKycStatus, appId) => {
+    try {
+      const token = localStorage.getItem('adminToken');
+      const response = await axios.patch(`${API_BASE_URL}/candidates/${candidateId}/status`,
+        { type: 'kyc', value: newKycStatus },
+        { headers: { 'Authorization': `Bearer ${token}` } }
+      );
+      if (response.data.success) {
+        toast({ title: 'Success', description: 'Candidate KYC status updated.', status: 'success', duration: 3000 });
+        setApplications(apps => apps.map(app => app._id === appId ? { ...app, candidateKycStatus: newKycStatus } : app));
+      }
+    } catch (error) {
+      toast({ title: 'Error', description: 'Failed to update KYC status.', status: 'error', duration: 3000 });
+    }
+  };
+
   // Pagination Logic
   const indexOfLastRecord = currentPage * entriesPerPage;
   const indexOfFirstRecord = indexOfLastRecord - entriesPerPage;
@@ -85,6 +101,14 @@ const ApplicationsList = () => {
       case 'Not Interested': return '#64748b';
       case 'Hired': return '#059669';
       default: return BRAND;
+    }
+  };
+
+  const getKycColor = (s) => {
+    switch (s?.toLowerCase()) {
+      case 'approved': return '#10b981';
+      case 'rejected': return '#ef4444';
+      default: return '#f59e0b';
     }
   };
 
@@ -194,6 +218,7 @@ const ApplicationsList = () => {
                     </Td>
                     <Td {...tdStyle} textAlign="center">
                       <VStack spacing="3" align="center">
+                        <Text fontSize="11px" fontWeight="600" color="#64748b" mb="-2">Application Status:</Text>
                         <Select
                           size="sm"
                           bg={getStatusColor(c.status)}
@@ -213,6 +238,23 @@ const ApplicationsList = () => {
                           <option value="Rejected">Rejected</option>
                           <option value="On Hold">On Hold</option>
                           <option value="Not Interested">Not Interested</option>
+                        </Select>
+                        <Divider my="1" />
+                        <Text fontSize="11px" fontWeight="600" color="#64748b" mb="-2">KYC Status:</Text>
+                        <Select
+                          size="sm"
+                          bg={getKycColor(c.candidateKycStatus)}
+                          color="white"
+                          borderColor="transparent"
+                          borderRadius="4px"
+                          fontWeight="700"
+                          value={c.candidateKycStatus?.toLowerCase() || 'pending'}
+                          onChange={(e) => handleKycStatusChange(c.candidateId, e.target.value, c._id)}
+                          sx={{ '& option': { color: '#1e293b', bg: 'white' } }}
+                        >
+                          <option value="pending">Pending</option>
+                          <option value="approved">Approved</option>
+                          <option value="rejected">Rejected</option>
                         </Select>
                         <Badge
                           variant="outline"

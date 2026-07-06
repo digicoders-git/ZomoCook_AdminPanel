@@ -1,9 +1,10 @@
 import { useState, useEffect } from 'react';
 import {
   Box, Flex, Text, HStack, Table, Thead, Tbody, Tr, Th, Td, Switch,
-  IconButton, Avatar, Spinner, useToast, Button, useDisclosure
+  IconButton, Avatar, Spinner, useToast, Button, useDisclosure,
+  Modal, ModalOverlay, ModalContent, ModalHeader, ModalFooter, ModalBody, ModalCloseButton, Badge, Divider, VStack, SimpleGrid
 } from '@chakra-ui/react';
-import { Edit3, Trash2, Filter, Plus } from 'lucide-react';
+import { Edit3, Trash2, Filter, Plus, Eye } from 'lucide-react';
 import { Link, useNavigate } from 'react-router-dom';
 import {
   PageHeader, TableCard, TableControls, TableFooter, PageFooter, BRAND, ACCENT,
@@ -18,7 +19,9 @@ const UserList = () => {
   const [searchTerm, setSearchTerm] = useState('');
   const toast = useToast();
   const { isOpen, onOpen, onClose } = useDisclosure();
+  const { isOpen: isViewOpen, onOpen: onViewOpen, onClose: onViewClose } = useDisclosure();
   const [confirmConfig, setConfirmConfig] = useState({ title: '', description: '', onConfirm: () => { }, type: 'danger' });
+  const [selectedUser, setSelectedUser] = useState(null);
 
   const fetchUsers = async () => {
     setIsLoading(true);
@@ -155,6 +158,19 @@ const UserList = () => {
                     <Td py="4" border="1px solid #edf2f7" textAlign="center">
                       <HStack spacing="2" justify="center">
                         <IconButton
+                          icon={<Eye size={16} />}
+                          size="sm"
+                          bg="#3b82f6"
+                          color="white"
+                          borderRadius="md"
+                          _hover={{ bg: '#2563eb' }}
+                          onClick={() => {
+                            setSelectedUser(user);
+                            onViewOpen();
+                          }}
+                          aria-label="view"
+                        />
+                        <IconButton
                           icon={<Edit3 size={16} />}
                           size="sm"
                           bg="#f97316"
@@ -198,6 +214,63 @@ const UserList = () => {
         type={confirmConfig.type}
         confirmColor={confirmConfig.type === 'danger' ? ACCENT : BRAND}
       />
+
+      {/* View User Modal */}
+      <Modal isOpen={isViewOpen} onClose={onViewClose} size="lg">
+        <ModalOverlay />
+        <ModalContent>
+          <ModalHeader color="#1e293b">User Details</ModalHeader>
+          <ModalCloseButton />
+          <ModalBody pb={6}>
+            {selectedUser && (
+              <VStack align="stretch" spacing={4}>
+                <Flex align="center" gap="4">
+                  <Avatar size="xl" src={selectedUser.profilePic ? `${apiBase}/${selectedUser.profilePic}` : ''} name={selectedUser.name} />
+                  <Box>
+                    <Text fontSize="xl" fontWeight="bold" color="#1e293b">{selectedUser.name}</Text>
+                    <Text fontSize="md" color="#64748b">{selectedUser.email}</Text>
+                    <Badge mt="1" colorScheme={selectedUser.status === 'Active' ? 'green' : 'red'}>{selectedUser.status}</Badge>
+                  </Box>
+                </Flex>
+                
+                <Divider />
+                
+                <SimpleGrid columns={2} spacing={4}>
+                  <Box>
+                    <Text fontSize="sm" color="#94a3b8" fontWeight="600">Phone No</Text>
+                    <Text fontSize="md" color="#334155">{selectedUser.phone || 'N/A'}</Text>
+                  </Box>
+                  <Box>
+                    <Text fontSize="sm" color="#94a3b8" fontWeight="600">Role</Text>
+                    <Text fontSize="md" color="#334155">{selectedUser.role?.name || 'N/A'}</Text>
+                  </Box>
+                  <Box>
+                    <Text fontSize="sm" color="#94a3b8" fontWeight="600">Job Actions</Text>
+                    <Text fontSize="md" color="#334155">{selectedUser.jobActions || 'N/A'}</Text>
+                  </Box>
+                </SimpleGrid>
+
+                <Divider />
+
+                <Box>
+                  <Text fontSize="sm" color="#94a3b8" fontWeight="600" mb="2">Access Permissions</Text>
+                  <Flex wrap="wrap" gap="2">
+                    {selectedUser.role?.permissions && selectedUser.role.permissions.length > 0 ? (
+                      selectedUser.role.permissions.map((perm, idx) => (
+                        <Badge key={idx} colorScheme="blue" variant="subtle" px="2" py="1" borderRadius="md">
+                          {perm}
+                        </Badge>
+                      ))
+                    ) : (
+                      <Text fontSize="sm" color="#94a3b8">No permissions assigned.</Text>
+                    )}
+                  </Flex>
+                </Box>
+              </VStack>
+            )}
+          </ModalBody>
+        </ModalContent>
+      </Modal>
 
       <PageFooter />
     </Box>

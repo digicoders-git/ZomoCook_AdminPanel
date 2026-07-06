@@ -144,7 +144,7 @@ function App() {
 
         {/* ── Dashboard ──────────────────────────────────────────────── */}
         <Route path="/" element={
-          <PermissionRoute permission="Dashboard">
+          <PermissionRoute permission={null}>
             <Layout><Dashboard /></Layout>
           </PermissionRoute>
         } />
