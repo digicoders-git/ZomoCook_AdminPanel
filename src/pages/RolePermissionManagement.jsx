@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import {
   Box, Flex, Text, Button, Input, InputGroup, InputLeftElement,
   VStack, HStack, Badge, Table, Thead, Tbody, Tr, Th, Td, TableContainer,
-  IconButton, Spinner, useToast, Checkbox, Icon, Divider, Tab, TabList, Tabs
+  IconButton, Spinner, useToast, Checkbox, Icon, Divider, Tab, TabList, Tabs, TabPanels, TabPanel
 } from '@chakra-ui/react';
 import { Search, Plus, MoreVertical, Copy, Edit, Check, X, Minus } from 'lucide-react';
 import axios from 'axios';
@@ -23,6 +23,8 @@ const modules = [
   { id: 'finance_revenue', name: 'Finance / Revenue', desc: 'Manage revenue and transactions' },
   { id: 'role_permission', name: 'Role & Permission', desc: 'Manage roles and permissions' },
   { id: 'settings', name: 'Settings', desc: 'System settings and configuration' },
+  { id: 'masters', name: 'Master Data', desc: 'Manage all system master data' },
+  { id: 'notifications', name: 'Notifications', desc: 'Manage push notifications' },
 ];
 
 const actions = [
@@ -218,9 +220,9 @@ export default function RolePermissionManagement() {
                   <Tab fontWeight="600" color="#475569" _selected={{ color: '#004aad', borderColor: '#004aad', borderBottomWidth: '2px' }}>Module Permissions</Tab>
                   <Tab fontWeight="600" color="#475569" _selected={{ color: '#004aad', borderColor: '#004aad', borderBottomWidth: '2px' }}>Global Permissions</Tab>
                 </TabList>
-              </Tabs>
-
-              <TableContainer>
+                <TabPanels>
+                  <TabPanel p={0}>
+                    <TableContainer>
                 <Table size="sm" variant="simple">
                   <Thead>
                     <Tr>
@@ -281,7 +283,38 @@ export default function RolePermissionManagement() {
                 <Flex align="center" gap="2"><Flex align="center" justify="center" w="5" h="5" borderRadius="sm" bg="#f1f5f9" color="#94a3b8"><Icon as={Minus} boxSize={3} /></Flex><Text fontSize="xs" fontWeight="600" color="#475569">Not Applicable</Text></Flex>
                 <Text fontSize="xs" color="#94a3b8" ml="auto">ⓘ Changes will be saved automatically</Text>
               </Flex>
+                  </TabPanel>
 
+                  <TabPanel p={5}>
+                    <Flex direction="column" gap="4">
+                      <Flex p="4" border="1px solid #e2e8f0" borderRadius="md" justify="space-between" align="center">
+                        <Box>
+                          <Text fontSize="sm" fontWeight="700" color="#1e293b">Full System Access</Text>
+                          <Text fontSize="xs" color="#64748b">Grants full control over all modules and features.</Text>
+                        </Box>
+                        {isEditing ? (
+                          <Checkbox colorScheme="green" size="lg" isChecked={hasPermission('global', 'full_access')} onChange={() => togglePermission('global', 'full_access')} />
+                        ) : (
+                          hasPermission('global', 'full_access') ? 
+                            <Badge colorScheme="green">Enabled</Badge> : <Badge colorScheme="red">Disabled</Badge>
+                        )}
+                      </Flex>
+                      <Flex p="4" border="1px solid #e2e8f0" borderRadius="md" justify="space-between" align="center">
+                        <Box>
+                          <Text fontSize="sm" fontWeight="700" color="#1e293b">Export All Data</Text>
+                          <Text fontSize="xs" color="#64748b">Allow exporting data across all modules regardless of individual settings.</Text>
+                        </Box>
+                        {isEditing ? (
+                          <Checkbox colorScheme="green" size="lg" isChecked={hasPermission('global', 'export_all')} onChange={() => togglePermission('global', 'export_all')} />
+                        ) : (
+                          hasPermission('global', 'export_all') ? 
+                            <Badge colorScheme="green">Enabled</Badge> : <Badge colorScheme="red">Disabled</Badge>
+                        )}
+                      </Flex>
+                    </Flex>
+                  </TabPanel>
+                </TabPanels>
+              </Tabs>
             </>
           ) : (
             <Flex justify="center" align="center" h="full" minH="400px">

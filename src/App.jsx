@@ -22,6 +22,7 @@ import NotificationList from './pages/NotificationList';
 import QueryHistory from './pages/QueryHistory';
 import AddRole from './pages/AddRole';
 import RolePermissionManagement from './pages/RolePermissionManagement';
+import RoleList from './pages/RoleList';
 import AddUser from './pages/AddUser';
 import EditUser from './pages/EditUser';
 import UserList from './pages/UserList';
@@ -151,198 +152,198 @@ function App() {
         
         {/* ── Finance / Revenue ──────────────────────────────────────── */}
         <Route path="/finance" element={
-          <PermissionRoute permission="Dashboard">
+          <PermissionRoute permission="finance_revenue:view">
             <Layout><FinanceRevenue /></Layout>
           </PermissionRoute>
         } />
 
         {/* ── Customer Routes ────────────────────────────────────────── */}
         <Route path="/customers/list" element={
-          <PermissionRoute permission="Customer/Client List">
+          <PermissionRoute permission="customer_client:view">
             <Layout><CustomerList /></Layout>
           </PermissionRoute>
         } />
         <Route path="/customers/add" element={
-          <PermissionRoute permission="Add Customer/Client">
+          <PermissionRoute permission="customer_client:add">
             <Layout><AddCustomer /></Layout>
           </PermissionRoute>
         } />
         <Route path="/customers/edit/:id" element={
-          <PermissionRoute permission="Add Customer/Client">
+          <PermissionRoute permission="customer_client:edit">
             <Layout><EditCustomer /></Layout>
           </PermissionRoute>
         } />
 
         {/* ── Job Routes ─────────────────────────────────────────────── */}
         <Route path="/jobs/list" element={
-          <PermissionRoute permission="Job List">
+          <PermissionRoute permission="job_management:view">
             <Layout><JobList /></Layout>
           </PermissionRoute>
         } />
         
         <Route path="/pending-jobs" element={
-          <PermissionRoute permission="Job List">
+          <PermissionRoute permission="job_management:view">
             <Layout><PendingJobs /></Layout>
           </PermissionRoute>
         } />
         <Route path="/jobs/add" element={
-          <PermissionRoute permission="Add Job">
+          <PermissionRoute permission="job_management:add">
             <Layout><AddJob /></Layout>
           </PermissionRoute>
         } />
         <Route path="/jobs/edit/:id" element={
-          <PermissionRoute permission="Add Job">
+          <PermissionRoute permission="job_management:edit">
             <Layout><EditJob /></Layout>
           </PermissionRoute>
         } />
         <Route path="/jobs/view/:id" element={
-          <PermissionRoute permission="Job List">
+          <PermissionRoute permission="job_management:view">
             <Layout><ViewJob /></Layout>
           </PermissionRoute>
         } />
 
         {/* ── Candidate Routes ───────────────────────────────────────── */}
         <Route path="/candidates/list" element={
-          <PermissionRoute permission="Candidate List">
+          <PermissionRoute permission="candidates:view">
             <Layout><CandidateList /></Layout>
           </PermissionRoute>
         } />
         <Route path="/candidates/add" element={
-          <PermissionRoute permission="Add Candidate">
+          <PermissionRoute permission="candidates:add">
             <Layout><AddCandidate /></Layout>
           </PermissionRoute>
         } />
         <Route path="/candidates/edit/:id" element={
-          <PermissionRoute permission="Add Candidate">
+          <PermissionRoute permission="candidates:edit">
             <Layout><EditCandidate /></Layout>
           </PermissionRoute>
         } />
         <Route path="/candidates/view/:id" element={
-          <PermissionRoute permission="Candidate List">
+          <PermissionRoute permission="candidates:view">
             <Layout><ViewCandidate /></Layout>
           </PermissionRoute>
         } />
         <Route path="/candidates/applied" element={
-          <PermissionRoute permission="Applied Candidates List">
+          <PermissionRoute permission="candidates:view">
             <Layout><AppliedCandidatesList /></Layout>
           </PermissionRoute>
         } />
         <Route path="/candidates/shortlisted" element={
-          <PermissionRoute permission="Shortlisted Candidate List">
+          <PermissionRoute permission="candidates:view">
             <Layout><ShortlistedCandidatesList /></Layout>
           </PermissionRoute>
         } />
         <Route path="/candidates/demo-scheduled" element={
-          <PermissionRoute permission="Candidates">
+          <PermissionRoute permission="candidates:view">
             <Layout><DemoScheduledCandidatesList /></Layout>
           </PermissionRoute>
         } />
         <Route path="/candidates/reschedule-requests" element={
-          <PermissionRoute permission="Candidates">
+          <PermissionRoute permission="candidates:view">
             <Layout><RescheduleRequestsList /></Layout>
           </PermissionRoute>
         } />
         <Route path="/candidates/rejected" element={
-          <PermissionRoute permission="Candidates">
+          <PermissionRoute permission="candidates:view">
             <Layout><RejectedCandidatesList /></Layout>
           </PermissionRoute>
         } />
         <Route path="/candidates/on-hold" element={
-          <PermissionRoute permission="Candidates">
+          <PermissionRoute permission="candidates:view">
             <Layout><OnHoldCandidatesList /></Layout>
           </PermissionRoute>
         } />
         <Route path="/candidates/not-interested" element={
-          <PermissionRoute permission="Candidates">
+          <PermissionRoute permission="candidates:view">
             <Layout><NotInterestedCandidatesList /></Layout>
           </PermissionRoute>
         } />
         <Route path="/candidates/hired" element={
-          <PermissionRoute permission="Candidates">
+          <PermissionRoute permission="candidates:view">
             <Layout><HiredCandidatesList /></Layout>
           </PermissionRoute>
         } />
 
         {/* ── Notification Routes ────────────────────────────────────── */}
         <Route path="/notifications/list" element={
-          <PermissionRoute permission="Notification List">
+          <PermissionRoute permission="notifications:view">
             <Layout><NotificationList /></Layout>
           </PermissionRoute>
         } />
         <Route path="/notifications/add" element={
-          <PermissionRoute permission="Add Notification">
+          <PermissionRoute permission="notifications:add">
             <Layout><AddNotification /></Layout>
           </PermissionRoute>
         } />
 
         {/* ── Plans Routes ───────────────────────────────────────────── */}
         <Route path="/plans/list" element={
-          <PermissionRoute permission="Plans">
+          <PermissionRoute permission="service_packages:view">
             <Layout><PlanList /></Layout>
           </PermissionRoute>
         } />
         <Route path="/plans/add" element={
-          <PermissionRoute permission="Plans">
+          <PermissionRoute permission="service_packages:add">
             <Layout><AddPlan /></Layout>
           </PermissionRoute>
         } />
         <Route path="/plans/edit/:id" element={
-          <PermissionRoute permission="Plans">
+          <PermissionRoute permission="service_packages:edit">
             <Layout><EditPlan /></Layout>
           </PermissionRoute>
         } />
         <Route path="/subscriptions/list" element={
-          <PermissionRoute permission="Subscriptions">
+          <PermissionRoute permission="service_packages:view">
             <Layout><SubscriptionList /></Layout>
           </PermissionRoute>
         } />
         <Route path="/offers" element={
-          <PermissionRoute permission="Offers">
+          <PermissionRoute permission="offer_management:view">
             <Layout><OfferList /></Layout>
           </PermissionRoute>
         } />
         <Route path="/banners" element={
-          <PermissionRoute permission="Banners">
+          <PermissionRoute permission="banner_management:view">
             <Layout><BannerList /></Layout>
           </PermissionRoute>
         } />
 
         {/* ── Other Routes ───────────────────────────────────────────── */}
         <Route path="/queries" element={
-          <PermissionRoute permission="Query History">
+          <PermissionRoute permission="query_management:view">
             <Layout><QueryHistory /></Layout>
           </PermissionRoute>
         } />
         <Route path="/applications/all" element={
-          <PermissionRoute permission="Candidates">
+          <PermissionRoute permission="candidates:view">
             <Layout><ApplicationsList /></Layout>
           </PermissionRoute>
         } />
 
         {/* ── Roles & Permissions Routes ─────────────────────────────── */}
         <Route path="/roles/add" element={
-          <PermissionRoute permission="Add Role">
+          <PermissionRoute permission="role_permission:add">
             <Layout><AddRole /></Layout>
           </PermissionRoute>
         } />
         <Route path="/roles/list" element={<Navigate to="/roles/permissions" replace />} />
         <Route path="/users/add" element={
-          <PermissionRoute permission="Add User">
+          <PermissionRoute permission="role_permission:add">
             <Layout><AddUser /></Layout>
           </PermissionRoute>
         } />
         <Route path="/users/edit/:id" element={
-          <PermissionRoute permission="Add User">
+          <PermissionRoute permission="role_permission:edit">
             <Layout><EditUser /></Layout>
           </PermissionRoute>
         } />
         <Route path="/users/list" element={
-          <PermissionRoute permission="User List">
+          <PermissionRoute permission="role_permission:view">
             <Layout><UserList /></Layout>
           </PermissionRoute>
         } />
         <Route path="/roles/permissions" element={
-          <PermissionRoute permission="Role & Permission">
+          <PermissionRoute permission="role_permission:manage">
             <Layout><RolePermissionManagement /></Layout>
           </PermissionRoute>
         } />
@@ -350,21 +351,21 @@ function App() {
 
         {/* ── Masters Routes ─────────────────────────────────────────── */}
         <Route path="/masters/:category/:action?" element={
-          <PermissionRoute permission="Masters">
+          <PermissionRoute permission="masters:view">
             <Layout><MasterPage /></Layout>
           </PermissionRoute>
         } />
 
         {/* ── Cook Approvals Routes ─────────────────────────────────── */}
         <Route path="/cook-approvals" element={
-          <PermissionRoute permission="Dashboard">
+          <PermissionRoute permission="cook_approvals:view">
             <Layout><PendingCookApprovals /></Layout>
           </PermissionRoute>
         } />
 
         {/* ── Settings & Profile (all logged-in users) ───────────────── */}
         <Route path="/settings" element={
-          <PermissionRoute permission="Web Settings">
+          <PermissionRoute permission="settings:view">
             <Layout><WebSettings /></Layout>
           </PermissionRoute>
         } />
