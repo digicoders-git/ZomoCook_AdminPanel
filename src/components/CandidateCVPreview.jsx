@@ -1,6 +1,6 @@
 import React, { forwardRef } from 'react';
-import { Box, Flex, Text, HStack, VStack, Image, Grid, Divider, Icon } from '@chakra-ui/react';
-import { MapPin, Phone, Mail } from 'lucide-react';
+import { Box, Flex, Text, HStack, VStack, Image, Grid, GridItem, Divider, Icon } from '@chakra-ui/react';
+import { MapPin, Phone, Mail, Shield, CheckCircle2, Globe } from 'lucide-react';
 
 const CandidateCVPreview = forwardRef(({ candidate }, ref) => {
   if (!candidate) return null;
@@ -51,19 +51,20 @@ const CandidateCVPreview = forwardRef(({ candidate }, ref) => {
   );
 
   return (
-    <Box 
+    <Flex 
       ref={ref} 
       bg="white" 
       w="800px" 
       minH="1131px" 
+      direction="column"
       color={PRIMARY_TEXT} 
       fontFamily="'Outfit', sans-serif" 
       style={{ WebkitFontSmoothing: 'antialiased' }}
     >
-      <Grid templateColumns="60% 40%" h="full" minH="1131px">
+      <Flex flex="1">
         
         {/* Left Main Column */}
-        <Box p="10" pr="8" pt="12">
+        <Box flex="6" p="10" pr="8" pt="12">
           <Text fontSize="5xl" fontWeight="900" color={PRIMARY_TEXT} letterSpacing="tighter" textTransform="uppercase" lineHeight="1.1">
             {candidate.name}
           </Text>
@@ -79,39 +80,83 @@ const CandidateCVPreview = forwardRef(({ candidate }, ref) => {
           </Text>
 
           <SectionHeading title="Work Experience" />
-          <Box mb="4">
-            <HStack justify="space-between" align="flex-end" mb="1">
-              <Text fontSize="md" fontWeight="800" color={PRIMARY_TEXT}>
-                {candidate.workExperience?.lastCompany?.role || 'Job Position'}
+          
+          {/* Last Company */}
+          {candidate.workExperience?.lastCompany?.name && (
+            <Box mb="4">
+              <HStack justify="space-between" align="flex-end" mb="1">
+                <Text fontSize="md" fontWeight="800" color={PRIMARY_TEXT}>
+                  {candidate.workExperience.lastCompany.role || 'Job Position'}
+                </Text>
+                <Text fontSize="sm" fontWeight="700" color={PRIMARY_TEXT}>
+                  {candidate.workExperience.lastCompany.duration || 'Duration N/A'}
+                </Text>
+              </HStack>
+              <Text fontSize="sm" fontWeight="700" color={PRIMARY_TEXT} mb="3">
+                {candidate.workExperience.lastCompany.name}
               </Text>
-              <Text fontSize="sm" fontWeight="700" color={PRIMARY_TEXT}>
-                {candidate.workExperience?.lastCompany?.duration || 'Duration N/A'}
+              <VStack align="start" spacing="2" pl="4">
+                <HStack align="start">
+                  <Text color={SECONDARY_TEXT} fontSize="sm">•</Text>
+                  <Text fontSize="sm" color={SECONDARY_TEXT} fontWeight="500" lineHeight="tall">
+                    Demonstrated excellence in delivering high-quality service and maintaining operational efficiency.
+                  </Text>
+                </HStack>
+                <HStack align="start">
+                  <Text color={SECONDARY_TEXT} fontSize="sm">•</Text>
+                  <Text fontSize="sm" color={SECONDARY_TEXT} fontWeight="500" lineHeight="tall">
+                    Collaborated with team members to ensure all standards and procedures were strictly followed.
+                  </Text>
+                </HStack>
+              </VStack>
+            </Box>
+          )}
+
+          {/* Previous Experiences */}
+          {candidate.workExperience?.experiences?.map((exp, idx) => (
+            <Box mb="4" key={idx}>
+              <HStack justify="space-between" align="flex-end" mb="1">
+                <Text fontSize="md" fontWeight="800" color={PRIMARY_TEXT}>
+                  {exp.jobProfile || 'Job Position'}
+                </Text>
+                <Text fontSize="sm" fontWeight="700" color={PRIMARY_TEXT}>
+                  {exp.from} {exp.to ? `- ${exp.to}` : ''}
+                </Text>
+              </HStack>
+              <Text fontSize="sm" fontWeight="700" color={PRIMARY_TEXT} mb="2">
+                {exp.position || 'Company Name'}
               </Text>
-            </HStack>
-            <Text fontSize="sm" fontWeight="700" color={PRIMARY_TEXT} mb="3">
-              {candidate.workExperience?.lastCompany?.name || 'Company Name'}
-            </Text>
-            <VStack align="start" spacing="2" pl="4">
-              <HStack align="start">
-                <Text color={SECONDARY_TEXT} fontSize="sm">•</Text>
-                <Text fontSize="sm" color={SECONDARY_TEXT} fontWeight="500" lineHeight="tall">
-                  Demonstrated excellence in delivering high-quality service and maintaining operational efficiency.
+              {exp.shortDetail && (
+                <Text fontSize="sm" color={SECONDARY_TEXT} fontWeight="500" lineHeight="tall" pl="4">
+                  {exp.shortDetail}
                 </Text>
-              </HStack>
-              <HStack align="start">
-                <Text color={SECONDARY_TEXT} fontSize="sm">•</Text>
-                <Text fontSize="sm" color={SECONDARY_TEXT} fontWeight="500" lineHeight="tall">
-                  Collaborated with team members to ensure all standards and procedures were strictly followed.
-                </Text>
-              </HStack>
-              <HStack align="start">
-                <Text color={SECONDARY_TEXT} fontSize="sm">•</Text>
-                <Text fontSize="sm" color={SECONDARY_TEXT} fontWeight="500" lineHeight="tall">
-                  Handled various responsibilities effectively, adapting to fast-paced environments.
-                </Text>
-              </HStack>
-            </VStack>
-          </Box>
+              )}
+            </Box>
+          ))}
+
+          {/* Education Section */}
+          {candidate.education && candidate.education.length > 0 && (
+            <>
+              <SectionHeading title="Education" />
+              {candidate.education.map((edu, idx) => (
+                <Box mb="4" key={idx}>
+                  <HStack justify="space-between" align="flex-end" mb="1">
+                    <Text fontSize="md" fontWeight="800" color={PRIMARY_TEXT}>
+                      {edu.title || 'Degree/Certificate'}
+                    </Text>
+                    <Text fontSize="sm" fontWeight="700" color={PRIMARY_TEXT}>
+                      {edu.from} {edu.to ? `- ${edu.to}` : ''}
+                    </Text>
+                  </HStack>
+                  {edu.shortDetail && (
+                    <Text fontSize="sm" color={SECONDARY_TEXT} fontWeight="500" lineHeight="tall">
+                      {edu.shortDetail}
+                    </Text>
+                  )}
+                </Box>
+              ))}
+            </>
+          )}
           
           <SectionHeading title="Additional Details" />
           <Grid templateColumns="1fr 1fr" gap="4">
@@ -135,7 +180,7 @@ const CandidateCVPreview = forwardRef(({ candidate }, ref) => {
         </Box>
 
         {/* Right Sidebar Column */}
-        <Box bg={DARK_BLUE} p="10" pl="8" h="full" color={LIGHT_TEXT}>
+        <Box flex="4" bg="linear-gradient(135deg, #004aad 0%, #0062e6 100%)" p="10" pl="8" color={LIGHT_TEXT}>
           
           {/* Profile Picture at Top Right */}
           <Flex justify="center" mb="8" mt="2">
@@ -222,8 +267,64 @@ const CandidateCVPreview = forwardRef(({ candidate }, ref) => {
           </VStack>
 
         </Box>
-      </Grid>
-    </Box>
+      </Flex>
+
+      {/* Footer Section */}
+      <Box w="full" bg="white" mt="auto">
+        <Box p="6" px="8" pt="4">
+          <HStack mb="4" spacing="3" align="center">
+            <Flex bg="#004aad" color="white" p="1.5" borderRadius="full" align="center" justify="center">
+              <Icon as={Shield} size={18} />
+            </Flex>
+            <Text color="#004aad" fontWeight="800" fontSize="lg" letterSpacing="wide">
+              VERIFICATION STATUS
+            </Text>
+          </HStack>
+          
+          <Flex justify="space-between" align="center" mb="5">
+            <HStack spacing="2" align="center">
+              <Icon as={CheckCircle2} color="#38a169" size={20} />
+              <Text fontSize="sm" fontWeight="700" color="#334155" lineHeight="1">Aadhaar Verified</Text>
+            </HStack>
+            <HStack spacing="2" align="center">
+              <Icon as={CheckCircle2} color="#38a169" size={20} />
+              <Text fontSize="sm" fontWeight="700" color="#334155" lineHeight="1">Mobile Verified</Text>
+            </HStack>
+            <HStack spacing="2" align="center">
+              <Icon as={CheckCircle2} color="#38a169" size={20} />
+              <Text fontSize="sm" fontWeight="700" color="#334155" lineHeight="1">Address Verified</Text>
+            </HStack>
+            <HStack spacing="2" align="center">
+              <Icon as={CheckCircle2} color="#38a169" size={20} />
+              <Text fontSize="sm" fontWeight="700" color="#334155" lineHeight="1">Experience Verified</Text>
+            </HStack>
+          </Flex>
+
+          <Flex justify="center" mb="2">
+            <HStack bg="#f0fdf4" border="1px solid" borderColor="#bbf7d0" borderRadius="full" px="6" py="2" align="center">
+              <Icon as={CheckCircle2} color="#16a34a" size={18} />
+              <Text fontSize="sm" fontWeight="800" color="#166534" lineHeight="1">Profile Reviewed by ZomoCook</Text>
+            </HStack>
+          </Flex>
+        </Box>
+        
+        <Flex bg="linear-gradient(135deg, #004aad 0%, #0062e6 100%)" p="4" px="8" justify="space-between" align="center">
+          <HStack spacing="4" align="center">
+            <Flex bg="white" p="1.5" borderRadius="md" color="#004aad" align="center" justify="center">
+              <Icon as={Shield} size={20} />
+            </Flex>
+            <Box>
+              <Text color="white" fontWeight="700" fontSize="sm">This profile has been verified by ZomoCook Recruitment Team.</Text>
+              <Text color="whiteAlpha.900" fontSize="xs" fontWeight="500">We ensure trusted, skilled & professional staff for your business.</Text>
+            </Box>
+          </HStack>
+          <HStack color="white" spacing="2">
+            <Icon as={Globe} size={18} />
+            <Text fontSize="sm" fontWeight="600">www.zomocook.com</Text>
+          </HStack>
+        </Flex>
+      </Box>
+    </Flex>
   );
 });
 

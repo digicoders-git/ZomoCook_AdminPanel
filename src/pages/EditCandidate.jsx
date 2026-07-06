@@ -9,6 +9,7 @@ import { useNavigate, Link, useParams } from 'react-router-dom';
 import { useToast } from '@chakra-ui/react';
 import { PageHeader, FormCard, PageFooter, BRAND, ACCENT, inputStyle, selectStyle, labelStyle, Loading } from '../components/ui';
 import axios from 'axios';
+import API_BASE_URL from '../apiConfig';
 
 const EditCandidate = () => {
   const { id } = useParams();
@@ -60,7 +61,7 @@ const EditCandidate = () => {
     image: null, cv: null, idProof: null, addressProof: null, policeVerification: null, academicCertificate: null, experienceCertificate: null, gallery: []
   });
 
-  const apiUrl = import.meta.env.VITE_API_URL;
+  const apiUrl = API_BASE_URL;
   const token = localStorage.getItem('adminToken');
 
   const fetchMasterData = async (category, key) => {
@@ -212,7 +213,8 @@ const EditCandidate = () => {
       const skipFields = [
         'languages', 'jobPreference', 'cookingSkills', 'workExperience', 
         'education', 'careerHighlights', 'socialMedia', 'photoGallery', 
-        'applications', '_id', '__v', 'createdAt', 'updatedAt',
+        'applications', 'savedJobs', 'profileVerification', 'documents', 'skills',
+        '_id', '__v', 'createdAt', 'updatedAt', 'createdBy', 'creatorModel',
         'jobCategory', 'jobType', 'experienceValue', 'experienceUnit', 'currentSalary', 'expectedSalary', 'preferredCities', 'jobPositions', 'cookingPreference'
       ];
       Object.keys(formData).forEach(key => {
@@ -264,7 +266,7 @@ const EditCandidate = () => {
   
   if (isFetching) return <Loading message="Loading candidate profile..." />;
 
-  const apiBase = import.meta.env.VITE_API_URL.replace('/api', '');
+  const apiBase = API_BASE_URL.replace('/api', '');
 
   return (
     <Box pb="10">
