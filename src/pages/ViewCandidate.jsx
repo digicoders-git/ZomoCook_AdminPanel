@@ -1,10 +1,12 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import {
   Box, Flex, Text, HStack, VStack, Badge, Button, Avatar, Icon, Spinner,
   SimpleGrid, Divider, Tag, Grid, GridItem, Menu, MenuButton, MenuList, MenuItem,
   Table, Thead, Tbody, Tr, Th, Td, Image, Link as ChakraLink, Tooltip, IconButton,
-  Tabs, TabList, Tab, TabPanels, TabPanel
+  Tabs, TabList, Tab, TabPanels, TabPanel, useDisclosure
 } from '@chakra-ui/react';
+import CandidateCVPreview from '../components/CandidateCVPreview';
+import CandidateCVModal from '../components/CandidateCVModal';
 import {
   ArrowLeft, Mail, Phone, MapPin, Calendar, Briefcase, IndianRupee, Globe,
   FileText, CheckCircle, Settings, Edit3, CheckSquare, CalendarDays, UserCircle, ChevronDown,
@@ -22,6 +24,7 @@ const ViewCandidate = () => {
   const [isLoading, setIsLoading] = useState(true);
   const [activeTab, setActiveTab] = useState(0);
   const [viewFilter, setViewFilter] = useState(null);
+  const { isOpen, onOpen, onClose } = useDisclosure();
 
   useEffect(() => {
     // Read query params for initial tab
@@ -82,7 +85,10 @@ const ViewCandidate = () => {
 
   return (
     <Box pb="10">
-      <PageHeader title="Candidate Details" breadcrumb="Candidate Details" actions={[<Button key="back" onClick={() => navigate(-1)} size="sm" bg="#ff6b00" color="white" borderRadius="md" leftIcon={<Icon as={ArrowLeft} size={14} />} _hover={{ bg: '#e65f00' }}>Back</Button>]} />
+      <PageHeader title="Candidate Details" breadcrumb="Candidate Details" actions={[
+        <Button key="download" onClick={onOpen} size="sm" bg={BRAND} color="white" borderRadius="md" leftIcon={<Icon as={Download} size={14} />} _hover={{ bg: '#003d91' }}>Download CV</Button>,
+        <Button key="back" onClick={() => navigate(-1)} size="sm" bg="#ff6b00" color="white" borderRadius="md" leftIcon={<Icon as={ArrowLeft} size={14} />} _hover={{ bg: '#e65f00' }}>Back</Button>
+      ]} />
 
       <Box bg="white" borderRadius="none" border="1px solid #e8edf5" boxShadow="sm" overflow="hidden">
         <Box p="5" borderBottom="1px solid #f1f5f9"><Text fontSize="md" fontWeight="800" color="#1e293b">Candidate Details</Text></Box>
@@ -239,6 +245,13 @@ const ViewCandidate = () => {
           </TabPanels>
         </Tabs>
       </Box>
+
+      <CandidateCVModal 
+        isOpen={isOpen} 
+        onClose={onClose} 
+        preloadedCandidate={candidate} 
+      />
+
       <PageFooter />
     </Box>
   );

@@ -129,7 +129,7 @@ export default function FinanceRevenue() {
 
   // --- Chart Configurations ---
   const lineChartOptions = {
-    chart: { type: 'line', toolbar: { show: false }, zoom: { enabled: false }, fontFamily: 'Inter, sans-serif' },
+    chart: { type: 'line', toolbar: { show: false }, zoom: { enabled: false }, fontFamily: 'Outfit, sans-serif' },
     colors: [colors.blue, colors.green, colors.purple],
     dataLabels: { enabled: false },
     stroke: { curve: 'smooth', width: 2 },
@@ -140,7 +140,7 @@ export default function FinanceRevenue() {
   };
 
   const pieChartOptions = (labels, seriesColors, centerText) => ({
-    chart: { type: 'donut', fontFamily: 'Inter, sans-serif' },
+    chart: { type: 'donut', fontFamily: 'Outfit, sans-serif' },
     labels: labels,
     colors: seriesColors,
     plotOptions: { 

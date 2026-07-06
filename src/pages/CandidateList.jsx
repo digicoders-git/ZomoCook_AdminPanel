@@ -13,6 +13,7 @@ import {
   PageHeader, TableCard, TableControls, TableFooter, PageFooter, BRAND, ACCENT,
   thStyle, ConfirmationModal
 } from '../components/ui';
+import CandidateCVModal from '../components/CandidateCVModal';
 import PageContentLoader from '../components/PageContentLoader';
 import axios from 'axios';
 import API_BASE_URL, { UPLOAD_BASE_URL } from '../apiConfig';
@@ -23,6 +24,8 @@ const CandidateList = () => {
   const [candidates, setCandidates] = useState([]);
   const [isLoading, setIsLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState('');
+  const [selectedCandidateForCV, setSelectedCandidateForCV] = useState(null);
+  const { isOpen: isCVModalOpen, onOpen: onOpenCVModal, onClose: onCloseCVModal } = useDisclosure();
   const [statusFilter, setStatusFilter] = useState('');
 
   // Confirmation State
@@ -163,7 +166,10 @@ const CandidateList = () => {
                         <Button
                           size="xs" bg="#ff6b00" color="white" leftIcon={<Icon as={FileType} size={12} />}
                           px="3" borderRadius="md" fontSize="10px"
-                          isDisabled={!c.cv} onClick={() => c.cv && window.open(`${UPLOAD_BASE_URL}/${c.cv}`, '_blank')}
+                          onClick={() => {
+                            setSelectedCandidateForCV(c._id);
+                            onOpenCVModal();
+                          }}
                         >CV</Button>
                       </VStack>
                     </Td>
@@ -267,6 +273,15 @@ const CandidateList = () => {
         description={confirmConfig.description}
         type={confirmConfig.type}
         confirmColor={confirmConfig.type === 'danger' ? ACCENT : BRAND}
+      />
+
+      <CandidateCVModal
+        isOpen={isCVModalOpen}
+        onClose={() => {
+          onCloseCVModal();
+          setSelectedCandidateForCV(null);
+        }}
+        candidateId={selectedCandidateForCV}
       />
 
       <PageFooter />

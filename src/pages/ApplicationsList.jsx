@@ -12,6 +12,7 @@ import {
   PageHeader, TableCard, TableControls, TableFooter, PageFooter,
   BRAND, tableHeadStyle, thStyle, tdStyle, trHover,
 } from '../components/ui';
+import CandidateCVModal from '../components/CandidateCVModal';
 import axios from 'axios';
 import API_BASE_URL from '../apiConfig';
 
@@ -20,6 +21,7 @@ const ApplicationsList = () => {
   const [isLoading, setIsLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedAppData, setSelectedAppData] = useState(null);
+  const [selectedCandidateForCV, setSelectedCandidateForCV] = useState(null);
   const toast = useToast();
 
   const apiBase = API_BASE_URL.replace('/api', '');
@@ -155,7 +157,7 @@ const ApplicationsList = () => {
                         <Avatar size="lg" name={c.candidateName} src={c.profileImage ? `${apiBase}/${c.profileImage}` : ''} border="2px solid #f8faff" />
                         <HStack spacing="2">
                           <Button size="xs" leftIcon={<Eye size={12} />} bg="#43767f" color="white" _hover={{ bg: '#33666f' }} borderRadius="4px" px="4" onClick={() => setSelectedAppData(c.applicationData)}>Full Details</Button>
-                          {c.candidateCV && <Button size="xs" leftIcon={<FileText size={12} />} bg="#f97316" color="white" _hover={{ bg: '#ea580c' }} borderRadius="4px" px="4" onClick={() => window.open(`${apiBase}/${c.candidateCV}`, '_blank')}>CV</Button>}
+                          <Button size="xs" leftIcon={<FileText size={12} />} bg="#f97316" color="white" _hover={{ bg: '#ea580c' }} borderRadius="4px" px="4" onClick={() => setSelectedCandidateForCV(c.candidateId)}>CV</Button>
                         </HStack>
                       </VStack>
                     </Td>
@@ -294,6 +296,12 @@ const ApplicationsList = () => {
           </ModalFooter>
         </ModalContent>
       </Modal>
+
+      <CandidateCVModal
+        isOpen={!!selectedCandidateForCV}
+        onClose={() => setSelectedCandidateForCV(null)}
+        candidateId={selectedCandidateForCV}
+      />
 
       <PageFooter />
     </Box>

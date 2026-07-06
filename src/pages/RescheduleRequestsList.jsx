@@ -11,6 +11,7 @@ import {
   PageHeader, TableCard, TableControls, TableFooter, PageFooter,
   BRAND, tableHeadStyle, thStyle, tdStyle, trHover,
 } from '../components/ui';
+import CandidateCVModal from '../components/CandidateCVModal';
 import axios from 'axios';
 
 const RescheduleRequestsList = () => {
@@ -19,6 +20,7 @@ const RescheduleRequestsList = () => {
   const [applications, setApplications] = useState([]);
   const [isLoading, setIsLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState('');
+  const [selectedCandidateForCV, setSelectedCandidateForCV] = useState(null);
 
   const fetchApplications = async () => {
     setIsLoading(true);
@@ -86,7 +88,7 @@ const RescheduleRequestsList = () => {
                     <Td {...tdStyle} textAlign="center">
                       <VStack spacing="3" align="center">
                         <Avatar size="lg" name={app.candidateName} src={`${apiUrl}/${app.profileImage}`} border="2px solid #f8faff" />
-                        <Button size="xs" leftIcon={<FileText size={12} />} bg="#f97316" color="white" _hover={{ bg: '#ea580c' }} borderRadius="4px" px="6" py="3" onClick={() => window.open(`${apiUrl}/${app.candidateCV}`, '_blank')}>CV</Button>
+                        <Button size="xs" leftIcon={<FileText size={12} />} bg="#f97316" color="white" _hover={{ bg: '#ea580c' }} borderRadius="4px" px="6" py="3" onClick={() => setSelectedCandidateForCV(app.candidateId)}>CV</Button>
                       </VStack>
                     </Td>
                     <Td {...tdStyle}>
@@ -123,6 +125,13 @@ const RescheduleRequestsList = () => {
         </Box>
         <TableFooter showing={`1 to ${applications.length}`} total={applications.length} />
       </TableCard>
+
+      <CandidateCVModal
+        isOpen={!!selectedCandidateForCV}
+        onClose={() => setSelectedCandidateForCV(null)}
+        candidateId={selectedCandidateForCV}
+      />
+
       <PageFooter />
     </Box>
   );
