@@ -1,3 +1,5 @@
+
+
 import React, { useState, useEffect, useMemo } from 'react';
 import {
   Box, Flex, Text, HStack, VStack, Table, Thead, Tbody, Tr, Th, Td,
@@ -263,8 +265,7 @@ const QueryHistory = () => {
         ]}
       />
 
-      <Grid templateColumns={{ base: '1fr', xl: '1fr 280px' }} gap="6" alignItems="start">
-        <GridItem minW="0">
+      <Box w="100%">
           {/* Filters Section */}
           <Box bg="white" borderRadius="xl" border="1px solid #e8edf5" p="5" mb="6" boxShadow="sm">
             <Flex justify="space-between" align="center" mb="4">
@@ -449,73 +450,7 @@ const QueryHistory = () => {
             </Box>
             <TableFooter showing={`1 to ${filteredQueries.length > 10 ? 10 : filteredQueries.length}`} total={filteredQueries.length} />
           </TableCard>
-        </GridItem>
-
-        <GridItem>
-          <VStack spacing="6" align="stretch">
-            {/* Status Workflow */}
-            <Box bg="white" borderRadius="2xl" border="1px solid" borderColor="gray.100" p="6" boxShadow="0 4px 12px rgba(0,0,0,0.03)">
-              <Flex align="center" mb="5">
-                <Box w="3px" h="16px" bg="#004aad" borderRadius="full" mr="2" />
-                <Text fontSize="md" fontWeight="800" color="#1e293b">Status Workflow</Text>
-              </Flex>
-              <VStack align="stretch" spacing="4">
-                {statusWorkflow.map((status) => (
-                  <Flex key={status} align="center" p="2" borderRadius="lg" _hover={{ bg: '#f8fafc' }} transition="all 0.2s">
-                    <StatusDot status={status} />
-                    <Text fontSize="sm" fontWeight="600" color="#475569">{status}</Text>
-                  </Flex>
-                ))}
-              </VStack>
-            </Box>
-
-            {/* Quick Actions */}
-            <Box bg="white" borderRadius="2xl" border="1px solid" borderColor="gray.100" p="6" boxShadow="0 4px 12px rgba(0,0,0,0.03)">
-              <Flex align="center" mb="5">
-                <Box w="3px" h="16px" bg="#004aad" borderRadius="full" mr="2" />
-                <Text fontSize="md" fontWeight="800" color="#1e293b">Quick Actions</Text>
-              </Flex>
-              <VStack align="stretch" spacing="3">
-                {dynamicQuickActions.map((action, i) => (
-                  <Flex key={i} justify="space-between" align="center" p="3" borderRadius="xl" bg={`${action.color}.50`} border="1px solid" borderColor={`${action.color}.100`} cursor="pointer" transition="all 0.2s" _hover={{ transform: 'translateX(4px)', boxShadow: 'sm' }}>
-                    <HStack spacing="3" color={`${action.color}.600`}>
-                      <Flex w="28px" h="28px" borderRadius="full" bg="white" align="center" justify="center" boxShadow="sm">
-                        {i === 0 && <User size={14} />}
-                        {i === 1 && <Users size={14} />}
-                        {i === 2 && <AlertCircle size={14} />}
-                        {i === 3 && <Clock size={14} />}
-                      </Flex>
-                      <Text fontSize="xs" fontWeight="700">{action.label}</Text>
-                    </HStack>
-                    <Badge bg="white" color={`${action.color}.600`} borderRadius="full" px="3" py="1" fontSize="11px" boxShadow="sm">
-                      {action.count}
-                    </Badge>
-                  </Flex>
-                ))}
-              </VStack>
-            </Box>
-
-            {/* Shortcuts */}
-            <Box bg="white" borderRadius="2xl" border="1px solid" borderColor="gray.100" p="6" boxShadow="0 4px 12px rgba(0,0,0,0.03)">
-              <Flex align="center" mb="5">
-                <Box w="3px" h="16px" bg="#004aad" borderRadius="full" mr="2" />
-                <Text fontSize="md" fontWeight="800" color="#1e293b">Shortcuts</Text>
-              </Flex>
-              <VStack align="stretch" spacing="3">
-                <Button size="md" variant="outline" color="#004aad" borderColor="#dde6f5" leftIcon={<Plus size={16} />} justifyContent="flex-start" bg="#f8faff" _hover={{ bg: '#eff6ff', transform: 'translateY(-2px)' }} transition="all 0.2s">
-                  Add Query
-                </Button>
-                <Button size="md" variant="outline" color="#10b981" borderColor="#d1fae5" leftIcon={<Send size={16} />} justifyContent="flex-start" bg="#f0fdf4" _hover={{ bg: '#ecfdf5', transform: 'translateY(-2px)' }} transition="all 0.2s">
-                  Send Notification
-                </Button>
-                <Button size="md" variant="outline" color="#8b5cf6" borderColor="#ede9fe" leftIcon={<Download size={16} />} justifyContent="flex-start" bg="#f5f3ff" _hover={{ bg: '#f3f0ff', transform: 'translateY(-2px)' }} transition="all 0.2s">
-                  Download Report
-                </Button>
-              </VStack>
-            </Box>
-          </VStack>
-        </GridItem>
-      </Grid>
+      </Box>
 
       <ConfirmationModal
         isOpen={isOpen}
