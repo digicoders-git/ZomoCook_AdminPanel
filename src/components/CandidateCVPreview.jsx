@@ -204,24 +204,24 @@ const CandidateCVPreview = forwardRef(({ candidate }, ref) => {
 
           {/* Contact Info */}
           <VStack align="start" spacing="4" w="full">
-            <HStack align="flex-start" spacing="4">
-              <Flex bg="white" color={DARK_BLUE} p="1.5" borderRadius="full">
-                <Icon as={MapPin} size={14} />
+            <Box>
+              <Flex bg="white" color={DARK_BLUE} p="1.5" borderRadius="full" align="center" justify="center" minW="26px" minH="26px" display="inline-flex" verticalAlign="middle" mr="3">
+                <Icon as={MapPin} boxSize="14px" />
               </Flex>
-              <Text fontSize="sm" fontWeight="600" mt="1">{currentAddress}</Text>
-            </HStack>
-            <HStack align="flex-start" spacing="4">
-              <Flex bg="white" color={DARK_BLUE} p="1.5" borderRadius="full">
-                <Icon as={Phone} size={14} />
+              <Text as="span" fontSize="sm" fontWeight="600" display="inline-block" verticalAlign="middle">{currentAddress}</Text>
+            </Box>
+            <Box>
+              <Flex bg="white" color={DARK_BLUE} p="1.5" borderRadius="full" align="center" justify="center" minW="26px" minH="26px" display="inline-flex" verticalAlign="middle" mr="3">
+                <Icon as={Phone} boxSize="14px" />
               </Flex>
-              <Text fontSize="sm" fontWeight="600" mt="1">{candidate.phone}</Text>
-            </HStack>
-            <HStack align="flex-start" spacing="4">
-              <Flex bg="white" color={DARK_BLUE} p="1.5" borderRadius="full">
-                <Icon as={Mail} size={14} />
+              <Text as="span" fontSize="sm" fontWeight="600" display="inline-block" verticalAlign="middle">{candidate.phone}</Text>
+            </Box>
+            <Box>
+              <Flex bg="white" color={DARK_BLUE} p="1.5" borderRadius="full" align="center" justify="center" minW="26px" minH="26px" display="inline-flex" verticalAlign="middle" mr="3">
+                <Icon as={Mail} boxSize="14px" />
               </Flex>
-              <Text fontSize="sm" fontWeight="600" mt="1" wordBreak="break-word">{candidate.email || 'N/A'}</Text>
-            </HStack>
+              <Text as="span" fontSize="sm" fontWeight="600" wordBreak="break-word" display="inline-block" verticalAlign="middle">{candidate.email || 'N/A'}</Text>
+            </Box>
           </VStack>
 
           <SidebarHeading title="Core Qualifications" />
@@ -282,46 +282,46 @@ const CandidateCVPreview = forwardRef(({ candidate }, ref) => {
           </HStack>
           
           <Flex justify="space-between" align="center" mb="5">
-            <HStack spacing="2" align="center">
-              <Icon as={CheckCircle2} color="#38a169" size={20} />
-              <Text fontSize="sm" fontWeight="700" color="#334155" lineHeight="1">Aadhaar Verified</Text>
-            </HStack>
-            <HStack spacing="2" align="center">
-              <Icon as={CheckCircle2} color="#38a169" size={20} />
-              <Text fontSize="sm" fontWeight="700" color="#334155" lineHeight="1">Mobile Verified</Text>
-            </HStack>
-            <HStack spacing="2" align="center">
-              <Icon as={CheckCircle2} color="#38a169" size={20} />
-              <Text fontSize="sm" fontWeight="700" color="#334155" lineHeight="1">Address Verified</Text>
-            </HStack>
-            <HStack spacing="2" align="center">
-              <Icon as={CheckCircle2} color="#38a169" size={20} />
-              <Text fontSize="sm" fontWeight="700" color="#334155" lineHeight="1">Experience Verified</Text>
-            </HStack>
+            <Box whiteSpace="nowrap">
+              <Icon as={CheckCircle2} color="#38a169" boxSize="18px" display="inline-block" verticalAlign="middle" mr="2" />
+              <Text as="span" fontSize="sm" fontWeight="700" color="#334155" display="inline-block" verticalAlign="middle">Aadhaar Verified</Text>
+            </Box>
+            <Box whiteSpace="nowrap">
+              <Icon as={CheckCircle2} color="#38a169" boxSize="18px" display="inline-block" verticalAlign="middle" mr="2" />
+              <Text as="span" fontSize="sm" fontWeight="700" color="#334155" display="inline-block" verticalAlign="middle">Mobile Verified</Text>
+            </Box>
+            <Box whiteSpace="nowrap">
+              <Icon as={CheckCircle2} color="#38a169" boxSize="18px" display="inline-block" verticalAlign="middle" mr="2" />
+              <Text as="span" fontSize="sm" fontWeight="700" color="#334155" display="inline-block" verticalAlign="middle">Address Verified</Text>
+            </Box>
+            <Box whiteSpace="nowrap">
+              <Icon as={CheckCircle2} color="#38a169" boxSize="18px" display="inline-block" verticalAlign="middle" mr="2" />
+              <Text as="span" fontSize="sm" fontWeight="700" color="#334155" display="inline-block" verticalAlign="middle">Experience Verified</Text>
+            </Box>
           </Flex>
 
           <Flex justify="center" mb="2">
-            <HStack bg="#f0fdf4" border="1px solid" borderColor="#bbf7d0" borderRadius="full" px="6" py="2" align="center">
-              <Icon as={CheckCircle2} color="#16a34a" size={18} />
-              <Text fontSize="sm" fontWeight="800" color="#166534" lineHeight="1">Profile Reviewed by ZomoCook</Text>
-            </HStack>
+            <Box bg="#f0fdf4" border="1px solid" borderColor="#bbf7d0" borderRadius="full" px="6" py="2" whiteSpace="nowrap">
+              <Icon as={CheckCircle2} color="#16a34a" boxSize="18px" display="inline-block" verticalAlign="middle" mr="2" />
+              <Text as="span" fontSize="sm" fontWeight="800" color="#166534" display="inline-block" verticalAlign="middle">Profile Reviewed by ZomoCook</Text>
+            </Box>
           </Flex>
         </Box>
         
         <Flex bg="linear-gradient(135deg, #004aad 0%, #0062e6 100%)" p="4" px="8" justify="space-between" align="center">
-          <HStack spacing="4" align="center">
-            <Flex bg="white" p="1.5" borderRadius="md" color="#004aad" align="center" justify="center">
-              <Icon as={Shield} size={20} />
+          <Box>
+            <Flex bg="white" p="1.5" borderRadius="md" color="#004aad" align="center" justify="center" minW="32px" minH="32px" display="inline-flex" verticalAlign="middle" mr="4">
+              <Icon as={Shield} boxSize="20px" />
             </Flex>
-            <Box>
+            <Box display="inline-block" verticalAlign="middle">
               <Text color="white" fontWeight="700" fontSize="sm">This profile has been verified by ZomoCook Recruitment Team.</Text>
               <Text color="whiteAlpha.900" fontSize="xs" fontWeight="500">We ensure trusted, skilled & professional staff for your business.</Text>
             </Box>
-          </HStack>
-          <HStack color="white" spacing="2">
-            <Icon as={Globe} size={18} />
-            <Text fontSize="sm" fontWeight="600">www.zomocook.com</Text>
-          </HStack>
+          </Box>
+          <Box whiteSpace="nowrap">
+            <Icon as={Globe} boxSize="18px" color="white" display="inline-block" verticalAlign="middle" mr="2" />
+            <Text as="span" color="white" fontSize="sm" fontWeight="600" display="inline-block" verticalAlign="middle">www.zomocook.com</Text>
+          </Box>
         </Flex>
       </Box>
     </Flex>
