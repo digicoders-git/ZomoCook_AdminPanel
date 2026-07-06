@@ -22,6 +22,12 @@ const UserList = () => {
   const { isOpen: isViewOpen, onOpen: onViewOpen, onClose: onViewClose } = useDisclosure();
   const [confirmConfig, setConfirmConfig] = useState({ title: '', description: '', onConfirm: () => { }, type: 'danger' });
   const [selectedUser, setSelectedUser] = useState(null);
+  
+  // Pagination State
+  const [currentPage, setCurrentPage] = useState(1);
+  const [entriesPerPage, setEntriesPerPage] = useState('10');
+  const [totalUsers, setTotalUsers] = useState(0);
+  const [totalPages, setTotalPages] = useState(1);
 
   const fetchUsers = async () => {
     setIsLoading(true);
@@ -29,11 +35,13 @@ const UserList = () => {
       const apiUrl = import.meta.env.VITE_API_URL;
       const token = localStorage.getItem('adminToken');
       const response = await axios.get(`${apiUrl}/admin/users`, {
-        params: { search: searchTerm },
+        params: { search: searchTerm, page: currentPage, limit: entriesPerPage },
         headers: { 'Authorization': `Bearer ${token}` }
       });
       if (response.data.success) {
         setUsers(response.data.users);
+        setTotalUsers(response.data.total || response.data.users.length);
+        setTotalPages(response.data.totalPages || 1);
       }
     } catch (error) {
       toast({ title: 'Error', description: 'Failed to fetch users', status: 'error' });
@@ -43,8 +51,12 @@ const UserList = () => {
   };
 
   useEffect(() => {
+    setCurrentPage(1); // Reset page on search or limit change
+  }, [searchTerm, entriesPerPage]);
+
+  useEffect(() => {
     fetchUsers();
-  }, [searchTerm]);
+  }, [searchTerm, currentPage, entriesPerPage]);
 
   const handleToggleStatus = (id, currentStatus) => {
     const isCurrentlyActive = currentStatus === 'Active';
@@ -113,7 +125,13 @@ const UserList = () => {
             <Box w="3px" h="18px" bg={BRAND} borderRadius="full" mr="1" />
             <Text fontSize="sm" fontWeight="700" color="#1e293b">User Record List</Text>
           </HStack>
-          <TableControls search={searchTerm} onSearch={setSearchTerm} searchPlaceholder="Search..." />
+          <TableControls 
+            search={searchTerm} 
+            onSearch={setSearchTerm} 
+            searchPlaceholder="Search..." 
+            entries={entriesPerPage}
+            onEntriesChange={setEntriesPerPage}
+          />
         </Flex>
 
         <Box overflowX="auto">
@@ -200,8 +218,11 @@ const UserList = () => {
           )}
         </Box>
         <TableFooter
-          showing={`${users.length > 0 ? 1 : 0} to ${users.length}`}
-          total={users.length}
+          showing={`${users.length > 0 ? (currentPage - 1) * parseInt(entriesPerPage) + 1 : 0} to ${(currentPage - 1) * parseInt(entriesPerPage) + users.length}`}
+          total={totalUsers}
+          currentPage={currentPage}
+          totalPages={totalPages}
+          onPageChange={setCurrentPage}
         />
       </TableCard>
 

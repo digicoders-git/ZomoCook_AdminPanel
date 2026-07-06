@@ -21,11 +21,10 @@ import AddNotification from './pages/AddNotification';
 import NotificationList from './pages/NotificationList';
 import QueryHistory from './pages/QueryHistory';
 import AddRole from './pages/AddRole';
-import RoleList from './pages/RoleList';
+import RolePermissionManagement from './pages/RolePermissionManagement';
 import AddUser from './pages/AddUser';
 import EditUser from './pages/EditUser';
 import UserList from './pages/UserList';
-import AssignPermissions from './pages/AssignPermissions';
 import MasterPage from './pages/MasterPage';
 import WebSettings from './pages/WebSettings';
 import Profile from './pages/Profile';
@@ -47,6 +46,7 @@ import SubscriptionList from './pages/SubscriptionList';
 import OfferList from './pages/OfferList';
 import BannerList from './pages/BannerList';
 import PendingCookApprovals from './pages/PendingCookApprovals';
+import FinanceRevenue from './pages/FinanceRevenue';
 
 // ─── Helper: Get current logged-in user's data ──────────────────────────────
 const getAdminData = () => {
@@ -146,6 +146,13 @@ function App() {
         <Route path="/" element={
           <PermissionRoute permission={null}>
             <Layout><Dashboard /></Layout>
+          </PermissionRoute>
+        } />
+        
+        {/* ── Finance / Revenue ──────────────────────────────────────── */}
+        <Route path="/finance" element={
+          <PermissionRoute permission="Dashboard">
+            <Layout><FinanceRevenue /></Layout>
           </PermissionRoute>
         } />
 
@@ -318,11 +325,7 @@ function App() {
             <Layout><AddRole /></Layout>
           </PermissionRoute>
         } />
-        <Route path="/roles/list" element={
-          <PermissionRoute permission="Role List">
-            <Layout><RoleList /></Layout>
-          </PermissionRoute>
-        } />
+        <Route path="/roles/list" element={<Navigate to="/roles/permissions" replace />} />
         <Route path="/users/add" element={
           <PermissionRoute permission="Add User">
             <Layout><AddUser /></Layout>
@@ -339,8 +342,8 @@ function App() {
           </PermissionRoute>
         } />
         <Route path="/roles/permissions" element={
-          <PermissionRoute permission="Add Role">
-            <Layout><AssignPermissions /></Layout>
+          <PermissionRoute permission="Role & Permission">
+            <Layout><RolePermissionManagement /></Layout>
           </PermissionRoute>
         } />
         <Route path="/roles/users" element={<Navigate to="/users/list" replace />} />

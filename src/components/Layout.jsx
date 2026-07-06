@@ -70,11 +70,12 @@ const navItems = [
     ]
   },
   { name: 'Query History', icon: MessageSquare, path: '/queries', permission: 'Query History' },
+  { name: 'Finance / Revenue', icon: Banknote, path: '/finance', permission: 'Dashboard' },
   {
     name: 'Roles & Permissions', icon: ShieldCheck, path: '/roles', permission: 'Roles',
     children: [
       { name: 'Add Role', path: '/roles/add', permission: 'Add Role' },
-      { name: 'Role List', path: '/roles/list', permission: 'Role List' },
+      { name: 'Manage Roles', path: '/roles/permissions', permission: 'Role & Permission' },
       { name: 'Add User', path: '/users/add', permission: 'Add User' },
       { name: 'User List', path: '/users/list', permission: 'User List' },
     ]
@@ -438,6 +439,7 @@ const Navbar = ({ onOpen, toggleCollapse, isCollapsed, onLogoutOpen }) => {
     if (pathname.includes('/banners')) return 'Manage Banners';
     if (pathname.includes('/subscriptions')) return 'Subscription History';
     if (pathname.includes('/plans')) return 'Plans Management';
+    if (pathname.includes('/finance')) return 'Finance / Revenue';
     return 'ZomoCook Admin';
   };
 
