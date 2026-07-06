@@ -4,7 +4,7 @@ import React, { useState, useEffect, useMemo } from 'react';
 import {
   Box, Flex, Text, HStack, VStack, Table, Thead, Tbody, Tr, Th, Td,
   IconButton, Tooltip, Spinner, useToast, Avatar, useDisclosure,
-  Grid, GridItem, Select, Input, Button, Badge, Menu, MenuButton, MenuList, MenuItem,
+  Grid, GridItem, Select, Input, InputGroup, InputLeftElement, Button, Badge, Menu, MenuButton, MenuList, MenuItem,
   Collapse, Modal, ModalOverlay, ModalContent, ModalHeader, ModalFooter, ModalBody, ModalCloseButton, Divider
 } from '@chakra-ui/react';
 import { 
@@ -55,8 +55,14 @@ const QueryHistory = () => {
   
   const [selectedQuery, setSelectedQuery] = useState(null);
   const [selectedAssignUser, setSelectedAssignUser] = useState('');
+  const [assignSearch, setAssignSearch] = useState('');
   const [isAssigning, setIsAssigning] = useState(false);
   const [confirmConfig, setConfirmConfig] = useState({ title: '', description: '', onConfirm: () => { }, type: 'danger' });
+
+  const filteredAssignUsers = systemUsers.filter(u => 
+    u.name.toLowerCase().includes(assignSearch.toLowerCase()) || 
+    (u.role?.name && u.role.name.toLowerCase().includes(assignSearch.toLowerCase()))
+  );
 
   const fetchData = async () => {
     setIsLoading(true);
@@ -109,6 +115,7 @@ const QueryHistory = () => {
   const handleOpenAssign = (query) => {
     setSelectedQuery(query);
     setSelectedAssignUser(query.assignedTo?._id || '');
+    setAssignSearch('');
     onAssignOpen();
   };
 
@@ -539,20 +546,56 @@ const QueryHistory = () => {
             <Text fontSize="sm" color="#64748b" mb="4">
               Select a system user (from roles & permissions) to assign this query to.
             </Text>
-            <Select 
-              value={selectedAssignUser} 
-              onChange={(e) => setSelectedAssignUser(e.target.value)}
-              placeholder="Select user to assign"
-              bg="#f8faff"
-              borderColor="#dde6f5"
-              _focus={{ borderColor: '#004aad', boxShadow: 'none' }}
+            
+            <InputGroup mb="4">
+              <InputLeftElement pointerEvents="none">
+                <Search size={14} color="#64748b" />
+              </InputLeftElement>
+              <Input 
+                placeholder="Search by name or role..." 
+                value={assignSearch}
+                onChange={(e) => setAssignSearch(e.target.value)}
+                bg="#f8faff"
+                borderColor="#dde6f5"
+                _focus={{ borderColor: '#004aad', boxShadow: 'none' }}
+              />
+            </InputGroup>
+
+            <VStack 
+              align="stretch" 
+              maxH="300px" 
+              overflowY="auto" 
+              spacing="2"
+              sx={{ '&::-webkit-scrollbar': { width: '4px' }, '&::-webkit-scrollbar-thumb': { background: '#cbd5e1', borderRadius: '4px' } }}
             >
-              {systemUsers.map(user => (
-                <option key={user._id} value={user._id}>
-                  {user.name} ({user.role?.name || 'Staff'})
-                </option>
-              ))}
-            </Select>
+              {filteredAssignUsers.length > 0 ? filteredAssignUsers.map(user => (
+                <Flex 
+                  key={user._id} 
+                  p="3" 
+                  borderRadius="md" 
+                  border="1px solid"
+                  borderColor={selectedAssignUser === user._id ? '#004aad' : '#e8edf5'}
+                  bg={selectedAssignUser === user._id ? '#eff6ff' : 'white'}
+                  cursor="pointer"
+                  onClick={() => setSelectedAssignUser(user._id)}
+                  _hover={{ bg: selectedAssignUser === user._id ? '#eff6ff' : '#f8faff' }}
+                  align="center"
+                  justify="space-between"
+                  transition="all 0.2s"
+                >
+                  <HStack>
+                    <Avatar size="sm" name={user.name} bg="#004aad" color="white" />
+                    <VStack align="start" spacing="0">
+                      <Text fontSize="sm" fontWeight="600" color="#1e293b">{user.name}</Text>
+                      <Text fontSize="xs" color="#64748b">{user.role?.name || 'Staff'}</Text>
+                    </VStack>
+                  </HStack>
+                  {selectedAssignUser === user._id && <CheckCircle size={18} color="#004aad" />}
+                </Flex>
+              )) : (
+                <Text fontSize="sm" color="#94a3b8" textAlign="center" py="4">No users found.</Text>
+              )}
+            </VStack>
           </ModalBody>
 
           <ModalFooter>
