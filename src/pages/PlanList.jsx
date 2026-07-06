@@ -7,6 +7,7 @@ import {
 import { Plus, Edit2, Trash2, Info, Send, Crown, Diamond, Receipt } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import axios from 'axios';
+import Swal from 'sweetalert2';
 
 const PlanList = () => {
   const [plans, setPlans] = useState([]);
@@ -97,27 +98,37 @@ const PlanList = () => {
   };
 
   const handleDelete = async (id) => {
-    if (window.confirm('Are you sure you want to delete this package?')) {
-      try {
-        const token = localStorage.getItem('adminToken');
-        const apiUrl = import.meta.env.VITE_API_URL;
-        const res = await axios.delete(`${apiUrl}/plans/${id}`, {
-          headers: { Authorization: `Bearer ${token}` }
-        });
-        if (res.data.success) {
-          toast({ title: 'Package deleted', status: 'success', duration: 2000, isClosable: true });
-          fetchData();
+    Swal.fire({
+      title: 'Are you sure?',
+      text: "You won't be able to revert this!",
+      icon: 'warning',
+      showCancelButton: true,
+      confirmButtonColor: '#3085d6',
+      cancelButtonColor: '#d33',
+      confirmButtonText: 'Yes, delete it!'
+    }).then(async (result) => {
+      if (result.isConfirmed) {
+        try {
+          const token = localStorage.getItem('adminToken');
+          const apiUrl = import.meta.env.VITE_API_URL;
+          const res = await axios.delete(`${apiUrl}/plans/${id}`, {
+            headers: { Authorization: `Bearer ${token}` }
+          });
+          if (res.data.success) {
+            toast({ title: 'Package deleted', status: 'success', duration: 2000, isClosable: true });
+            fetchData();
+          }
+        } catch (err) {
+          toast({
+            title: 'Error deleting package',
+            description: err.response?.data?.message || err.message,
+            status: 'error',
+            duration: 3000,
+            isClosable: true,
+          });
         }
-      } catch (err) {
-        toast({
-          title: 'Error deleting package',
-          description: err.response?.data?.message || err.message,
-          status: 'error',
-          duration: 3000,
-          isClosable: true,
-        });
       }
-    }
+    });
   };
 
   const togglePlanStatus = async (plan) => {

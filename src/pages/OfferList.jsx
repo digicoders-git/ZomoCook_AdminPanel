@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import axios from 'axios';
+import Swal from 'sweetalert2';
 import {
   Box, Button, Table, Thead, Tbody, Tr, Th, Td, IconButton,
   useToast, Modal, ModalOverlay, ModalContent, ModalHeader,
@@ -78,15 +79,25 @@ const OfferList = () => {
   };
 
   const handleDelete = async (id) => {
-    if (window.confirm('Are you sure you want to delete this offer?')) {
-      try {
-        await axios.delete(`${apiUrl}/offers/${id}`, { headers: { Authorization: `Bearer ${token}` } });
-        toast({ title: 'Offer deleted', status: 'success', isClosable: true });
-        fetchOffers();
-      } catch (error) {
-        toast({ title: 'Failed to delete offer', status: 'error', isClosable: true });
+    Swal.fire({
+      title: 'Are you sure?',
+      text: "Delete this offer permanently?",
+      icon: 'warning',
+      showCancelButton: true,
+      confirmButtonColor: '#3085d6',
+      cancelButtonColor: '#d33',
+      confirmButtonText: 'Yes, delete it!'
+    }).then(async (result) => {
+      if (result.isConfirmed) {
+        try {
+          await axios.delete(`${apiUrl}/offers/${id}`, { headers: { Authorization: `Bearer ${token}` } });
+          toast({ title: 'Offer deleted', status: 'success', isClosable: true });
+          fetchOffers();
+        } catch (error) {
+          toast({ title: 'Failed to delete offer', status: 'error', isClosable: true });
+        }
       }
-    }
+    });
   };
 
   const handleToggleActive = async (offer) => {

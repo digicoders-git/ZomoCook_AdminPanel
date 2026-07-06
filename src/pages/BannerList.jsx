@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import axios from 'axios';
+import Swal from 'sweetalert2';
 import API_BASE_URL from '../apiConfig';
 import {
   Box, Button, Table, Thead, Tbody, Tr, Th, Td, IconButton,
@@ -113,16 +114,27 @@ const BannerList = () => {
   };
 
   const handleDelete = async (id) => {
-    if (!window.confirm('Delete this banner?')) return;
-    try {
-      await axios.delete(`${API_BASE_URL}/banners/${id}`, {
-        headers: { Authorization: `Bearer ${token}` }
-      });
-      toast({ title: 'Banner deleted', status: 'success', isClosable: true });
-      fetchBanners();
-    } catch {
-      toast({ title: 'Failed to delete banner', status: 'error', isClosable: true });
-    }
+    Swal.fire({
+      title: 'Are you sure?',
+      text: "Delete this banner?",
+      icon: 'warning',
+      showCancelButton: true,
+      confirmButtonColor: '#3085d6',
+      cancelButtonColor: '#d33',
+      confirmButtonText: 'Yes, delete it!'
+    }).then(async (result) => {
+      if (result.isConfirmed) {
+        try {
+          await axios.delete(`${API_BASE_URL}/banners/${id}`, {
+            headers: { Authorization: `Bearer ${token}` }
+          });
+          toast({ title: 'Banner deleted', status: 'success', isClosable: true });
+          fetchBanners();
+        } catch {
+          toast({ title: 'Failed to delete banner', status: 'error', isClosable: true });
+        }
+      }
+    });
   };
 
   const handleToggleStatus = async (banner) => {
