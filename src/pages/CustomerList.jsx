@@ -2,9 +2,10 @@ import { useEffect, useState } from 'react';
 import {
   Box, Flex, Text, HStack, VStack, Table, Thead, Tbody, Tr, Th, Td, Avatar, Switch,
   IconButton, Icon, useToast, Button, useDisclosure, Collapse, SimpleGrid,
-  FormControl, FormLabel, Select, Input
+  FormControl, FormLabel, Select, Input,
+  Menu, MenuButton, MenuList, MenuItem, MenuDivider
 } from '@chakra-ui/react';
-import { Edit3, Filter, Plus, Trash2, Search, RotateCcw } from 'lucide-react';
+import { Edit3, Filter, Plus, Trash2, Search, RotateCcw, Eye, MoreVertical, LayoutDashboard, Package, CreditCard, Ban, CheckCircle } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import {
   PageHeader, TableCard, TableControls, TableFooter, PageFooter,
@@ -17,7 +18,6 @@ const CustomerList = () => {
   const navigate = useNavigate();
   const toast = useToast();
   const { isOpen, onOpen, onClose } = useDisclosure();
-
   const [customers, setCustomers] = useState([]);
   const [isLoading, setIsLoading] = useState(true);
 
@@ -294,11 +294,54 @@ const CustomerList = () => {
                       sx={{ '.chakra-switch__track[data-checked]': { bg: BRAND } }}
                     />
                   </Td>
-                  <Td py="3.5" minW="80px">
-                    <HStack spacing="2">
-                      <IconButton icon={<Edit3 size={14} />} size="xs" bg="#e6eeff" color={BRAND} borderRadius="lg" _hover={{ bg: BRAND, color: 'white' }} aria-label="Edit" onClick={() => navigate(`/customers/edit/${row._id}`)} />
-                      <IconButton icon={<Trash2 size={14} />} size="xs" bg="#fff1f1" color={ACCENT} borderRadius="lg" _hover={{ bg: ACCENT, color: 'white' }} aria-label="Delete" onClick={() => confirmDelete(row._id)} />
-                    </HStack>
+                  <Td py="3.5" minW="80px" textAlign="center">
+                    <Menu placement="bottom-end">
+                      <MenuButton as={IconButton} icon={<MoreVertical size={16} />} size="sm" variant="ghost" color="#64748b" _hover={{ bg: '#f1f5f9', color: BRAND }} borderRadius="lg" aria-label="Options" />
+                      <MenuList minW="180px" boxShadow="lg" p="1.5" borderRadius="xl" border="1px solid #e8edf5">
+                        <MenuItem borderRadius="md" py="2" fontSize="sm" fontWeight="600" color="#1e293b" _hover={{ bg: '#f8fafc', color: BRAND }}
+                          icon={<LayoutDashboard size={16} />}
+                          onClick={() => {
+                            navigate(`/customers/dashboard/${row._id}`, { state: { activeTab: 0 } });
+                          }}>
+                          View Dashboard
+                        </MenuItem>
+                        <MenuItem borderRadius="md" py="2" fontSize="sm" fontWeight="600" color="#1e293b" _hover={{ bg: '#f8fafc', color: BRAND }}
+                          icon={<Package size={16} />}
+                          onClick={() => {
+                            navigate(`/customers/dashboard/${row._id}`, { state: { activeTab: 0 } });
+                          }}>
+                          View Package
+                        </MenuItem>
+                        <MenuItem borderRadius="md" py="2" fontSize="sm" fontWeight="600" color="#1e293b" _hover={{ bg: '#f8fafc', color: BRAND }}
+                          icon={<CreditCard size={16} />}
+                          onClick={() => {
+                            navigate(`/customers/dashboard/${row._id}`, { state: { activeTab: 4 } }); // Transactions is index 4
+                          }}>
+                          Transactions
+                        </MenuItem>
+                        
+                        <MenuDivider my="1.5" borderColor="#f1f5f9" />
+                        
+                        <MenuItem borderRadius="md" py="2" fontSize="sm" fontWeight="600" color={row.accountStatus === 'active' ? '#ef4444' : '#10b981'} _hover={{ bg: row.accountStatus === 'active' ? '#fef2f2' : '#ecfdf5' }}
+                          icon={row.accountStatus === 'active' ? <Ban size={16} /> : <CheckCircle size={16} />}
+                          onClick={() => confirmStatusToggle(row._id, row.accountStatus)}>
+                          {row.accountStatus === 'active' ? 'Block Client' : 'Unblock Client'}
+                        </MenuItem>
+                        
+                        <MenuDivider my="1.5" borderColor="#f1f5f9" />
+
+                        <MenuItem borderRadius="md" py="2" fontSize="sm" fontWeight="600" color="#1e293b" _hover={{ bg: '#f8fafc', color: BRAND }}
+                          icon={<Edit3 size={16} />}
+                          onClick={() => navigate(`/customers/edit/${row._id}`)}>
+                          Edit Customer
+                        </MenuItem>
+                        <MenuItem borderRadius="md" py="2" fontSize="sm" fontWeight="600" color="#ef4444" _hover={{ bg: '#fef2f2' }}
+                          icon={<Trash2 size={16} />}
+                          onClick={() => confirmDelete(row._id)}>
+                          Delete Customer
+                        </MenuItem>
+                      </MenuList>
+                    </Menu>
                   </Td>
                 </Tr>
               ))}

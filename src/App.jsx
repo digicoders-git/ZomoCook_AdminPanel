@@ -8,6 +8,7 @@ import Dashboard from './pages/Dashboard';
 import CustomerList from './pages/CustomerList';
 import AddCustomer from './pages/AddCustomer';
 import EditCustomer from './pages/EditCustomer';
+import CustomerDashboard from './pages/CustomerDashboard';
 import JobList from './pages/JobList';
 import PendingJobs from './pages/PendingJobs';
 import AddJob from './pages/AddJob';
@@ -171,6 +172,11 @@ function App() {
         <Route path="/customers/edit/:id" element={
           <PermissionRoute permission="customer_client:edit">
             <Layout><EditCustomer /></Layout>
+          </PermissionRoute>
+        } />
+        <Route path="/customers/dashboard/:id" element={
+          <PermissionRoute permission="customer_client:view">
+            <Layout><CustomerDashboard /></Layout>
           </PermissionRoute>
         } />
 
