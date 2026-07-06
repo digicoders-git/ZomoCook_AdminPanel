@@ -264,7 +264,7 @@ const QueryHistory = () => {
       />
 
       <Grid templateColumns={{ base: '1fr', xl: '1fr 280px' }} gap="6" alignItems="start">
-        <GridItem>
+        <GridItem minW="0">
           {/* Filters Section */}
           <Box bg="white" borderRadius="xl" border="1px solid #e8edf5" p="5" mb="6" boxShadow="sm">
             <Flex justify="space-between" align="center" mb="4">
