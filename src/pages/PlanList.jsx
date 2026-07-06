@@ -14,6 +14,7 @@ const PlanList = () => {
   const [settings, setSettings] = useState(null);
   const [isLoading, setIsLoading] = useState(true);
   const [isUpdatingFee, setIsUpdatingFee] = useState(false);
+  const [activeTab, setActiveTab] = useState('fee');
   const navigate = useNavigate();
   const toast = useToast();
 
@@ -180,23 +181,31 @@ const PlanList = () => {
 
       {/* Tabs / Navigation */}
       <Flex borderBottom="1px solid #e2e8f0" mb="6">
-        <Box borderBottom="2px solid #2563eb" pb="3" px="4" cursor="pointer">
-          <Text color="#2563eb" fontWeight="600" fontSize="sm">Hiring Processing Fee</Text>
+        <Box borderBottom={activeTab === 'fee' ? "2px solid #2563eb" : "none"} pb="3" px="4" cursor="pointer" onClick={() => setActiveTab('fee')}>
+          <Text color={activeTab === 'fee' ? "#2563eb" : "#64748b"} fontWeight="600" fontSize="sm">Hiring Processing Fee</Text>
         </Box>
-        <Box pb="3" px="4" cursor="pointer">
-          <Text color="#64748b" fontWeight="600" fontSize="sm">Service Packages</Text>
+        <Box borderBottom={activeTab === 'packages' ? "2px solid #2563eb" : "none"} pb="3" px="4" cursor="pointer" onClick={() => setActiveTab('packages')}>
+          <Text color={activeTab === 'packages' ? "#2563eb" : "#64748b"} fontWeight="600" fontSize="sm">Service Packages</Text>
         </Box>
         <Box ml="auto" pb="2">
-          <Button size="sm" colorScheme="blue" bg="#2563eb" onClick={() => {
-            const el = document.getElementById('fee-section');
-            if (el) el.scrollIntoView({ behavior: 'smooth' });
-          }}>
-            + Add / Update Fee
-          </Button>
+          {activeTab === 'fee' ? (
+            <Button size="sm" colorScheme="blue" bg="#2563eb" onClick={() => {
+              const el = document.getElementById('fee-section');
+              if (el) el.scrollIntoView({ behavior: 'smooth' });
+            }}>
+              + Add / Update Fee
+            </Button>
+          ) : (
+            <Button size="sm" colorScheme="blue" bg="#2563eb" leftIcon={<Plus size={16} />} onClick={() => navigate('/plans/add')}>
+              Add Package
+            </Button>
+          )}
         </Box>
       </Flex>
 
-      {/* Info Alert */}
+      {activeTab === 'fee' && (
+        <Box>
+          {/* Info Alert */}
       <Flex bg="#f8fafc" border="1px solid #e2e8f0" p="3" borderRadius="md" mb="6" align="center">
         <Icon as={Info} color="#3b82f6" mr="2" size={18} />
         <Text fontSize="sm" color="#475569">Manage the hiring processing fee. This fee will be applicable for all new job postings.</Text>
@@ -292,7 +301,11 @@ const PlanList = () => {
           </GridItem>
         </Grid>
       </Box>
+      </Box>
+      )}
 
+      {activeTab === 'packages' && (
+        <Box>
       {/* Service Packages Section */}
       <Flex justify="space-between" align="center" mb="4">
         <Box>
@@ -408,6 +421,8 @@ const PlanList = () => {
           <HStack><Icon as={Info} color="#2563eb" size={14} /><Text fontSize="sm" color="#475569"><b>Status:</b> Active packages will be visible to users in the application.</Text></HStack>
         </VStack>
       </Box>
+      </Box>
+      )}
     </Box>
   );
 };
