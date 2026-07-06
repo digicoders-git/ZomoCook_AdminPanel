@@ -231,14 +231,14 @@ const QueryHistory = () => {
   const getStatusCount = (statusName) => filteredQueries.filter(q => (q.statusMock === statusName || q.status === statusName)).length;
   
   const dynamicSummaryStats = [
-    { id: 'total', label: 'Total Queries', value: filteredQueries.length, color: 'blue', icon: MessageSquare, bg: '#f0f5ff' },
-    { id: 'new', label: 'New', value: getStatusCount('New'), color: 'yellow', icon: MessageCircle, bg: '#fffbeb' },
-    { id: 'assigned', label: 'Assigned', value: getStatusCount('Assigned'), color: 'blue', icon: User, bg: '#f0f5ff' },
+    { id: 'total', label: 'Total Queries', value: filteredQueries.length, color: 'blue', icon: MessageSquare, bg: '#e0e7ff' },
+    { id: 'new', label: 'New', value: getStatusCount('New'), color: 'yellow', icon: MessageCircle, bg: '#fef08a' },
+    { id: 'assigned', label: 'Assigned', value: getStatusCount('Assigned'), color: 'cyan', icon: User, bg: '#cffafe' },
     { id: 'in_progress', label: 'In Progress', value: getStatusCount('In Progress'), color: 'purple', icon: Activity, bg: '#f3e8ff' },
-    { id: 'waiting', label: 'Waiting', value: getStatusCount('Waiting for Customer') + getStatusCount('Waiting for Candidate'), color: 'orange', icon: Clock, bg: '#fff7ed' },
-    { id: 'escalated', label: 'Escalated', value: getStatusCount('Escalated'), color: 'red', icon: AlertCircle, bg: '#fef2f2' },
-    { id: 'resolved', label: 'Resolved', value: getStatusCount('Resolved'), color: 'green', icon: CheckCircle, bg: '#f0fdf4' },
-    { id: 'closed', label: 'Closed', value: getStatusCount('Closed'), color: 'gray', icon: Lock, bg: '#f8fafc' },
+    { id: 'waiting', label: 'Waiting', value: getStatusCount('Waiting for Customer') + getStatusCount('Waiting for Candidate'), color: 'orange', icon: Clock, bg: '#ffedd5' },
+    { id: 'escalated', label: 'Escalated', value: getStatusCount('Escalated'), color: 'red', icon: AlertCircle, bg: '#fee2e2' },
+    { id: 'resolved', label: 'Resolved', value: getStatusCount('Resolved'), color: 'green', icon: CheckCircle, bg: '#dcfce7' },
+    { id: 'closed', label: 'Closed', value: getStatusCount('Closed'), color: 'gray', icon: Lock, bg: '#f1f5f9' },
   ];
 
   const dynamicQuickActions = [
@@ -328,15 +328,19 @@ const QueryHistory = () => {
           {/* Summary Cards */}
           <Grid templateColumns={{ base: 'repeat(2, 1fr)', md: 'repeat(4, 1fr)', lg: 'repeat(8, 1fr)' }} gap="4" mb="6">
             {dynamicSummaryStats.map(stat => (
-              <Box key={stat.id} bg="white" p="3" borderRadius="xl" border="1px solid #e8edf5" textAlign="center" boxShadow="sm"
-                transition="all 0.2s" _hover={{ transform: 'translateY(-2px)', boxShadow: 'md', borderColor: `${stat.color}.200` }}>
-                <Flex justify="center" mb="2">
-                  <Flex align="center" justify="center" w="32px" h="32px" borderRadius="full" bg={stat.bg} color={`${stat.color}.500`}>
-                    <stat.icon size={16} />
+              <Box key={stat.id} bg="white" p="4" borderRadius="2xl" border="1px solid" borderColor={`${stat.color}.100`} textAlign="center" boxShadow="0 4px 12px rgba(0,0,0,0.02)"
+                position="relative" overflow="hidden"
+                transition="all 0.3s cubic-bezier(0.4, 0, 0.2, 1)" _hover={{ transform: 'translateY(-4px)', boxShadow: '0 12px 20px rgba(0,0,0,0.06)', borderColor: `${stat.color}.200` }}>
+                <Box position="absolute" top="-10px" right="-10px" opacity="0.04" transform="scale(2)">
+                  <stat.icon size={64} color={stat.color} />
+                </Box>
+                <Flex justify="center" mb="3" position="relative" zIndex="1">
+                  <Flex align="center" justify="center" w="40px" h="40px" borderRadius="xl" bg={`linear-gradient(135deg, ${stat.bg}, white)`} color={`${stat.color}.600`} boxShadow="sm" border="1px solid" borderColor="white">
+                    <stat.icon size={18} />
                   </Flex>
                 </Flex>
-                <Text fontSize="10px" fontWeight="600" color="#64748b" mb="1">{stat.label}</Text>
-                <Text fontSize="lg" fontWeight="800" color="#1e293b">{stat.value}</Text>
+                <Text fontSize="10px" fontWeight="800" color="#64748b" textTransform="uppercase" letterSpacing="0.5px" mb="1" position="relative" zIndex="1">{stat.label}</Text>
+                <Text fontSize="2xl" fontWeight="900" color="#1e293b" position="relative" zIndex="1">{stat.value}</Text>
               </Box>
             ))}
           </Grid>
@@ -450,32 +454,40 @@ const QueryHistory = () => {
         <GridItem>
           <VStack spacing="6" align="stretch">
             {/* Status Workflow */}
-            <Box bg="white" borderRadius="xl" border="1px solid #e8edf5" p="5" boxShadow="sm">
-              <Text fontSize="sm" fontWeight="700" color="#1e293b" mb="4">Status Workflow</Text>
-              <VStack align="stretch" spacing="3">
+            <Box bg="white" borderRadius="2xl" border="1px solid" borderColor="gray.100" p="6" boxShadow="0 4px 12px rgba(0,0,0,0.03)">
+              <Flex align="center" mb="5">
+                <Box w="3px" h="16px" bg="#004aad" borderRadius="full" mr="2" />
+                <Text fontSize="md" fontWeight="800" color="#1e293b">Status Workflow</Text>
+              </Flex>
+              <VStack align="stretch" spacing="4">
                 {statusWorkflow.map((status) => (
-                  <Flex key={status} align="center">
+                  <Flex key={status} align="center" p="2" borderRadius="lg" _hover={{ bg: '#f8fafc' }} transition="all 0.2s">
                     <StatusDot status={status} />
-                    <Text fontSize="xs" fontWeight="500" color="#475569">{status}</Text>
+                    <Text fontSize="sm" fontWeight="600" color="#475569">{status}</Text>
                   </Flex>
                 ))}
               </VStack>
             </Box>
 
             {/* Quick Actions */}
-            <Box bg="white" borderRadius="xl" border="1px solid #e8edf5" p="5" boxShadow="sm">
-              <Text fontSize="sm" fontWeight="700" color="#1e293b" mb="4">Quick Actions</Text>
+            <Box bg="white" borderRadius="2xl" border="1px solid" borderColor="gray.100" p="6" boxShadow="0 4px 12px rgba(0,0,0,0.03)">
+              <Flex align="center" mb="5">
+                <Box w="3px" h="16px" bg="#004aad" borderRadius="full" mr="2" />
+                <Text fontSize="md" fontWeight="800" color="#1e293b">Quick Actions</Text>
+              </Flex>
               <VStack align="stretch" spacing="3">
                 {dynamicQuickActions.map((action, i) => (
-                  <Flex key={i} justify="space-between" align="center" cursor="pointer" _hover={{ opacity: 0.8 }}>
-                    <HStack spacing="2" color="#64748b">
-                      {i === 0 && <User size={14} />}
-                      {i === 1 && <Users size={14} />}
-                      {i === 2 && <AlertCircle size={14} />}
-                      {i === 3 && <Clock size={14} />}
-                      <Text fontSize="xs" fontWeight="500">{action.label}</Text>
+                  <Flex key={i} justify="space-between" align="center" p="3" borderRadius="xl" bg={`${action.color}.50`} border="1px solid" borderColor={`${action.color}.100`} cursor="pointer" transition="all 0.2s" _hover={{ transform: 'translateX(4px)', boxShadow: 'sm' }}>
+                    <HStack spacing="3" color={`${action.color}.600`}>
+                      <Flex w="28px" h="28px" borderRadius="full" bg="white" align="center" justify="center" boxShadow="sm">
+                        {i === 0 && <User size={14} />}
+                        {i === 1 && <Users size={14} />}
+                        {i === 2 && <AlertCircle size={14} />}
+                        {i === 3 && <Clock size={14} />}
+                      </Flex>
+                      <Text fontSize="xs" fontWeight="700">{action.label}</Text>
                     </HStack>
-                    <Badge bg={`${action.color}.50`} color={`${action.color}.500`} borderRadius="md" px="2" py="0.5" fontSize="10px">
+                    <Badge bg="white" color={`${action.color}.600`} borderRadius="full" px="3" py="1" fontSize="11px" boxShadow="sm">
                       {action.count}
                     </Badge>
                   </Flex>
@@ -484,16 +496,19 @@ const QueryHistory = () => {
             </Box>
 
             {/* Shortcuts */}
-            <Box bg="white" borderRadius="xl" border="1px solid #e8edf5" p="5" boxShadow="sm">
-              <Text fontSize="sm" fontWeight="700" color="#1e293b" mb="4">Shortcuts</Text>
+            <Box bg="white" borderRadius="2xl" border="1px solid" borderColor="gray.100" p="6" boxShadow="0 4px 12px rgba(0,0,0,0.03)">
+              <Flex align="center" mb="5">
+                <Box w="3px" h="16px" bg="#004aad" borderRadius="full" mr="2" />
+                <Text fontSize="md" fontWeight="800" color="#1e293b">Shortcuts</Text>
+              </Flex>
               <VStack align="stretch" spacing="3">
-                <Button size="sm" variant="outline" color="#004aad" borderColor="#dde6f5" leftIcon={<Plus size={14} />} justifyContent="flex-start" bg="#f8faff">
+                <Button size="md" variant="outline" color="#004aad" borderColor="#dde6f5" leftIcon={<Plus size={16} />} justifyContent="flex-start" bg="#f8faff" _hover={{ bg: '#eff6ff', transform: 'translateY(-2px)' }} transition="all 0.2s">
                   Add Query
                 </Button>
-                <Button size="sm" variant="outline" color="#004aad" borderColor="#dde6f5" leftIcon={<Send size={14} />} justifyContent="flex-start">
+                <Button size="md" variant="outline" color="#10b981" borderColor="#d1fae5" leftIcon={<Send size={16} />} justifyContent="flex-start" bg="#f0fdf4" _hover={{ bg: '#ecfdf5', transform: 'translateY(-2px)' }} transition="all 0.2s">
                   Send Notification
                 </Button>
-                <Button size="sm" variant="outline" color="#004aad" borderColor="#dde6f5" leftIcon={<Download size={14} />} justifyContent="flex-start">
+                <Button size="md" variant="outline" color="#8b5cf6" borderColor="#ede9fe" leftIcon={<Download size={16} />} justifyContent="flex-start" bg="#f5f3ff" _hover={{ bg: '#f3f0ff', transform: 'translateY(-2px)' }} transition="all 0.2s">
                   Download Report
                 </Button>
               </VStack>
