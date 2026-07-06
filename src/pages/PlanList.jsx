@@ -38,7 +38,7 @@ const PlanList = () => {
       }
       
       if (settingsRes.data.success) {
-        const s = settingsRes.data.data;
+        const s = settingsRes.data.settings || {};
         setSettings(s);
         setFeeForm({
           amount: s.jobPostFee?.toString() || '299',
