@@ -29,7 +29,7 @@ const PlanList = () => {
       const apiUrl = import.meta.env.VITE_API_URL;
       
       const [plansRes, settingsRes] = await Promise.all([
-        axios.get(`${apiUrl}/plans`, { headers: { Authorization: `Bearer ${token}` } }),
+        axios.get(`${apiUrl}/plans/admin/all`, { headers: { Authorization: `Bearer ${token}` } }),
         axios.get(`${apiUrl}/settings`, { headers: { Authorization: `Bearer ${token}` } })
       ]);
 
