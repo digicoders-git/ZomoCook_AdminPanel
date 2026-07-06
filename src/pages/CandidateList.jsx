@@ -83,6 +83,30 @@ const CandidateList = () => {
     onOpen();
   };
 
+  const handleKycStatusChange = async (candidateId, newKycStatus) => {
+    try {
+      const token = localStorage.getItem('adminToken');
+      const response = await axios.patch(`${API_BASE_URL}/candidates/${candidateId}/status`,
+        { type: 'kyc', value: newKycStatus },
+        { headers: { 'Authorization': `Bearer ${token}` } }
+      );
+      if (response.data.success) {
+        toast({ title: 'Success', description: 'Candidate KYC status updated.', status: 'success', duration: 3000 });
+        setCandidates(prev => prev.map(c => c._id === candidateId ? { ...c, kycStatus: newKycStatus } : c));
+      }
+    } catch (error) {
+      toast({ title: 'Error', description: 'Failed to update KYC status.', status: 'error', duration: 3000 });
+    }
+  };
+
+  const getKycColor = (s) => {
+    switch (s?.toLowerCase()) {
+      case 'approved': return '#10b981';
+      case 'rejected': return '#ef4444';
+      default: return '#f59e0b';
+    }
+  };
+
   const apiUrl = import.meta.env.VITE_API_URL;
 
   return (
@@ -177,8 +201,24 @@ const CandidateList = () => {
                     </Td>
                     <Td py="4" border="1px solid #edf2f7" verticalAlign="top">
                       <VStack align="start" spacing="1">
-                        <Text fontSize="xs" color="#475569"><b>KYC Status :</b> {c.kycStatus}</Text>
-                        <Text fontSize="xs" color="#475569"><b>Profile Status :</b> {c.profileStatus}</Text>
+                        <Text fontSize="11px" fontWeight="600" color="#64748b" mb="-1">KYC Status:</Text>
+                        <Select
+                          size="sm"
+                          bg={getKycColor(c.kycStatus)}
+                          color="white"
+                          borderColor="transparent"
+                          borderRadius="4px"
+                          fontWeight="700"
+                          value={c.kycStatus?.toLowerCase() || 'pending'}
+                          onChange={(e) => handleKycStatusChange(c._id, e.target.value)}
+                          sx={{ '& option': { color: '#1e293b', bg: 'white' } }}
+                        >
+                          <option value="pending">Pending</option>
+                          <option value="approved">Approved</option>
+                          <option value="rejected">Rejected</option>
+                        </Select>
+                        <Text fontSize="11px" fontWeight="600" color="#64748b" mb="-1" mt="2">Profile Status:</Text>
+                        <Badge bg={c.profileStatus === 'active' ? '#10b981' : '#ef4444'} color="white" borderRadius="4px" px="2" py="1" fontSize="11px">{c.profileStatus}</Badge>
                       </VStack>
                     </Td>
                     <Td py="4" border="1px solid #edf2f7" textAlign="center" verticalAlign="middle">
