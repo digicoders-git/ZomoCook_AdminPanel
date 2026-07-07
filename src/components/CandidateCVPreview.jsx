@@ -1,16 +1,15 @@
 import React, { forwardRef, useState } from 'react';
 import { Box, Flex, Text, HStack, VStack, Image, Grid, Divider, Icon } from '@chakra-ui/react';
-import { MapPin, Phone, Mail, Shield, CheckCircle2, Globe } from 'lucide-react';
 
 const CandidateCVPreview = forwardRef(({ candidate }, ref) => {
   const [imgError, setImgError] = useState(false);
   if (!candidate) return null;
 
-  const DARK_BLUE = '#004aad'; // ZomoCook Brand Color
+  const DARK_BLUE = '#004aad';
   const LIGHT_TEXT = '#ffffff';
   const PRIMARY_TEXT = '#004aad';
   const SECONDARY_TEXT = '#475569';
-  const LIGHT_BLUE = '#e0e7ff'; // For horizontal lines
+  const LIGHT_BLUE = '#e0e7ff';
 
   const calculateAge = (dob) => {
     if (!dob) return 'N/A';
@@ -26,7 +25,6 @@ const CandidateCVPreview = forwardRef(({ candidate }, ref) => {
   const apiUrl = import.meta.env.VITE_API_URL || '';
   const apiBase = apiUrl.replace('/api', '');
   
-  // A simple base64 encoded grey SVG avatar placeholder to avoid connection errors from external URLs during html2canvas
   const placeholderBase64 = 'data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCAyNCAyNCIgZmlsbD0iI2QxZDVkYiI+PHBhdGggZD0iTTEyIDJhNSA1IDAgMSAwIDUgNSAgNSA1IDAgMCAwLTUtNXptMCA4YTMgMyAwIDEgMSAzLTMgIDMgMyAwIDAgMS0zIDN6bTkgMTF2LTFhNyA3IDAgMCAwLTctNyA3IDcgMCAwIDAtNyA3diFIM3YtMWE5IDkgMCAwIDEgOS05IDkgOSAwIDAgMSA5IDl2MXoiLz48L3N2Zz4=';
 
   const profileImageSrc = candidate.profileImage && !candidate.profileImage.includes('default') && !imgError
@@ -218,24 +216,32 @@ const CandidateCVPreview = forwardRef(({ candidate }, ref) => {
 
           {/* Contact Info */}
           <Box w="full">
-            <Box mb="4">
-              <Box bg="white" borderRadius="full" display="inline-block" verticalAlign="middle" mr="3" w="24px" h="24px" textAlign="center" lineHeight="22px">
-                <MapPin size={12} color={DARK_BLUE} style={{ display: 'inline-block', verticalAlign: 'middle' }} />
-              </Box>
-              <Text as="span" fontSize="xs" fontWeight="600" display="inline-block" verticalAlign="middle">{currentAddress}</Text>
-            </Box>
-            <Box mb="4">
-              <Box bg="white" borderRadius="full" display="inline-block" verticalAlign="middle" mr="3" w="24px" h="24px" textAlign="center" lineHeight="22px">
-                <Phone size={12} color={DARK_BLUE} style={{ display: 'inline-block', verticalAlign: 'middle' }} />
-              </Box>
-              <Text as="span" fontSize="xs" fontWeight="600" display="inline-block" verticalAlign="middle">{candidate.phone}</Text>
-            </Box>
-            <Box>
-              <Box bg="white" borderRadius="full" display="inline-block" verticalAlign="middle" mr="3" w="24px" h="24px" textAlign="center" lineHeight="22px">
-                <Mail size={12} color={DARK_BLUE} style={{ display: 'inline-block', verticalAlign: 'middle' }} />
-              </Box>
-              <Text as="span" fontSize="xs" fontWeight="600" wordBreak="break-word" display="inline-block" verticalAlign="middle">{candidate.email || 'N/A'}</Text>
-            </Box>
+            <Flex mb="4" align="center" gap="3">
+              <Flex bg="white" borderRadius="full" w="24px" h="24px" align="center" justify="center" flexShrink={0} style={{ position: 'relative', top: '4px' }}>
+                <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#004aad" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                  <path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"></path>
+                  <circle cx="12" cy="10" r="3"></circle>
+                </svg>
+              </Flex>
+              <Text fontSize="xs" fontWeight="600">{currentAddress}</Text>
+            </Flex>
+            <Flex mb="4" align="center" gap="3">
+              <Flex bg="white" borderRadius="full" w="24px" h="24px" align="center" justify="center" flexShrink={0} style={{ position: 'relative', top: '4px' }}>
+                <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#004aad" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                  <path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z"></path>
+                </svg>
+              </Flex>
+              <Text fontSize="xs" fontWeight="600">{candidate.phone}</Text>
+            </Flex>
+            <Flex align="center" gap="3">
+              <Flex bg="white" borderRadius="full" w="24px" h="24px" align="center" justify="center" flexShrink={0} style={{ position: 'relative', top: '4px' }}>
+                <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#004aad" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                  <rect x="2" y="4" width="20" height="16" rx="2"></rect>
+                  <path d="m22 7-8.97 5.7a1.94 1.94 0 0 1-2.06 0L2 7"></path>
+                </svg>
+              </Flex>
+              <Text fontSize="xs" fontWeight="600" wordBreak="break-word">{candidate.email || 'N/A'}</Text>
+            </Flex>
           </Box>
 
           <SidebarHeading title="Core Qualifications" />
@@ -289,63 +295,51 @@ const CandidateCVPreview = forwardRef(({ candidate }, ref) => {
       {/* Footer Section */}
       <Box w="full" bg="white" mt="auto">
         <Box p="5" px="8" pt="3">
-          <Box mb="3" display="inline-block">
-            <Shield size={18} color="#004aad" />
-          </Box>
-          <Flex justify="space-between" align="center" mb="3">
-            <Box display="inline-block">
-              <Box display="inline-block" verticalAlign="middle" mr="2">
-                <CheckCircle2 size={16} color="#38a169" />
-              </Box>
-              <Text as="span" fontSize="xs" fontWeight="700" color="#334155" verticalAlign="middle">Aadhaar Verified</Text>
-            </Box>
-            <Box display="inline-block">
-              <Box display="inline-block" verticalAlign="middle" mr="2">
-                <CheckCircle2 size={16} color="#38a169" />
-              </Box>
-              <Text as="span" fontSize="xs" fontWeight="700" color="#334155" verticalAlign="middle">Mobile Verified</Text>
-            </Box>
-            <Box display="inline-block">
-              <Box display="inline-block" verticalAlign="middle" mr="2">
-                <CheckCircle2 size={16} color="#38a169" />
-              </Box>
-              <Text as="span" fontSize="xs" fontWeight="700" color="#334155" verticalAlign="middle">Address Verified</Text>
-            </Box>
-            <Box display="inline-block">
-              <Box display="inline-block" verticalAlign="middle" mr="2">
-                <CheckCircle2 size={16} color="#38a169" />
-              </Box>
-              <Text as="span" fontSize="xs" fontWeight="700" color="#334155" verticalAlign="middle">Experience Verified</Text>
-            </Box>
+          {/* <Box mb="3">
+            <Text fontSize="sm" fontWeight="bold">🛡️</Text>
+          </Box> */}
+          <Flex justify="space-between" align="center" mb="3" wrap="wrap" gap="2">
+            <Flex align="center" gap="2" minW="fit-content">
+              <Text fontSize="sm" color="#38a169" fontWeight="bold">✓</Text>
+              <Text fontSize="xs" fontWeight="700" color="#334155" whiteSpace="nowrap">Aadhaar Verified</Text>
+            </Flex>
+            <Flex align="center" gap="2" minW="fit-content">
+              <Text fontSize="sm" color="#38a169" fontWeight="bold">✓</Text>
+              <Text fontSize="xs" fontWeight="700" color="#334155" whiteSpace="nowrap">Mobile Verified</Text>
+            </Flex>
+            <Flex align="center" gap="2" minW="fit-content">
+              <Text fontSize="sm" color="#38a169" fontWeight="bold">✓</Text>
+              <Text fontSize="xs" fontWeight="700" color="#334155" whiteSpace="nowrap">Address Verified</Text>
+            </Flex>
+            <Flex align="center" gap="2" minW="fit-content">
+              <Text fontSize="sm" color="#38a169" fontWeight="bold">✓</Text>
+              <Text fontSize="xs" fontWeight="700" color="#334155" whiteSpace="nowrap">Experience Verified</Text>
+            </Flex>
           </Flex>
 
           <Flex justify="center" mt="4">
-            <Box bg="#f0fdf4" border="1px solid" borderColor="#bbf7d0" borderRadius="full" px="5" py="1.5" display="inline-block" textAlign="center">
-              <Box display="inline-block" verticalAlign="middle" mr="2">
-                <CheckCircle2 size={14} color="#16a34a" />
-              </Box>
-              <Text as="span" fontSize="xs" fontWeight="800" color="#166534" verticalAlign="middle">Profile Reviewed by ZomoCook</Text>
-            </Box>
+            <div style={{ display: 'inline-flex', alignItems: 'flex-end', gap: '8px' }}>
+              {/* <div style={{ width: '14px', height: '14px', backgroundColor: '#16a34a', borderRadius: '50%', marginBottom: '3px', flexShrink: 0 }} /> */}
+              <div style={{ fontSize: '11px', fontWeight: '800', color: '#166534', whiteSpace: 'nowrap' }}>Profile Reviewed by ZomoCook</div>
+            </div>
           </Flex>
         </Box>
         
-        <Flex bg="linear-gradient(135deg, #004aad 0%, #0062e6 100%)" p="3" px="8" justify="space-between" align="center">
-          <Box display="inline-block">
-            <Box bg="white" borderRadius="md" color="#004aad" display="inline-block" verticalAlign="middle" mr="4" w="28px" h="28px" textAlign="center" lineHeight="26px">
-              <Shield size={16} style={{ display: 'inline-block', verticalAlign: 'middle' }} />
-            </Box>
-            <Box display="inline-block" verticalAlign="middle">
-              <Text color="white" fontWeight="700" fontSize="xs">This profile has been verified by ZomoCook Recruitment Team.</Text>
-              <Text color="whiteAlpha.900" fontSize="2xs" fontWeight="500">We ensure trusted, skilled & professional staff for your business.</Text>
-            </Box>
-          </Box>
-          <Box display="inline-block" whiteSpace="nowrap">
-            <Box display="inline-block" verticalAlign="middle" mr="2">
-              <Globe size={14} color="white" />
-            </Box>
-            <Text as="span" color="white" fontSize="xs" fontWeight="600" verticalAlign="middle">www.zomocook.com</Text>
-          </Box>
-        </Flex>
+        <div style={{ background: 'linear-gradient(135deg, #004aad 0%, #0062e6 100%)', padding: '12px 32px', display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: '12px' }}>
+          <div style={{ display: 'flex', flexDirection: 'row', alignItems: 'center', gap: '16px' }}>
+            <div style={{ backgroundColor: 'white', borderRadius: '6px', width: '28px', height: '28px', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0, position: 'relative', top: '4px' }}>
+              <img src="/logo.png" alt="ZomoCook" style={{ width: '22px', height: '22px', objectFit: 'contain' }} />
+            </div>
+            <div style={{ display: 'flex', flexDirection: 'column' }}>
+              <div style={{ color: 'white', fontWeight: '700', fontSize: '11px', lineHeight: '1.5' }}>This profile has been verified by ZomoCook Recruitment Team.</div>
+              <div style={{ color: 'rgba(255,255,255,0.8)', fontWeight: '500', fontSize: '10px', lineHeight: '1.5' }}>We ensure trusted, skilled & professional staff for your business.</div>
+            </div>
+          </div>
+          <div style={{ display: 'flex', flexDirection: 'row', alignItems: 'center', gap: '8px', whiteSpace: 'nowrap' }}>
+            <Text fontSize="sm" color="white" fontWeight="bold">🌐</Text>
+            <div style={{ color: 'white', fontSize: '11px', fontWeight: '600' }}>www.zomocook.com</div>
+          </div>
+        </div>
       </Box>
     </Flex>
   );
