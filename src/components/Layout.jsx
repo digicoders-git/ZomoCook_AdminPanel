@@ -15,6 +15,7 @@ import {
 } from 'lucide-react';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
 import React from 'react';
+import logo from '../assets/logo.png';
 
 const BRAND = '#004aad';
 const ACCENT = '#f59e0b';
@@ -278,7 +279,7 @@ const SidebarContent = ({ isCollapsed, onClose, onLogoutOpen, ...rest }) => (
           justifyContent="center"
           boxShadow="0 2px 8px rgba(0,0,0,0.15)"
         >
-          <img src="/src/assets/logo.png" alt="ZomoCook" style={{ width: '100%', height: '100%', objectFit: 'contain' }} />
+          <img src={logo} alt="ZomoCook" style={{ width: '100%', height: '100%', objectFit: 'contain' }} />
         </Box>
         {!isCollapsed && (
           <Box>
