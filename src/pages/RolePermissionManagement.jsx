@@ -200,10 +200,32 @@ export default function RolePermissionManagement() {
                           icon={<Icon as={Users} size={14} />} 
                           onClick={(e) => { 
                             e.stopPropagation(); 
-                            navigate(`/users/list?role=${role._id}`); 
+                            handleSelectRole(role); 
                           }}
                         >
-                          View Users
+                          View Details
+                        </MenuItem>
+                        <MenuItem 
+                          fontSize="sm" 
+                          icon={<Icon as={Edit} size={14} />} 
+                          onClick={(e) => { 
+                            e.stopPropagation(); 
+                            handleSelectRole(role);
+                            setIsEditing(true);
+                          }}
+                        >
+                          Edit Role
+                        </MenuItem>
+                        <MenuItem 
+                          fontSize="sm" 
+                          color="red.500"
+                          icon={<Icon as={X} size={14} />} 
+                          onClick={(e) => { 
+                            e.stopPropagation(); 
+                            toast({ title: 'Delete Role functionality not yet implemented.', status: 'info', duration: 2000 });
+                          }}
+                        >
+                          Delete Role
                         </MenuItem>
                       </MenuList>
                     </Menu>
