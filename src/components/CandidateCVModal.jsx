@@ -57,14 +57,23 @@ const CandidateCVModal = ({ isOpen, onClose, candidateId, preloadedCandidate }) 
   const handleDownloadPNG = async () => {
     if (!cvRef.current || !candidate) return;
     try {
-      const canvas = await html2canvas(cvRef.current, { 
+      const element = cvRef.current;
+      const canvas = await html2canvas(element, { 
         scale: 2,
         useCORS: true,
         allowTaint: false,
         backgroundColor: '#ffffff',
         logging: false,
         imageTimeout: 0,
-        removeContainer: true
+        removeContainer: true,
+        width: element.scrollWidth,
+        height: element.scrollHeight,
+        windowWidth: element.scrollWidth,
+        windowHeight: element.scrollHeight,
+        x: 0,
+        y: 0,
+        scrollX: 0,
+        scrollY: 0,
       });
       const imgData = canvas.toDataURL('image/png');
       const link = document.createElement('a');
@@ -81,14 +90,23 @@ const CandidateCVModal = ({ isOpen, onClose, candidateId, preloadedCandidate }) 
   const handleDownloadPDF = async () => {
     if (!cvRef.current || !candidate) return;
     try {
-      const canvas = await html2canvas(cvRef.current, { 
+      const element = cvRef.current;
+      const canvas = await html2canvas(element, { 
         scale: 1.5,
         useCORS: true,
         allowTaint: false,
         backgroundColor: '#ffffff',
         logging: false,
         imageTimeout: 0,
-        removeContainer: true
+        removeContainer: true,
+        width: element.scrollWidth,
+        height: element.scrollHeight,
+        windowWidth: element.scrollWidth,
+        windowHeight: element.scrollHeight,
+        x: 0,
+        y: 0,
+        scrollX: 0,
+        scrollY: 0,
       });
       const imgData = canvas.toDataURL('image/jpeg', 0.7);
       const pdf = new jsPDF({
