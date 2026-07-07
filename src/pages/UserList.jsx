@@ -5,7 +5,7 @@ import {
   Modal, ModalOverlay, ModalContent, ModalHeader, ModalFooter, ModalBody, ModalCloseButton, Badge, Divider, VStack, SimpleGrid
 } from '@chakra-ui/react';
 import { Edit3, Trash2, Filter, Plus, Eye } from 'lucide-react';
-import { Link, useNavigate } from 'react-router-dom';
+import { Link, useNavigate, useSearchParams } from 'react-router-dom';
 import {
   PageHeader, TableCard, TableControls, TableFooter, PageFooter, BRAND, ACCENT,
   thStyle, trHover, ConfirmationModal
@@ -14,6 +14,8 @@ import axios from 'axios';
 
 const UserList = () => {
   const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
+  const roleFilter = searchParams.get('role');
   const [users, setUsers] = useState([]);
   const [isLoading, setIsLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState('');
@@ -34,8 +36,11 @@ const UserList = () => {
     try {
       const apiUrl = import.meta.env.VITE_API_URL;
       const token = localStorage.getItem('adminToken');
+      const params = { search: searchTerm, page: currentPage, limit: entriesPerPage };
+      if (roleFilter) params.role = roleFilter;
+      
       const response = await axios.get(`${apiUrl}/admin/users`, {
-        params: { search: searchTerm, page: currentPage, limit: entriesPerPage },
+        params,
         headers: { 'Authorization': `Bearer ${token}` }
       });
       if (response.data.success) {
@@ -56,7 +61,7 @@ const UserList = () => {
 
   useEffect(() => {
     fetchUsers();
-  }, [searchTerm, currentPage, entriesPerPage]);
+  }, [searchTerm, currentPage, entriesPerPage, roleFilter]);
 
   const handleToggleStatus = (id, currentStatus) => {
     const isCurrentlyActive = currentStatus === 'Active';
