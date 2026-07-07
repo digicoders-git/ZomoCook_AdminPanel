@@ -58,7 +58,7 @@ const CandidateCVModal = ({ isOpen, onClose, candidateId, preloadedCandidate }) 
     if (!cvRef.current || !candidate) return;
     try {
       const canvas = await html2canvas(cvRef.current, { 
-        scale: 1,
+        scale: 2,
         useCORS: true,
         allowTaint: false,
         backgroundColor: '#ffffff',
@@ -82,7 +82,7 @@ const CandidateCVModal = ({ isOpen, onClose, candidateId, preloadedCandidate }) 
     if (!cvRef.current || !candidate) return;
     try {
       const canvas = await html2canvas(cvRef.current, { 
-        scale: 1,
+        scale: 1.5,
         useCORS: true,
         allowTaint: false,
         backgroundColor: '#ffffff',
@@ -90,13 +90,13 @@ const CandidateCVModal = ({ isOpen, onClose, candidateId, preloadedCandidate }) 
         imageTimeout: 0,
         removeContainer: true
       });
-      const imgData = canvas.toDataURL('image/png');
+      const imgData = canvas.toDataURL('image/jpeg', 0.7);
       const pdf = new jsPDF({
         orientation: 'portrait',
         unit: 'px',
-        format: [canvas.width, canvas.height]
+        format: [canvas.width / 1.5, canvas.height / 1.5]
       });
-      pdf.addImage(imgData, 'PNG', 0, 0, canvas.width, canvas.height);
+      pdf.addImage(imgData, 'JPEG', 0, 0, canvas.width / 1.5, canvas.height / 1.5);
       pdf.save(`Resume_${candidate.name.replace(/\s+/g, '_')}.pdf`);
       toast({ title: 'PDF downloaded successfully', status: 'success', duration: 2000 });
     } catch (error) {
