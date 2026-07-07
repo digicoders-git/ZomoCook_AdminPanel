@@ -209,6 +209,7 @@ const CandidateCVPreview = forwardRef(({ candidate }, ref) => {
                 w="full" 
                 h="full" 
                 objectFit="cover" 
+                crossOrigin="anonymous"
                 onError={() => setImgError(true)}
               />
             </Box>
