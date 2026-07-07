@@ -64,7 +64,7 @@ const CandidateCVModal = ({ isOpen, onClose, candidateId, preloadedCandidate }) 
       const canvas = await html2canvas(clonedElement, { 
         scale: 2,
         useCORS: true,
-        allowTaint: false,
+        allowTaint: true,
         backgroundColor: '#ffffff',
         logging: false,
         imageTimeout: 0,
@@ -94,7 +94,7 @@ const CandidateCVModal = ({ isOpen, onClose, candidateId, preloadedCandidate }) 
       const canvas = await html2canvas(clonedElement, { 
         scale: 1.5,
         useCORS: true,
-        allowTaint: false,
+        allowTaint: true,
         backgroundColor: '#ffffff',
         logging: false,
         imageTimeout: 0,
