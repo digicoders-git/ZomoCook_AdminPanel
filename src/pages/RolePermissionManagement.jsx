@@ -197,13 +197,23 @@ export default function RolePermissionManagement() {
                       <MenuList minW="150px" boxShadow="lg" border="1px solid #e2e8f0" zIndex="10">
                         <MenuItem 
                           fontSize="sm" 
-                          icon={<Icon as={Users} size={14} />} 
+                          icon={<Icon as={Search} size={14} />} 
                           onClick={(e) => { 
                             e.stopPropagation(); 
                             handleSelectRole(role); 
                           }}
                         >
                           View Details
+                        </MenuItem>
+                        <MenuItem 
+                          fontSize="sm" 
+                          icon={<Icon as={Users} size={14} />} 
+                          onClick={(e) => { 
+                            e.stopPropagation(); 
+                            navigate(`/users/list?role=${role._id}`); 
+                          }}
+                        >
+                          Assigned Users
                         </MenuItem>
                         <MenuItem 
                           fontSize="sm" 
