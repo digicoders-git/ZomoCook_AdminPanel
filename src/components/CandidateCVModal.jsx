@@ -58,23 +58,20 @@ const CandidateCVModal = ({ isOpen, onClose, candidateId, preloadedCandidate }) 
     if (!cvRef.current || !candidate) return;
     try {
       const element = cvRef.current;
-      const canvas = await html2canvas(element, { 
+      const clonedElement = element.cloneNode(true);
+      document.body.appendChild(clonedElement);
+      
+      const canvas = await html2canvas(clonedElement, { 
         scale: 2,
         useCORS: true,
         allowTaint: false,
         backgroundColor: '#ffffff',
         logging: false,
         imageTimeout: 0,
-        removeContainer: true,
-        width: element.scrollWidth,
-        height: element.scrollHeight,
-        windowWidth: element.scrollWidth,
-        windowHeight: element.scrollHeight,
-        x: 0,
-        y: 0,
-        scrollX: 0,
-        scrollY: 0,
       });
+      
+      document.body.removeChild(clonedElement);
+      
       const imgData = canvas.toDataURL('image/png');
       const link = document.createElement('a');
       link.href = imgData;
@@ -91,23 +88,20 @@ const CandidateCVModal = ({ isOpen, onClose, candidateId, preloadedCandidate }) 
     if (!cvRef.current || !candidate) return;
     try {
       const element = cvRef.current;
-      const canvas = await html2canvas(element, { 
+      const clonedElement = element.cloneNode(true);
+      document.body.appendChild(clonedElement);
+      
+      const canvas = await html2canvas(clonedElement, { 
         scale: 1.5,
         useCORS: true,
         allowTaint: false,
         backgroundColor: '#ffffff',
         logging: false,
         imageTimeout: 0,
-        removeContainer: true,
-        width: element.scrollWidth,
-        height: element.scrollHeight,
-        windowWidth: element.scrollWidth,
-        windowHeight: element.scrollHeight,
-        x: 0,
-        y: 0,
-        scrollX: 0,
-        scrollY: 0,
       });
+      
+      document.body.removeChild(clonedElement);
+      
       const imgData = canvas.toDataURL('image/jpeg', 0.7);
       const pdf = new jsPDF({
         orientation: 'portrait',
