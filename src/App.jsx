@@ -1,5 +1,5 @@
 import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
-import { useEffect } from 'react';
+import { useEffect, useState } from 'react';
 import axios from 'axios';
 import API_BASE_URL from './apiConfig';
 import { requestFCMToken, onForegroundMessage } from './firebase';
@@ -83,6 +83,7 @@ const PermissionRoute = ({ children, permission = null }) => {
 
   // 4. Check role permissions
   const userPermissions = adminData?.role?.permissions || [];
+  if (userPermissions.includes('global:full_access')) return children;
   if (userPermissions.includes(permission)) return children;
 
   // 5. Permission denied → show 403
@@ -112,6 +113,29 @@ axios.interceptors.response.use(
 );
 
 function App() {
+  const [profileLoaded, setProfileLoaded] = useState(false);
+
+  useEffect(() => {
+    const fetchProfile = async () => {
+      const token = localStorage.getItem('adminToken');
+      if (token) {
+        try {
+          const response = await axios.get(`${API_BASE_URL}/admin/profile`, {
+            headers: { Authorization: `Bearer ${token}` }
+          });
+          if (response.data.success) {
+            localStorage.setItem('adminData', JSON.stringify(response.data));
+          }
+        } catch (error) {
+          // If 401, the interceptor will handle logout
+          console.error("Failed to fetch latest profile", error);
+        }
+      }
+      setProfileLoaded(true);
+    };
+    fetchProfile();
+  }, []);
+
   useEffect(() => {
     const initFCM = async () => {
       const fcmToken = await requestFCMToken();
@@ -137,6 +161,10 @@ function App() {
 
     return () => unsubscribe();
   }, []);
+
+  if (!profileLoaded) {
+    return null; // Or a loading spinner
+  }
 
   return (
     <Router>
