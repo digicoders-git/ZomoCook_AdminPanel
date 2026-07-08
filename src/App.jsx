@@ -14,6 +14,7 @@ import PendingJobs from './pages/PendingJobs';
 import AddJob from './pages/AddJob';
 import EditJob from './pages/EditJob';
 import ViewJob from './pages/ViewJob';
+import ReplacementDashboard from './pages/ReplacementDashboard';
 import CandidateList from './pages/CandidateList';
 import AddCandidate from './pages/AddCandidate';
 import EditCandidate from './pages/EditCandidate';
@@ -205,6 +206,11 @@ function App() {
         <Route path="/jobs/view/:id" element={
           <PermissionRoute permission="job_management:view">
             <Layout><ViewJob /></Layout>
+          </PermissionRoute>
+        } />
+        <Route path="/replacements" element={
+          <PermissionRoute permission="job_management:view">
+            <Layout><ReplacementDashboard /></Layout>
           </PermissionRoute>
         } />
 

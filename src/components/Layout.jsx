@@ -35,6 +35,7 @@ const navItems = [
       { name: 'Job List', path: '/jobs/list', permission: 'job_management:view' },
       { name: 'Pending Jobs', path: '/pending-jobs', permission: 'job_management:view' },
       { name: 'Add Job', path: '/jobs/add', permission: 'job_management:add' },
+      { name: 'Replacements', path: '/replacements', permission: 'job_management:view' },
     ]
   },
   {
