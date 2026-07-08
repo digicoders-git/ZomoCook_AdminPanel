@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import {
   Box, Flex, Text, HStack, VStack, Button, Input, Select,
   Table, Thead, Tbody, Tr, Th, Td, Menu, MenuButton, MenuList, MenuItem,
@@ -34,23 +34,35 @@ const customTdStyle = {
   verticalAlign: 'middle'
 };
 
-const mockReplacements = [
-  { id: 1, category: 'Commercial', customerName: 'Hotel Royal Palace', noAddress: '9876543210\nMG Road, Indore, Madhya Pradesh', currentPackage: 'Standard Plan\n(6 Months)', cookName: 'Ramesh Kumar', reason: 'Cook going back to home town', status: 'Pending', assignTo: 'Amit Verma' },
-  { id: 2, category: 'Domestic', customerName: 'Sunita Sharma', noAddress: '9123456780\nVikas Nagar, Lucknow, UP', currentPackage: 'Basic Plan\n(3 Months)', cookName: 'Savitri Devi', reason: 'Not satisfied with cooking', status: 'In Progress', assignTo: 'Neha Singh' },
-  { id: 3, category: 'Commercial', customerName: 'Spice Villa Restaurant', noAddress: '9988776655\nSalt Lake, Kolkata, West Bengal', currentPackage: 'Premium Plan\n(11 Months)', cookName: 'Mahesh Yadav', reason: 'Behavior issue', status: 'In Progress', assignTo: 'Amit Verma' },
-  { id: 4, category: 'Domestic', customerName: 'Rohit Mehta', noAddress: '9090909090\nShalimar Bagh, Delhi', currentPackage: 'Basic Plan\n(3 Months)', cookName: 'Pooja Kumari', reason: 'Not taking care of kitchen', status: 'Resolved', assignTo: 'Neha Singh' },
-  { id: 5, category: 'Commercial', customerName: 'The Grand Kitchen', noAddress: '9991122334\nBaner, Pune, Maharashtra', currentPackage: 'Standard Plan\n(6 Months)', cookName: 'Suresh Das', reason: 'Health issue', status: 'Resolved', assignTo: 'Rohit Tiwari' },
-  { id: 6, category: 'Domestic', customerName: 'Anjali Verma', noAddress: '8887766554\nGomti Nagar, Lucknow, UP', currentPackage: 'Basic Plan\n(3 Months)', cookName: 'Lata Devi', reason: 'Unsatisfied with diet food', status: 'Rejected', assignTo: 'Neha Singh' },
-  { id: 7, category: 'Commercial', customerName: 'Cafe Crunch', noAddress: '8765432100\nHSR Layout, Bangalore, Karnataka', currentPackage: 'Premium Plan\n(11 Months)', cookName: 'Arjun Singh', reason: 'Performance not good', status: 'Pending', assignTo: 'Amit Verma' },
-  { id: 8, category: 'Domestic', customerName: 'Kiran Joshi', noAddress: '9456781230\nVaishali Nagar, Jaipur, Rajasthan', currentPackage: 'Standard Plan\n(6 Months)', cookName: 'Kamla Bai', reason: 'Too many leaves without intimation', status: 'In Progress', assignTo: 'Rohit Tiwari' },
-  { id: 9, category: 'Commercial', customerName: 'Foodies Hub', noAddress: '9200123450\nDwarka, Delhi', currentPackage: 'Basic Plan\n(3 Months)', cookName: 'Deepak Yadav', reason: 'Mismatch in experience', status: 'Pending', assignTo: 'Neha Singh' },
-  { id: 10, category: 'Domestic', customerName: 'Vandana Saxena', noAddress: '9812345678\nAliganj, Lucknow, UP', currentPackage: 'Basic Plan\n(3 Months)', cookName: 'Maya Devi', reason: 'Not following instructions', status: 'In Progress', assignTo: 'Rohit Tiwari' },
-];
+import axios from 'axios';
+import API_BASE_URL from '../apiConfig';
 
 const ReplacementDashboard = () => {
   const navigate = useNavigate();
   const [entries, setEntries] = useState('10');
   const [search, setSearch] = useState('');
+  const [replacements, setReplacements] = useState([]);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    fetchReplacements();
+  }, []);
+
+  const fetchReplacements = async () => {
+    try {
+      const adminToken = localStorage.getItem('adminToken');
+      const response = await axios.get(`${API_BASE_URL}/api/replacements`, {
+        headers: { Authorization: `Bearer ${adminToken}` }
+      });
+      if (response.data.success) {
+        setReplacements(response.data.data);
+      }
+    } catch (error) {
+      console.error('Error fetching replacements:', error);
+    } finally {
+      setLoading(false);
+    }
+  };
   
   const getStatusColor = (status) => {
     switch(status) {
@@ -216,24 +228,31 @@ const ReplacementDashboard = () => {
               </Tr>
             </Thead>
             <Tbody>
-              {mockReplacements.map((row) => (
-                <Tr key={row.id} _hover={{ bg: '#f8fafc' }}>
-                  <Td {...customTdStyle}>{row.id}</Td>
+              {loading ? (
+                <Tr><Td colSpan="10" textAlign="center">Loading...</Td></Tr>
+              ) : replacements.length === 0 ? (
+                <Tr><Td colSpan="10" textAlign="center">No replacement requests found</Td></Tr>
+              ) : replacements.map((row, index) => (
+                <Tr key={row._id} _hover={{ bg: '#f8fafc' }}>
+                  <Td {...customTdStyle}>{index + 1}</Td>
                   <Td {...customTdStyle}>
                     <Badge bg={getCategoryColor(row.category).bg} color={getCategoryColor(row.category).color} px="2.5" py="1" borderRadius="full" fontSize="10px">
                       {row.category}
                     </Badge>
                   </Td>
-                  <Td {...customTdStyle} fontWeight="700">{row.customerName}</Td>
+                  <Td {...customTdStyle} fontWeight="700">{row.customer?.name || 'N/A'}</Td>
                   <Td {...customTdStyle} textAlign="left" maxW="200px">
-                    <Text fontSize="xs" whiteSpace="pre-line" lineHeight="1.5">{row.noAddress}</Text>
-                  </Td>
-                  <Td {...customTdStyle}>
-                    <Text fontSize="xs" color={getPackageColor(row.currentPackage)} fontWeight="700" whiteSpace="pre-line">
-                      {row.currentPackage}
+                    <Text fontSize="xs" whiteSpace="pre-line" lineHeight="1.5">
+                      {row.customer?.phone || 'N/A'}
+                      {row.customer?.address ? `\n${row.customer.address}` : ''}
                     </Text>
                   </Td>
-                  <Td {...customTdStyle}>{row.cookName}</Td>
+                  <Td {...customTdStyle}>
+                    <Text fontSize="xs" color={row.customer?.activePlan ? getPackageColor(row.customer.activePlan.name) : 'gray.600'} fontWeight="700" whiteSpace="pre-line">
+                      {row.customer?.activePlan?.name || 'No Plan'}
+                    </Text>
+                  </Td>
+                  <Td {...customTdStyle}>{row.staffName}</Td>
                   <Td {...customTdStyle} maxW="150px">
                     <Text fontSize="xs" color="gray.600" isTruncated>{row.reason}</Text>
                   </Td>
@@ -242,7 +261,7 @@ const ReplacementDashboard = () => {
                       {row.status}
                     </Badge>
                   </Td>
-                  <Td {...customTdStyle} fontWeight="700">{row.assignTo}</Td>
+                  <Td {...customTdStyle} fontWeight="700">{row.assignTo?.name || 'Unassigned'}</Td>
                   <Td {...customTdStyle}>
                     <Menu placement="bottom-end">
                       <MenuButton as={IconButton} icon={<MoreVertical size={16} />} size="sm" variant="ghost" />
