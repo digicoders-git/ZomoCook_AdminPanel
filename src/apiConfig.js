@@ -2,7 +2,7 @@ const isLocal = window.location.hostname === 'localhost' || window.location.host
 
 const API_BASE_URL = import.meta.env.VITE_API_URL || (
   isLocal
-    ? 'http://localhost:5000/api'
+    ? 'http://localhost:5001/api'
     : 'https://zomocook-backend.onrender.com/api'
 );
 

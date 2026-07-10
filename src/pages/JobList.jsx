@@ -4,7 +4,8 @@ import {
   useToast, useDisclosure, Collapse, Flex, Badge,
   FormLabel, Select, Input, Table, Thead, Tbody, Tr, Th, Td,
   Menu, MenuButton, MenuList, MenuItem, Link as ChakraLink,
-  Modal, ModalOverlay, ModalContent, ModalHeader, ModalFooter, ModalBody, ModalCloseButton
+  Modal, ModalOverlay, ModalContent, ModalHeader, ModalFooter, ModalBody, ModalCloseButton,
+  Tooltip
 } from '@chakra-ui/react';
 import { Plus, Filter, Edit3, RotateCcw, Search, Eye, ChevronDown, Users, Trash2, Calendar, UserPlus, Send } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
@@ -55,6 +56,16 @@ const JobList = () => {
   const [leadManagers, setLeadManagers] = useState([]);
 
   const token = localStorage.getItem('adminToken');
+  const adminData = JSON.parse(localStorage.getItem('adminData') || '{}');
+  const roleName = (adminData?.role?.name || '').toLowerCase();
+  // Super Admin: type='admin' with no role, OR hardcoded email, OR role name is 'super admin'
+  const isSuperAdmin =
+    adminData?.email?.toLowerCase() === 'zomocookadmin@gmail.com' ||
+    roleName === 'super admin' ||
+    (adminData?.type === 'admin' && !adminData?.role);
+  // ANY user who logs in via User collection (type='user') = staff user = restricted
+  // Customers never login to admin panel — they use the mobile app
+  const isLeadManager = !isSuperAdmin && (adminData?.type === 'user' || (adminData?.type === 'admin' && !!adminData?.role && roleName !== 'super admin'));
 
   // Confirmation State
   const [confirmConfig, setConfirmConfig] = useState({
@@ -196,6 +207,52 @@ const JobList = () => {
     return 'N/A';
   };
 
+  const getLeadManagerName = (job) => {
+    if (!job || !job.leadManager) return 'Not Assigned';
+    const lm = String(job.leadManager).toLowerCase().trim();
+    const found = leadManagers.find(m => 
+      String(m.name || '').toLowerCase().trim() === lm ||
+      String(m._id || '').toLowerCase().trim() === lm ||
+      String(m.email || '').toLowerCase().trim() === lm
+    );
+    return found ? found.name : job.leadManager;
+  };
+
+  const getCustomerPhone = (job) => {
+    if (!job) return null;
+    
+    if (job.customer && typeof job.customer === 'object') {
+      const phone = job.customer.contactPhone || job.customer.phone;
+      if (phone) return phone;
+    }
+    
+    if (job.createdBy && typeof job.createdBy === 'object') {
+      const phone = job.createdBy.phone || job.createdBy.contactPhone;
+      if (phone) return phone;
+    }
+    
+    const customerId = job.customer && typeof job.customer === 'object' 
+      ? job.customer._id 
+      : job.customer;
+      
+    if (customerId) {
+      const foundCust = customers.find(c => String(c._id) === String(customerId));
+      if (foundCust && foundCust.contactPhone) return foundCust.contactPhone;
+    }
+    
+    const creatorId = job.createdBy && typeof job.createdBy === 'object'
+      ? job.createdBy._id
+      : job.createdBy;
+      
+    const searchId = customerId || creatorId;
+    if (searchId) {
+      const foundUser = leadManagers.find(u => String(u._id) === String(searchId));
+      if (foundUser && foundUser.phone) return foundUser.phone;
+    }
+    
+    return null;
+  };
+
   const handleFilterChange = (name, value) => {
     setFilters(prev => ({ ...prev, [name]: value }));
   };
@@ -232,9 +289,11 @@ const JobList = () => {
 
   const confirmDelete = (id) => {
     setConfirmConfig({
-      title: 'Delete Job Record?',
-      description: 'Are you sure you want to delete this job? This action cannot be undone and all associated data will be lost.',
-      confirmLabel: 'Delete Job',
+      title: isLeadManager ? 'Remove Job from Panel?' : 'Delete Job Record?',
+      description: isLeadManager 
+        ? 'Are you sure you want to remove this job from your panel? It will be returned to the Super Admin for reassignment.'
+        : 'Are you sure you want to delete this job? This action cannot be undone and all associated data will be lost.',
+      confirmLabel: isLeadManager ? 'Remove Job' : 'Delete Job',
       type: 'danger',
       onConfirm: async () => {
         try {
@@ -243,7 +302,13 @@ const JobList = () => {
           });
           if (response.data.success) {
             setJobs(prev => prev.filter(j => j._id !== id));
-            toast({ title: 'Deleted', description: 'Job record removed.', status: 'success', duration: 3000, position: 'top-right' });
+            toast({ 
+              title: isLeadManager ? 'Removed' : 'Deleted', 
+              description: isLeadManager ? 'Job removed from your panel.' : 'Job record removed.', 
+              status: 'success', 
+              duration: 3000, 
+              position: 'top-right' 
+            });
           }
         } catch (error) {
           toast({ title: 'Error', description: error.response?.data?.message || 'Failed to delete job.', status: 'error', duration: 3000, position: 'top-right' });
@@ -365,6 +430,17 @@ const JobList = () => {
   };
 
   const filteredJobs = jobs.filter(job => {
+    if (isLeadManager) {
+      const cleanStr = (s) => String(s || '').toLowerCase().replace(/[\s_-]/g, '');
+      const lm = cleanStr(job.leadManager);
+      const meName = cleanStr(adminData.name);
+      const meId = cleanStr(adminData._id);
+      const meEmail = cleanStr(adminData.email);
+      if (lm !== meName && lm !== meId && lm !== meEmail) {
+        return false;
+      }
+    }
+
     const matchesSearch =
       job.title.toLowerCase().includes(search.toLowerCase()) ||
       job.city.toLowerCase().includes(search.toLowerCase()) ||
@@ -550,7 +626,7 @@ const JobList = () => {
                 <Th {...darkThStyle} w="65px">Assigned</Th>
                 <Th {...darkThStyle} w="110px">Lead Manager</Th>
                 <Th {...darkThStyle} w="90px">Status</Th>
-                <Th {...darkThStyle} w="90px">Toggle Status</Th>
+                {!isLeadManager && <Th {...darkThStyle} w="90px">Toggle Status</Th>}
                 <Th {...darkThStyle} w="100px">Created Date</Th>
                 <Th {...darkThStyle} w="150px">Action</Th>
               </Tr>
@@ -579,7 +655,14 @@ const JobList = () => {
 
                     {/* Customer */}
                     <Td {...customTdStyle} fontWeight="700" color="#0B1A30">
-                      {getCustomerName(row)}
+                      <VStack spacing="0" align="center">
+                        <Text fontWeight="700">{getCustomerName(row)}</Text>
+                        {getCustomerPhone(row) && (
+                          <Text fontSize="10px" color="gray.500" fontWeight="600">
+                            {getCustomerPhone(row)}
+                          </Text>
+                        )}
+                      </VStack>
                     </Td>
 
                     {/* City */}
@@ -630,69 +713,84 @@ const JobList = () => {
 
                     {/* Lead Manager */}
                     <Td {...customTdStyle} fontWeight="700" color={row.leadManager ? '#0B1A30' : 'gray.400'}>
-                      {row.leadManager || 'Not Assigned'}
+                      {getLeadManagerName(row)}
                     </Td>
 
                     {/* Status badge and toggle dropdown */}
                     <Td {...customTdStyle}>
-                      <Menu size="sm">
-                        <MenuButton
-                          as={Button}
-                          size="xs"
-                          h="26px"
-                          px="3"
+                      {isLeadManager ? (
+                        <Badge
+                          px="3.5" py="1.5"
                           borderRadius="md"
                           bg={colors.bg}
                           color={colors.color}
-                          _hover={{ opacity: 0.8 }}
-                          _active={{ opacity: 0.7 }}
-                          rightIcon={<ChevronDown size={12} />}
                           fontSize="11px"
                           fontWeight="700"
                         >
                           {statusLabel}
-                        </MenuButton>
-                        <MenuList borderRadius="lg" border="1px solid #e8edf5" boxShadow="sm" p="1">
-                          {['Urgent', 'New', 'Active', 'Inactive', 'Cancelled', 'Expired'].map(s => (
-                            <MenuItem
-                              key={s}
-                              fontSize="xs"
-                              fontWeight="600"
-                              onClick={async () => {
-                                try {
-                                  await axios.patch(`${API_BASE_URL}/jobs/${row._id}/status-string`, { status: s }, {
-                                    headers: { 'Authorization': `Bearer ${token}` }
-                                  });
-                                  toast({ title: 'Success', description: `Status updated to ${s}`, status: 'success', duration: 2000, position: 'top-right' });
-                                  fetchJobs();
-                                } catch (error) {
-                                  console.error('Status update error:', error);
-                                  toast({
-                                    title: 'Error',
-                                    description: error.response?.data?.message || 'Status update failed.',
-                                    status: 'error',
-                                    duration: 3000,
-                                    position: 'top-right'
-                                  });
-                                }
-                              }}
-                              _hover={{ bg: '#f8faff', color: BRAND }}
-                            >
-                              {s}
-                            </MenuItem>
-                          ))}
-                        </MenuList>
-                      </Menu>
+                        </Badge>
+                      ) : (
+                        <Menu size="sm">
+                          <MenuButton
+                            as={Button}
+                            size="xs"
+                            h="26px"
+                            px="3"
+                            borderRadius="md"
+                            bg={colors.bg}
+                            color={colors.color}
+                            _hover={{ opacity: 0.8 }}
+                            _active={{ opacity: 0.7 }}
+                            rightIcon={<ChevronDown size={12} />}
+                            fontSize="11px"
+                            fontWeight="700"
+                          >
+                            {statusLabel}
+                          </MenuButton>
+                          <MenuList borderRadius="lg" border="1px solid #e8edf5" boxShadow="sm" p="1">
+                            {['Urgent', 'New', 'Active', 'Inactive', 'Cancelled', 'Expired'].map(s => (
+                              <MenuItem
+                                key={s}
+                                fontSize="xs"
+                                fontWeight="600"
+                                onClick={async () => {
+                                  try {
+                                    await axios.patch(`${API_BASE_URL}/jobs/${row._id}/status-string`, { status: s }, {
+                                      headers: { 'Authorization': `Bearer ${token}` }
+                                    });
+                                    toast({ title: 'Success', description: `Status updated to ${s}`, status: 'success', duration: 2000, position: 'top-right' });
+                                    fetchJobs();
+                                  } catch (error) {
+                                    console.error('Status update error:', error);
+                                    toast({
+                                      title: 'Error',
+                                      description: error.response?.data?.message || 'Status update failed.',
+                                      status: 'error',
+                                      duration: 3000,
+                                      position: 'top-right'
+                                    });
+                                  }
+                                }}
+                                _hover={{ bg: '#f8faff', color: BRAND }}
+                              >
+                                {s}
+                              </MenuItem>
+                            ))}
+                          </MenuList>
+                        </Menu>
+                      )}
                     </Td>
 
                     {/* Toggle Status Switch */}
-                    <Td {...customTdStyle}>
-                      <Switch
-                        isChecked={row.isActive}
-                        onChange={() => confirmToggleStatus(row._id, row.isActive)}
-                        sx={{ '.chakra-switch__track[data-checked]': { bg: BRAND } }}
-                      />
-                    </Td>
+                    {!isLeadManager && (
+                      <Td {...customTdStyle}>
+                        <Switch
+                          isChecked={row.isActive}
+                          onChange={() => confirmToggleStatus(row._id, row.isActive)}
+                          sx={{ '.chakra-switch__track[data-checked]': { bg: BRAND } }}
+                        />
+                      </Td>
+                    )}
 
                     {/* Created Date */}
                     <Td {...customTdStyle}>
@@ -702,71 +800,94 @@ const JobList = () => {
                     {/* Actions */}
                     <Td {...customTdStyle}>
                       <HStack spacing="1" justify="center">
-                        <IconButton
-                          icon={<Eye size={15} />}
-                          size="xs"
-                          w="28px"
-                          h="28px"
-                          variant="ghost"
-                          color="#64748b"
-                          _hover={{ color: '#0f62fe', bg: '#f1f5f9' }}
-                          aria-label="View Details"
-                          onClick={() => navigate(`/jobs/view/${row._id}`)}
-                        />
-                        <IconButton
-                          icon={<UserPlus size={15} />}
-                          size="xs"
-                          w="28px"
-                          h="28px"
-                          variant="ghost"
-                          color="#64748b"
-                          _hover={{ color: '#0f62fe', bg: '#f1f5f9' }}
-                          aria-label="Edit Lead Manager"
-                          onClick={() => {
-                            setAssignJob(row);
-                            setSelectedLeadManager(row.leadManager || '');
-                            onAssignOpen();
-                          }}
-                        />
-                        <IconButton
-                          icon={<Send size={14} />}
-                          size="xs"
-                          w="28px"
-                          h="28px"
-                          variant="ghost"
-                          color="#64748b"
-                          _hover={{ color: '#10b981', bg: '#e6fcf5' }}
-                          aria-label="Resend Notification"
-                          onClick={() => resendNotification(row._id)}
-                        />
-                        <IconButton
-                          icon={<Edit3 size={15} />}
-                          size="xs"
-                          w="28px"
-                          h="28px"
-                          variant="ghost"
-                          color="#64748b"
-                          _hover={{ color: '#0f62fe', bg: '#f1f5f9' }}
-                          aria-label="Edit Job"
-                          onClick={() => navigate(`/jobs/edit/${row._id}`)}
-                        />
-                        <IconButton
-                          icon={<Trash2 size={15} />}
-                          size="xs"
-                          w="28px"
-                          h="28px"
-                          variant="ghost"
-                          color="#ef4444"
-                          _hover={{ bg: '#fee2e2' }}
-                          aria-label="Delete Record"
-                          onClick={() => confirmDelete(row._id)}
-                        />
+                        {/* View - always visible */}
+                        <Tooltip label="View Details" hasArrow>
+                          <IconButton
+                            icon={<Eye size={15} />}
+                            size="xs"
+                            w="28px"
+                            h="28px"
+                            variant="ghost"
+                            color="#64748b"
+                            _hover={{ color: '#0f62fe', bg: '#f1f5f9' }}
+                            aria-label="View Details"
+                            onClick={() => navigate(`/jobs/view/${row._id}`)}
+                          />
+                        </Tooltip>
+
+                        {/* Assign Lead Manager - Admin only */}
+                        {!isLeadManager && (
+                          <Tooltip label="Assign Lead Manager" hasArrow>
+                            <IconButton
+                              icon={<UserPlus size={15} />}
+                              size="xs"
+                              w="28px"
+                              h="28px"
+                              variant="ghost"
+                              color="#64748b"
+                              _hover={{ color: '#0f62fe', bg: '#f1f5f9' }}
+                              aria-label="Edit Lead Manager"
+                              onClick={() => {
+                                setAssignJob(row);
+                                setSelectedLeadManager(row.leadManager || '');
+                                onAssignOpen();
+                              }}
+                            />
+                          </Tooltip>
+                        )}
+
+                        {/* Resend Notification - visible to all */}
+                        <Tooltip label="Resend Notification" hasArrow>
+                          <IconButton
+                            icon={<Send size={14} />}
+                            size="xs"
+                            w="28px"
+                            h="28px"
+                            variant="ghost"
+                            color="#64748b"
+                            _hover={{ color: '#10b981', bg: '#e6fcf5' }}
+                            aria-label="Resend Notification"
+                            onClick={() => resendNotification(row._id)}
+                          />
+                        </Tooltip>
+
+                        {/* Edit - Admin only */}
+                        {!isLeadManager && (
+                          <Tooltip label="Edit Job" hasArrow>
+                            <IconButton
+                              icon={<Edit3 size={15} />}
+                              size="xs"
+                              w="28px"
+                              h="28px"
+                              variant="ghost"
+                              color="#64748b"
+                              _hover={{ color: '#0f62fe', bg: '#f1f5f9' }}
+                              aria-label="Edit Job"
+                              onClick={() => navigate(`/jobs/edit/${row._id}`)}
+                            />
+                          </Tooltip>
+                        )}
+
+                        {/* Delete - visible to all */}
+                        <Tooltip label={isLeadManager ? "Remove from my panel" : "Delete Job"} hasArrow>
+                          <IconButton
+                            icon={<Trash2 size={15} />}
+                            size="xs"
+                            w="28px"
+                            h="28px"
+                            variant="ghost"
+                            color="#ef4444"
+                            _hover={{ bg: '#fee2e2' }}
+                            aria-label="Delete Record"
+                            onClick={() => confirmDelete(row._id)}
+                          />
+                        </Tooltip>
                       </HStack>
                     </Td>
                   </Tr>
                 );
               })}
-              {!isLoading && paginatedJobs.length === 0 && <Tr><Td colSpan={13} py="10" textAlign="center" color="#94a3b8">No records found.</Td></Tr>}
+              {!isLoading && paginatedJobs.length === 0 && <Tr><Td colSpan={isLeadManager ? 12 : 13} py="10" textAlign="center" color="#94a3b8">No records found.</Td></Tr>}
             </Tbody>
           </Table>
         </Box>

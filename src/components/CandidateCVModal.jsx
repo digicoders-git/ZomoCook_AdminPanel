@@ -57,12 +57,18 @@ const CandidateCVModal = ({ isOpen, onClose, candidateId, preloadedCandidate }) 
   const handleDownloadPNG = async () => {
     if (!cvRef.current || !candidate) return;
     try {
-      const canvas = await html2canvas(cvRef.current, { scale: 2, useCORS: true });
+      const canvas = await html2canvas(cvRef.current, { 
+        scale: 2, 
+        useCORS: true,
+        allowTaint: true,
+        backgroundColor: '#ffffff'
+      });
       const imgData = canvas.toDataURL('image/png');
       const link = document.createElement('a');
       link.href = imgData;
       link.download = `Resume_${candidate.name.replace(/\s+/g, '_')}.png`;
       link.click();
+      toast({ title: 'PNG downloaded successfully', status: 'success', duration: 2000 });
     } catch (error) {
       console.error("Error generating PNG", error);
       toast({ title: "Failed to generate PNG", status: "error", duration: 3000 });
@@ -72,7 +78,12 @@ const CandidateCVModal = ({ isOpen, onClose, candidateId, preloadedCandidate }) 
   const handleDownloadPDF = async () => {
     if (!cvRef.current || !candidate) return;
     try {
-      const canvas = await html2canvas(cvRef.current, { scale: 2, useCORS: true });
+      const canvas = await html2canvas(cvRef.current, { 
+        scale: 2, 
+        useCORS: true,
+        allowTaint: true,
+        backgroundColor: '#ffffff'
+      });
       const imgData = canvas.toDataURL('image/png');
       const pdf = new jsPDF({
         orientation: 'portrait',
@@ -81,6 +92,7 @@ const CandidateCVModal = ({ isOpen, onClose, candidateId, preloadedCandidate }) 
       });
       pdf.addImage(imgData, 'PNG', 0, 0, canvas.width / 2, canvas.height / 2);
       pdf.save(`Resume_${candidate.name.replace(/\s+/g, '_')}.pdf`);
+      toast({ title: 'PDF downloaded successfully', status: 'success', duration: 2000 });
     } catch (error) {
       console.error("Error generating PDF", error);
       toast({ title: "Failed to generate PDF", status: "error", duration: 3000 });
@@ -113,28 +125,36 @@ const CandidateCVModal = ({ isOpen, onClose, candidateId, preloadedCandidate }) 
           )}
         </ModalBody>
 
-        <ModalFooter borderTop="1px solid #e2e8f0" bg="white" borderRadius="0 0 0.375rem 0.375rem">
-          <HStack spacing="4" w="full" justify="space-between">
-            <Text fontSize="sm" color="#64748b">Please wait a moment for images to load before downloading.</Text>
-            <HStack>
+        <ModalFooter borderTop="1px solid #e2e8f0" bg="white" borderRadius="0 0 0.375rem 0.375rem" py="4" px="6">
+          <Flex w="full" justify="space-between" align="center" gap="4">
+            <Text fontSize="sm" color="#64748b" whiteSpace="nowrap">Please wait a moment for images to load before downloading.</Text>
+            <Flex gap="3" align="center">
               <Button 
                 onClick={handleDownloadPNG} 
                 colorScheme="blue" 
-                leftIcon={<Icon as={ImageIcon} size={16} />}
                 isDisabled={isLoading || !candidate}
+                size="md"
+                display="flex"
+                alignItems="center"
+                gap="2"
               >
+                <Icon as={ImageIcon} boxSize={4} />
                 Download PNG
               </Button>
               <Button 
                 onClick={handleDownloadPDF} 
                 colorScheme="red" 
-                leftIcon={<Icon as={FileText} size={16} />}
                 isDisabled={isLoading || !candidate}
+                size="md"
+                display="flex"
+                alignItems="center"
+                gap="2"
               >
+                <Icon as={FileText} boxSize={4} />
                 Download PDF
               </Button>
-            </HStack>
-          </HStack>
+            </Flex>
+          </Flex>
         </ModalFooter>
       </ModalContent>
     </Modal>

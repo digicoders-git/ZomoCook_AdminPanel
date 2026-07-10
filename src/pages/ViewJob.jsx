@@ -19,6 +19,7 @@ const ViewJob = () => {
   const [isLoading, setIsLoading] = useState(true);
   const [appliedCount, setAppliedCount] = useState(0);
   const [assignedCount, setAssignedCount] = useState(0);
+  const [transaction, setTransaction] = useState(null);
 
   const fetchJob = async () => {
     setIsLoading(true);
@@ -35,6 +36,7 @@ const ViewJob = () => {
 
       if (response.data.success) {
         setJob(response.data.job);
+        setTransaction(response.data.transaction);
       }
       if (appsResponse.data.success && Array.isArray(appsResponse.data.applications)) {
         const apps = appsResponse.data.applications;
@@ -178,6 +180,62 @@ const ViewJob = () => {
             </Tbody>
           </Table>
         </Box>
+
+        {/* Payment / Transaction Details Section */}
+        {transaction && (
+          <Box bg="white" borderRadius="xl" border="1px solid #e8edf5" boxShadow="sm" overflow="hidden">
+            <Box p="4" borderBottom="1px solid #f1f5f9" bg="#fcfdfe">
+              <Text fontSize="sm" fontWeight="800" color="#1e293b">Payment Information</Text>
+            </Box>
+            <Table variant="simple">
+              <Tbody>
+                <Tr borderBottom="1px solid #f1f5f9">
+                  <Td py="3" px="6" bg="#fcfdfe" w="300px" fontSize="sm" fontWeight="700" color="#1e293b" borderRight="1px solid #f1f5f9">Transaction ID</Td>
+                  <Td py="3" px="6" fontSize="sm" color="#475569" fontWeight="500">
+                    {transaction.razorpayPaymentId || transaction._id}
+                  </Td>
+                </Tr>
+                <Tr borderBottom="1px solid #f1f5f9">
+                  <Td py="3" px="6" bg="#fcfdfe" w="300px" fontSize="sm" fontWeight="700" color="#1e293b" borderRight="1px solid #f1f5f9">Order ID / Reference</Td>
+                  <Td py="3" px="6" fontSize="sm" color="#475569" fontWeight="500">
+                    {transaction.razorpayOrderId || '-'}
+                  </Td>
+                </Tr>
+                <Tr borderBottom="1px solid #f1f5f9">
+                  <Td py="3" px="6" bg="#fcfdfe" w="300px" fontSize="sm" fontWeight="700" color="#1e293b" borderRight="1px solid #f1f5f9">Amount</Td>
+                  <Td py="3" px="6" fontSize="sm" color="#0f62fe" fontWeight="700">
+                    ₹{transaction.amount}
+                  </Td>
+                </Tr>
+                <Tr borderBottom="1px solid #f1f5f9">
+                  <Td py="3" px="6" bg="#fcfdfe" w="300px" fontSize="sm" fontWeight="700" color="#1e293b" borderRight="1px solid #f1f5f9">Payment Type</Td>
+                  <Td py="3" px="6" fontSize="sm" color="#475569" fontWeight="500" style={{ textTransform: 'capitalize' }}>
+                    {transaction.type ? transaction.type.replace(/_/g, ' ') : '-'}
+                  </Td>
+                </Tr>
+                <Tr borderBottom="1px solid #f1f5f9">
+                  <Td py="3" px="6" bg="#fcfdfe" w="300px" fontSize="sm" fontWeight="700" color="#1e293b" borderRight="1px solid #f1f5f9">Description / Payment Method</Td>
+                  <Td py="3" px="6" fontSize="sm" color="#475569" fontWeight="500">
+                    {transaction.description || '-'}
+                  </Td>
+                </Tr>
+                <Tr borderBottom="1px solid #f1f5f9">
+                  <Td py="3" px="6" bg="#fcfdfe" w="300px" fontSize="sm" fontWeight="700" color="#1e293b" borderRight="1px solid #f1f5f9">Paid Date & Time</Td>
+                  <Td py="3" px="6" fontSize="sm" color="#475569" fontWeight="500">
+                    {new Date(transaction.createdAt).toLocaleString('en-GB', {
+                      day: '2-digit',
+                      month: 'short',
+                      year: 'numeric',
+                      hour: '2-digit',
+                      minute: '2-digit',
+                      hour12: true
+                    })}
+                  </Td>
+                </Tr>
+              </Tbody>
+            </Table>
+          </Box>
+        )}
         {/* Candidate Responses Section */}
         <Box bg="white" borderRadius="xl" border="1px solid #e8edf5" boxShadow="sm" p="5">
           <Flex justify="space-between" align="center" mb="4">

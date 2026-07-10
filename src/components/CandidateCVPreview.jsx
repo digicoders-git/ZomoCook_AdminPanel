@@ -1,8 +1,9 @@
-import React, { forwardRef } from 'react';
+import React, { forwardRef, useState } from 'react';
 import { Box, Flex, Text, HStack, VStack, Image, Grid, Divider, Icon } from '@chakra-ui/react';
 import { MapPin, Phone, Mail, Shield, CheckCircle2, Globe } from 'lucide-react';
 
 const CandidateCVPreview = forwardRef(({ candidate }, ref) => {
+  const [imgError, setImgError] = useState(false);
   if (!candidate) return null;
 
   const DARK_BLUE = '#004aad'; // ZomoCook Brand Color
@@ -28,7 +29,7 @@ const CandidateCVPreview = forwardRef(({ candidate }, ref) => {
   // A simple base64 encoded grey SVG avatar placeholder to avoid connection errors from external URLs during html2canvas
   const placeholderBase64 = 'data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCAyNCAyNCIgZmlsbD0iI2QxZDVkYiI+PHBhdGggZD0iTTEyIDJhNSA1IDAgMSAwIDUgNSAgNSA1IDAgMCAwLTUtNXptMCA4YTMgMyAwIDEgMSAzLTMgIDMgMyAwIDAgMS0zIDN6bTkgMTF2LTFhNyA3IDAgMCAwLTctNyA3IDcgMCAwIDAtNyA3diFIM3YtMWE5IDkgMCAwIDEgOS05IDkgOSAwIDAgMSA5IDl2MXoiLz48L3N2Zz4=';
 
-  const profileImageSrc = candidate.profileImage && !candidate.profileImage.includes('default') 
+  const profileImageSrc = candidate.profileImage && !candidate.profileImage.includes('default') && !imgError
     ? `${apiBase}/${candidate.profileImage}` 
     : placeholderBase64;
 
@@ -51,9 +52,16 @@ const CandidateCVPreview = forwardRef(({ candidate }, ref) => {
   );
 
   const role = candidate.jobPreference?.jobPositions?.[0] || candidate.jobPreference?.jobCategory?.[0] || 'Professional Chef';
-  const expValue = candidate.jobPreference?.experience?.value || '0';
-  const expUnit = candidate.jobPreference?.experience?.unit === 'months' ? 'Months' : 'Years';
-  const subtitle = `${role} - ${expValue}+ ${expUnit} Experience`;
+  const expValueRaw = candidate.jobPreference?.experience?.value || '0';
+  const expUnitRaw = candidate.jobPreference?.experience?.unit === 'months' ? 'Months' : 'Years';
+  const expString = String(expValueRaw).toLowerCase().includes('year') ? expValueRaw : `${expValueRaw}+ ${expUnitRaw}`;
+  const subtitle = `${role} - ${expString} Experience`;
+
+  const expectedSalary = parseInt(candidate.jobPreference?.expectedSalary);
+  const expectedSalaryText = isNaN(expectedSalary) || expectedSalary === 0 ? 'Not Disclosed' : `₹${expectedSalary} - ₹${expectedSalary + 5000} / Month`;
+
+  const currentSalary = parseInt(candidate.jobPreference?.currentSalary);
+  const currentSalaryText = isNaN(currentSalary) || currentSalary === 0 ? 'Not Disclosed' : `₹${currentSalary} - ₹${currentSalary + 5000} / Month`;
 
   return (
     <Flex 
@@ -78,8 +86,8 @@ const CandidateCVPreview = forwardRef(({ candidate }, ref) => {
           </Text>
           
           <SectionHeading title="Summary" />
-          <Text fontSize="xs" color={SECONDARY_TEXT} fontWeight="500" lineHeight="tall" noOfLines={4}>
-            {candidate.about || `Experienced and dedicated hospitality professional with ${expValue}+ ${expUnit.toLowerCase()} of expertise in food service operations, team coordination, guest handling, and maintaining high standards of hygiene and service. Seeking a challenging role to contribute to operational excellence and customer satisfaction.`}
+          <Text fontSize="xs" color={SECONDARY_TEXT} fontWeight="500" lineHeight="tall">
+            {candidate.about || `Experienced and dedicated hospitality professional with ${expValueRaw}+ ${expUnitRaw.toLowerCase()} of expertise in food service operations, team coordination, guest handling, and maintaining high standards of hygiene and service. Seeking a challenging role to contribute to operational excellence and customer satisfaction.`}
           </Text>
 
           <SectionHeading title="Work Experience" />
@@ -164,24 +172,24 @@ const CandidateCVPreview = forwardRef(({ candidate }, ref) => {
           )}
           
           <SectionHeading title="Additional Details" />
-          <Grid templateColumns="1fr 1fr" columnGap="8" rowGap="4">
-            <Box>
+          <Flex wrap="wrap" rowGap="4" columnGap="0">
+            <Box w="50%">
               <Text fontSize="xs" fontWeight="600" color={SECONDARY_TEXT} mb="1">Total Experience</Text>
-              <Text fontSize="sm" fontWeight="800" color={PRIMARY_TEXT}>{expValue} {expUnit}</Text>
+              <Text fontSize="sm" fontWeight="800" color={PRIMARY_TEXT}>{expString}</Text>
             </Box>
-            <Box>
+            <Box w="50%">
               <Text fontSize="xs" fontWeight="600" color={SECONDARY_TEXT} mb="1">Expected Salary</Text>
-              <Text fontSize="sm" fontWeight="800" color={PRIMARY_TEXT}>₹{candidate.jobPreference?.expectedSalary || '0'} - ₹{parseInt(candidate.jobPreference?.expectedSalary || '0') + 5000} / Month</Text>
+              <Text fontSize="sm" fontWeight="800" color={PRIMARY_TEXT}>{expectedSalaryText}</Text>
             </Box>
-            <Box>
+            <Box w="50%">
               <Text fontSize="xs" fontWeight="600" color={SECONDARY_TEXT} mb="1">Current Salary</Text>
-              <Text fontSize="sm" fontWeight="800" color={PRIMARY_TEXT}>₹{candidate.jobPreference?.currentSalary || '0'} - ₹{parseInt(candidate.jobPreference?.currentSalary || '0') + 5000} / Month</Text>
+              <Text fontSize="sm" fontWeight="800" color={PRIMARY_TEXT}>{currentSalaryText}</Text>
             </Box>
-            <Box>
+            <Box w="50%">
               <Text fontSize="xs" fontWeight="600" color={SECONDARY_TEXT} mb="1">Ready to Relocate</Text>
               <Text fontSize="sm" fontWeight="800" color={PRIMARY_TEXT}>Yes</Text>
             </Box>
-          </Grid>
+          </Flex>
         </Box>
 
         {/* Right Sidebar Column */}
@@ -203,31 +211,32 @@ const CandidateCVPreview = forwardRef(({ candidate }, ref) => {
                 w="full" 
                 h="full" 
                 objectFit="cover" 
+                onError={() => setImgError(true)}
               />
             </Box>
           </Flex>
 
           {/* Contact Info */}
-          <VStack align="start" spacing="4" w="full">
-            <Box>
-              <Flex bg="white" color={DARK_BLUE} p="1.5" borderRadius="full" align="center" justify="center" minW="24px" minH="24px" display="inline-flex" verticalAlign="middle" mr="3">
-                <Icon as={MapPin} boxSize="12px" />
-              </Flex>
+          <Box w="full">
+            <Box mb="4">
+              <Box bg="white" borderRadius="full" display="inline-block" verticalAlign="middle" mr="3" w="24px" h="24px" textAlign="center" lineHeight="22px">
+                <MapPin size={12} color={DARK_BLUE} style={{ display: 'inline-block', verticalAlign: 'middle' }} />
+              </Box>
               <Text as="span" fontSize="xs" fontWeight="600" display="inline-block" verticalAlign="middle">{currentAddress}</Text>
             </Box>
-            <Box>
-              <Flex bg="white" color={DARK_BLUE} p="1.5" borderRadius="full" align="center" justify="center" minW="24px" minH="24px" display="inline-flex" verticalAlign="middle" mr="3">
-                <Icon as={Phone} boxSize="12px" />
-              </Flex>
+            <Box mb="4">
+              <Box bg="white" borderRadius="full" display="inline-block" verticalAlign="middle" mr="3" w="24px" h="24px" textAlign="center" lineHeight="22px">
+                <Phone size={12} color={DARK_BLUE} style={{ display: 'inline-block', verticalAlign: 'middle' }} />
+              </Box>
               <Text as="span" fontSize="xs" fontWeight="600" display="inline-block" verticalAlign="middle">{candidate.phone}</Text>
             </Box>
             <Box>
-              <Flex bg="white" color={DARK_BLUE} p="1.5" borderRadius="full" align="center" justify="center" minW="24px" minH="24px" display="inline-flex" verticalAlign="middle" mr="3">
-                <Icon as={Mail} boxSize="12px" />
-              </Flex>
+              <Box bg="white" borderRadius="full" display="inline-block" verticalAlign="middle" mr="3" w="24px" h="24px" textAlign="center" lineHeight="22px">
+                <Mail size={12} color={DARK_BLUE} style={{ display: 'inline-block', verticalAlign: 'middle' }} />
+              </Box>
               <Text as="span" fontSize="xs" fontWeight="600" wordBreak="break-word" display="inline-block" verticalAlign="middle">{candidate.email || 'N/A'}</Text>
             </Box>
-          </VStack>
+          </Box>
 
           <SidebarHeading title="Core Qualifications" />
           <VStack align="start" spacing="2" pl="1" w="full">
@@ -240,21 +249,27 @@ const CandidateCVPreview = forwardRef(({ candidate }, ref) => {
           </VStack>
 
           <SidebarHeading title="Personal Details" />
-          <Grid templateColumns="100px 1fr" columnGap="2" rowGap="2" w="full">
-            <Text fontSize="xs" fontWeight="500" color="whiteAlpha.800">Age</Text>
-            <Text fontSize="xs" fontWeight="700">{candidate.age ? `${candidate.age} Years` : calculateAge(candidate.dob)}</Text>
+          <Flex direction="column" gap="3" w="full">
+            <Flex w="full">
+              <Text fontSize="xs" fontWeight="500" color="whiteAlpha.800" w="100px">Age</Text>
+              <Text fontSize="xs" fontWeight="700" flex="1">{candidate.age ? `${candidate.age} Years` : calculateAge(candidate.dob)}</Text>
+            </Flex>
 
-            <Text fontSize="xs" fontWeight="500" color="whiteAlpha.800">Gender</Text>
-            <Text fontSize="xs" fontWeight="700">{candidate.gender ? candidate.gender.charAt(0).toUpperCase() + candidate.gender.slice(1) : 'N/A'}</Text>
+            <Flex w="full">
+              <Text fontSize="xs" fontWeight="500" color="whiteAlpha.800" w="100px">Gender</Text>
+              <Text fontSize="xs" fontWeight="700" flex="1">{candidate.gender ? candidate.gender.charAt(0).toUpperCase() + candidate.gender.slice(1) : 'N/A'}</Text>
+            </Flex>
 
-            <Text fontSize="xs" fontWeight="500" color="whiteAlpha.800">Marital Status</Text>
-            <Text fontSize="xs" fontWeight="700">{candidate.maritalStatus ? candidate.maritalStatus.charAt(0).toUpperCase() + candidate.maritalStatus.slice(1) : 'N/A'}</Text>
+            <Flex w="full">
+              <Text fontSize="xs" fontWeight="500" color="whiteAlpha.800" w="100px">Marital Status</Text>
+              <Text fontSize="xs" fontWeight="700" flex="1">{candidate.maritalStatus ? candidate.maritalStatus.charAt(0).toUpperCase() + candidate.maritalStatus.slice(1) : 'N/A'}</Text>
+            </Flex>
 
-            <Box gridColumn="span 2" mt="2">
+            <Box w="full" mt="1">
               <Text fontSize="xs" fontWeight="500" color="whiteAlpha.800" mb="1">Languages</Text>
               <Text fontSize="xs" fontWeight="700">{languages}</Text>
             </Box>
-          </Grid>
+          </Flex>
 
           <SidebarHeading title="Certifications" />
           <VStack align="start" spacing="2" pl="1" w="full">
@@ -274,48 +289,62 @@ const CandidateCVPreview = forwardRef(({ candidate }, ref) => {
       {/* Footer Section */}
       <Box w="full" bg="white" mt="auto">
         <Box p="5" px="8" pt="3">
-          <Icon as={Shield} color="#004aad" boxSize="18px" mb="3" />
+          <Box mb="3" display="inline-block">
+            <Shield size={18} color="#004aad" />
+          </Box>
           <Flex justify="space-between" align="center" mb="3">
-            <Box whiteSpace="nowrap">
-              <Icon as={CheckCircle2} color="#38a169" boxSize="16px" display="inline-block" verticalAlign="middle" mr="2" />
-              <Text as="span" fontSize="xs" fontWeight="700" color="#334155" display="inline-block" verticalAlign="middle">Aadhaar Verified</Text>
+            <Box display="inline-block">
+              <Box display="inline-block" verticalAlign="middle" mr="2">
+                <CheckCircle2 size={16} color="#38a169" />
+              </Box>
+              <Text as="span" fontSize="xs" fontWeight="700" color="#334155" verticalAlign="middle">Aadhaar Verified</Text>
             </Box>
-            <Box whiteSpace="nowrap">
-              <Icon as={CheckCircle2} color="#38a169" boxSize="16px" display="inline-block" verticalAlign="middle" mr="2" />
-              <Text as="span" fontSize="xs" fontWeight="700" color="#334155" display="inline-block" verticalAlign="middle">Mobile Verified</Text>
+            <Box display="inline-block">
+              <Box display="inline-block" verticalAlign="middle" mr="2">
+                <CheckCircle2 size={16} color="#38a169" />
+              </Box>
+              <Text as="span" fontSize="xs" fontWeight="700" color="#334155" verticalAlign="middle">Mobile Verified</Text>
             </Box>
-            <Box whiteSpace="nowrap">
-              <Icon as={CheckCircle2} color="#38a169" boxSize="16px" display="inline-block" verticalAlign="middle" mr="2" />
-              <Text as="span" fontSize="xs" fontWeight="700" color="#334155" display="inline-block" verticalAlign="middle">Address Verified</Text>
+            <Box display="inline-block">
+              <Box display="inline-block" verticalAlign="middle" mr="2">
+                <CheckCircle2 size={16} color="#38a169" />
+              </Box>
+              <Text as="span" fontSize="xs" fontWeight="700" color="#334155" verticalAlign="middle">Address Verified</Text>
             </Box>
-            <Box whiteSpace="nowrap">
-              <Icon as={CheckCircle2} color="#38a169" boxSize="16px" display="inline-block" verticalAlign="middle" mr="2" />
-              <Text as="span" fontSize="xs" fontWeight="700" color="#334155" display="inline-block" verticalAlign="middle">Experience Verified</Text>
+            <Box display="inline-block">
+              <Box display="inline-block" verticalAlign="middle" mr="2">
+                <CheckCircle2 size={16} color="#38a169" />
+              </Box>
+              <Text as="span" fontSize="xs" fontWeight="700" color="#334155" verticalAlign="middle">Experience Verified</Text>
             </Box>
           </Flex>
 
           <Flex justify="center" mt="4">
-            <Box bg="#f0fdf4" border="1px solid" borderColor="#bbf7d0" borderRadius="full" px="5" py="1.5" whiteSpace="nowrap" display="flex" alignItems="center">
-              <Icon as={CheckCircle2} color="#16a34a" boxSize="14px" mr="2" />
-              <Text as="span" fontSize="xs" fontWeight="800" color="#166534">Profile Reviewed by ZomoCook</Text>
+            <Box bg="#f0fdf4" border="1px solid" borderColor="#bbf7d0" borderRadius="full" px="5" py="1.5" display="inline-block" textAlign="center">
+              <Box display="inline-block" verticalAlign="middle" mr="2">
+                <CheckCircle2 size={14} color="#16a34a" />
+              </Box>
+              <Text as="span" fontSize="xs" fontWeight="800" color="#166534" verticalAlign="middle">Profile Reviewed by ZomoCook</Text>
             </Box>
           </Flex>
         </Box>
         
         <Flex bg="linear-gradient(135deg, #004aad 0%, #0062e6 100%)" p="3" px="8" justify="space-between" align="center">
-          <HStack spacing="4">
-            <Flex bg="white" p="1.5" borderRadius="md" color="#004aad" align="center" justify="center" w="28px" h="28px">
-              <Icon as={Shield} boxSize="16px" />
-            </Flex>
-            <Box>
+          <Box display="inline-block">
+            <Box bg="white" borderRadius="md" color="#004aad" display="inline-block" verticalAlign="middle" mr="4" w="28px" h="28px" textAlign="center" lineHeight="26px">
+              <Shield size={16} style={{ display: 'inline-block', verticalAlign: 'middle' }} />
+            </Box>
+            <Box display="inline-block" verticalAlign="middle">
               <Text color="white" fontWeight="700" fontSize="xs">This profile has been verified by ZomoCook Recruitment Team.</Text>
               <Text color="whiteAlpha.900" fontSize="2xs" fontWeight="500">We ensure trusted, skilled & professional staff for your business.</Text>
             </Box>
-          </HStack>
-          <HStack spacing="2" whiteSpace="nowrap">
-            <Icon as={Globe} boxSize="14px" color="white" />
-            <Text as="span" color="white" fontSize="xs" fontWeight="600">www.zomocook.com</Text>
-          </HStack>
+          </Box>
+          <Box display="inline-block" whiteSpace="nowrap">
+            <Box display="inline-block" verticalAlign="middle" mr="2">
+              <Globe size={14} color="white" />
+            </Box>
+            <Text as="span" color="white" fontSize="xs" fontWeight="600" verticalAlign="middle">www.zomocook.com</Text>
+          </Box>
         </Flex>
       </Box>
     </Flex>

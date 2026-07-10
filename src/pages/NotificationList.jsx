@@ -16,6 +16,8 @@ const NotificationList = () => {
   const [notifications, setNotifications] = useState([]);
   const [isLoading, setIsLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState('');
+  const [currentPage, setCurrentPage] = useState(1);
+  const [entriesPerPage, setEntriesPerPage] = useState(10);
   const toast = useToast();
   const { isOpen, onOpen, onClose } = useDisclosure();
   const [confirmConfig, setConfirmConfig] = useState({ title: '', description: '', onConfirm: () => { }, type: 'danger' });
@@ -40,6 +42,7 @@ const NotificationList = () => {
 
   useEffect(() => {
     fetchNotifications();
+    setCurrentPage(1);
   }, [searchTerm]);
 
   const handleToggleStatus = (id, currentStatus) => {
@@ -103,7 +106,13 @@ const NotificationList = () => {
             <Box w="3px" h="18px" bg={BRAND} borderRadius="full" mr="1" />
             <Text fontSize="sm" fontWeight="700" color="#1e293b">Notification Record List</Text>
           </HStack>
-          <TableControls search={searchTerm} onSearch={setSearchTerm} searchPlaceholder="Search notifications..." />
+          <TableControls
+          search={searchTerm}
+          onSearch={(val) => { setSearchTerm(val); setCurrentPage(1); }}
+          searchPlaceholder="Search notifications..."
+          entries={String(entriesPerPage)}
+          onEntriesChange={(val) => { setEntriesPerPage(Number(val)); setCurrentPage(1); }}
+        />
         </Flex>
 
         <Box overflowX="auto">
@@ -123,9 +132,9 @@ const NotificationList = () => {
                 </Tr>
               </Thead>
               <Tbody>
-                {notifications.map((n, i) => (
+                {notifications.slice((currentPage - 1) * entriesPerPage, currentPage * entriesPerPage).map((n, i) => (
                   <Tr key={n._id} {...trHover}>
-                    <Td py="4" color="#64748b" fontSize="xs" fontWeight="600">{i + 1}</Td>
+                    <Td py="4" color="#64748b" fontSize="xs" fontWeight="600">{(currentPage - 1) * entriesPerPage + i + 1}</Td>
                     <Td py="4">
                       <Box w="45px" h="45px" borderRadius="lg" overflow="hidden" border="1px solid #e8edf5" bg="#f8faff">
                         {n.image ? (
@@ -177,7 +186,13 @@ const NotificationList = () => {
             </Table>
           )}
         </Box>
-        <TableFooter showing={`1 to ${notifications.length}`} total={notifications.length} />
+        <TableFooter
+          showing={`${notifications.length === 0 ? 0 : (currentPage - 1) * entriesPerPage + 1} to ${Math.min(currentPage * entriesPerPage, notifications.length)}`}
+          total={notifications.length}
+          currentPage={currentPage}
+          totalPages={Math.max(1, Math.ceil(notifications.length / entriesPerPage))}
+          onPageChange={setCurrentPage}
+        />
       </TableCard>
 
       <ConfirmationModal
