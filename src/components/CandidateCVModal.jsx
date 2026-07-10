@@ -57,12 +57,19 @@ const CandidateCVModal = ({ isOpen, onClose, candidateId, preloadedCandidate }) 
   const handleDownloadPNG = async () => {
     if (!cvRef.current || !candidate) return;
     try {
-      const canvas = await html2canvas(cvRef.current, { 
-        scale: 2, 
+      const element = cvRef.current;
+      const clonedElement = element.cloneNode(true);
+      document.body.appendChild(clonedElement);
+      const canvas = await html2canvas(clonedElement, {
+        scale: 2,
         useCORS: true,
         allowTaint: true,
-        backgroundColor: '#ffffff'
+        backgroundColor: '#ffffff',
+        logging: false,
+        imageTimeout: 0,
       });
+      document.body.removeChild(clonedElement);
+
       const imgData = canvas.toDataURL('image/png');
       const link = document.createElement('a');
       link.href = imgData;
@@ -78,19 +85,26 @@ const CandidateCVModal = ({ isOpen, onClose, candidateId, preloadedCandidate }) 
   const handleDownloadPDF = async () => {
     if (!cvRef.current || !candidate) return;
     try {
-      const canvas = await html2canvas(cvRef.current, { 
-        scale: 2, 
+      const element = cvRef.current;
+      const clonedElement = element.cloneNode(true);
+      document.body.appendChild(clonedElement);
+      const canvas = await html2canvas(clonedElement, {
+        scale: 1.5,
         useCORS: true,
         allowTaint: true,
-        backgroundColor: '#ffffff'
+        backgroundColor: '#ffffff',
+        logging: false,
+        imageTimeout: 0,
       });
-      const imgData = canvas.toDataURL('image/png');
+      document.body.removeChild(clonedElement);
+      const imgData = canvas.toDataURL('image/jpeg', 0.7);
+
       const pdf = new jsPDF({
         orientation: 'portrait',
         unit: 'px',
-        format: [canvas.width / 2, canvas.height / 2]
+        format: [canvas.width / 1.5, canvas.height / 1.5]
       });
-      pdf.addImage(imgData, 'PNG', 0, 0, canvas.width / 2, canvas.height / 2);
+      pdf.addImage(imgData, 'JPEG', 0, 0, canvas.width / 1.5, canvas.height / 1.5);
       pdf.save(`Resume_${candidate.name.replace(/\s+/g, '_')}.pdf`);
       toast({ title: 'PDF downloaded successfully', status: 'success', duration: 2000 });
     } catch (error) {

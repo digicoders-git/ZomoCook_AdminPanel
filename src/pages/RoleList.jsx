@@ -5,13 +5,14 @@ import {
   Modal, ModalOverlay, ModalContent, ModalHeader, ModalBody, ModalFooter,
   ModalCloseButton, SimpleGrid, Checkbox, Icon, VStack
 } from '@chakra-ui/react';
-import { Edit3, RefreshCcw, Trash2, Plus, ShieldCheck, Save, Layers, Eye, CheckCircle2, XCircle } from 'lucide-react';
+import { Edit3, RefreshCcw, Trash2, Plus, ShieldCheck, Save, Layers, Eye, CheckCircle2, XCircle, Users } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import {
   PageHeader, TableCard, TableControls, TableFooter, PageFooter, BRAND, ACCENT,
   tableHeadStyle, thStyle, trHover, ConfirmationModal
 } from '../components/ui';
 import axios from 'axios';
+import { useNavigate } from 'react-router-dom';
 
 const PERMISSION_MODULES = [
   { name: 'Dashboard', permissions: [] },
@@ -55,6 +56,7 @@ const RoleList = () => {
   const [isLoading, setIsLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState('');
   const toast = useToast();
+  const navigate = useNavigate();
 
   // Confirm modal
   const { isOpen: isConfirmOpen, onOpen: onConfirmOpen, onClose: onConfirmClose } = useDisclosure();
@@ -280,6 +282,18 @@ const RoleList = () => {
                             _hover={{ bg: BRAND, color: 'white' }}
                             onClick={() => handleOpenPermissions(role)}
                             aria-label="assign permissions"
+                          />
+                        </Tooltip>
+                        <Tooltip label="View Users">
+                          <IconButton
+                            icon={<Users size={13} />}
+                            size="xs"
+                            bg="#fff7ed"
+                            color="#ea580c"
+                            borderRadius="lg"
+                            _hover={{ bg: '#ea580c', color: 'white' }}
+                            onClick={() => navigate(`/users/list?role=${role._id}`)}
+                            aria-label="view users"
                           />
                         </Tooltip>
                         <Tooltip label="Delete Role">

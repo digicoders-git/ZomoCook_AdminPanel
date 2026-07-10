@@ -15,6 +15,7 @@ import {
 } from 'lucide-react';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
 import React from 'react';
+import logo from '../assets/logo.png';
 
 const BRAND = '#004aad';
 const ACCENT = '#f59e0b';
@@ -34,6 +35,7 @@ const navItems = [
       { name: 'Job List', path: '/jobs/list', permission: 'job_management:view' },
       { name: 'Pending Jobs', path: '/pending-jobs', permission: 'job_management:view' },
       { name: 'Add Job', path: '/jobs/add', permission: 'job_management:add' },
+      { name: 'Replacements', path: '/replacements', permission: 'job_management:view' },
     ]
   },
   {
@@ -278,7 +280,7 @@ const SidebarContent = ({ isCollapsed, onClose, onLogoutOpen, ...rest }) => (
           justifyContent="center"
           boxShadow="0 2px 8px rgba(0,0,0,0.15)"
         >
-          <img src="/src/assets/logo.png" alt="ZomoCook" style={{ width: '100%', height: '100%', objectFit: 'contain' }} />
+          <img src={logo} alt="ZomoCook" style={{ width: '100%', height: '100%', objectFit: 'contain' }} />
         </Box>
         {!isCollapsed && (
           <Box>

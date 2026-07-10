@@ -2,11 +2,13 @@ import React, { useState, useEffect } from 'react';
 import {
   Box, Flex, Text, Button, Input, InputGroup, InputLeftElement,
   VStack, HStack, Badge, Table, Thead, Tbody, Tr, Th, Td, TableContainer,
-  IconButton, Spinner, useToast, Checkbox, Icon, Divider, Tab, TabList, Tabs, TabPanels, TabPanel
+  IconButton, Spinner, useToast, Checkbox, Icon, Divider, Tab, TabList, Tabs, TabPanels, TabPanel,
+  Menu, MenuButton, MenuList, MenuItem
 } from '@chakra-ui/react';
-import { Search, Plus, MoreVertical, Copy, Edit, Check, X, Minus } from 'lucide-react';
+import { Search, Plus, MoreVertical, Copy, Edit, Check, X, Minus, Users } from 'lucide-react';
 import axios from 'axios';
 import API_BASE_URL from '../apiConfig';
+import { useNavigate } from 'react-router-dom';
 
 const modules = [
   { id: 'dashboard', name: 'Dashboard', desc: 'View dashboard and analytics' },
@@ -47,6 +49,7 @@ export default function RolePermissionManagement() {
   const [localPermissions, setLocalPermissions] = useState([]);
   
   const toast = useToast();
+  const navigate = useNavigate();
 
   useEffect(() => {
     fetchRoles();
@@ -181,7 +184,61 @@ export default function RolePermissionManagement() {
                     >
                       {role.name === 'Super Admin' ? 'System Role' : role.status === 'active' ? 'Active' : 'Inactive'}
                     </Badge>
-                    <IconButton size="xs" variant="ghost" icon={<Icon as={MoreVertical} size={14} />} aria-label="options" color="#94a3b8" />
+                    <Menu>
+                      <MenuButton
+                        as={IconButton}
+                        size="xs"
+                        variant="ghost"
+                        icon={<Icon as={MoreVertical} size={14} />}
+                        aria-label="options"
+                        color="#94a3b8"
+                        onClick={(e) => e.stopPropagation()}
+                      />
+                      <MenuList minW="150px" boxShadow="lg" border="1px solid #e2e8f0" zIndex="10">
+                        <MenuItem 
+                          fontSize="sm" 
+                          icon={<Icon as={Search} size={14} />} 
+                          onClick={(e) => { 
+                            e.stopPropagation(); 
+                            handleSelectRole(role); 
+                          }}
+                        >
+                          View Details
+                        </MenuItem>
+                        <MenuItem 
+                          fontSize="sm" 
+                          icon={<Icon as={Users} size={14} />} 
+                          onClick={(e) => { 
+                            e.stopPropagation(); 
+                            navigate(`/users/list?role=${role._id}`); 
+                          }}
+                        >
+                          Assigned Users
+                        </MenuItem>
+                        <MenuItem 
+                          fontSize="sm" 
+                          icon={<Icon as={Edit} size={14} />} 
+                          onClick={(e) => { 
+                            e.stopPropagation(); 
+                            handleSelectRole(role);
+                            setIsEditing(true);
+                          }}
+                        >
+                          Edit Role
+                        </MenuItem>
+                        <MenuItem 
+                          fontSize="sm" 
+                          color="red.500"
+                          icon={<Icon as={X} size={14} />} 
+                          onClick={(e) => { 
+                            e.stopPropagation(); 
+                            toast({ title: 'Delete Role functionality not yet implemented.', status: 'info', duration: 2000 });
+                          }}
+                        >
+                          Delete Role
+                        </MenuItem>
+                      </MenuList>
+                    </Menu>
                   </Flex>
                 </Flex>
               );
