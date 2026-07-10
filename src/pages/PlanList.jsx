@@ -1,8 +1,8 @@
 import React, { useState, useEffect } from 'react';
 import {
   Box, Flex, Text, Button, Table, Thead, Tbody, Tr, Th, Td, Badge, IconButton,
-  useToast, HStack, Spinner, Input, Select, Textarea, VStack, Grid, GridItem,
-  Icon, Switch, useColorModeValue,
+  useToast, HStack, Spinner, Input, Select, Textarea, VStack, Grid, GridItem, SimpleGrid,
+  Icon, Switch,
   Modal, ModalOverlay, ModalContent, ModalHeader, ModalFooter, ModalBody, ModalCloseButton,
   FormControl, FormLabel
 } from '@chakra-ui/react';
@@ -425,7 +425,7 @@ const PlanList = () => {
                 const iconData = getPlanIcon(plan.name);
                 return (
                   <Tr key={plan._id} _hover={{ bg: '#f8fafc' }}>
-                    <Td>
+                    <Td py="4" verticalAlign="middle">
                       <HStack>
                         <Flex align="center" justify="center" w="10" h="10" bg={iconData.bg} borderRadius="md">
                           <Icon as={iconData.icon} color={iconData.color} size={20} />
@@ -438,26 +438,26 @@ const PlanList = () => {
                         </VStack>
                       </HStack>
                     </Td>
-                    <Td>
+                    <Td py="4" verticalAlign="middle">
                       <Badge colorScheme={getBadgeColor(plan.name)} variant="subtle" px="3" py="1" borderRadius="full" fontSize="xs">
                         {plan.name.split(' ')[0].toUpperCase()}
                       </Badge>
                     </Td>
-                    <Td>
-                      <Text fontWeight="bold" color="#10b981">₹ {plan.price.toLocaleString('en-IN')}</Text>
+                    <Td py="4" verticalAlign="middle">
+                      <Text fontWeight="bold" color="#10b981" whiteSpace="nowrap">₹ {plan.price.toLocaleString('en-IN')}</Text>
                     </Td>
-                    <Td>
+                    <Td py="4" verticalAlign="middle" textAlign="center">
                       <Text fontWeight="600" color="#1e293b">{plan.hiringLimit || 1}</Text>
                     </Td>
-                    <Td>
+                    <Td py="4" verticalAlign="middle" textAlign="center">
                       <Text fontWeight="600" color="#1e293b">{(plan.durationDays / 30).toFixed(0)} Months</Text>
                     </Td>
-                    <Td>
+                    <Td py="4" verticalAlign="middle">
                       <Text fontSize="xs" color="#475569" maxW="250px" whiteSpace="normal">
                         This package includes {plan.hiringLimit} hires with {(plan.durationDays / 30).toFixed(0)} months validity.
                       </Text>
                     </Td>
-                    <Td>
+                    <Td py="4" verticalAlign="middle">
                       <VStack spacing={1}>
                         <Switch colorScheme="green" isChecked={plan.isActive} onChange={() => togglePlanStatus(plan)} />
                         <Text fontSize="xs" color={plan.isActive ? 'green.500' : 'gray.400'} fontWeight="600">
@@ -465,7 +465,7 @@ const PlanList = () => {
                         </Text>
                       </VStack>
                     </Td>
-                    <Td>
+                    <Td py="4" verticalAlign="middle">
                       <HStack justify="center" spacing={2}>
                         <IconButton
                           icon={<Edit2 size={16} />}
@@ -542,7 +542,7 @@ const PlanList = () => {
                     const iconData = getPlanIcon(pkg.name);
                     return (
                       <Tr key={pkg._id} _hover={{ bg: '#f8fafc' }}>
-                        <Td>
+                        <Td py="4" verticalAlign="middle">
                           <HStack>
                             <Flex align="center" justify="center" w="10" h="10" bg={iconData.bg} borderRadius="md">
                               <Icon as={ShieldCheck} color={iconData.color} size={20} />
@@ -550,24 +550,24 @@ const PlanList = () => {
                             <Text fontWeight="bold" color="#1e293b" fontSize="sm">{pkg.name}</Text>
                           </HStack>
                         </Td>
-                        <Td>
-                          <Text fontWeight="bold" color="#10b981">₹ {pkg.price.toLocaleString('en-IN')}</Text>
+                        <Td py="4" verticalAlign="middle">
+                          <Text fontWeight="bold" color="#10b981" whiteSpace="nowrap">₹ {pkg.price.toLocaleString('en-IN')}</Text>
                         </Td>
-                        <Td>
+                        <Td py="4" verticalAlign="middle" textAlign="center">
                           <Text fontWeight="600" color="#1e293b">{pkg.demoLimit}</Text>
                         </Td>
-                        <Td>
+                        <Td py="4" verticalAlign="middle" textAlign="center">
                           <Text fontWeight="600" color="#1e293b">{pkg.replacementLimit}</Text>
                         </Td>
-                        <Td>
-                          <Badge colorScheme="purple" px="3" py="1" borderRadius="full" fontSize="xs">
+                        <Td py="4" verticalAlign="middle">
+                          <Badge colorScheme="purple" px="3" py="1" borderRadius="full" fontSize="xs" whiteSpace="nowrap">
                             {pkg.supportDurationMonths || 3} Months Support
                           </Badge>
                         </Td>
-                        <Td>
+                        <Td py="4" verticalAlign="middle">
                           <Text fontSize="xs" color="#475569" maxW="200px" whiteSpace="normal">{pkg.description || 'N/A'}</Text>
                         </Td>
-                        <Td>
+                        <Td py="4" verticalAlign="middle">
                           <VStack spacing={1}>
                             <Switch colorScheme="green" isChecked={pkg.isActive} onChange={() => toggleServicePackageStatus(pkg)} />
                             <Text fontSize="xs" color={pkg.isActive ? 'green.500' : 'gray.400'} fontWeight="600">
@@ -575,7 +575,7 @@ const PlanList = () => {
                             </Text>
                           </VStack>
                         </Td>
-                        <Td>
+                        <Td py="4" verticalAlign="middle">
                           <HStack justify="center" spacing={2}>
                             <Button
                               size="sm"
@@ -698,8 +698,9 @@ const PlanList = () => {
               <Button variant="outline" onClick={() => setIsEditModalOpen(false)}>Cancel</Button>
               <Button colorScheme="blue" bg="#2563eb" onClick={handleUpdateServicePackage}>Save Changes</Button>
             </ModalFooter>
-          </Modal>
-        )}
+          </ModalContent>
+        </Modal>
+      )}
     </Box>
   );
 };
