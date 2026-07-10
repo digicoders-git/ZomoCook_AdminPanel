@@ -2,15 +2,29 @@ import React, { useState, useEffect } from 'react';
 import {
   Box, Flex, Text, Button, Table, Thead, Tbody, Tr, Th, Td, Badge, IconButton,
   useToast, HStack, Spinner, Input, Select, Textarea, VStack, Grid, GridItem,
-  Icon, Switch, useColorModeValue
+  Icon, Switch, useColorModeValue,
+  Modal, ModalOverlay, ModalContent, ModalHeader, ModalFooter, ModalBody, ModalCloseButton,
+  FormControl, FormLabel
 } from '@chakra-ui/react';
-import { Plus, Edit2, Trash2, Info, Send, Crown, Diamond, Receipt } from 'lucide-react';
+import { Plus, Edit2, Trash2, Info, Send, Crown, Diamond, Receipt, ShieldCheck } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import axios from 'axios';
 import Swal from 'sweetalert2';
 
 const PlanList = () => {
   const [plans, setPlans] = useState([]);
+  const [servicePackages, setServicePackages] = useState([]);
+  const [selectedPackage, setSelectedPackage] = useState(null);
+  const [isEditModalOpen, setIsEditModalOpen] = useState(false);
+  const [editPackageForm, setEditPackageForm] = useState({
+    price: '',
+    replacementLimit: '',
+    demoLimit: '',
+    supportDurationMonths: '',
+    description: '',
+    features: '',
+    isActive: true
+  });
   const [settings, setSettings] = useState(null);
   const [isLoading, setIsLoading] = useState(true);
   const [isUpdatingFee, setIsUpdatingFee] = useState(false);
@@ -30,13 +44,18 @@ const PlanList = () => {
       const token = localStorage.getItem('adminToken');
       const apiUrl = import.meta.env.VITE_API_URL;
       
-      const [plansRes, settingsRes] = await Promise.all([
+      const [plansRes, settingsRes, servicePackagesRes] = await Promise.all([
         axios.get(`${apiUrl}/plans/admin/all`, { headers: { Authorization: `Bearer ${token}` } }),
-        axios.get(`${apiUrl}/settings`, { headers: { Authorization: `Bearer ${token}` } })
+        axios.get(`${apiUrl}/settings`, { headers: { Authorization: `Bearer ${token}` } }),
+        axios.get(`${apiUrl}/payments/service-packages`, { headers: { Authorization: `Bearer ${token}` } })
       ]);
 
       if (plansRes.data.success) {
         setPlans(plansRes.data.data);
+      }
+      
+      if (servicePackagesRes.data.success) {
+        setServicePackages(servicePackagesRes.data.packages || []);
       }
       
       if (settingsRes.data.success) {
@@ -146,6 +165,68 @@ const PlanList = () => {
     }
   };
 
+  const toggleServicePackageStatus = async (pkg) => {
+    try {
+      const token = localStorage.getItem('adminToken');
+      const apiUrl = import.meta.env.VITE_API_URL;
+      await axios.put(`${apiUrl}/payments/service-packages/${pkg._id}`, { isActive: !pkg.isActive }, {
+        headers: { Authorization: `Bearer ${token}` }
+      });
+      fetchData();
+      toast({ title: 'Package status updated', status: 'success', duration: 2000 });
+    } catch (err) {
+      toast({ title: 'Error updating package status', status: 'error', duration: 2000 });
+    }
+  };
+
+  const handleEditServicePackage = (pkg) => {
+    setSelectedPackage(pkg);
+    setEditPackageForm({
+      price: pkg.price.toString(),
+      replacementLimit: pkg.replacementLimit.toString(),
+      demoLimit: pkg.demoLimit.toString(),
+      supportDurationMonths: (pkg.supportDurationMonths || 3).toString(),
+      description: pkg.description || '',
+      features: (pkg.features || []).join('\n'),
+      isActive: pkg.isActive !== false
+    });
+    setIsEditModalOpen(true);
+  };
+
+  const handleUpdateServicePackage = async () => {
+    try {
+      const token = localStorage.getItem('adminToken');
+      const apiUrl = import.meta.env.VITE_API_URL;
+      const payload = {
+        price: Number(editPackageForm.price),
+        replacementLimit: Number(editPackageForm.replacementLimit),
+        demoLimit: Number(editPackageForm.demoLimit),
+        supportDurationMonths: Number(editPackageForm.supportDurationMonths),
+        description: editPackageForm.description,
+        features: editPackageForm.features.split('\n').map(f => f.trim()).filter(f => f),
+        isActive: editPackageForm.isActive
+      };
+
+      const res = await axios.put(`${apiUrl}/payments/service-packages/${selectedPackage._id}`, payload, {
+        headers: { Authorization: `Bearer ${token}` }
+      });
+
+      if (res.data.success) {
+        toast({ title: 'Service package updated successfully', status: 'success', duration: 2000 });
+        setIsEditModalOpen(false);
+        fetchData();
+      }
+    } catch (err) {
+      toast({
+        title: 'Error updating package',
+        description: err.response?.data?.message || err.message,
+        status: 'error',
+        duration: 3000,
+        isClosable: true
+      });
+    }
+  };
+
   const getPlanIcon = (name) => {
     const n = name.toLowerCase();
     if (n.includes('premium')) return { icon: Crown, color: '#f59e0b', bg: '#fef3c7' };
@@ -185,7 +266,10 @@ const PlanList = () => {
           <Text color={activeTab === 'fee' ? "#2563eb" : "#64748b"} fontWeight="600" fontSize="sm">Hiring Processing Fee</Text>
         </Box>
         <Box borderBottom={activeTab === 'packages' ? "2px solid #2563eb" : "none"} pb="3" px="4" cursor="pointer" onClick={() => setActiveTab('packages')}>
-          <Text color={activeTab === 'packages' ? "#2563eb" : "#64748b"} fontWeight="600" fontSize="sm">Service Packages</Text>
+          <Text color={activeTab === 'packages' ? "#2563eb" : "#64748b"} fontWeight="600" fontSize="sm">Subscription Plans</Text>
+        </Box>
+        <Box borderBottom={activeTab === 'service_packages' ? "2px solid #2563eb" : "none"} pb="3" px="4" cursor="pointer" onClick={() => setActiveTab('service_packages')}>
+          <Text color={activeTab === 'service_packages' ? "#2563eb" : "#64748b"} fontWeight="600" fontSize="sm">Hiring & Support Packages</Text>
         </Box>
         <Box ml="auto" pb="2">
           {activeTab === 'fee' ? (
@@ -195,11 +279,11 @@ const PlanList = () => {
             }}>
               + Add / Update Fee
             </Button>
-          ) : (
+          ) : activeTab === 'packages' ? (
             <Button size="sm" colorScheme="blue" bg="#2563eb" leftIcon={<Plus size={16} />} onClick={() => navigate('/plans/add')}>
               Add Package
             </Button>
-          )}
+          ) : null}
         </Box>
       </Flex>
 
@@ -309,8 +393,8 @@ const PlanList = () => {
       {/* Service Packages Section */}
       <Flex justify="space-between" align="center" mb="4">
         <Box>
-          <Text fontSize="lg" fontWeight="bold" color="#1e293b" mb="1">Service Packages</Text>
-          <Text fontSize="sm" color="#64748b">Create and manage service packages shown to customers during hire process.</Text>
+          <Text fontSize="lg" fontWeight="bold" color="#1e293b" mb="1">Subscription Plans</Text>
+          <Text fontSize="sm" color="#64748b">Create and manage subscription plans shown to customers.</Text>
         </Box>
         <Button size="sm" colorScheme="blue" bg="#2563eb" leftIcon={<Plus size={16} />} onClick={() => navigate('/plans/add')}>
           Add Package
@@ -423,6 +507,199 @@ const PlanList = () => {
       </Box>
       </Box>
       )}
+
+      {activeTab === 'service_packages' && (
+        <Box>
+          {/* Hiring & Support Packages Section */}
+          <Flex justify="space-between" align="center" mb="4">
+            <Box>
+              <Text fontSize="lg" fontWeight="bold" color="#1e293b" mb="1">Hiring & Support Packages</Text>
+              <Text fontSize="sm" color="#64748b">Manage candidate demo limits, replacement counts, and support durations visible to customers during hiring.</Text>
+            </Box>
+          </Flex>
+
+          <Box bg="white" borderRadius="xl" boxShadow="sm" border="1px solid #e2e8f0" overflow="hidden" mb="6">
+            <Table variant="simple" size="md">
+              <Thead bg="#f8fafc">
+                <Tr>
+                  <Th fontSize="xs" color="#64748b" fontWeight="700">PACKAGE NAME</Th>
+                  <Th fontSize="xs" color="#64748b" fontWeight="700">PRICE</Th>
+                  <Th fontSize="xs" color="#64748b" fontWeight="700">DEMO LIMIT</Th>
+                  <Th fontSize="xs" color="#64748b" fontWeight="700">REPLACEMENT LIMIT</Th>
+                  <Th fontSize="xs" color="#64748b" fontWeight="700">SUPPORT WARRANTY</Th>
+                  <Th fontSize="xs" color="#64748b" fontWeight="700">DESCRIPTION</Th>
+                  <Th fontSize="xs" color="#64748b" fontWeight="700">STATUS</Th>
+                  <Th fontSize="xs" color="#64748b" fontWeight="700" textAlign="center">ACTIONS</Th>
+                </Tr>
+              </Thead>
+              <Tbody>
+                {servicePackages.length === 0 ? (
+                  <Tr>
+                    <Td colSpan={8} textAlign="center" py={8} color="gray.500">No support packages found.</Td>
+                  </Tr>
+                ) : (
+                  servicePackages.map((pkg) => {
+                    const iconData = getPlanIcon(pkg.name);
+                    return (
+                      <Tr key={pkg._id} _hover={{ bg: '#f8fafc' }}>
+                        <Td>
+                          <HStack>
+                            <Flex align="center" justify="center" w="10" h="10" bg={iconData.bg} borderRadius="md">
+                              <Icon as={ShieldCheck} color={iconData.color} size={20} />
+                            </Flex>
+                            <Text fontWeight="bold" color="#1e293b" fontSize="sm">{pkg.name}</Text>
+                          </HStack>
+                        </Td>
+                        <Td>
+                          <Text fontWeight="bold" color="#10b981">₹ {pkg.price.toLocaleString('en-IN')}</Text>
+                        </Td>
+                        <Td>
+                          <Text fontWeight="600" color="#1e293b">{pkg.demoLimit}</Text>
+                        </Td>
+                        <Td>
+                          <Text fontWeight="600" color="#1e293b">{pkg.replacementLimit}</Text>
+                        </Td>
+                        <Td>
+                          <Badge colorScheme="purple" px="3" py="1" borderRadius="full" fontSize="xs">
+                            {pkg.supportDurationMonths || 3} Months Support
+                          </Badge>
+                        </Td>
+                        <Td>
+                          <Text fontSize="xs" color="#475569" maxW="200px" whiteSpace="normal">{pkg.description || 'N/A'}</Text>
+                        </Td>
+                        <Td>
+                          <VStack spacing={1}>
+                            <Switch colorScheme="green" isChecked={pkg.isActive} onChange={() => toggleServicePackageStatus(pkg)} />
+                            <Text fontSize="xs" color={pkg.isActive ? 'green.500' : 'gray.400'} fontWeight="600">
+                              {pkg.isActive ? 'Active' : 'Inactive'}
+                            </Text>
+                          </VStack>
+                        </Td>
+                        <Td>
+                          <HStack justify="center" spacing={2}>
+                            <Button
+                              size="sm"
+                              leftIcon={<Edit2 size={14} />}
+                              colorScheme="blue"
+                              variant="outline"
+                              onClick={() => handleEditServicePackage(pkg)}
+                            >
+                              Edit Package
+                            </Button>
+                          </HStack>
+                        </Td>
+                      </Tr>
+                    );
+                  })
+                )}
+              </Tbody>
+            </Table>
+          </Box>
+
+          {/* Guide Section */}
+          <Box bg="#f8fafc" p="4" borderRadius="lg" border="1px solid #e2e8f0" mb="8">
+            <VStack align="start" spacing="2">
+              <HStack><Icon as={Info} color="#2563eb" size={16} /><Text fontSize="sm" fontWeight="bold" color="#1e293b">Hiring Support Package Guide</Text></HStack>
+              <HStack><Icon as={Info} color="#2563eb" size={14} /><Text fontSize="sm" color="#475569"><b>Demo Limit:</b> Maximum number of cook trials/demos allowed before final hiring.</Text></HStack>
+              <HStack><Icon as={Info} color="#2563eb" size={14} /><Text fontSize="sm" color="#475569"><b>Replacement Limit:</b> Maximum count of candidate replacements permitted.</Text></HStack>
+              <HStack><Icon as={Info} color="#2563eb" size={14} /><Text fontSize="sm" color="#475569"><b>Support Warranty Duration:</b> Post-hiring warranty window (e.g. 3, 6, or 11 Months) during which replacements can be requested.</Text></HStack>
+            </VStack>
+          </Box>
+        </Box>
+      )}
+
+      {/* Edit Service Package Modal */}
+      {selectedPackage && (
+        <Modal isOpen={isEditModalOpen} onClose={() => setIsEditModalOpen(false)} size="lg">
+          <ModalOverlay backdropFilter="blur(3px)" />
+          <ModalContent borderRadius="xl">
+            <ModalHeader borderBottom="1px solid #e2e8f0" color="#1e293b">
+              Edit Hiring & Support Package ({selectedPackage.name})
+            </ModalHeader>
+            <ModalCloseButton />
+            <ModalBody py="6">
+              <VStack spacing="5">
+                <FormControl isRequired>
+                  <FormLabel fontSize="sm" fontWeight="bold" color="#475569">Package Price (₹)</FormLabel>
+                  <Input
+                    type="number"
+                    value={editPackageForm.price}
+                    onChange={(e) => setEditPackageForm({...editPackageForm, price: e.target.value})}
+                    placeholder="Enter price"
+                  />
+                </FormControl>
+
+                <SimpleGrid columns={2} spacing="4" w="full">
+                  <FormControl isRequired>
+                    <FormLabel fontSize="sm" fontWeight="bold" color="#475569">Demo Limit</FormLabel>
+                    <Input
+                      type="number"
+                      value={editPackageForm.demoLimit}
+                      onChange={(e) => setEditPackageForm({...editPackageForm, demoLimit: e.target.value})}
+                      placeholder="e.g. 3"
+                    />
+                  </FormControl>
+
+                  <FormControl isRequired>
+                    <FormLabel fontSize="sm" fontWeight="bold" color="#475569">Replacement Limit</FormLabel>
+                    <Input
+                      type="number"
+                      value={editPackageForm.replacementLimit}
+                      onChange={(e) => setEditPackageForm({...editPackageForm, replacementLimit: e.target.value})}
+                      placeholder="e.g. 3"
+                    />
+                  </FormControl>
+                </SimpleGrid>
+
+                <FormControl isRequired>
+                  <FormLabel fontSize="sm" fontWeight="bold" color="#475569">Support Warranty (Months)</FormLabel>
+                  <Select
+                    value={editPackageForm.supportDurationMonths}
+                    onChange={(e) => setEditPackageForm({...editPackageForm, supportDurationMonths: e.target.value})}
+                  >
+                    <option value="3">3 Months Replacement Support</option>
+                    <option value="6">6 Months Replacement Support</option>
+                    <option value="11">11 Months Replacement Support</option>
+                    <option value="12">12 Months (1 Year) Replacement Support</option>
+                    <option value="24">24 Months (2 Years) Replacement Support</option>
+                  </Select>
+                </FormControl>
+
+                <FormControl>
+                  <FormLabel fontSize="sm" fontWeight="bold" color="#475569">Description</FormLabel>
+                  <Input
+                    value={editPackageForm.description}
+                    onChange={(e) => setEditPackageForm({...editPackageForm, description: e.target.value})}
+                    placeholder="Package summary"
+                  />
+                </FormControl>
+
+                <FormControl>
+                  <FormLabel fontSize="sm" fontWeight="bold" color="#475569">Features List (Newline Separated)</FormLabel>
+                  <Textarea
+                    rows={4}
+                    value={editPackageForm.features}
+                    onChange={(e) => setEditPackageForm({...editPackageForm, features: e.target.value})}
+                    placeholder="Feature 1&#10;Feature 2&#10;Feature 3"
+                  />
+                </FormControl>
+
+                <FormControl display="flex" alignItems="center">
+                  <FormLabel fontSize="sm" fontWeight="bold" color="#475569" mb="0">Package Status (Active)</FormLabel>
+                  <Switch
+                    colorScheme="green"
+                    isChecked={editPackageForm.isActive}
+                    onChange={(e) => setEditPackageForm({...editPackageForm, isActive: e.target.checked})}
+                  />
+                </FormControl>
+              </VStack>
+            </ModalBody>
+            <ModalFooter borderTop="1px solid #e2e8f0" gap="3">
+              <Button variant="outline" onClick={() => setIsEditModalOpen(false)}>Cancel</Button>
+              <Button colorScheme="blue" bg="#2563eb" onClick={handleUpdateServicePackage}>Save Changes</Button>
+            </ModalFooter>
+          </Modal>
+        )}
     </Box>
   );
 };

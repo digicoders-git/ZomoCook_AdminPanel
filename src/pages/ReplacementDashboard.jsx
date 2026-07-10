@@ -415,6 +415,7 @@ const ReplacementDashboard = () => {
                 <Th {...darkThStyle}>Customer Name</Th>
                 <Th {...darkThStyle}>No. / Address</Th>
                 <Th {...darkThStyle}>Current Package</Th>
+                <Th {...darkThStyle}>Hiring Package & Support Expiry</Th>
                 <Th {...darkThStyle}>Current Cook Name</Th>
                 <Th {...darkThStyle}>Reason</Th>
                 <Th {...darkThStyle}>Status</Th>
@@ -424,9 +425,9 @@ const ReplacementDashboard = () => {
             </Thead>
             <Tbody>
               {loading ? (
-                <Tr><Td colSpan="10" textAlign="center">Loading...</Td></Tr>
+                <Tr><Td colSpan="11" textAlign="center">Loading...</Td></Tr>
               ) : paginatedData.length === 0 ? (
-                <Tr><Td colSpan="10" textAlign="center">No replacement requests found</Td></Tr>
+                <Tr><Td colSpan="11" textAlign="center">No replacement requests found</Td></Tr>
               ) : paginatedData.map((row, index) => (
                 <Tr key={row._id} _hover={{ bg: '#f8fafc' }}>
                   <Td {...customTdStyle}>{(currentPage - 1) * pageSize + index + 1}</Td>
@@ -446,6 +447,29 @@ const ReplacementDashboard = () => {
                     <Text fontSize="xs" color={row.customer?.activePlan ? getPackageColor(row.customer.activePlan.name) : 'gray.600'} fontWeight="700" whiteSpace="pre-line">
                       {row.customer?.activePlan?.name || 'No Plan'}
                     </Text>
+                  </Td>
+                  <Td {...customTdStyle} textAlign="left">
+                    {row.servicePackage ? (
+                      <VStack align="start" spacing="1">
+                        <HStack>
+                          <Badge colorScheme="purple" fontSize="10px">{row.servicePackage.packageType}</Badge>
+                          <Badge 
+                            colorScheme={new Date(row.servicePackage.supportExpiryDate) < new Date() ? 'red' : 'green'} 
+                            fontSize="9px"
+                          >
+                            {new Date(row.servicePackage.supportExpiryDate) < new Date() ? 'Expired' : 'Active'}
+                          </Badge>
+                        </HStack>
+                        <Text fontSize="10px" fontWeight="bold" color="gray.700">
+                          Expires: {new Date(row.servicePackage.supportExpiryDate).toLocaleDateString('en-IN')}
+                        </Text>
+                        <Text fontSize="10px" color="gray.500">
+                          Replacements: {row.servicePackage.replacementsUsed || 0} / {row.servicePackage.replacementLimit}
+                        </Text>
+                      </VStack>
+                    ) : (
+                      <Text fontSize="xs" color="gray.400">No Support Package</Text>
+                    )}
                   </Td>
                   <Td {...customTdStyle}>{row.staffName}</Td>
                   <Td {...customTdStyle} maxW="150px">
