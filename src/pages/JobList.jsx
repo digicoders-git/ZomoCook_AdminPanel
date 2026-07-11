@@ -54,6 +54,7 @@ const JobList = () => {
   const [assignJob, setAssignJob] = useState(null);
   const [selectedLeadManager, setSelectedLeadManager] = useState('');
   const [leadManagers, setLeadManagers] = useState([]);
+  const [applicantsModalTab, setApplicantsModalTab] = useState(0);
 
   const token = localStorage.getItem('adminToken');
   const adminData = JSON.parse(localStorage.getItem('adminData') || '{}');
@@ -119,7 +120,9 @@ const JobList = () => {
         const enrichedJobs = sortedJobs.map(job => {
           const jobApps = fetchedApps.filter(app => (app.jobId === job._id || (app.job && app.job._id === job._id)));
           const appliedCount = jobApps.length;
-          const assignedCount = jobApps.filter(app => app.status === 'Applied').length;
+          const assignedCount = jobApps.filter(app => 
+            ['Shortlisted', 'Demo Scheduled', 'Reschedule Requested', 'Hired'].includes(app.status)
+          ).length;
           return {
             ...job,
             leadManager: job.leadManager || 'Not Assigned',
@@ -347,6 +350,7 @@ const JobList = () => {
     const s = (status || '').toLowerCase();
     if (s === 'active' || s === 'open') return { bg: '#e6fcf5', color: '#0ca678' }; // Green
     if (s === 'new') return { bg: '#e7f5ff', color: '#1c7ed6' }; // Blue
+    if (s === 'assigned') return { bg: '#f3e8ff', color: '#9333ea' }; // Purple
     if (s === 'urgent') return { bg: '#fff5f5', color: '#e03131' }; // Red
     if (s === 'in progress' || s === 'inprogress') return { bg: '#e7f5ff', color: '#1c7ed6' }; // Blue
     if (s === 'hold' || s === 'onhold') return { bg: '#fff4e6', color: '#f76707' }; // Orange
@@ -389,7 +393,8 @@ const JobList = () => {
   const handleAssignLeadManager = async () => {
     try {
       const response = await axios.put(`${API_BASE_URL}/jobs/${assignJob._id}`, {
-        leadManager: selectedLeadManager
+        leadManager: selectedLeadManager,
+        ...(selectedLeadManager && { status: 'Assigned' })
       }, {
         headers: { 'Authorization': `Bearer ${token}` }
       });
@@ -484,7 +489,9 @@ const JobList = () => {
       }
     }
 
-    return matchesSearch && matchesCategory && matchesCity && matchesStatus && matchesDate && matchesLeadManager;
+    const matchesPaymentStatus = (job.paymentStatus || '').toLowerCase() !== 'pending';
+
+    return matchesSearch && matchesCategory && matchesCity && matchesStatus && matchesDate && matchesLeadManager && matchesPaymentStatus;
   });
 
   const totalPages = Math.ceil(filteredJobs.length / parseInt(entries));
@@ -543,7 +550,7 @@ const JobList = () => {
             <FormLabel fontSize="xs" fontWeight="700" color="#475569" mb="2">Status</FormLabel>
             <Select size="sm" h="40px" borderRadius="lg" bg="#f8faff" border="1.5px solid #dde6f5" value={filters.status} onChange={(e) => handleFilterChange('status', e.target.value)}>
               <option value="">All Status</option>
-              {['Urgent', 'New', 'Active', 'Inactive', 'Cancelled', 'Expired'].map(s => (
+              {['Urgent', 'New', 'Assigned', 'Active', 'Inactive', 'Cancelled', 'Expired'].map(s => (
                 <option key={s} value={s}>{s}</option>
               ))}
             </Select>
@@ -685,7 +692,7 @@ const JobList = () => {
                         fontSize="xs"
                         fontWeight="700"
                         cursor="pointer"
-                        onClick={() => { setSelectedJob(row); onApplicantsOpen(); }}
+                        onClick={() => { setSelectedJob(row); setApplicantsModalTab(0); onApplicantsOpen(); }}
                         _hover={{ transform: 'scale(1.1)', opacity: 0.9 }}
                         transition="all 0.15s"
                       >
@@ -703,7 +710,7 @@ const JobList = () => {
                         fontSize="xs"
                         fontWeight="700"
                         cursor="pointer"
-                        onClick={() => { setSelectedJob(row); onApplicantsOpen(); }}
+                        onClick={() => { setSelectedJob(row); setApplicantsModalTab(1); onApplicantsOpen(); }}
                         _hover={{ transform: 'scale(1.1)', opacity: 0.9 }}
                         transition="all 0.15s"
                       >
@@ -748,7 +755,7 @@ const JobList = () => {
                             {statusLabel}
                           </MenuButton>
                           <MenuList borderRadius="lg" border="1px solid #e8edf5" boxShadow="sm" p="1">
-                            {['Urgent', 'New', 'Active', 'Inactive', 'Cancelled', 'Expired'].map(s => (
+                            {['Urgent', 'New', 'Assigned', 'Active', 'Inactive', 'Cancelled', 'Expired'].map(s => (
                               <MenuItem
                                 key={s}
                                 fontSize="xs"
@@ -998,6 +1005,7 @@ const JobList = () => {
           onClose={onApplicantsClose}
           jobId={selectedJob._id}
           jobTitle={selectedJob.title}
+          initialTab={applicantsModalTab}
         />
       )}
 

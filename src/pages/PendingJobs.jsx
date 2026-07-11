@@ -376,6 +376,7 @@ const PendingJobs = () => {
     const s = (status || '').toLowerCase();
     if (s === 'active' || s === 'open') return { bg: '#e6fcf5', color: '#0ca678' }; // Green
     if (s === 'new') return { bg: '#e7f5ff', color: '#1c7ed6' }; // Blue
+    if (s === 'assigned') return { bg: '#f3e8ff', color: '#9333ea' }; // Purple
     if (s === 'urgent') return { bg: '#fff5f5', color: '#e03131' }; // Red
     if (s === 'in progress' || s === 'inprogress') return { bg: '#e7f5ff', color: '#1c7ed6' }; // Blue
     if (s === 'hold' || s === 'onhold') return { bg: '#fff4e6', color: '#f76707' }; // Orange
@@ -418,7 +419,8 @@ const PendingJobs = () => {
   const handleAssignLeadManager = async () => {
     try {
       const response = await axios.put(`${API_BASE_URL}/jobs/${assignJob._id}`, {
-        leadManager: selectedLeadManager
+        leadManager: selectedLeadManager,
+        ...(selectedLeadManager && { status: 'Assigned' })
       }, {
         headers: { 'Authorization': `Bearer ${token}` }
       });
@@ -479,7 +481,7 @@ const PendingJobs = () => {
     const matchesCity = !filters.city || job.city.toLowerCase() === filters.city.toLowerCase();
     const matchesStatus = !filters.status || (job.status || '').toLowerCase() === filters.status.toLowerCase();
     const matchesLeadManager = !filters.leadManager || job.leadManager === filters.leadManager;
-    const matchesPaymentStatus = !filters.paymentStatus || (job.paymentStatus || 'pending').toLowerCase() === filters.paymentStatus.toLowerCase();
+    const matchesPaymentStatus = (job.paymentStatus || '').toLowerCase() === 'pending';
 
     // Date matching logic
     let matchesDate = true;
@@ -568,19 +570,12 @@ const PendingJobs = () => {
             <FormLabel fontSize="xs" fontWeight="700" color="#475569" mb="2">Status</FormLabel>
             <Select size="sm" h="40px" borderRadius="lg" bg="#f8faff" border="1.5px solid #dde6f5" value={filters.status} onChange={(e) => handleFilterChange('status', e.target.value)}>
               <option value="">All Status</option>
-              {['Urgent', 'New', 'Active', 'Inactive', 'Cancelled', 'Expired'].map(s => (
+              {['Urgent', 'New', 'Assigned', 'Active', 'Inactive', 'Cancelled', 'Expired'].map(s => (
                 <option key={s} value={s}>{s}</option>
               ))}
             </Select>
           </Box>
-          <Box flex="1" minW="180px">
-            <FormLabel fontSize="xs" fontWeight="700" color="#475569" mb="2">Payment Status</FormLabel>
-            <Select size="sm" h="40px" borderRadius="lg" bg="#f8faff" border="1.5px solid #dde6f5" value={filters.paymentStatus} onChange={(e) => handleFilterChange('paymentStatus', e.target.value)}>
-              <option value="">All Payments</option>
-              <option value="pending">⏳ Pending Payment</option>
-              <option value="paid">✅ Paid Payment</option>
-            </Select>
-          </Box>
+
           <Box flex="1" minW="180px">
             <FormLabel fontSize="xs" fontWeight="700" color="#475569" mb="2">Lead Manager</FormLabel>
             <Select size="sm" h="40px" borderRadius="lg" bg="#f8faff" border="1.5px solid #dde6f5" value={filters.leadManager} onChange={(e) => handleFilterChange('leadManager', e.target.value)}>
@@ -655,8 +650,8 @@ const PendingJobs = () => {
                 <Th {...darkThStyle} w="100px">Customer</Th>
                 <Th {...darkThStyle} w="80px">City</Th>
                 <Th {...darkThStyle} w="120px">Salary</Th>
-                <Th {...darkThStyle} w="65px">Applied</Th>
-                <Th {...darkThStyle} w="65px">Assigned</Th>
+                <Th {...darkThStyle} w="65px" display="none">Applied</Th>
+                <Th {...darkThStyle} w="65px" display="none">Assigned</Th>
                 <Th {...darkThStyle} w="110px">Lead Manager</Th>
                 <Th {...darkThStyle} w="90px">Status</Th>
                 <Th {...darkThStyle} w="100px">Payment</Th>
@@ -710,7 +705,7 @@ const PendingJobs = () => {
                     </Td>
 
                     {/* Applied Candidates Badge */}
-                    <Td {...customTdStyle}>
+                    <Td {...customTdStyle} display="none">
                       <Badge
                         colorScheme="blue"
                         variant="solid"
@@ -728,7 +723,7 @@ const PendingJobs = () => {
                     </Td>
 
                     {/* Assigned Candidates Badge */}
-                    <Td {...customTdStyle}>
+                    <Td {...customTdStyle} display="none">
                       <Badge
                         colorScheme="green"
                         variant="solid"
@@ -782,7 +777,7 @@ const PendingJobs = () => {
                             {statusLabel}
                           </MenuButton>
                           <MenuList borderRadius="lg" border="1px solid #e8edf5" boxShadow="sm" p="1">
-                            {['Urgent', 'New', 'Active', 'Inactive', 'Cancelled', 'Expired'].map(s => (
+                            {['Urgent', 'New', 'Assigned', 'Active', 'Inactive', 'Cancelled', 'Expired'].map(s => (
                               <MenuItem
                                 key={s}
                                 fontSize="xs"

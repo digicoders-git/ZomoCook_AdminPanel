@@ -267,15 +267,58 @@ const ApplicationsList = () => {
               <Text color="gray.500" textAlign="center">No additional details available for this application.</Text>
             ) : (
               <Grid templateColumns="repeat(2, 1fr)" gap={6}>
-                {Object.entries(selectedAppData).map(([key, value]) => {
+                {Object.entries(selectedAppData).map(([key, rawValue]) => {
+                  let value = rawValue;
+                  if (typeof rawValue === 'string' && (rawValue.trim().startsWith('{') || rawValue.trim().startsWith('['))) {
+                    try {
+                      value = JSON.parse(rawValue);
+                    } catch(e) {
+                      // ignore parse errors
+                    }
+                  }
+
                   if (typeof value === 'object' && value !== null) {
+                    const renderNestedObject = (obj) => {
+                      if (Array.isArray(obj)) {
+                        return obj.length > 0 ? (
+                          <Flex flexWrap="wrap" gap="2">
+                            {obj.map((item, idx) => (
+                              <Badge key={idx} bg="#e2e8f0" color="#475569" px="2" py="1" borderRadius="md" textTransform="none" fontWeight="600">{typeof item === 'object' ? JSON.stringify(item) : item}</Badge>
+                            ))}
+                          </Flex>
+                        ) : <Text fontSize="13px" color="#94a3b8">None</Text>;
+                      }
+                      return (
+                        <Grid templateColumns="repeat(auto-fill, minmax(200px, 1fr))" gap="4">
+                          {Object.entries(obj).map(([k, v]) => (
+                            <Box key={k}>
+                              <Text fontSize="11px" color="#64748b" fontWeight="600" textTransform="uppercase" mb="1">{k.replace(/([A-Z])/g, ' $1').trim()}</Text>
+                              {typeof v === 'object' && v !== null ? (
+                                Array.isArray(v) ? (
+                                  <Flex flexWrap="wrap" gap="1">
+                                    {v.length > 0 ? v.map((item, idx) => (
+                                      <Badge key={idx} bg="#e2e8f0" color="#475569" px="2" py="1" borderRadius="md" textTransform="none" fontWeight="600">{typeof item === 'object' ? JSON.stringify(item) : item}</Badge>
+                                    )) : <Text fontSize="13px" color="#94a3b8">-</Text>}
+                                  </Flex>
+                                ) : (
+                                  <Box p="2" bg="white" border="1px solid #e2e8f0" borderRadius="md">
+                                    {renderNestedObject(v)}
+                                  </Box>
+                                )
+                              ) : (
+                                <Text fontSize="13px" color="#1e293b" fontWeight="500">{v?.toString() || 'N/A'}</Text>
+                              )}
+                            </Box>
+                          ))}
+                        </Grid>
+                      );
+                    };
+
                     return (
                       <GridItem colSpan={2} key={key}>
-                        <Box bg="gray.50" p="4" borderRadius="md">
-                          <Text fontSize="12px" color="#64748b" fontWeight="600" textTransform="uppercase" mb="2">{key}</Text>
-                          <pre style={{ fontSize: '13px', color: '#1e293b', whiteSpace: 'pre-wrap' }}>
-                            {JSON.stringify(value, null, 2)}
-                          </pre>
+                        <Box bg="gray.50" p="4" borderRadius="md" border="1px solid #e8edf5">
+                          <Text fontSize="12px" color="#64748b" fontWeight="700" textTransform="uppercase" mb="3" pb="2" borderBottom="1px solid #e2e8f0">{key.replace(/([A-Z])/g, ' $1').trim()}</Text>
+                          {renderNestedObject(value)}
                         </Box>
                       </GridItem>
                     );

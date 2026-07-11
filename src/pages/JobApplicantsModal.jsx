@@ -27,7 +27,7 @@ const getStatusColorScheme = (s) => {
   return "red";
 };
 
-const CandidateCard = ({ app, navigate }) => {
+const CandidateCard = ({ app, navigate, selectable, isSelected, onToggleSelect }) => {
   const candidate = app.candidate || {};
   const imageUrl = candidate.profileImage
     ? (candidate.profileImage.startsWith("http") ? candidate.profileImage : `${UPLOAD_BASE}/${candidate.profileImage}`)
@@ -42,24 +42,35 @@ const CandidateCard = ({ app, navigate }) => {
 
   return (
     <Box
-      bg="white"
-      border="1px solid #e8edf5"
+      bg={isSelected ? "#e8f0ff" : "white"}
+      border="1px solid"
+      borderColor={isSelected ? BRAND : "#e8edf5"}
       borderRadius="xl"
       p="4"
       mb="3"
       _hover={{ boxShadow: "md", borderColor: BRAND, cursor: "pointer" }}
       transition="all 0.2s"
-      onClick={() => navigate(`/candidates/view/${candidate._id}`)}
     >
       <Flex align="center" gap="3">
+        {selectable && (
+          <Box mr="2" onClick={(e) => { e.stopPropagation(); onToggleSelect(app._id); }}>
+            <input 
+              type="checkbox" 
+              checked={isSelected} 
+              onChange={() => {}} 
+              style={{ width: '18px', height: '18px', cursor: 'pointer' }}
+            />
+          </Box>
+        )}
         <Avatar
           size="md"
           src={imageUrl}
           name={candidate.name || "Unknown"}
           bg={BRAND}
           color="white"
+          onClick={() => navigate(`/candidates/view/${candidate._id}`)}
         />
-        <Box flex="1" minW="0">
+        <Box flex="1" minW="0" onClick={() => navigate(`/candidates/view/${candidate._id}`)}>
           <Flex align="center" gap="2" mb="1" flexWrap="wrap">
             <Text fontSize="sm" fontWeight="700" color="#1e293b" noOfLines={1}>
               {candidate.name || "Unknown"}
@@ -72,28 +83,33 @@ const CandidateCard = ({ app, navigate }) => {
             <HStack spacing="1">
               <Text fontSize="xs" color="#64748b">{role}</Text>
             </HStack>
-            {city && <Text fontSize="xs" color="#64748b">?? {city}</Text>}
+            {city && <Text fontSize="xs" color="#64748b">📍 {city}</Text>}
             {experience && <Text fontSize="xs" color="#64748b">Exp: {experience}</Text>}
           </HStack>
-          {phone && <Text fontSize="xs" color="#64748b" mt="1">?? {phone}</Text>}
+          {phone && <Text fontSize="xs" color="#64748b" mt="1">📞 {phone}</Text>}
         </Box>
-        <Text fontSize="xs" color={BRAND} fontWeight="700" flexShrink="0">View ?</Text>
+        <Text fontSize="xs" color={BRAND} fontWeight="700" flexShrink="0" onClick={() => navigate(`/candidates/view/${candidate._id}`)}>View →</Text>
       </Flex>
     </Box>
   );
 };
 
-const JobApplicantsModal = ({ isOpen, onClose, jobId, jobTitle }) => {
+const JobApplicantsModal = ({ isOpen, onClose, jobId, jobTitle, initialTab = 0 }) => {
   const [applications, setApplications] = useState([]);
   const [loading, setLoading] = useState(false);
+  const [assigning, setAssigning] = useState(false);
+  const [selectedApps, setSelectedApps] = useState([]);
+  const [activeTab, setActiveTab] = useState(initialTab);
   const navigate = useNavigate();
   const toast = useToast();
 
   useEffect(() => {
     if (isOpen && jobId) {
       fetchApplications();
+      setSelectedApps([]);
+      setActiveTab(initialTab);
     }
-  }, [isOpen, jobId]);
+  }, [isOpen, jobId, initialTab]);
 
   const fetchApplications = async () => {
     setLoading(true);
@@ -117,6 +133,35 @@ const JobApplicantsModal = ({ isOpen, onClose, jobId, jobTitle }) => {
     }
   };
 
+  const handleToggleSelect = (appId) => {
+    setSelectedApps(prev => 
+      prev.includes(appId) ? prev.filter(id => id !== appId) : [...prev, appId]
+    );
+  };
+
+  const handleBulkAssign = async () => {
+    if (selectedApps.length === 0) return;
+    setAssigning(true);
+    try {
+      const token = localStorage.getItem("adminToken");
+      const promises = selectedApps.map(appId => 
+        axios.patch(`${API_BASE_URL}/applications/${appId}/status`, 
+          { status: "Shortlisted" },
+          { headers: { Authorization: `Bearer ${token}` } }
+        )
+      );
+      await Promise.all(promises);
+      toast({ title: "Success", description: `${selectedApps.length} candidates shortlisted successfully.`, status: "success", duration: 3000 });
+      setSelectedApps([]);
+      fetchApplications();
+    } catch (err) {
+      console.error("Bulk assign error:", err);
+      toast({ title: "Error", description: "Failed to assign candidates.", status: "error", duration: 3000 });
+    } finally {
+      setAssigning(false);
+    }
+  };
+
   const applied = applications.filter(a => statusGroups.Applied(a.status));
   const shortlisted = applications.filter(a => statusGroups.Shortlisted(a.status));
   const hired = applications.filter(a => statusGroups.Hired(a.status));
@@ -124,7 +169,7 @@ const JobApplicantsModal = ({ isOpen, onClose, jobId, jobTitle }) => {
 
   const EmptyState = () => (
     <VStack py="8" spacing="3">
-      <Text fontSize="2xl">??</Text>
+      <Text fontSize="2xl">😕</Text>
       <Text fontSize="sm" color="#94a3b8" fontWeight="600">No candidates in this category</Text>
     </VStack>
   );
@@ -149,11 +194,11 @@ const JobApplicantsModal = ({ isOpen, onClose, jobId, jobTitle }) => {
             <Loading message="Loading applicants..." size="sm" />
           ) : applications.length === 0 ? (
             <VStack py="12" spacing="3">
-              <Text fontSize="3xl">??</Text>
+              <Text fontSize="3xl">😕</Text>
               <Text fontSize="sm" color="#94a3b8" fontWeight="600">No applicants yet for this job</Text>
             </VStack>
           ) : (
-            <Tabs colorScheme="blue" variant="soft-rounded" size="sm">
+            <Tabs colorScheme="blue" variant="soft-rounded" size="sm" index={activeTab} onChange={setActiveTab}>
               <TabList mb="4" gap="2" flexWrap="wrap">
                 <Tab fontWeight="700" fontSize="xs" _selected={{ bg: "#e8f0ff", color: BRAND }}>
                   Applied ({applied.length})
@@ -172,8 +217,22 @@ const JobApplicantsModal = ({ isOpen, onClose, jobId, jobTitle }) => {
               <TabPanels>
                 <TabPanel px="0" py="0">
                   {applied.length === 0 ? <EmptyState /> : applied.map(app => (
-                    <CandidateCard key={app._id} app={app} navigate={navigate} />
+                    <CandidateCard 
+                      key={app._id} 
+                      app={app} 
+                      navigate={navigate} 
+                      selectable={true}
+                      isSelected={selectedApps.includes(app._id)}
+                      onToggleSelect={handleToggleSelect}
+                    />
                   ))}
+                  {activeTab === 0 && selectedApps.length > 0 && (
+                    <Box position="sticky" bottom="0" bg="white" p="3" borderTop="1px solid #f1f5f9" mt="2" zIndex="10" boxShadow="0 -4px 6px -1px rgba(0, 0, 0, 0.05)">
+                      <Button w="full" bg={BRAND} color="white" _hover={{ bg: "#1565D8" }} isLoading={assigning} onClick={handleBulkAssign}>
+                        Assign {selectedApps.length} Candidate{selectedApps.length > 1 ? 's' : ''} (Shortlist)
+                      </Button>
+                    </Box>
+                  )}
                 </TabPanel>
                 <TabPanel px="0" py="0">
                   {shortlisted.length === 0 ? <EmptyState /> : shortlisted.map(app => (
