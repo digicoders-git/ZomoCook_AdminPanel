@@ -5,7 +5,7 @@ import {
   Spinner, VStack, HStack, Tabs, TabList, Tab, TabPanels, TabPanel,
   useToast
 } from "@chakra-ui/react";
-import { User, MapPin, Phone, Briefcase } from "lucide-react";
+import { User, MapPin, Phone, Briefcase, UserPlus, CheckCircle2, Info } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import axios from "axios";
 import API_BASE_URL from "../apiConfig";
@@ -27,7 +27,7 @@ const getStatusColorScheme = (s) => {
   return "red";
 };
 
-const CandidateCard = ({ app, navigate, selectable, isSelected, onToggleSelect }) => {
+const CandidateCard = ({ app, navigate, selectable, isSelected, onToggleSelect, onAssign }) => {
   const candidate = app.candidate || {};
   const imageUrl = candidate.profileImage
     ? (candidate.profileImage.startsWith("http") ? candidate.profileImage : `${UPLOAD_BASE}/${candidate.profileImage}`)
@@ -88,7 +88,27 @@ const CandidateCard = ({ app, navigate, selectable, isSelected, onToggleSelect }
           </HStack>
           {phone && <Text fontSize="xs" color="#64748b" mt="1">📞 {phone}</Text>}
         </Box>
-        <Text fontSize="xs" color={BRAND} fontWeight="700" flexShrink="0" onClick={() => navigate(`/candidates/view/${candidate._id}`)}>View →</Text>
+        <HStack spacing="3" flexShrink="0" ml="auto">
+          <Text fontSize="sm" color={BRAND} fontWeight="700" cursor="pointer" onClick={(e) => { e.stopPropagation(); navigate(`/candidates/view/${candidate._id}`); }}>View</Text>
+          
+          {(app.status === "Applied" || app.status === "Shortlisted") && (
+            <Text fontSize="sm" color="#cbd5e1">|</Text>
+          )}
+
+          {app.status === "Applied" && (
+            <HStack spacing="1" cursor="pointer" color={BRAND} onClick={(e) => { e.stopPropagation(); onAssign && onAssign(app._id); }}>
+              <Text fontSize="sm" fontWeight="700">Assign</Text>
+              <Icon as={UserPlus} size={16} />
+            </HStack>
+          )}
+          
+          {app.status === "Shortlisted" && (
+            <HStack spacing="1" color="green.600">
+              <Icon as={CheckCircle2} size={16} />
+              <Text fontSize="sm" fontWeight="700">Assigned</Text>
+            </HStack>
+          )}
+        </HStack>
       </Flex>
     </Box>
   );
@@ -137,6 +157,24 @@ const JobApplicantsModal = ({ isOpen, onClose, jobId, jobTitle, initialTab = 0 }
     setSelectedApps(prev => 
       prev.includes(appId) ? prev.filter(id => id !== appId) : [...prev, appId]
     );
+  };
+
+  const handleAssignSingle = async (appId) => {
+    setAssigning(true);
+    try {
+      const token = localStorage.getItem("adminToken");
+      await axios.patch(`${API_BASE_URL}/applications/${appId}/status`, 
+        { status: "Shortlisted" },
+        { headers: { Authorization: `Bearer ${token}` } }
+      );
+      toast({ title: "Assigned!", description: "Candidate moved to Shortlisted.", status: "success", duration: 3000 });
+      fetchApplications();
+    } catch (err) {
+      console.error("Error assigning applicant:", err);
+      toast({ title: "Error", description: "Failed to assign candidate.", status: "error", duration: 3000 });
+    } finally {
+      setAssigning(false);
+    }
   };
 
   const handleBulkAssign = async () => {
@@ -221,22 +259,26 @@ const JobApplicantsModal = ({ isOpen, onClose, jobId, jobTitle, initialTab = 0 }
                       key={app._id} 
                       app={app} 
                       navigate={navigate} 
-                      selectable={true}
-                      isSelected={selectedApps.includes(app._id)}
-                      onToggleSelect={handleToggleSelect}
+                      onAssign={handleAssignSingle}
                     />
                   ))}
-                  {activeTab === 0 && selectedApps.length > 0 && (
-                    <Box position="sticky" bottom="0" bg="white" p="3" borderTop="1px solid #f1f5f9" mt="2" zIndex="10" boxShadow="0 -4px 6px -1px rgba(0, 0, 0, 0.05)">
-                      <Button w="full" bg={BRAND} color="white" _hover={{ bg: "#1565D8" }} isLoading={assigning} onClick={handleBulkAssign}>
-                        Assign {selectedApps.length} Candidate{selectedApps.length > 1 ? 's' : ''} (Shortlist)
-                      </Button>
+                  {applied.length > 0 && (
+                    <Box mt="2" p="3" bg="#eff6ff" borderRadius="md" border="1px solid" borderColor="#bfdbfe" display="flex" alignItems="center" gap="2">
+                      <Icon as={Info} size={16} color="#3b82f6" />
+                      <Text fontSize="sm" color="#1e40af" fontWeight="500">
+                        Assigned candidate will now appear in Shortlisted tab.
+                      </Text>
                     </Box>
                   )}
                 </TabPanel>
                 <TabPanel px="0" py="0">
                   {shortlisted.length === 0 ? <EmptyState /> : shortlisted.map(app => (
-                    <CandidateCard key={app._id} app={app} navigate={navigate} />
+                    <CandidateCard 
+                      key={app._id} 
+                      app={app} 
+                      navigate={navigate} 
+                      onAssign={handleAssignSingle}
+                    />
                   ))}
                 </TabPanel>
                 <TabPanel px="0" py="0">
