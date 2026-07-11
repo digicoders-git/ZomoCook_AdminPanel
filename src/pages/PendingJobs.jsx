@@ -113,9 +113,9 @@ const PendingJobs = () => {
           fetchedApps = appResponse.data.applications;
         }
 
-        // Sort by updated date descending
+        // Sort by created date descending
         const sortedJobs = fetchedJobs.sort((a, b) => {
-          return new Date(b.updatedAt || b.createdAt) - new Date(a.updatedAt || a.createdAt);
+          return new Date(b.createdAt) - new Date(a.createdAt);
         });
         
         // Compute counts on client-side dynamically and set default leadManager
