@@ -3,7 +3,7 @@ import {
   Modal, ModalOverlay, ModalContent, ModalHeader, ModalBody,
   ModalCloseButton, Box, Text, Flex, Avatar, Badge, Button,
   Spinner, VStack, HStack, Tabs, TabList, Tab, TabPanels, TabPanel,
-  useToast
+  useToast, Icon
 } from "@chakra-ui/react";
 import { User, MapPin, Phone, Briefcase, UserPlus, CheckCircle2, Info } from "lucide-react";
 import { useNavigate } from "react-router-dom";

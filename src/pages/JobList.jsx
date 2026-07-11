@@ -50,10 +50,14 @@ const JobList = () => {
   const { isOpen: isAssignOpen, onOpen: onAssignOpen, onClose: onAssignClose } = useDisclosure();
   const [selectedJob, setSelectedJob] = useState(null);
   const [jobs, setJobs] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [isSuperAdmin, setIsSuperAdmin] = useState(false);
+  const [adminId, setAdminId] = useState(null);
+  const [leadManagers, setLeadManagers] = useState([]);
+  const [customers, setCustomers] = useState([]);
   const [isLoading, setIsLoading] = useState(true);
   const [assignJob, setAssignJob] = useState(null);
   const [selectedLeadManager, setSelectedLeadManager] = useState('');
-  const [leadManagers, setLeadManagers] = useState([]);
   const [applicantsModalTab, setApplicantsModalTab] = useState(0);
 
   const token = localStorage.getItem('adminToken');
