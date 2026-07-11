@@ -59,11 +59,13 @@ const CandidateCVModal = ({ isOpen, onClose, candidateId, preloadedCandidate }) 
     try {
       const element = cvRef.current;
       const clonedElement = element.cloneNode(true);
+      clonedElement.style.position = 'absolute';
+      clonedElement.style.top = '-9999px';
+      clonedElement.style.left = '-9999px';
       document.body.appendChild(clonedElement);
       const canvas = await html2canvas(clonedElement, {
         scale: 2,
         useCORS: true,
-        allowTaint: true,
         backgroundColor: '#ffffff',
         logging: false,
         imageTimeout: 0,
@@ -87,11 +89,13 @@ const CandidateCVModal = ({ isOpen, onClose, candidateId, preloadedCandidate }) 
     try {
       const element = cvRef.current;
       const clonedElement = element.cloneNode(true);
+      clonedElement.style.position = 'absolute';
+      clonedElement.style.top = '-9999px';
+      clonedElement.style.left = '-9999px';
       document.body.appendChild(clonedElement);
       const canvas = await html2canvas(clonedElement, {
         scale: 1.5,
         useCORS: true,
-        allowTaint: true,
         backgroundColor: '#ffffff',
         logging: false,
         imageTimeout: 0,
