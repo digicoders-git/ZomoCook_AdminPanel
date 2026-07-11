@@ -1,5 +1,6 @@
 import React, { forwardRef, useState } from 'react';
 import { Box, Flex, Text, HStack, VStack, Image, Grid, Divider, Icon } from '@chakra-ui/react';
+import { MapPin, Phone, Mail } from 'lucide-react';
 
 const CandidateCVPreview = forwardRef(({ candidate }, ref) => {
   const [imgError, setImgError] = useState(false);
