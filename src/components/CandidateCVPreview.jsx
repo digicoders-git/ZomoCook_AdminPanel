@@ -1,6 +1,6 @@
 import React, { forwardRef, useState } from 'react';
 import { Box, Flex, Text, HStack, VStack, Image, Grid, Divider, Icon } from '@chakra-ui/react';
-import { MapPin, Phone, Mail } from 'lucide-react';
+import { MapPin, Phone, Mail, User } from 'lucide-react';
 
 const CandidateCVPreview = forwardRef(({ candidate }, ref) => {
   const [imgError, setImgError] = useState(false);
@@ -25,12 +25,10 @@ const CandidateCVPreview = forwardRef(({ candidate }, ref) => {
 
   const apiUrl = import.meta.env.VITE_API_URL || '';
   const apiBase = apiUrl.replace('/api', '');
-  
-  const placeholderBase64 = 'data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCAyNCAyNCIgZmlsbD0iI2QxZDVkYiI+PHBhdGggZD0iTTEyIDJhNSA1IDAgMSAwIDUgNSAgNSA1IDAgMCAwLTUtNXptMCA4YTMgMyAwIDEgMSAzLTMgIDMgMyAwIDAgMS0zIDN6bTkgMTF2LTFhNyA3IDAgMCAwLTctNyA3IDcgMCAwIDAtNyA3diFIM3YtMWE5IDkgMCAwIDEgOS05IDkgOSAwIDAgMSA5IDl2MXoiLz48L3N2Zz4=';
 
   const profileImageSrc = candidate.profileImage && !candidate.profileImage.includes('default') && !imgError
     ? `${apiBase}/${candidate.profileImage}` 
-    : placeholderBase64;
+    : null;
 
   const SectionHeading = ({ title }) => (
     <Box mt="6" mb="3">
@@ -203,16 +201,23 @@ const CandidateCVPreview = forwardRef(({ candidate }, ref) => {
               w="150px"
               h="150px"
               bg="white"
+              display="flex"
+              alignItems="center"
+              justifyContent="center"
             >
-              <Image 
-                src={profileImageSrc} 
-                alt={candidate.name} 
-                w="full" 
-                h="full" 
-                objectFit="cover" 
-                crossOrigin="anonymous"
-                onError={() => setImgError(true)}
-              />
+              {profileImageSrc ? (
+                <Image 
+                  src={profileImageSrc} 
+                  alt={candidate.name} 
+                  w="full" 
+                  h="full" 
+                  objectFit="cover" 
+                  crossOrigin="anonymous"
+                  onError={() => setImgError(true)}
+                />
+              ) : (
+                <Icon as={User} boxSize="80px" color="#cbd5e1" />
+              )}
             </Box>
           </Flex>
 
