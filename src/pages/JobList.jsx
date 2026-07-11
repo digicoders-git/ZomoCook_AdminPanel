@@ -95,11 +95,11 @@ const JobList = () => {
 
   const fetchJobs = async () => {
     try {
-      const response = await axios.get(`${API_BASE_URL}/jobs`, {
+      const response = await axios.get(`${API_BASE_URL}/jobs?_t=${Date.now()}`, {
         headers: { 'Authorization': `Bearer ${token}` }
       });
 
-      const appResponse = await axios.get(`${API_BASE_URL}/candidates/applications`, {
+      const appResponse = await axios.get(`${API_BASE_URL}/candidates/applications?_t=${Date.now()}`, {
         headers: { 'Authorization': `Bearer ${token}` }
       });
 
@@ -111,9 +111,9 @@ const JobList = () => {
           fetchedApps = appResponse.data.applications;
         }
 
-        // Sort by created date descending
+        // Sort by updated date descending so recently modified jobs appear at the top
         const sortedJobs = fetchedJobs.sort((a, b) => {
-          return new Date(b.createdAt) - new Date(a.createdAt);
+          return new Date(b.updatedAt || b.createdAt) - new Date(a.updatedAt || a.createdAt);
         });
         
         // Compute counts on client-side dynamically and set default leadManager
