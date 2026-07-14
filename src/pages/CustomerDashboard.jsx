@@ -322,6 +322,66 @@ const CustomerDashboard = () => {
               </Box>
             </TabPanel>
 
+            {/* Hired Candidates Tab */}
+            <TabPanel p="0">
+              <Box bg="white" borderRadius="xl" border="1px solid #e2e8f0" overflowX="auto">
+                <Table variant="simple" size="sm">
+                  <Thead bg="#f8fafc">
+                    <Tr>
+                      <Th py="4" color="#64748b">Candidate Name</Th>
+                      <Th py="4" color="#64748b">Phone</Th>
+                      <Th py="4" color="#64748b">Job Title</Th>
+                      <Th py="4" color="#64748b">Hired On</Th>
+                    </Tr>
+                  </Thead>
+                  <Tbody>
+                    {hiredCandidates.length === 0 ? (
+                      <Tr><Td colSpan={4} textAlign="center" py="6" color="#94a3b8">No hired candidates.</Td></Tr>
+                    ) : hiredCandidates.map(app => (
+                      <Tr key={app._id}>
+                        <Td py="3" fontSize="sm" fontWeight="700" color="#1e293b">{app.candidate?.name || 'N/A'}</Td>
+                        <Td py="3" fontSize="sm" color="#64748b">{app.candidate?.phone || 'N/A'}</Td>
+                        <Td py="3" fontSize="sm" color="#64748b">{app.job?.title || 'N/A'}</Td>
+                        <Td py="3" fontSize="sm" color="#64748b">{formatDate(app.updatedAt)}</Td>
+                      </Tr>
+                    ))}
+                  </Tbody>
+                </Table>
+              </Box>
+            </TabPanel>
+
+            {/* Demo Scheduled Tab */}
+            <TabPanel p="0">
+              <Box bg="white" borderRadius="xl" border="1px solid #e2e8f0" overflowX="auto">
+                <Table variant="simple" size="sm">
+                  <Thead bg="#f8fafc">
+                    <Tr>
+                      <Th py="4" color="#64748b">Candidate Name</Th>
+                      <Th py="4" color="#64748b">Job Title</Th>
+                      <Th py="4" color="#64748b">Demo Date</Th>
+                      <Th py="4" color="#64748b">Demo Time</Th>
+                      <Th py="4" color="#64748b">Meeting Link</Th>
+                    </Tr>
+                  </Thead>
+                  <Tbody>
+                    {demoScheduled.length === 0 ? (
+                      <Tr><Td colSpan={5} textAlign="center" py="6" color="#94a3b8">No demos scheduled.</Td></Tr>
+                    ) : demoScheduled.map(app => (
+                      <Tr key={app._id}>
+                        <Td py="3" fontSize="sm" fontWeight="700" color="#1e293b">{app.candidate?.name || 'N/A'}</Td>
+                        <Td py="3" fontSize="sm" color="#64748b">{app.job?.title || 'N/A'}</Td>
+                        <Td py="3" fontSize="sm" color="#64748b">{formatDate(app.demoDate)}</Td>
+                        <Td py="3" fontSize="sm" color="#64748b">{app.demoTime || 'N/A'}</Td>
+                        <Td py="3" fontSize="sm" color="blue.500">
+                          {app.meetingLink ? <a href={app.meetingLink} target="_blank" rel="noreferrer">Join Meet</a> : 'N/A'}
+                        </Td>
+                      </Tr>
+                    ))}
+                  </Tbody>
+                </Table>
+              </Box>
+            </TabPanel>
+
             {/* Transactions Tab */}
             <TabPanel p="0">
               <Box bg="white" borderRadius="xl" border="1px solid #e2e8f0" overflowX="auto">
@@ -352,14 +412,70 @@ const CustomerDashboard = () => {
               </Box>
             </TabPanel>
 
-            {/* Other Tabs Placeholder */}
-            {['Hired Candidates', 'Demo Scheduled', 'Bookings', 'Blocked History', 'Activity Log'].map((_, idx) => (
-              <TabPanel key={idx + 2} p="0">
-                <Flex justify="center" align="center" h="200px" bg="white" borderRadius="xl" border="1px solid #e2e8f0">
-                  <Text color="#94a3b8" fontWeight="600">Data for this section will be populated here.</Text>
-                </Flex>
-              </TabPanel>
-            ))}
+            {/* Bookings Tab */}
+            <TabPanel p="0">
+              <Box bg="white" borderRadius="xl" border="1px solid #e2e8f0" overflowX="auto">
+                <Table variant="simple" size="sm">
+                  <Thead bg="#f8fafc">
+                    <Tr>
+                      <Th py="4" color="#64748b">Booked Cook</Th>
+                      <Th py="4" color="#64748b">Job Title</Th>
+                      <Th py="4" color="#64748b">Booking Status</Th>
+                      <Th py="4" color="#64748b">Booked On</Th>
+                    </Tr>
+                  </Thead>
+                  <Tbody>
+                    {bookings.length === 0 ? (
+                      <Tr><Td colSpan={4} textAlign="center" py="6" color="#94a3b8">No bookings found.</Td></Tr>
+                    ) : bookings.map(b => (
+                      <Tr key={b._id}>
+                        <Td py="3" fontSize="sm" fontWeight="700" color="#1e293b">{b.cook?.name || 'N/A'}</Td>
+                        <Td py="3" fontSize="sm" color="#64748b">{b.job?.title || 'N/A'}</Td>
+                        <Td py="3" fontSize="sm" color="#64748b">
+                          <Badge colorScheme={b.status === 'confirmed' ? 'green' : 'orange'} borderRadius="full" px="2">{b.status}</Badge>
+                        </Td>
+                        <Td py="3" fontSize="sm" color="#64748b">{formatDate(b.createdAt)}</Td>
+                      </Tr>
+                    ))}
+                  </Tbody>
+                </Table>
+              </Box>
+            </TabPanel>
+
+            {/* Blocked History Tab */}
+            <TabPanel p="0">
+              <Flex justify="center" align="center" h="200px" bg="white" borderRadius="xl" border="1px solid #e2e8f0">
+                <Text color="#94a3b8" fontWeight="600">No blocked history found.</Text>
+              </Flex>
+            </TabPanel>
+
+            {/* Activity Log Tab */}
+            <TabPanel p="0">
+              <Box bg="white" p="5" borderRadius="xl" border="1px solid #e2e8f0">
+                {recentActivity.length === 0 ? (
+                  <Text fontSize="sm" color="#94a3b8">No activity log found.</Text>
+                ) : (
+                  <VStack align="stretch" spacing="4" position="relative" pl="2">
+                    <Box position="absolute" left="15px" top="10px" bottom="10px" w="2px" bg="#e2e8f0" zIndex="0" />
+                    {recentActivity.map((activity, idx) => (
+                      <Flex key={idx} position="relative" zIndex="1" gap="4">
+                        <Box w="10px" h="10px" borderRadius="full" bg={BRAND} mt="1.5" outline="4px solid white" />
+                        <Box>
+                          <Text fontSize="sm" fontWeight="700" color="#1e293b">
+                            {activity.type === 'job_posted' && `New job posted - ${activity.details.title}`}
+                            {activity.type === 'candidate_hired' && `Candidate ${activity.details.candidate?.name || ''} hired`}
+                            {activity.type === 'demo_scheduled' && `Demo scheduled with ${activity.details.candidate?.name || ''}`}
+                            {activity.type === 'payment_received' && `Payment received ₹${activity.details.amount}`}
+                            {activity.type === 'package_renewed' && `Package active - ${activity.details.plan?.name}`}
+                          </Text>
+                          <Text fontSize="xs" color="#64748b" mt="0.5">{formatDateTime(activity.date)}</Text>
+                        </Box>
+                      </Flex>
+                    ))}
+                  </VStack>
+                )}
+              </Box>
+            </TabPanel>
 
           </TabPanels>
         </Tabs>
