@@ -174,7 +174,8 @@ const JobApplicantsModal = ({ isOpen, onClose, jobId, jobTitle, initialTab = 0 }
       fetchApplications();
     } catch (err) {
       console.error("Error updating status:", err);
-      toast({ title: "Error", description: "Failed to update candidate status.", status: "error", duration: 3000 });
+      const errorMsg = err.response?.data?.message || "Failed to update candidate status.";
+      toast({ title: "Error", description: errorMsg, status: "error", duration: 5000, isClosable: true });
     } finally {
       setAssigning(false);
     }
