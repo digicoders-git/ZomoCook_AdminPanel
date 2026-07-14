@@ -27,7 +27,7 @@ const getStatusColorScheme = (s) => {
   return "red";
 };
 
-const CandidateCard = ({ app, navigate, selectable, isSelected, onToggleSelect, onAssign }) => {
+const CandidateCard = ({ app, navigate, selectable, isSelected, onToggleSelect, onUpdateStatus }) => {
   const candidate = app.candidate || {};
   const imageUrl = candidate.profileImage
     ? (candidate.profileImage.startsWith("http") ? candidate.profileImage : `${UPLOAD_BASE}/${candidate.profileImage}`)
@@ -91,22 +91,20 @@ const CandidateCard = ({ app, navigate, selectable, isSelected, onToggleSelect, 
         <HStack spacing="3" flexShrink="0" ml="auto">
           <Text fontSize="sm" color={BRAND} fontWeight="700" cursor="pointer" onClick={(e) => { e.stopPropagation(); navigate(`/candidates/view/${candidate._id}`); }}>View</Text>
           
-          {(app.status === "Applied" || app.status === "Shortlisted") && (
-            <Text fontSize="sm" color="#cbd5e1">|</Text>
+          {onUpdateStatus && app.status === "Applied" && (
+            <>
+              <Text fontSize="sm" color="#cbd5e1">|</Text>
+              <Text fontSize="sm" color="green.600" fontWeight="700" cursor="pointer" onClick={(e) => { e.stopPropagation(); onUpdateStatus(app._id, "Shortlisted"); }}>Shortlist</Text>
+              <Text fontSize="sm" color="red.500" fontWeight="700" cursor="pointer" onClick={(e) => { e.stopPropagation(); onUpdateStatus(app._id, "Rejected"); }}>Reject</Text>
+            </>
           )}
 
-          {app.status === "Applied" && (
-            <HStack spacing="1" cursor="pointer" color={BRAND} onClick={(e) => { e.stopPropagation(); onAssign && onAssign(app._id); }}>
-              <Text fontSize="sm" fontWeight="700">Assign</Text>
-              <Icon as={UserPlus} size={16} />
-            </HStack>
-          )}
-          
-          {app.status === "Shortlisted" && (
-            <HStack spacing="1" color="green.600">
-              <Icon as={CheckCircle2} size={16} />
-              <Text fontSize="sm" fontWeight="700">Assigned</Text>
-            </HStack>
+          {onUpdateStatus && ["Shortlisted", "Demo Scheduled", "Reschedule Requested"].includes(app.status) && (
+            <>
+              <Text fontSize="sm" color="#cbd5e1">|</Text>
+              <Text fontSize="sm" color="green.600" fontWeight="700" cursor="pointer" onClick={(e) => { e.stopPropagation(); onUpdateStatus(app._id, "Hired"); }}>Hire</Text>
+              <Text fontSize="sm" color="red.500" fontWeight="700" cursor="pointer" onClick={(e) => { e.stopPropagation(); onUpdateStatus(app._id, "Rejected"); }}>Reject</Text>
+            </>
           )}
         </HStack>
       </Flex>
@@ -159,19 +157,24 @@ const JobApplicantsModal = ({ isOpen, onClose, jobId, jobTitle, initialTab = 0 }
     );
   };
 
-  const handleAssignSingle = async (appId) => {
+  const handleUpdateStatus = async (appId, status) => {
     setAssigning(true);
     try {
       const token = localStorage.getItem("adminToken");
       await axios.patch(`${API_BASE_URL}/applications/${appId}/status`, 
-        { status: "Shortlisted" },
+        { status },
         { headers: { Authorization: `Bearer ${token}` } }
       );
-      toast({ title: "Assigned!", description: "Candidate moved to Shortlisted.", status: "success", duration: 3000 });
+      toast({ 
+        title: status === "Shortlisted" ? "Shortlisted!" : (status === "Hired" ? "Hired!" : "Rejected!"), 
+        description: `Candidate status updated to ${status}.`, 
+        status: "success", 
+        duration: 3000 
+      });
       fetchApplications();
     } catch (err) {
-      console.error("Error assigning applicant:", err);
-      toast({ title: "Error", description: "Failed to assign candidate.", status: "error", duration: 3000 });
+      console.error("Error updating status:", err);
+      toast({ title: "Error", description: "Failed to update candidate status.", status: "error", duration: 3000 });
     } finally {
       setAssigning(false);
     }
@@ -259,14 +262,14 @@ const JobApplicantsModal = ({ isOpen, onClose, jobId, jobTitle, initialTab = 0 }
                       key={app._id} 
                       app={app} 
                       navigate={navigate} 
-                      onAssign={handleAssignSingle}
+                      onUpdateStatus={handleUpdateStatus}
                     />
                   ))}
                   {applied.length > 0 && (
                     <Box mt="2" p="3" bg="#eff6ff" borderRadius="md" border="1px solid" borderColor="#bfdbfe" display="flex" alignItems="center" gap="2">
                       <Icon as={Info} size={16} color="#3b82f6" />
                       <Text fontSize="sm" color="#1e40af" fontWeight="500">
-                        Assigned candidate will now appear in Shortlisted tab.
+                        Assigned candidates will appear in the Shortlisted tab.
                       </Text>
                     </Box>
                   )}
@@ -277,7 +280,7 @@ const JobApplicantsModal = ({ isOpen, onClose, jobId, jobTitle, initialTab = 0 }
                       key={app._id} 
                       app={app} 
                       navigate={navigate} 
-                      onAssign={handleAssignSingle}
+                      onUpdateStatus={handleUpdateStatus}
                     />
                   ))}
                 </TabPanel>

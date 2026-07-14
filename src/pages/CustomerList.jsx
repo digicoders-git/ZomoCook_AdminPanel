@@ -77,14 +77,14 @@ const CustomerList = () => {
   // Filter and Paginate Data
   const filteredCustomers = customers.filter(customer => {
     const matchesSearch =
-      customer.name.toLowerCase().includes(search.toLowerCase()) ||
-      customer.email.toLowerCase().includes(search.toLowerCase()) ||
-      customer.contactPhone.includes(search);
+      (customer.name || '').toLowerCase().includes(search.toLowerCase()) ||
+      (customer.email || '').toLowerCase().includes(search.toLowerCase()) ||
+      (customer.contactPhone || '').includes(search);
 
     const matchesCategory = !filters.category || customer.propertyCategory === filters.category;
     const matchesNamePhone = !filters.namePhone ||
-      customer.name.toLowerCase().includes(filters.namePhone.toLowerCase()) ||
-      customer.contactPhone.includes(filters.namePhone);
+      (customer.name || '').toLowerCase().includes(filters.namePhone.toLowerCase()) ||
+      (customer.contactPhone || '').includes(filters.namePhone);
     const matchesStatus = !filters.status || customer.accountStatus === filters.status;
 
     return matchesSearch && matchesCategory && matchesNamePhone && matchesStatus;

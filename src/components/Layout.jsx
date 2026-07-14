@@ -336,16 +336,54 @@ const SidebarContent = ({ isCollapsed, onClose, onLogoutOpen, ...rest }) => (
             // If user has full system access, grant access to everything
             if (userPermissions.includes('global:full_access')) return true;
 
+            const checkPermission = (permToCheck) => {
+              if (!permToCheck) return false;
+              if (userPermissions.includes(permToCheck)) return true;
+
+              // Legacy normalization mapping
+              const mapping = {
+                'dashboard:view': ['Dashboard', 'dashboard'],
+                'customer_client:view': ['Customer/Client', 'Customer/Client List', 'Customer List', 'customer_client'],
+                'customer_client:add': ['Add Customer/Client', 'Add Customer', 'customer_client'],
+                'customer_client:edit': ['Edit Customer', 'customer_client'],
+                'job_management:view': ['Jobs', 'Job List', 'Pending Jobs', 'job_management'],
+                'job_management:add': ['Add Job', 'job_management'],
+                'candidates:view': ['Candidates', 'Candidate List', 'All Applications', 'Applied Candidates List', 'Shortlisted Candidate List', 'candidates'],
+                'candidates:add': ['Add Candidate', 'candidates'],
+                'service_packages:view': ['Subscription Plans', 'Plan List', 'Subscription History', 'service_packages'],
+                'service_packages:add': ['Add Plan', 'service_packages'],
+                'offer_management:view': ['Offers', 'offer_management'],
+                'banner_management:view': ['Banners', 'banner_management'],
+                'cook_approvals:view': ['Cook Approvals', 'cook_approvals'],
+                'notifications:view': ['Notifications', 'Notification List', 'notifications'],
+                'notifications:add': ['Add Notification', 'notifications'],
+                'query_management:view': ['Query History', 'query_management'],
+                'finance_revenue:view': ['Finance / Revenue', 'finance_revenue'],
+                'role_permission:view': ['Roles & Permissions', 'User List', 'role_permission'],
+                'role_permission:add': ['Add Role', 'Add User', 'role_permission'],
+                'role_permission:manage': ['Manage Roles', 'role_permission'],
+                'masters:view': ['Masters', 'masters'],
+                'settings:view': ['Web Settings', 'settings']
+              };
+
+              const legacyNames = mapping[permToCheck];
+              if (legacyNames) {
+                return legacyNames.some(name => 
+                  userPermissions.includes(name) || 
+                  userPermissions.some(up => String(up).toLowerCase() === name.toLowerCase())
+                );
+              }
+              return false;
+            };
+
             // Check direct permission
-            if (navItem.permission && userPermissions.includes(navItem.permission)) return true;
+            if (navItem.permission && checkPermission(navItem.permission)) return true;
 
             // Check if any child has permission
             if (navItem.children) {
               return navItem.children.some(child => hasAccess(child));
             }
 
-            // If no permission specified, it might be public or dependent on others
-            // For now, if no permission is set, we can decide to show or hide
             return false;
           };
 

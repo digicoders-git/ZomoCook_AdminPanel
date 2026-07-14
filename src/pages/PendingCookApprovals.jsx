@@ -221,7 +221,7 @@ const PendingCookApprovals = () => {
                         color="#f59e0b"
                         border="1px solid #fcd34d"
                       >
-                        ⏳ Pending
+                        Pending
                       </Badge>
                     </Td>
                     <Td py="4" px="4" border="1px solid #e8edf5" textAlign="center">

@@ -5,7 +5,7 @@ import {
   IconButton, Spinner, useToast, Checkbox, Icon, Divider, Tab, TabList, Tabs, TabPanels, TabPanel,
   Menu, MenuButton, MenuList, MenuItem
 } from '@chakra-ui/react';
-import { Search, Plus, MoreVertical, Copy, Edit, Check, X, Minus, Users } from 'lucide-react';
+import { Search, Plus, MoreVertical, Copy, Edit, Check, X, Minus, Users, Award } from 'lucide-react';
 import axios from 'axios';
 import API_BASE_URL from '../apiConfig';
 import { useNavigate } from 'react-router-dom';
@@ -96,7 +96,43 @@ export default function RolePermissionManagement() {
   };
 
   const hasPermission = (moduleId, actionId) => {
-    return localPermissions.includes(`${moduleId}:${actionId}`);
+    const permString = `${moduleId}:${actionId}`;
+    if (localPermissions.includes(permString)) return true;
+
+    // Normalization mapping for legacy formats
+    const mapping = {
+      'dashboard:view': ['Dashboard', 'dashboard'],
+      'customer_client:view': ['Customer/Client', 'Customer/Client List', 'Customer List', 'customer_client'],
+      'customer_client:add': ['Add Customer/Client', 'Add Customer', 'customer_client'],
+      'customer_client:edit': ['Edit Customer', 'customer_client'],
+      'job_management:view': ['Jobs', 'Job List', 'Pending Jobs', 'job_management'],
+      'job_management:add': ['Add Job', 'job_management'],
+      'candidates:view': ['Candidates', 'Candidate List', 'All Applications', 'Applied Candidates List', 'Shortlisted Candidate List', 'candidates'],
+      'candidates:add': ['Add Candidate', 'candidates'],
+      'service_packages:view': ['Subscription Plans', 'Plan List', 'Subscription History', 'service_packages'],
+      'service_packages:add': ['Add Plan', 'service_packages'],
+      'offer_management:view': ['Offers', 'offer_management'],
+      'banner_management:view': ['Banners', 'banner_management'],
+      'cook_approvals:view': ['Cook Approvals', 'cook_approvals'],
+      'notifications:view': ['Notifications', 'Notification List', 'notifications'],
+      'notifications:add': ['Add Notification', 'notifications'],
+      'query_management:view': ['Query History', 'query_management'],
+      'finance_revenue:view': ['Finance / Revenue', 'finance_revenue'],
+      'role_permission:view': ['Roles & Permissions', 'User List', 'role_permission'],
+      'role_permission:add': ['Add Role', 'Add User', 'role_permission'],
+      'role_permission:manage': ['Manage Roles', 'role_permission'],
+      'masters:view': ['Masters', 'masters'],
+      'settings:view': ['Web Settings', 'settings']
+    };
+
+    const legacyNames = mapping[permString];
+    if (legacyNames) {
+      return legacyNames.some(name => 
+        localPermissions.includes(name) || 
+        localPermissions.some(up => String(up).toLowerCase() === name.toLowerCase())
+      );
+    }
+    return false;
   };
 
   const savePermissions = async () => {
@@ -172,7 +208,7 @@ export default function RolePermissionManagement() {
                   <Box>
                     <Flex align="center" gap="2">
                       <Text fontSize="sm" fontWeight="700" color={isSelected ? '#004aad' : '#1e293b'}>{role.name}</Text>
-                      {role.name === 'Super Admin' && <Text fontSize="sm">👑</Text>}
+                      {role.name === 'Super Admin' && <Icon as={Award} color="#f59e0b" size={14} />}
                     </Flex>
                     <Text fontSize="xs" fontWeight="500" color="#64748b" mt="1">{role.userCount || 0} User{role.userCount !== 1 ? 's' : ''}</Text>
                   </Box>

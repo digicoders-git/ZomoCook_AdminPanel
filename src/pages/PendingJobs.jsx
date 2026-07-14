@@ -7,7 +7,7 @@ import {
   Modal, ModalOverlay, ModalContent, ModalHeader, ModalFooter, ModalBody, ModalCloseButton,
   Tooltip
 } from '@chakra-ui/react';
-import { Plus, Filter, Edit3, RotateCcw, Search, Eye, ChevronDown, Users, Trash2, Calendar, UserPlus, Send, Check } from 'lucide-react';
+import { Plus, Filter, Edit3, RotateCcw, Search, Eye, ChevronDown, Users, Trash2, Calendar, UserPlus, Send, Check, Printer } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import {
   PageHeader, PageFooter, BRAND, ACCENT, TableCard, TableControls,
@@ -43,6 +43,271 @@ const customTdStyle = {
 };
 
 const PendingJobs = () => {
+  const formatDateTime = (dateStr) => {
+    if (!dateStr) return 'N/A';
+    const date = new Date(dateStr);
+    return date.toLocaleString('en-GB', {
+      day: '2-digit',
+      month: 'short',
+      year: 'numeric',
+      hour: '2-digit',
+      minute: '2-digit',
+      hour12: true
+    });
+  };
+  const handlePrintReceipt = (job) => {
+    const receiptWindow = window.open('', '_blank', 'width=800,height=600');
+    
+    // Determine amount based on category/settings
+    const jobCat = String(job.jobCategory || '').toLowerCase();
+    let amount = '₹299';
+    if (jobCat === 'daily') {
+      amount = '25% Advance';
+    }
+    
+    const htmlContent = `
+      <html>
+        <head>
+          <title>Payment Receipt - ${job.jobCode || 'Receipt'}</title>
+          <style>
+            body {
+              font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+              color: #1e293b;
+              margin: 0;
+              padding: 40px;
+              line-height: 1.5;
+              position: relative;
+            }
+            /* Watermark style */
+            .watermark {
+              position: absolute;
+              top: 50%;
+              left: 50%;
+              transform: translate(-50%, -50%) rotate(-30deg);
+              width: 350px;
+              height: 350px;
+              opacity: 0.04;
+              pointer-events: none;
+              background-image: url('/logo.png');
+              background-size: contain;
+              background-repeat: no-repeat;
+              background-position: center;
+              z-index: -1;
+            }
+            .receipt-container {
+              max-width: 700px;
+              margin: 0 auto;
+              border: 1px solid #e2e8f0;
+              border-radius: 12px;
+              padding: 30px;
+              box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05);
+              background: rgba(255, 255, 255, 0.95);
+              position: relative;
+            }
+            .header {
+              display: flex;
+              justify-content: space-between;
+              align-items: center;
+              border-bottom: 2px solid #f1f5f9;
+              padding-bottom: 20px;
+              margin-bottom: 30px;
+            }
+            .logo-container {
+              display: flex;
+              align-items: center;
+              gap: 12px;
+            }
+            .logo-img {
+              height: 50px;
+              width: auto;
+            }
+            .logo-text {
+              font-size: 24px;
+              font-weight: 800;
+              color: #004aad;
+            }
+            .receipt-title {
+              font-size: 18px;
+              font-weight: 700;
+              color: #64748b;
+              text-transform: uppercase;
+              letter-spacing: 1px;
+            }
+            .meta-section {
+              display: flex;
+              justify-content: space-between;
+              margin-bottom: 30px;
+            }
+            .meta-block h4 {
+              margin: 0 0 8px 0;
+              color: #94a3b8;
+              font-size: 11px;
+              text-transform: uppercase;
+              letter-spacing: 0.5px;
+            }
+            .meta-block p {
+              margin: 0;
+              font-weight: 600;
+              font-size: 14px;
+            }
+            .details-table {
+              width: 100%;
+              border-collapse: collapse;
+              margin-bottom: 30px;
+            }
+            .details-table th {
+              background: #f8fafc;
+              text-align: left;
+              padding: 12px;
+              font-size: 11px;
+              font-weight: 700;
+              text-transform: uppercase;
+              color: #64748b;
+              border-bottom: 1px solid #e2e8f0;
+            }
+            .details-table td {
+              padding: 15px 12px;
+              font-size: 13px;
+              border-bottom: 1px solid #f1f5f9;
+            }
+            .amount-section {
+              display: flex;
+              justify-content: flex-end;
+              border-top: 2px solid #f1f5f9;
+              padding-top: 20px;
+              margin-top: 20px;
+            }
+            .amount-box {
+              text-align: right;
+              min-width: 200px;
+            }
+            .amount-row {
+              display: flex;
+              justify-content: space-between;
+              margin-bottom: 8px;
+              font-size: 13px;
+            }
+            .amount-row.total {
+              font-size: 18px;
+              font-weight: 800;
+              color: #004aad;
+              margin-top: 10px;
+              border-top: 1px solid #e2e8f0;
+              padding-top: 10px;
+            }
+            .badge-paid {
+              display: inline-block;
+              background: #dcfce7;
+              color: #16a34a;
+              font-weight: 700;
+              font-size: 12px;
+              padding: 4px 12px;
+              border-radius: 9999px;
+              text-transform: uppercase;
+            }
+            .footer {
+              text-align: center;
+              margin-top: 50px;
+              font-size: 11px;
+              color: #94a3b8;
+              border-top: 1px solid #f1f5f9;
+              padding-top: 20px;
+            }
+            @media print {
+              body { padding: 0; }
+              .receipt-container { box-shadow: none; border: none; background: transparent; }
+              .watermark { opacity: 0.05 !important; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+            }
+          </style>
+        </head>
+        <body>
+          <div class="receipt-container">
+            <!-- Watermark -->
+            <div class="watermark"></div>
+
+            <div class="header">
+              <div class="logo-container">
+                <img class="logo-img" src="/logo.png" alt="ZomoCook Logo" />
+                <span class="logo-text">ZomoCook</span>
+              </div>
+              <div class="receipt-title">Payment Receipt</div>
+            </div>
+            
+            <div class="meta-section">
+              <div class="meta-block">
+                <h4>Receipt No</h4>
+                <p>ZOMOPAY-${job._id.slice(-8).toUpperCase()}</p>
+              </div>
+              <div class="meta-block">
+                <h4>Date</h4>
+                <p>${new Date(job.createdAt).toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' })}</p>
+              </div>
+              <div class="meta-block">
+                <h4>Payment Status</h4>
+                <p><span class="badge-paid">Paid</span></p>
+              </div>
+            </div>
+
+            <div class="meta-section" style="margin-top: -10px; border-bottom: 1px solid #f1f5f9; padding-bottom: 20px;">
+              <div class="meta-block">
+                <h4>Billed To</h4>
+                <p style="font-size: 14px; font-weight: 700;">${job.customer?.name || 'Customer'}</p>
+                <p style="font-size: 12px; color: #64748b; font-weight: 500; margin-top: 4px;">Phone: ${job.customer?.contactPhone || 'N/A'}</p>
+                <p style="font-size: 12px; color: #64748b; font-weight: 500;">Email: ${job.customer?.email || 'N/A'}</p>
+              </div>
+            </div>
+
+            <table class="details-table">
+              <thead>
+                <tr>
+                  <th>Job Code</th>
+                  <th>Job Category</th>
+                  <th>Job Position</th>
+                  <th>Location</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr>
+                  <td style="font-weight: 700; color: #004aad;">${job.jobCode || 'N/A'}</td>
+                  <td style="text-transform: capitalize;">${job.jobCategory || 'N/A'}</td>
+                  <td>${job.jobPosition || 'N/A'}</td>
+                  <td>${job.city || 'N/A'}, ${job.state || 'N/A'}</td>
+                </tr>
+              </tbody>
+            </table>
+
+            <div class="amount-section">
+              <div class="amount-box">
+                <div class="amount-row">
+                  <span style="color: #64748b;">Job Posting Fee</span>
+                  <span style="font-weight: 600;">${amount}</span>
+                </div>
+                <div class="amount-row total">
+                  <span>Total Paid</span>
+                  <span>${amount}</span>
+                </div>
+              </div>
+            </div>
+
+            <div class="footer">
+              Thank you for choosing ZomoCook. If you have any questions, please contact support.
+            </div>
+          </div>
+          <script>
+            window.onload = function() {
+              setTimeout(function() {
+                window.print();
+                setTimeout(function() { window.close(); }, 500);
+              }, 300);
+            };
+          </script>
+        </body>
+      </html>
+    `;
+    
+    receiptWindow.document.write(htmlContent);
+    receiptWindow.document.close();
+  };
   const navigate = useNavigate();
   const toast = useToast();
   const { isOpen, onOpen, onClose } = useDisclosure();
@@ -55,6 +320,7 @@ const PendingJobs = () => {
   const [selectedLeadManager, setSelectedLeadManager] = useState('');
   const [leadManagers, setLeadManagers] = useState([]);
   const [customers, setCustomers] = useState([]);
+  const [paymentTab, setPaymentTab] = useState('pending'); // 'pending' or 'paid'
 
   const token = localStorage.getItem('adminToken');
   const adminData = JSON.parse(localStorage.getItem('adminData') || '{}');
@@ -481,7 +747,7 @@ const PendingJobs = () => {
     const matchesCity = !filters.city || job.city.toLowerCase() === filters.city.toLowerCase();
     const matchesStatus = !filters.status || (job.status || '').toLowerCase() === filters.status.toLowerCase();
     const matchesLeadManager = !filters.leadManager || job.leadManager === filters.leadManager;
-    const matchesPaymentStatus = (job.paymentStatus || '').toLowerCase() === 'pending';
+    const matchesPaymentStatus = (job.paymentStatus || '').toLowerCase() === paymentTab;
 
     // Date matching logic
     let matchesDate = true;
@@ -613,6 +879,42 @@ const PendingJobs = () => {
         </Flex>
       </Box>
 
+      {/* Payment Tab Switcher */}
+      <HStack spacing="4" mb="6">
+        <Button
+          size="sm"
+          borderRadius="full"
+          px="6"
+          h="38px"
+          bg={paymentTab === 'pending' ? '#0f62fe' : 'white'}
+          color={paymentTab === 'pending' ? 'white' : '#475569'}
+          border="1.5px solid"
+          borderColor={paymentTab === 'pending' ? '#0f62fe' : '#dde6f5'}
+          _hover={{ bg: paymentTab === 'pending' ? '#0043ce' : '#f8faff' }}
+          fontWeight="bold"
+          fontSize="xs"
+          onClick={() => { setPaymentTab('pending'); setCurrentPage(1); }}
+        >
+          Payment Pending
+        </Button>
+        <Button
+          size="sm"
+          borderRadius="full"
+          px="6"
+          h="38px"
+          bg={paymentTab === 'paid' ? '#0f62fe' : 'white'}
+          color={paymentTab === 'paid' ? 'white' : '#475569'}
+          border="1.5px solid"
+          borderColor={paymentTab === 'paid' ? '#0f62fe' : '#dde6f5'}
+          _hover={{ bg: paymentTab === 'paid' ? '#0043ce' : '#f8faff' }}
+          fontWeight="bold"
+          fontSize="xs"
+          onClick={() => { setPaymentTab('paid'); setCurrentPage(1); }}
+        >
+          Payment History (Paid)
+        </Button>
+      </HStack>
+
       {/* Table Section */}
       <TableCard>
         <TableControls
@@ -644,7 +946,7 @@ const PendingJobs = () => {
           <Table variant="simple" size="sm">
             <Thead>
               <Tr>
-                <Th {...darkThStyle} w="80px">Job ID</Th>
+                <Th {...darkThStyle} w="80px" position="sticky" left={0} zIndex={3} borderRight="1px solid #e8edf5">Job ID</Th>
                 <Th {...darkThStyle} w="100px">Category</Th>
                 <Th {...darkThStyle} w="120px">Department</Th>
                 <Th {...darkThStyle} w="100px">Customer</Th>
@@ -656,7 +958,7 @@ const PendingJobs = () => {
                 <Th {...darkThStyle} w="90px">Status</Th>
                 <Th {...darkThStyle} w="100px">Payment</Th>
                 {!isLeadManager && <Th {...darkThStyle} w="90px">Toggle Status</Th>}
-                <Th {...darkThStyle} w="100px">Created Date</Th>
+                <Th {...darkThStyle} w="100px">{paymentTab === 'paid' ? 'Payment Date' : 'Created Date'}</Th>
                 <Th {...darkThStyle} w="150px">Action</Th>
               </Tr>
             </Thead>
@@ -668,7 +970,7 @@ const PendingJobs = () => {
                 return (
                   <Tr key={row._id} _hover={{ bg: '#f8fafc' }} transition="background 0.1s">
                     {/* Job ID */}
-                    <Td {...customTdStyle} fontWeight="800" color="#0B1A30">
+                    <Td {...customTdStyle} fontWeight="800" color="#0B1A30" position="sticky" left={0} zIndex={1} bg="white" borderRight="1px solid #e8edf5">
                       {row.jobCode || 'N/A'}
                     </Td>
 
@@ -821,7 +1123,7 @@ const PendingJobs = () => {
                         fontWeight="700"
                         textTransform="capitalize"
                       >
-                        {row.paymentStatus === 'paid' ? '✅ Paid' : '⏳ Pending'}
+                        {row.paymentStatus === 'paid' ? 'Paid' : 'Pending'}
                       </Badge>
                     </Td>
 
@@ -843,105 +1145,158 @@ const PendingJobs = () => {
 
                     {/* Actions */}
                     <Td {...customTdStyle}>
-                      <HStack spacing="1" justify="center">
-                        {/* View - always visible */}
-                        <Tooltip label="View Details" hasArrow>
-                          <IconButton
-                            icon={<Eye size={15} />}
-                            size="xs"
-                            w="28px"
-                            h="28px"
-                            variant="ghost"
-                            color="#64748b"
-                            _hover={{ color: '#0f62fe', bg: '#f1f5f9' }}
-                            aria-label="View Details"
-                            onClick={() => navigate(`/jobs/view/${row._id}`)}
-                          />
-                        </Tooltip>
-
-                        {/* Assign Lead Manager - Admin only */}
-                        {!isLeadManager && (
-                          <Tooltip label="Assign Lead Manager" hasArrow>
+                      {paymentTab === 'paid' ? (
+                        <HStack spacing="1" justify="center">
+                          {/* View - always visible */}
+                          <Tooltip label="View Details" hasArrow>
                             <IconButton
-                              icon={<UserPlus size={15} />}
+                              icon={<Eye size={15} />}
                               size="xs"
                               w="28px"
                               h="28px"
                               variant="ghost"
                               color="#64748b"
                               _hover={{ color: '#0f62fe', bg: '#f1f5f9' }}
-                              aria-label="Edit Lead Manager"
-                              onClick={() => {
-                                setAssignJob(row);
-                                setSelectedLeadManager(row.leadManager || '');
-                                onAssignOpen();
-                              }}
+                              aria-label="View Details"
+                              onClick={() => navigate(`/jobs/view/${row._id}`)}
                             />
                           </Tooltip>
-                        )}
 
-                        {/* Mark as Paid - visible to all (Lead Manager can mark) */}
-                        <Tooltip label="Mark as Paid" hasArrow>
-                          <IconButton
-                            icon={<Check size={16} />}
-                            size="xs"
-                            w="28px"
-                            h="28px"
-                            variant="ghost"
-                            color="#64748b"
-                            _hover={{ color: '#10b981', bg: '#e6fcf5' }}
-                            aria-label="Mark as Paid"
-                            onClick={() => confirmMarkAsPaid(row)}
-                          />
-                        </Tooltip>
-
-                        {/* Resend Notification - visible to all */}
-                        <Tooltip label="Resend Notification" hasArrow>
-                          <IconButton
-                            icon={<Send size={14} />}
-                            size="xs"
-                            w="28px"
-                            h="28px"
-                            variant="ghost"
-                            color="#64748b"
-                            _hover={{ color: '#10b981', bg: '#e6fcf5' }}
-                            aria-label="Resend Notification"
-                            onClick={() => resendNotification(row._id)}
-                          />
-                        </Tooltip>
-
-                        {/* Edit - Admin only */}
-                        {!isLeadManager && (
-                          <Tooltip label="Edit Job" hasArrow>
+                          {/* Print Receipt - always visible for paid */}
+                          <Tooltip label="Print Receipt" hasArrow>
                             <IconButton
-                              icon={<Edit3 size={15} />}
+                              icon={<Printer size={15} />}
                               size="xs"
                               w="28px"
                               h="28px"
                               variant="ghost"
                               color="#64748b"
                               _hover={{ color: '#0f62fe', bg: '#f1f5f9' }}
-                              aria-label="Edit Job"
-                              onClick={() => navigate(`/jobs/edit/${row._id}`)}
+                              aria-label="Print Receipt"
+                              onClick={() => handlePrintReceipt(row)}
                             />
                           </Tooltip>
-                        )}
 
-                        {/* Delete - visible to all */}
-                        <Tooltip label={isLeadManager ? "Remove from my panel" : "Delete Job"} hasArrow>
-                          <IconButton
-                            icon={<Trash2 size={15} />}
-                            size="xs"
-                            w="28px"
-                            h="28px"
-                            variant="ghost"
-                            color="#ef4444"
-                            _hover={{ bg: '#fee2e2' }}
-                            aria-label="Delete Record"
-                            onClick={() => confirmDelete(row._id)}
-                          />
-                        </Tooltip>
-                      </HStack>
+                          {/* Delete - visible to all */}
+                          <Tooltip label={isLeadManager ? "Remove from my panel" : "Delete Job"} hasArrow>
+                            <IconButton
+                              icon={<Trash2 size={15} />}
+                              size="xs"
+                              w="28px"
+                              h="28px"
+                              variant="ghost"
+                              color="#ef4444"
+                              _hover={{ bg: '#fee2e2' }}
+                              aria-label="Delete Record"
+                              onClick={() => confirmDelete(row._id)}
+                            />
+                          </Tooltip>
+                        </HStack>
+                      ) : (
+                        <HStack spacing="1" justify="center">
+                          {/* View - always visible */}
+                          <Tooltip label="View Details" hasArrow>
+                            <IconButton
+                              icon={<Eye size={15} />}
+                              size="xs"
+                              w="28px"
+                              h="28px"
+                              variant="ghost"
+                              color="#64748b"
+                              _hover={{ color: '#0f62fe', bg: '#f1f5f9' }}
+                              aria-label="View Details"
+                              onClick={() => navigate(`/jobs/view/${row._id}`)}
+                            />
+                          </Tooltip>
+
+                          {/* Assign Lead Manager - Admin only */}
+                          {!isLeadManager && (
+                            <Tooltip label="Assign Lead Manager" hasArrow>
+                              <IconButton
+                                icon={<UserPlus size={15} />}
+                                size="xs"
+                                w="28px"
+                                h="28px"
+                                variant="ghost"
+                                color="#64748b"
+                                _hover={{ color: '#0f62fe', bg: '#f1f5f9' }}
+                                aria-label="Edit Lead Manager"
+                                onClick={() => {
+                                  setAssignJob(row);
+                                  setSelectedLeadManager(row.leadManager || '');
+                                  onAssignOpen();
+                                }}
+                              />
+                            </Tooltip>
+                          )}
+
+                          {/* Mark as Paid - visible to all (Lead Manager can mark) - only if pending */}
+                          {paymentTab !== 'paid' && (
+                            <Tooltip label="Mark as Paid" hasArrow>
+                              <IconButton
+                                icon={<Check size={16} />}
+                                size="xs"
+                                w="28px"
+                                h="28px"
+                                variant="ghost"
+                                color="#64748b"
+                                _hover={{ color: '#10b981', bg: '#e6fcf5' }}
+                                aria-label="Mark as Paid"
+                                onClick={() => confirmMarkAsPaid(row)}
+                              />
+                            </Tooltip>
+                          )}
+
+                          {/* Resend Notification - visible to all - only if pending */}
+                          {paymentTab !== 'paid' && (
+                            <Tooltip label="Resend Notification" hasArrow>
+                              <IconButton
+                                icon={<Send size={14} />}
+                                size="xs"
+                                w="28px"
+                                h="28px"
+                                variant="ghost"
+                                color="#64748b"
+                                _hover={{ color: '#10b981', bg: '#e6fcf5' }}
+                                aria-label="Resend Notification"
+                                onClick={() => resendNotification(row._id)}
+                              />
+                            </Tooltip>
+                          )}
+
+                          {/* Edit - Admin only */}
+                          {!isLeadManager && (
+                            <Tooltip label="Edit Job" hasArrow>
+                              <IconButton
+                                icon={<Edit3 size={15} />}
+                                size="xs"
+                                w="28px"
+                                h="28px"
+                                variant="ghost"
+                                color="#64748b"
+                                _hover={{ color: '#0f62fe', bg: '#f1f5f9' }}
+                                aria-label="Edit Job"
+                                onClick={() => navigate(`/jobs/edit/${row._id}`)}
+                              />
+                            </Tooltip>
+                          )}
+
+                          {/* Delete - visible to all */}
+                          <Tooltip label={isLeadManager ? "Remove from my panel" : "Delete Job"} hasArrow>
+                            <IconButton
+                              icon={<Trash2 size={15} />}
+                              size="xs"
+                              w="28px"
+                              h="28px"
+                              variant="ghost"
+                              color="#ef4444"
+                              _hover={{ bg: '#fee2e2' }}
+                              aria-label="Delete Record"
+                              onClick={() => confirmDelete(row._id)}
+                            />
+                          </Tooltip>
+                        </HStack>
+                      )}
                     </Td>
                   </Tr>
                 );

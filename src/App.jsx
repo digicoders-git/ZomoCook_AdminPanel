@@ -84,7 +84,48 @@ const PermissionRoute = ({ children, permission = null }) => {
   // 4. Check role permissions
   const userPermissions = adminData?.role?.permissions || [];
   if (userPermissions.includes('global:full_access')) return children;
-  if (userPermissions.includes(permission)) return children;
+
+  const checkPermission = (permToCheck) => {
+    if (!permToCheck) return true;
+    if (userPermissions.includes(permToCheck)) return true;
+
+    // Legacy normalization mapping
+    const mapping = {
+      'dashboard:view': ['Dashboard', 'dashboard'],
+      'customer_client:view': ['Customer/Client', 'Customer/Client List', 'Customer List', 'customer_client'],
+      'customer_client:add': ['Add Customer/Client', 'Add Customer', 'customer_client'],
+      'customer_client:edit': ['Edit Customer', 'customer_client'],
+      'job_management:view': ['Jobs', 'Job List', 'Pending Jobs', 'job_management'],
+      'job_management:add': ['Add Job', 'job_management'],
+      'candidates:view': ['Candidates', 'Candidate List', 'All Applications', 'Applied Candidates List', 'Shortlisted Candidate List', 'candidates'],
+      'candidates:add': ['Add Candidate', 'candidates'],
+      'service_packages:view': ['Subscription Plans', 'Plan List', 'Subscription History', 'service_packages'],
+      'service_packages:add': ['Add Plan', 'service_packages'],
+      'offer_management:view': ['Offers', 'offer_management'],
+      'banner_management:view': ['Banners', 'banner_management'],
+      'cook_approvals:view': ['Cook Approvals', 'cook_approvals'],
+      'notifications:view': ['Notifications', 'Notification List', 'notifications'],
+      'notifications:add': ['Add Notification', 'notifications'],
+      'query_management:view': ['Query History', 'query_management'],
+      'finance_revenue:view': ['Finance / Revenue', 'finance_revenue'],
+      'role_permission:view': ['Roles & Permissions', 'User List', 'role_permission'],
+      'role_permission:add': ['Add Role', 'Add User', 'role_permission'],
+      'role_permission:manage': ['Manage Roles', 'role_permission'],
+      'masters:view': ['Masters', 'masters'],
+      'settings:view': ['Web Settings', 'settings']
+    };
+
+    const legacyNames = mapping[permToCheck];
+    if (legacyNames) {
+      return legacyNames.some(name => 
+        userPermissions.includes(name) || 
+        userPermissions.some(up => String(up).toLowerCase() === name.toLowerCase())
+      );
+    }
+    return false;
+  };
+
+  if (checkPermission(permission)) return children;
 
   // 5. Permission denied → show 403
   return <Navigate to="/unauthorized" replace />;
@@ -332,7 +373,7 @@ function App() {
             <Layout><EditPlan /></Layout>
           </PermissionRoute>
         } />
-        <Route path="/subscriptions/list" element={
+        <Route path="/plans/subscriptions" element={
           <PermissionRoute permission="service_packages:view">
             <Layout><SubscriptionList /></Layout>
           </PermissionRoute>
