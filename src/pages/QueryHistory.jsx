@@ -81,15 +81,18 @@ const QueryHistory = () => {
       ]);
 
       if (queriesRes.data.success) {
-        const mappedQueries = queriesRes.data.queries.map(q => ({
-          ...q,
-          category: q.category || (Math.random() > 0.5 ? 'Candidate' : 'Customer'),
-          profileInitials: q.name ? q.name.split(' ').map(n => n[0]).join('').substring(0, 2).toUpperCase() : 'U',
-          profileBg: q.category === 'Customer' ? 'green.500' : 'blue.500',
-          statusMock: q.status || 'New',
-          assignedToName: q.assignedToName || (q.assignedTo ? q.assignedTo.name : 'Unassigned'),
-          assignedToRole: q.assignedToRole || (q.assignedTo ? (q.assignedTo.role?.name || 'Staff') : ''),
-        }));
+        const mappedQueries = queriesRes.data.queries.map(q => {
+          const category = q.category || 'General';
+          return {
+            ...q,
+            category,
+            profileInitials: q.name ? q.name.split(' ').map(n => n[0]).join('').substring(0, 2).toUpperCase() : 'U',
+            profileBg: category === 'Customer' ? 'green.500' : category === 'Candidate' ? 'blue.500' : 'gray.500',
+            statusMock: q.status || 'New',
+            assignedToName: q.assignedToName || (q.assignedTo ? q.assignedTo.name : 'Unassigned'),
+            assignedToRole: q.assignedToRole || (q.assignedTo ? (q.assignedTo.role?.name || 'Staff') : ''),
+          };
+        });
         setQueries(mappedQueries);
       }
 
