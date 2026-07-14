@@ -162,14 +162,14 @@ const CustomerDashboard = () => {
                 <Text fontSize="xl" fontWeight="800" color="#0f172a">{customer.name}</Text>
                 <Badge colorScheme="blue" variant="subtle" fontSize="2xs" px="2" borderRadius="full">Verified</Badge>
               </HStack>
-              <Text fontSize="sm" color="#64748b" fontWeight="600" textTransform="capitalize">Category: {customer.propertyCategory}</Text>
+              <Text fontSize="sm" color="#64748b" fontWeight="600" textTransform="capitalize">Category: {customer.propertyCategory || 'N/A'}</Text>
             </Box>
           </HStack>
           
           <VStack align="start" spacing="3">
-            <HStack color="#475569"><Phone size={16} /><Text fontSize="sm" fontWeight="600">{customer.contactPhone}</Text></HStack>
-            <HStack color="#475569"><Mail size={16} /><Text fontSize="sm" fontWeight="600">{customer.email}</Text></HStack>
-            <HStack color="#475569" align="start"><MapPin size={16} mt="1" /><Text fontSize="sm" fontWeight="600">{customer.contactAddress}</Text></HStack>
+            <HStack color="#475569"><Phone size={16} /><Text fontSize="sm" fontWeight="600">{customer.contactPhone || 'N/A'}</Text></HStack>
+            <HStack color="#475569"><Mail size={16} /><Text fontSize="sm" fontWeight="600">{customer.email || 'N/A'}</Text></HStack>
+            <HStack color="#475569" align="start"><MapPin size={16} mt="1" /><Text fontSize="sm" fontWeight="600">{customer.contactAddress || 'N/A'}</Text></HStack>
             <HStack color="#475569" mt="2"><Clock size={16} /><Text fontSize="sm" fontWeight="600">Client Since: {formatDate(customer.createdAt)}</Text></HStack>
           </VStack>
         </Box>
@@ -215,23 +215,23 @@ const CustomerDashboard = () => {
                     </Grid>
                     <Grid templateColumns="120px 1fr" gap="2">
                       <Text fontSize="sm" color="#64748b" fontWeight="600">Contact Person</Text>
-                      <Text fontSize="sm" color="#0f172a" fontWeight="700">{customer.contactName}</Text>
+                      <Text fontSize="sm" color="#0f172a" fontWeight="700">{customer.contactName || 'N/A'}</Text>
                     </Grid>
                     <Grid templateColumns="120px 1fr" gap="2">
                       <Text fontSize="sm" color="#64748b" fontWeight="600">Email</Text>
-                      <Text fontSize="sm" color="#0f172a" fontWeight="700">{customer.email}</Text>
+                      <Text fontSize="sm" color="#0f172a" fontWeight="700">{customer.email || 'N/A'}</Text>
                     </Grid>
                     <Grid templateColumns="120px 1fr" gap="2">
                       <Text fontSize="sm" color="#64748b" fontWeight="600">Phone</Text>
-                      <Text fontSize="sm" color="#0f172a" fontWeight="700">{customer.contactPhone}</Text>
+                      <Text fontSize="sm" color="#0f172a" fontWeight="700">{customer.contactPhone || 'N/A'}</Text>
                     </Grid>
                     <Grid templateColumns="120px 1fr" gap="2">
                       <Text fontSize="sm" color="#64748b" fontWeight="600">Category</Text>
-                      <Text fontSize="sm" color="#0f172a" fontWeight="700" textTransform="capitalize">{customer.propertyCategory}</Text>
+                      <Text fontSize="sm" color="#0f172a" fontWeight="700" textTransform="capitalize">{customer.propertyCategory || 'N/A'}</Text>
                     </Grid>
                     <Grid templateColumns="120px 1fr" gap="2">
                       <Text fontSize="sm" color="#64748b" fontWeight="600">Address</Text>
-                      <Text fontSize="sm" color="#0f172a" fontWeight="700">{customer.contactAddress}</Text>
+                      <Text fontSize="sm" color="#0f172a" fontWeight="700">{customer.contactAddress || 'N/A'}</Text>
                     </Grid>
                     <Grid templateColumns="120px 1fr" gap="2">
                       <Text fontSize="sm" color="#64748b" fontWeight="600">Account Status</Text>
