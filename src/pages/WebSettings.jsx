@@ -1,6 +1,6 @@
 import { useState, useEffect, useRef } from 'react';
-import { Box, VStack, HStack, Text, Icon, Tabs, TabList, TabPanels, Tab, TabPanel, FormControl, FormLabel, Input, SimpleGrid, Image, Flex, Textarea, Button, useToast, Spinner } from '@chakra-ui/react';
-import { Globe, MapPin, Share2, Save, Upload } from 'lucide-react';
+import { Box, VStack, HStack, Text, Icon, Tabs, TabList, TabPanels, Tab, TabPanel, FormControl, FormLabel, Input, SimpleGrid, Image, Flex, Textarea, Button, useToast, Spinner, Select } from '@chakra-ui/react';
+import { Globe, MapPin, Share2, Save, Upload, ClipboardList } from 'lucide-react';
 import axios from 'axios';
 import ReactQuill from 'react-quill-new';
 import 'react-quill-new/dist/quill.snow.css';
@@ -18,6 +18,7 @@ const SectionTitle = ({ children }) => (
 const WebSettings = () => {
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
+  const [selectedCategoryKey, setSelectedCategoryKey] = useState('chef');
   const [settings, setSettings] = useState({
     siteName: '',
     companyEmail: '',
@@ -33,7 +34,8 @@ const WebSettings = () => {
     importantInstruction: '',
     rescheduleMessage: '',
     logo: null,
-    favicon: null
+    favicon: null,
+    responsibilities: {}
   });
 
   const [previews, setPreviews] = useState({
@@ -48,6 +50,15 @@ const WebSettings = () => {
   useEffect(() => {
     fetchSettings();
   }, []);
+
+  const [willDoText, setWillDoText] = useState('');
+  const [willNotDoText, setWillNotDoText] = useState('');
+
+  useEffect(() => {
+    const categoryObj = settings.responsibilities?.[selectedCategoryKey];
+    setWillDoText(categoryObj?.willDo?.join('\n') || '');
+    setWillNotDoText(categoryObj?.willNotDo?.join('\n') || '');
+  }, [selectedCategoryKey, settings.responsibilities]);
 
   const fetchSettings = async () => {
     try {
@@ -89,6 +100,35 @@ const WebSettings = () => {
     setSettings(prev => ({ ...prev, importantInstruction: content }));
   };
 
+  const getCategoryDisplayName = (key) => {
+    const names = {
+      chef: 'Chef / Kitchen Staff',
+      cook: 'Home Cook / Cook',
+      helper: 'Kitchen Helper / Assistant',
+      waiter: 'Waiter / Steward',
+      dishwasher: 'Dishwasher / Utility Staff',
+      sitter: 'Baby Sitter / Nanny'
+    };
+    return names[key] || key;
+  };
+
+  const handleCategoryChange = (newKey) => {
+    const currentWillDo = willDoText.split('\n').map(l => l.trim()).filter(l => l.length > 0);
+    const currentWillNotDo = willNotDoText.split('\n').map(l => l.trim()).filter(l => l.length > 0);
+
+    setSettings(prev => {
+      const updatedResp = { ...prev.responsibilities || {} };
+      updatedResp[selectedCategoryKey] = {
+        displayName: updatedResp[selectedCategoryKey]?.displayName || getCategoryDisplayName(selectedCategoryKey),
+        willDo: currentWillDo,
+        willNotDo: currentWillNotDo
+      };
+      return { ...prev, responsibilities: updatedResp };
+    });
+
+    setSelectedCategoryKey(newKey);
+  };
+
   const handleFileChange = (e, type) => {
     const file = e.target.files[0];
     if (file) {
@@ -103,10 +143,25 @@ const WebSettings = () => {
       const token = localStorage.getItem('adminToken');
       const formData = new FormData();
 
+      // Sync local textarea text to the responsibilities object before saving
+      const currentWillDo = willDoText.split('\n').map(l => l.trim()).filter(l => l.length > 0);
+      const currentWillNotDo = willNotDoText.split('\n').map(l => l.trim()).filter(l => l.length > 0);
+
+      const updatedResp = { ...settings.responsibilities || {} };
+      updatedResp[selectedCategoryKey] = {
+        displayName: updatedResp[selectedCategoryKey]?.displayName || getCategoryDisplayName(selectedCategoryKey),
+        willDo: currentWillDo,
+        willNotDo: currentWillNotDo
+      };
+
       // Append all fields
       Object.keys(settings).forEach(key => {
         if (settings[key] !== null) {
-          formData.append(key, settings[key]);
+          if (key === 'responsibilities') {
+            formData.append(key, JSON.stringify(updatedResp));
+          } else {
+            formData.append(key, settings[key]);
+          }
         }
       });
 
@@ -154,7 +209,7 @@ const WebSettings = () => {
       <Box bg="white" borderRadius="xl" overflow="hidden" border="1px solid #e8edf5" boxShadow="0 2px 8px rgba(0,74,173,0.04)">
         <Tabs variant="unstyled">
           <TabList bg="#f8faff" px="4" pt="3" borderBottom="2px solid #e8edf5" gap="1" display="flex" overflowX="auto" sx={{ WebkitOverflowScrolling: 'touch', scrollbarWidth: 'none', '&::-webkit-scrollbar': { display: 'none' } }}>
-            {[{ icon: Globe, label: 'General Settings' }, { icon: MapPin, label: 'Address Settings' }, { icon: Share2, label: 'Social Media Settings' }].map(({ icon, label }) => (
+            {[{ icon: Globe, label: 'General Settings' }, { icon: MapPin, label: 'Address Settings' }, { icon: Share2, label: 'Social Media Settings' }, { icon: ClipboardList, label: 'Responsibilities' }].map(({ icon, label }) => (
               <Tab key={label}
                 _selected={{ color: BRAND, bg: 'white', borderBottom: `2px solid ${BRAND}`, mb: '-2px' }}
                 borderRadius="lg lg 0 0" px="5" py="3" fontSize="sm" fontWeight="600" color="#64748b"
@@ -252,6 +307,74 @@ const WebSettings = () => {
                 </FormControl>
                 <Flex pt="4">
                   <Button isLoading={saving} onClick={handleSave} leftIcon={<Save size={15} />} bg={BRAND} color="white" size="sm" px="6" borderRadius="lg" _hover={{ bg: '#003d91' }} boxShadow={`0 4px 12px ${BRAND}30`}>Update Settings</Button>
+                </Flex>
+              </VStack>
+            </TabPanel>
+
+            {/* Responsibilities Settings */}
+            <TabPanel p="0">
+              <VStack align="stretch" spacing="6">
+                <SectionTitle>Category Responsibilities (What staff will do / NOT do)</SectionTitle>
+                
+                <FormControl maxW="400px">
+                  <FormLabel {...labelStyle}>Select Job Category</FormLabel>
+                  <Select 
+                    {...inputStyle} 
+                    value={selectedCategoryKey} 
+                    onChange={(e) => handleCategoryChange(e.target.value)}
+                  >
+                    <option value="chef">Chef / Kitchen Staff</option>
+                    <option value="cook">Home Cook / Cook</option>
+                    <option value="helper">Kitchen Helper / Assistant</option>
+                    <option value="waiter">Waiter / Steward</option>
+                    <option value="dishwasher">Dishwasher / Utility Staff</option>
+                    <option value="sitter">Baby Sitter / Nanny</option>
+                  </Select>
+                </FormControl>
+
+                <SimpleGrid columns={{ base: 1, md: 2 }} spacing="5">
+                  <FormControl>
+                    <FormLabel {...labelStyle} color="green.600" fontWeight="bold">What staff will do (One item per line)</FormLabel>
+                    <Textarea 
+                      {...inputStyle} 
+                      borderColor="green.200"
+                      _focus={{ borderColor: "green.400", boxShadow: "0 0 0 1px green.400" }}
+                      value={willDoText} 
+                      onChange={(e) => setWillDoText(e.target.value)} 
+                      placeholder="Enter each task on a new line..."
+                      minH="250px" 
+                    />
+                  </FormControl>
+
+                  <FormControl>
+                    <FormLabel {...labelStyle} color="red.600" fontWeight="bold">What staff will NOT do (One item per line)</FormLabel>
+                    <Textarea 
+                      {...inputStyle} 
+                      borderColor="red.200"
+                      _focus={{ borderColor: "red.400", boxShadow: "0 0 0 1px red.400" }}
+                      value={willNotDoText} 
+                      onChange={(e) => setWillNotDoText(e.target.value)} 
+                      placeholder="Enter each restriction on a new line..."
+                      minH="250px" 
+                    />
+                  </FormControl>
+                </SimpleGrid>
+
+                <Flex pt="4">
+                  <Button 
+                    isLoading={saving} 
+                    onClick={handleSave} 
+                    leftIcon={<Save size={15} />} 
+                    bg={BRAND} 
+                    color="white" 
+                    size="sm" 
+                    px="6" 
+                    borderRadius="lg" 
+                    _hover={{ bg: '#003d91' }} 
+                    boxShadow={`0 4px 12px ${BRAND}30`}
+                  >
+                    Save Responsibilities
+                  </Button>
                 </Flex>
               </VStack>
             </TabPanel>

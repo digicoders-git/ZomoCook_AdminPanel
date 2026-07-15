@@ -52,6 +52,8 @@ const BannerList = () => {
       setCurrentBanner(banner);
       setFormData({
         title: banner.title,
+        subtitle: banner.subtitle || '',
+        cta: banner.cta || '',
         link: banner.link || '',
         status: banner.status,
         targetAudience: banner.targetAudience || 'both',
@@ -59,7 +61,7 @@ const BannerList = () => {
       setImagePreview(banner.image ? `${API_BASE_URL.replace('/api', '')}/${banner.image}` : '');
     } else {
       setCurrentBanner(null);
-      setFormData({ title: '', link: '', status: 'active', targetAudience: 'both' });
+      setFormData({ title: '', subtitle: '', cta: '', link: '', status: 'active', targetAudience: 'both' });
       setImagePreview('');
     }
     setImageFile(null);
@@ -84,6 +86,8 @@ const BannerList = () => {
     try {
       const data = new FormData();
       data.append('title', formData.title);
+      data.append('subtitle', formData.subtitle);
+      data.append('cta', formData.cta);
       data.append('link', formData.link);
       data.append('status', formData.status);
       data.append('targetAudience', formData.targetAudience);
@@ -240,6 +244,22 @@ const BannerList = () => {
                 placeholder="e.g. Summer Special Offer"
                 value={formData.title}
                 onChange={(e) => setFormData({ ...formData, title: e.target.value })}
+              />
+            </FormControl>
+            <FormControl mb={4}>
+              <FormLabel>Subtitle (Optional)</FormLabel>
+              <Input
+                placeholder="e.g. Verified | Experienced | Reliable"
+                value={formData.subtitle}
+                onChange={(e) => setFormData({ ...formData, subtitle: e.target.value })}
+              />
+            </FormControl>
+            <FormControl mb={4}>
+              <FormLabel>CTA Button Text (Optional)</FormLabel>
+              <Input
+                placeholder="e.g. Hire Now"
+                value={formData.cta}
+                onChange={(e) => setFormData({ ...formData, cta: e.target.value })}
               />
             </FormControl>
             <FormControl mb={4}>
