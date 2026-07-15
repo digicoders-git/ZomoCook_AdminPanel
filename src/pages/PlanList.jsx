@@ -7,7 +7,7 @@ import {
   FormControl, FormLabel
 } from '@chakra-ui/react';
 import { Plus, Edit2, Trash2, Info, Send, Crown, Diamond, Receipt, ShieldCheck } from 'lucide-react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useLocation } from 'react-router-dom';
 import axios from 'axios';
 import Swal from 'sweetalert2';
 
@@ -28,8 +28,11 @@ const PlanList = () => {
   const [settings, setSettings] = useState(null);
   const [isLoading, setIsLoading] = useState(true);
   const [isUpdatingFee, setIsUpdatingFee] = useState(false);
-  const [activeTab, setActiveTab] = useState('fee');
+  
   const navigate = useNavigate();
+  const location = useLocation();
+  const queryParams = new URLSearchParams(location.search);
+  const [activeTab, setActiveTab] = useState(queryParams.get('tab') || 'fee');
   const toast = useToast();
 
   const [feeForm, setFeeForm] = useState({
@@ -83,6 +86,14 @@ const PlanList = () => {
   useEffect(() => {
     fetchData();
   }, []);
+
+  useEffect(() => {
+    const params = new URLSearchParams(location.search);
+    const tab = params.get('tab');
+    if (tab) {
+      setActiveTab(tab);
+    }
+  }, [location.search]);
 
   const handleUpdateFee = async () => {
     setIsUpdatingFee(true);
@@ -262,13 +273,13 @@ const PlanList = () => {
 
       {/* Tabs / Navigation */}
       <Flex borderBottom="1px solid #e2e8f0" mb="6">
-        <Box borderBottom={activeTab === 'fee' ? "2px solid #2563eb" : "none"} pb="3" px="4" cursor="pointer" onClick={() => setActiveTab('fee')}>
+        <Box borderBottom={activeTab === 'fee' ? "2px solid #2563eb" : "none"} pb="3" px="4" cursor="pointer" onClick={() => navigate('/plans/list?tab=fee')}>
           <Text color={activeTab === 'fee' ? "#2563eb" : "#64748b"} fontWeight="600" fontSize="sm">Hiring Processing Fee</Text>
         </Box>
-        <Box borderBottom={activeTab === 'packages' ? "2px solid #2563eb" : "none"} pb="3" px="4" cursor="pointer" onClick={() => setActiveTab('packages')}>
+        <Box borderBottom={activeTab === 'packages' ? "2px solid #2563eb" : "none"} pb="3" px="4" cursor="pointer" onClick={() => navigate('/plans/list?tab=packages')}>
           <Text color={activeTab === 'packages' ? "#2563eb" : "#64748b"} fontWeight="600" fontSize="sm">Subscription Plans</Text>
         </Box>
-        <Box borderBottom={activeTab === 'service_packages' ? "2px solid #2563eb" : "none"} pb="3" px="4" cursor="pointer" onClick={() => setActiveTab('service_packages')}>
+        <Box borderBottom={activeTab === 'service_packages' ? "2px solid #2563eb" : "none"} pb="3" px="4" cursor="pointer" onClick={() => navigate('/plans/list?tab=service_packages')}>
           <Text color={activeTab === 'service_packages' ? "#2563eb" : "#64748b"} fontWeight="600" fontSize="sm">Hiring & Support Packages</Text>
         </Box>
         <Box ml="auto" pb="2">

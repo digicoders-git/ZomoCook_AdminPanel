@@ -54,10 +54,12 @@ const navItems = [
     ]
   },
   {
-    name: 'Subscription Plans', icon: Star, path: '/plans', permission: 'service_packages:view',
+    name: 'Plans & Platform Fees', icon: Star, path: '/plans/list?tab=fee', permission: 'service_packages:view',
     children: [
-      { name: 'Plan List', path: '/plans/list', permission: 'service_packages:view' },
-      { name: 'Add Plan', path: '/plans/add', permission: 'service_packages:add' },
+      { name: 'Platform Fees Settings', path: '/plans/list?tab=fee', permission: 'service_packages:view' },
+      { name: 'Daily Basis Charges', path: '/plans/list?tab=service_packages', permission: 'service_packages:view' },
+      { name: 'Subscription Plans', path: '/plans/list?tab=packages', permission: 'service_packages:view' },
+      { name: 'Add Subscription Plan', path: '/plans/add', permission: 'service_packages:add' },
       { name: 'Subscription History', path: '/plans/subscriptions', permission: 'service_packages:view' },
     ]
   },
