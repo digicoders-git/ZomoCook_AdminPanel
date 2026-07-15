@@ -80,10 +80,6 @@ const BannerList = () => {
       toast({ title: 'Title is required', status: 'warning', isClosable: true });
       return;
     }
-    if (!currentBanner && !imageFile) {
-      toast({ title: 'Please upload a banner image', status: 'warning', isClosable: true });
-      return;
-    }
     setSaving(true);
     try {
       const data = new FormData();
@@ -171,7 +167,6 @@ const BannerList = () => {
         <Table variant="simple" size="sm">
           <Thead bg="gray.50">
             <Tr>
-              <Th>Image</Th>
               <Th>Title</Th>
               <Th>Show To</Th>
               <Th>Link</Th>
@@ -182,13 +177,6 @@ const BannerList = () => {
           <Tbody>
             {banners.map((b) => (
               <Tr key={b._id}>
-                <Td>
-                  {b.image ? (
-                    <Image src={getImageUrl(b.image)} alt={b.title} w="80px" h="40px" objectFit="cover" borderRadius="md" />
-                  ) : (
-                    <Text color="gray.400" fontSize="xs">No image</Text>
-                  )}
-                </Td>
                 <Td fontWeight="semibold">{b.title}</Td>
                 <Td>
                   <Badge colorScheme={audienceColor(b.targetAudience)}>
@@ -262,13 +250,7 @@ const BannerList = () => {
                 onChange={(e) => setFormData({ ...formData, link: e.target.value })}
               />
             </FormControl>
-            <FormControl mb={4} isRequired={!currentBanner}>
-              <FormLabel>Banner Image {currentBanner && '(Leave empty to keep current)'}</FormLabel>
-              <Input type="file" accept="image/*" p={1} onChange={handleImageChange} />
-              {imagePreview && (
-                <Image src={imagePreview} mt={3} borderRadius="md" maxH="150px" objectFit="cover" w="100%" />
-              )}
-            </FormControl>
+
             <FormControl display="flex" alignItems="center">
               <FormLabel mb="0">Active</FormLabel>
               <Switch
