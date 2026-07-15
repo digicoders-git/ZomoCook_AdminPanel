@@ -285,8 +285,8 @@ const PlanList = () => {
         <Box ml="auto" pb="2">
           {activeTab === 'fee' ? (
             <Button size="sm" colorScheme="blue" bg="#2563eb" onClick={() => {
-              const el = document.getElementById('fee-section');
-              if (el) el.scrollIntoView({ behavior: 'smooth' });
+              const input = document.getElementById('fee-amount-input');
+              if (input) input.focus();
             }}>
               + Add / Update Fee
             </Button>
@@ -334,6 +334,7 @@ const PlanList = () => {
               <Box w="100%">
                 <Text fontSize="xs" fontWeight="bold" color="#1e293b" mb="1">Fee Amount (₹) *</Text>
                 <Input 
+                  id="fee-amount-input"
                   value={feeForm.amount} 
                   onChange={(e) => setFeeForm({...feeForm, amount: e.target.value})}
                   size="sm" 
