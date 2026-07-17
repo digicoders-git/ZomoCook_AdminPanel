@@ -171,6 +171,7 @@ const BannerList = () => {
         <Table variant="simple" size="sm">
           <Thead bg="gray.50">
             <Tr>
+              <Th>Image</Th>
               <Th>Title</Th>
               <Th>Show To</Th>
               <Th>Link</Th>
@@ -181,6 +182,21 @@ const BannerList = () => {
           <Tbody>
             {banners.map((b) => (
               <Tr key={b._id}>
+                <Td>
+                  {b.image ? (
+                    <Image
+                      src={getImageUrl(b.image)}
+                      alt={b.title}
+                      boxSize="40px"
+                      objectFit="cover"
+                      borderRadius="md"
+                    />
+                  ) : (
+                    <Box boxSize="40px" bg="gray.100" borderRadius="md" display="flex" alignItems="center" justifyContent="center">
+                      <Icon as={ImageIcon} color="gray.400" />
+                    </Box>
+                  )}
+                </Td>
                 <Td fontWeight="semibold">{b.title}</Td>
                 <Td>
                   <Badge colorScheme={audienceColor(b.targetAudience)}>
@@ -269,6 +285,19 @@ const BannerList = () => {
                 value={formData.link}
                 onChange={(e) => setFormData({ ...formData, link: e.target.value })}
               />
+            </FormControl>
+
+            <FormControl mb={4}>
+              <FormLabel>Banner Image {currentBanner ? '(Leave empty to keep current)' : ''}</FormLabel>
+              <Input
+                type="file"
+                accept="image/*"
+                onChange={handleImageChange}
+                p={1}
+              />
+              {imagePreview && (
+                <Image src={imagePreview} mt={2} borderRadius="md" maxH="150px" objectFit="contain" />
+              )}
             </FormControl>
 
             <FormControl display="flex" alignItems="center">
