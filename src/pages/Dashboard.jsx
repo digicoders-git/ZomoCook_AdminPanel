@@ -49,51 +49,57 @@ const StatCard = ({ title, value, icon, color, trend }) => {
   return (
     <HStack
       bg="white"
-      p="4.5"
+      p="3.5"
       borderRadius="2xl"
       border="1.5px solid #e2e8f0"
-      spacing="3.5"
+      spacing="3"
       align="center"
       flex="1"
       transition="all 0.25s cubic-bezier(0.4, 0, 0.2, 1)"
-      _hover={{ transform: 'translateY(-4px)', boxShadow: '0 12px 30px rgba(0,74,173,0.08)', borderColor: '#cbd5e1' }}
+      _hover={{ transform: 'translateY(-4px)', boxShadow: '0 12px 30px rgba(0,74,173,0.12)', borderColor: '#cbd5e1' }}
       overflow="hidden"
-      minH="110px"
+      minH="95px"
     >
-      <Flex 
-        w="12" 
-        h="12" 
+      <Box 
+        w="44px" 
+        h="44px" 
+        minW="44px"
+        minH="44px"
         bg={color} 
         borderRadius="full" 
-        align="center" 
-        justify="center" 
+        display="flex"
+        alignItems="center" 
+        justifyContent="center" 
         flexShrink={0}
       >
-        <Icon as={icon} color="white" boxSize="20px" />
-      </Flex>
-      <VStack align="start" spacing="0.5" flex="1" overflow="hidden">
+        <Icon as={icon} color="white" boxSize="22px" />
+      </Box>
+      <VStack align="start" spacing="0.5" flex="1" overflow="hidden" w="100%">
         <Text 
           color="#64748b" 
-          fontSize="xs" 
+          fontSize="11px" 
           fontWeight="600"
           lineHeight="1.2"
-          noOfLines={1}
+          noOfLines={2}
+          wordBreak="break-word"
+          w="100%"
         >
           {title}
         </Text>
         <Text 
-          fontSize="xl" 
+          fontSize={typeof value === 'string' && value.length > 7 ? '14px' : '20px'} 
           fontWeight="800" 
           color="#1e293b" 
           lineHeight="1.1"
           noOfLines={1}
+          w="100%"
         >
           {value}
         </Text>
-        <HStack spacing="1" align="center" mt="0.5">
-          <Icon as={TrendingUp} color="#10b981" boxSize="11px" flexShrink={0} />
+        <HStack spacing="1" align="center" mt="0.5" w="100%">
+          <Icon as={TrendingUp} color="#10b981" boxSize="10px" flexShrink={0} />
           <Text fontSize="9px" fontWeight="800" color="#10b981" whiteSpace="nowrap">{trend}</Text>
-          <Text fontSize="9px" color="#94a3b8" fontWeight="600" whiteSpace="nowrap">from last month</Text>
+          <Text fontSize="9px" color="#94a3b8" fontWeight="600" whiteSpace="nowrap">vs last month</Text>
         </HStack>
       </VStack>
     </HStack>
@@ -120,9 +126,9 @@ const Dashboard = () => {
   const [positions, setPositions] = useState([]);
 
   // Modal States for drilling down
-  const [donutInterval, setDonutInterval] = useState('month');
-  const [lineInterval, setLineInterval] = useState('month');
-  const [performanceInterval, setPerformanceInterval] = useState('month');
+  const [donutInterval, setDonutInterval] = useState('all');
+  const [lineInterval, setLineInterval] = useState('all');
+  const [performanceInterval, setPerformanceInterval] = useState('all');
   const { isOpen, onOpen, onClose } = useDisclosure();
   const [selectedPosition, setSelectedPosition] = useState(null);
   const [positionJobs, setPositionJobs] = useState([]);
@@ -252,7 +258,7 @@ const Dashboard = () => {
 
   // Chart Data Formatting
   const catNames = { hotel: 'Commercial Jobs', home: 'Domestic Jobs', daily: 'Daily Pay' };
-  
+
   let activeCategoryDistribution = [];
   if (charts?.categoryDistribution) {
     if (Array.isArray(charts.categoryDistribution)) {
@@ -280,10 +286,10 @@ const Dashboard = () => {
   }) || [];
   const growthSeries = charts?.applicationGrowth?.map(g => g.count) || [];
 
-  // Resolve Trend Chart based on lineInterval selector (Year shows 6-Month growth, Month shows weekly trend)
+  // Resolve Trend Chart based on lineInterval selector (All/Year shows 6-Month growth, Month shows weekly trend)
   let activeLineSeries = [];
   let activeLineCategories = [];
-  if (lineInterval === 'year') {
+  if (lineInterval === 'all' || lineInterval === 'year') {
     activeLineSeries = [{ name: 'Applications', data: growthSeries }];
     activeLineCategories = growthLabels.length ? growthLabels : ['No Data'];
   } else {
@@ -314,9 +320,9 @@ const Dashboard = () => {
     chart: { type: 'line', height: 260, toolbar: { show: false }, fontFamily: 'Outfit, sans-serif' },
     colors: ['#2563eb', '#10b981', '#f59e0b'],
     stroke: { width: 3, curve: 'smooth' },
-    xaxis: { 
-      categories: activeLineCategories, 
-      labels: { style: { colors: '#64748b', fontSize: '11px' } } 
+    xaxis: {
+      categories: activeLineCategories,
+      labels: { style: { colors: '#64748b', fontSize: '11px' } }
     },
     yaxis: { labels: { style: { colors: '#64748b', fontSize: '11px' } } },
     grid: { borderColor: '#f1f5f9' },
@@ -410,7 +416,7 @@ const Dashboard = () => {
       </Box>
 
       {/* Main Grid: 6 Premium Stat Cards (Responsive column wrapping) */}
-      <SimpleGrid columns={{ base: 1, sm: 2, md: 3, xl: 6 }} spacing="5" mb="8">
+      <SimpleGrid columns={{ base: 1, sm: 2, md: 3, lg: 3, xl: 6 }} spacing="4" mb="8">
         {statCards.map((stat, idx) => (
           <StatCard key={idx} {...stat} />
         ))}
@@ -420,26 +426,26 @@ const Dashboard = () => {
       <Grid templateColumns={{ base: "1fr", lg: "repeat(3, 1fr)" }} gap="6" mb="8">
         {/* Category Wise Jobs (Donut Chart) */}
         <GridItem bg="white" p="4" borderRadius="2xl" border="1.5px solid #e2e8f0" boxShadow="xs">
-          <SectionHeader 
-            title="Category Wise Jobs" 
+          <SectionHeader
+            title="Category Wise Jobs"
             rightElement={
-              <Select 
-                size="xs" 
-                width="auto" 
-                minW="80px" 
-                borderRadius="lg" 
-                borderColor="#e2e8f0" 
-                bg="white" 
-                fontSize="9px" 
+              <Select
+                size="xs"
+                width="auto"
+                minW="80px"
+                borderRadius="lg"
+                borderColor="#e2e8f0"
+                bg="white"
+                fontSize="9px"
                 fontWeight="700"
                 color="#475569"
                 value={donutInterval}
                 onChange={(e) => setDonutInterval(e.target.value)}
               >
+                <option value="all">All Time</option>
                 <option value="week">This Week</option>
                 <option value="month">This Month</option>
                 <option value="year">This Year</option>
-                <option value="all">All Time</option>
               </Select>
             }
           />
@@ -463,7 +469,7 @@ const Dashboard = () => {
                 const percent = total > 0 ? ((count / total) * 100).toFixed(1) : 0;
                 const colors = ['#2563eb', '#10b981', '#f59e0b', '#94a3b8'];
                 const color = colors[idx % colors.length];
-                
+
                 return (
                   <HStack key={c._id} justify="space-between" width="100%">
                     <HStack spacing="2" align="center" minW="0">
@@ -483,8 +489,8 @@ const Dashboard = () => {
 
         {/* Jobs Trend Overview (Line Chart) */}
         <GridItem bg="white" p="6" borderRadius="2xl" border="1.5px solid #e2e8f0" boxShadow="xs">
-          <SectionHeader 
-            title="Jobs Trend Overview" 
+          <SectionHeader
+            title="Jobs Trend Overview"
             rightElement={
               <Select 
                 size="xs" 
@@ -499,6 +505,7 @@ const Dashboard = () => {
                 value={lineInterval}
                 onChange={(e) => setLineInterval(e.target.value)}
               >
+                <option value="all">All Time</option>
                 <option value="month">This Month</option>
                 <option value="year">This Year</option>
               </Select>
@@ -511,26 +518,26 @@ const Dashboard = () => {
 
         {/* Category Performance (Table with Icons) */}
         <GridItem bg="white" p="4" borderRadius="2xl" border="1.5px solid #e2e8f0" boxShadow="xs" display="flex" flexDirection="column">
-          <SectionHeader 
-            title="Category Performance" 
+          <SectionHeader
+            title="Category Performance"
             rightElement={
-              <Select 
-                size="xs" 
-                width="auto" 
-                minW="80px" 
-                borderRadius="lg" 
-                borderColor="#e2e8f0" 
-                bg="white" 
-                fontSize="9px" 
+              <Select
+                size="xs"
+                width="auto"
+                minW="80px"
+                borderRadius="lg"
+                borderColor="#e2e8f0"
+                bg="white"
+                fontSize="9px"
                 fontWeight="700"
                 color="#475569"
                 value={performanceInterval}
                 onChange={(e) => setPerformanceInterval(e.target.value)}
               >
+                <option value="all">All Time</option>
                 <option value="week">This Week</option>
                 <option value="month">This Month</option>
                 <option value="year">This Year</option>
-                <option value="all">All Time</option>
               </Select>
             }
           />
