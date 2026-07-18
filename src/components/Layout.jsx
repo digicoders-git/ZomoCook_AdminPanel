@@ -8,7 +8,7 @@ import {
 } from '@chakra-ui/react';
 import {
   LayoutDashboard, Users, Briefcase, UserSquare2, Bell, MessageSquare,
-  ShieldCheck, Database, Settings, LogOut, Menu as MenuIcon, X, ChevronDown,
+  ShieldCheck, Database, Settings, LogOut, Menu as MenuIcon, X, ChevronDown, ChevronRight,
   Menu as ListMenu, Layers, Wrench, Star, Banknote, Clock, UtensilsCrossed,
   Calendar, Heart, Building2, Gift, Image as ImageIcon, Film, Globe, MapPin,
   Plus, List as ListIcon
@@ -20,105 +20,136 @@ import logo from '../assets/logo.png';
 const BRAND = '#004aad';
 const ACCENT = '#f59e0b';
 
-const navItems = [
-  { name: 'Dashboard', icon: LayoutDashboard, path: '/', permission: 'dashboard:view' },
+const navCategories = [
   {
-    name: 'Customer/Client', icon: Users, path: '/customers', permission: 'customer_client:view',
-    children: [
-      { name: 'Customer List', path: '/customers/list', permission: 'customer_client:view' },
-      { name: 'Add Customer', path: '/customers/add', permission: 'customer_client:add' },
+    category: '',
+    items: [
+      { name: 'Dashboard', icon: LayoutDashboard, path: '/', permission: 'dashboard:view' },
     ]
   },
   {
-    name: 'Job Management', icon: Briefcase, path: '/jobs', permission: 'job_management:view',
-    children: [
-      { name: 'Job List', path: '/jobs/list', permission: 'job_management:view' },
-      { name: 'Pending Jobs', path: '/pending-jobs', permission: 'job_management:view' },
-      { name: 'Add Job', path: '/jobs/add', permission: 'job_management:add' },
-      { name: 'Replacements', path: '/replacements', permission: 'job_management:view' },
-    ]
-  },
-  {
-    name: 'Candidates', icon: UserSquare2, path: '/candidates', permission: 'candidates:view',
-    children: [
-      { name: 'Candidate List', path: '/candidates/list', permission: 'candidates:view' },
-      { name: 'Add Candidate', path: '/candidates/add', permission: 'candidates:add' },
-      { name: 'All Applications', path: '/applications/all', permission: 'candidates:view' },
-      { name: 'Applied Candidates', path: '/candidates/applied', permission: 'candidates:view' },
-      { name: 'Shortlisted Candidates', path: '/candidates/shortlisted', permission: 'candidates:view' },
-      { name: 'Demo Scheduled', path: '/candidates/demo-scheduled', permission: 'candidates:view' },
-      { name: 'Rejected Candidates', path: '/candidates/rejected', permission: 'candidates:view' },
-      { name: 'On Hold Candidates', path: '/candidates/on-hold', permission: 'candidates:view' },
-      { name: 'Not Interested', path: '/candidates/not-interested', permission: 'candidates:view' },
-      { name: 'Hired Candidates', path: '/candidates/hired', permission: 'candidates:view' },
-    ]
-  },
-  {
-    name: 'Plans & Platform Fees', icon: Star, path: '/plans/list?tab=fee', permission: 'service_packages:view',
-    children: [
-      { name: 'Platform Fees Settings', path: '/plans/list?tab=fee', permission: 'service_packages:view' },
-      { name: 'Daily Basis Charges', path: '/plans/list?tab=service_packages', permission: 'service_packages:view' },
-      { name: 'Subscription Plans', path: '/plans/list?tab=packages', permission: 'service_packages:view' },
-      { name: 'Add Subscription Plan', path: '/plans/add', permission: 'service_packages:add' },
-      { name: 'Subscription History', path: '/plans/subscriptions', permission: 'service_packages:view' },
-    ]
-  },
-  { name: 'Offers', icon: Gift, path: '/offers', permission: 'offer_management:view' },
-  { name: 'Banners', icon: ImageIcon, path: '/banners', permission: 'banner_management:view' },
-  { name: 'Cook Approvals', icon: UserSquare2, path: '/cook-approvals', permission: 'cook_approvals:view' },
-  {
-    name: 'Notifications', icon: Bell, path: '/notifications', permission: 'notifications:view',
-    children: [
-      { name: 'Notification List', path: '/notifications/list', permission: 'notifications:view' },
-      { name: 'Add Notification', path: '/notifications/add', permission: 'notifications:add' },
-    ]
-  },
-  { name: 'Query History', icon: MessageSquare, path: '/queries', permission: 'query_management:view' },
-  { name: 'Finance / Revenue', icon: Banknote, path: '/finance', permission: 'finance_revenue:view' },
-  {
-    name: 'Roles & Permissions', icon: ShieldCheck, path: '/roles', permission: 'role_permission:view',
-    children: [
-      { name: 'Add Role', path: '/roles/add', permission: 'role_permission:add' },
-      { name: 'Manage Roles', path: '/roles/list', permission: 'role_permission:manage' },
-      { name: 'Add User', path: '/users/add', permission: 'role_permission:add' },
-      { name: 'User List', path: '/users/list', permission: 'role_permission:view' },
-    ]
-  },
-  {
-    name: 'Masters', icon: Database, path: '/masters', permission: 'masters:view',
-    children: [
-      { name: 'Job Menu Items', icon: ListMenu, path: '/masters/job-menu', permission: 'masters:view', children: [{ name: 'Add Job Menu Item', icon: Plus, path: '/masters/job-menu/add', permission: 'masters:add' }, { name: 'Job Menu Item List', icon: ListIcon, path: '/masters/job-menu/list', permission: 'masters:view' }] },
-      { name: 'Job Categories', icon: Layers, path: '/masters/job-categories', permission: 'masters:view', children: [{ name: 'Add Job Category', icon: Plus, path: '/masters/job-categories/add', permission: 'masters:add' }, { name: 'Job Category List', icon: ListIcon, path: '/masters/job-categories/list', permission: 'masters:view' }] },
-      { name: 'Skill Categories', icon: Layers, path: '/masters/skill-categories', permission: 'masters:view', children: [{ name: 'Add Skill Category', icon: Plus, path: '/masters/skill-categories/add', permission: 'masters:add' }, { name: 'Skill Category List', icon: ListIcon, path: '/masters/skill-categories/list', permission: 'masters:view' }] },
-      { name: 'Skills', icon: Wrench, path: '/masters/skills', permission: 'masters:view', children: [{ name: 'Add Skill', icon: Plus, path: '/masters/skills/add', permission: 'masters:add' }, { name: 'Skill List', icon: ListIcon, path: '/masters/skills/list', permission: 'masters:view' }] },
-      { name: 'Job Types', icon: Briefcase, path: '/masters/job-types', permission: 'masters:view', children: [{ name: 'Add Job Type', icon: Plus, path: '/masters/job-types/add', permission: 'masters:add' }, { name: 'Job Type List', icon: ListIcon, path: '/masters/job-types/list', permission: 'masters:view' }] },
-      { name: 'Job Positions', icon: Star, path: '/masters/job-positions', permission: 'masters:view', children: [{ name: 'Add Job Position', icon: Plus, path: '/masters/job-positions/add', permission: 'masters:add' }, { name: 'Job Position List', icon: ListIcon, path: '/masters/job-positions/list', permission: 'masters:view' }] },
-      { name: 'Experience Ranges', icon: Briefcase, path: '/masters/experiences', permission: 'masters:view', children: [{ name: 'Add Experience Range', icon: Plus, path: '/masters/experiences/add', permission: 'masters:add' }, { name: 'Experience Range List', icon: ListIcon, path: '/masters/experiences/list', permission: 'masters:view' }] },
-      { name: 'Salary Ranges', icon: Banknote, path: '/masters/salaries', permission: 'masters:view', children: [{ name: 'Add Salary Range', icon: Plus, path: '/masters/salaries/add', permission: 'masters:add' }, { name: 'Salary Range List', icon: ListIcon, path: '/masters/salaries/list', permission: 'masters:view' }] },
-      { name: 'Time Ranges', icon: Clock, path: '/masters/time-ranges', permission: 'masters:view', children: [{ name: 'Add Time Range', icon: Plus, path: '/masters/time-ranges/add', permission: 'masters:add' }, { name: 'Time Range List', icon: ListIcon, path: '/masters/time-ranges/list', permission: 'masters:view' }] },
-      { name: 'Cooking Categories', icon: UtensilsCrossed, path: '/masters/cooking-categories', permission: 'masters:view', children: [{ name: 'Add Cooking Category', icon: Plus, path: '/masters/cooking-categories/add', permission: 'masters:add' }, { name: 'Cooking Category List', icon: ListIcon, path: '/masters/cooking-categories/list', permission: 'masters:view' }] },
-      { name: 'Events', icon: Calendar, path: '/masters/events', permission: 'masters:view', children: [{ name: 'Add Event', icon: Plus, path: '/masters/events/add', permission: 'masters:add' }, { name: 'Event List', icon: ListIcon, path: '/masters/events/list', permission: 'masters:view' }] },
-      { name: 'Cooking Preferences', icon: Heart, path: '/masters/cooking-preferences', permission: 'masters:view', children: [{ name: 'Add Cooking Preference', icon: Plus, path: '/masters/cooking-preferences/add', permission: 'masters:add' }, { name: 'Cooking Preference List', icon: ListIcon, path: '/masters/cooking-preferences/list', permission: 'masters:view' }] },
-      { name: 'Cook Preferences', icon: Heart, path: '/masters/cook-preferences', permission: 'masters:view', children: [{ name: 'Add Cook Preference', icon: Plus, path: '/masters/cook-preferences/add', permission: 'masters:add' }, { name: 'Cook Preference List', icon: ListIcon, path: '/masters/cook-preferences/list', permission: 'masters:view' }] },
-      { name: 'Food Preferences', icon: Heart, path: '/masters/food-preferences', permission: 'masters:view', children: [{ name: 'Add Food Preference', icon: Plus, path: '/masters/food-preferences/add', permission: 'masters:add' }, { name: 'Food Preference List', icon: ListIcon, path: '/masters/food-preferences/list', permission: 'masters:view' }] },
-      { name: 'Gender Preferences', icon: Users, path: '/masters/gender-preferences', permission: 'masters:view', children: [{ name: 'Add Gender Preference', icon: Plus, path: '/masters/gender-preferences/add', permission: 'masters:add' }, { name: 'Gender Preference List', icon: ListIcon, path: '/masters/gender-preferences/list', permission: 'masters:view' }] },
-      { name: 'Service Durations', icon: Clock, path: '/masters/service-durations', permission: 'masters:view', children: [{ name: 'Add Service Duration', icon: Plus, path: '/masters/service-durations/add', permission: 'masters:add' }, { name: 'Service Duration List', icon: ListIcon, path: '/masters/service-durations/list', permission: 'masters:view' }] },
-      { name: 'Facilities', icon: Building2, path: '/masters/facilities', permission: 'masters:view', children: [{ name: 'Add Facility', icon: Plus, path: '/masters/facilities/add', permission: 'masters:add' }, { name: 'Facility List', icon: ListIcon, path: '/masters/facilities/list', permission: 'masters:view' }] },
-      { name: 'Benefits', icon: Gift, path: '/masters/benefits', permission: 'masters:view', children: [{ name: 'Add Benefit', icon: Plus, path: '/masters/benefits/add', permission: 'masters:add' }, { name: 'Benefit List', icon: ListIcon, path: '/masters/benefits/list', permission: 'masters:view' }] },
-      { name: 'Property Categories', icon: Layers, path: '/masters/property-categories', permission: 'masters:view', children: [{ name: 'Add Property Category', icon: Plus, path: '/masters/property-categories/add', permission: 'masters:add' }, { name: 'Property Category List', icon: ListIcon, path: '/masters/property-categories/list', permission: 'masters:view' }] },
-      { name: 'Sliders', icon: ImageIcon, path: '/masters/sliders', permission: 'masters:view', children: [{ name: 'Add Slider', icon: Plus, path: '/masters/sliders/add', permission: 'masters:add' }, { name: 'Slider List', icon: ListIcon, path: '/masters/sliders/list', permission: 'masters:view' }] },
-      { name: 'Videos', icon: Film, path: '/masters/videos', permission: 'masters:view', children: [{ name: 'Add Video', icon: Plus, path: '/masters/videos/add', permission: 'masters:add' }, { name: 'Video List', icon: ListIcon, path: '/masters/videos/list', permission: 'masters:view' }] },
-      { name: 'CMS', icon: Globe, path: '/masters/cms', permission: 'masters:view', children: [{ name: 'Add CMS', icon: Plus, path: '/masters/cms/add', permission: 'masters:add' }, { name: 'CMS List', icon: ListIcon, path: '/masters/cms/list', permission: 'masters:view' }] },
+    category: 'USER MANAGEMENT',
+    items: [
       {
-        name: 'Location', icon: MapPin, path: '/masters/location', permission: 'masters:view',
+        name: 'Customers / Clients', icon: Users, path: '/customers', permission: 'customer_client:view',
         children: [
-          { name: 'State List', icon: ListIcon, path: '/masters/states/list', permission: 'masters:view' },
-          { name: 'City List', icon: ListIcon, path: '/masters/cities/list', permission: 'masters:view' },
+          { name: 'Customer List', path: '/customers/list', permission: 'customer_client:view' },
+          { name: 'Add Customer', path: '/customers/add', permission: 'customer_client:add' },
+        ]
+      },
+      {
+        name: 'Candidates', icon: UserSquare2, path: '/candidates', permission: 'candidates:view',
+        children: [
+          { name: 'Candidate List', path: '/candidates/list', permission: 'candidates:view' },
+          { name: 'Add Candidate', path: '/candidates/add', permission: 'candidates:add' },
+          { name: 'All Applications', path: '/applications/all', permission: 'candidates:view' },
+          { name: 'Applied Candidates', path: '/candidates/applied', permission: 'candidates:view' },
+          { name: 'Shortlisted Candidates', path: '/candidates/shortlisted', permission: 'candidates:view' },
+          { name: 'Demo Scheduled', path: '/candidates/demo-scheduled', permission: 'candidates:view' },
+          { name: 'Rejected Candidates', path: '/candidates/rejected', permission: 'candidates:view' },
+          { name: 'On Hold Candidates', path: '/candidates/on-hold', permission: 'candidates:view' },
+          { name: 'Not Interested', path: '/candidates/not-interested', permission: 'candidates:view' },
+          { name: 'Hired Candidates', path: '/candidates/hired', permission: 'candidates:view' },
+        ]
+      },
+      { name: 'Cook Approvals', icon: ShieldCheck, path: '/cook-approvals', permission: 'cook_approvals:view' },
+    ]
+  },
+  {
+    category: 'RECRUITMENT & JOBS',
+    items: [
+      {
+        name: 'Job Management', icon: Briefcase, path: '/jobs', permission: 'job_management:view',
+        children: [
+          { name: 'Job List', path: '/jobs/list', permission: 'job_management:view' },
+          { name: 'Pending Jobs', path: '/pending-jobs', permission: 'job_management:view' },
+          { name: 'Add Job', path: '/jobs/add', permission: 'job_management:add' },
+          { name: 'Replacements', path: '/replacements', permission: 'job_management:view' },
+        ]
+      },
+      { name: 'Assignments', icon: ListMenu, path: '/replacements', permission: 'job_management:view' },
+      { name: 'Query History', icon: MessageSquare, path: '/queries', permission: 'query_management:view' },
+    ]
+  },
+  {
+    category: 'FINANCE',
+    items: [
+      { name: 'Finance / Revenue', icon: Banknote, path: '/finance', permission: 'finance_revenue:view' },
+      {
+        name: 'Subscription Plans', icon: Star, path: '/plans/list?tab=packages', permission: 'service_packages:view',
+        children: [
+          { name: 'Platform Fees Settings', path: '/plans/list?tab=fee', permission: 'service_packages:view' },
+          { name: 'Daily Basis Charges', path: '/plans/list?tab=service_packages', permission: 'service_packages:view' },
+          { name: 'Subscription Plans', path: '/plans/list?tab=packages', permission: 'service_packages:view' },
+          { name: 'Add Subscription Plan', path: '/plans/add', permission: 'service_packages:add' },
+          { name: 'Subscription History', path: '/plans/subscriptions', permission: 'service_packages:view' },
+        ]
+      },
+      { name: 'Offers', icon: Gift, path: '/offers', permission: 'offer_management:view' },
+    ]
+  },
+  {
+    category: 'MARKETING',
+    items: [
+      { name: 'Banners', icon: ImageIcon, path: '/banners', permission: 'banner_management:view' },
+      {
+        name: 'Notifications', icon: Bell, path: '/notifications', permission: 'notifications:view',
+        children: [
+          { name: 'Notification List', path: '/notifications/list', permission: 'notifications:view' },
+          { name: 'Add Notification', path: '/notifications/add', permission: 'notifications:add' },
         ]
       },
     ]
   },
-  { name: 'Web Settings', icon: Settings, path: '/settings', permission: 'settings:view' },
+  {
+    category: 'ADMINISTRATION',
+    items: [
+      {
+        name: 'Roles & Permissions', icon: ShieldCheck, path: '/roles', permission: 'role_permission:view',
+        children: [
+          { name: 'Add Role', path: '/roles/add', permission: 'role_permission:add' },
+          { name: 'Manage Roles', path: '/roles/list', permission: 'role_permission:manage' },
+          { name: 'Add User', path: '/users/add', permission: 'role_permission:add' },
+          { name: 'User List', path: '/users/list', permission: 'role_permission:view' },
+        ]
+      },
+      {
+        name: 'Masters', icon: Database, path: '/masters', permission: 'masters:view',
+        children: [
+          { name: 'Job Menu Items', icon: ListMenu, path: '/masters/job-menu', permission: 'masters:view' },
+          { name: 'Job Categories', icon: Layers, path: '/masters/job-categories', permission: 'masters:view' },
+          { name: 'Skill Categories', icon: Layers, path: '/masters/skill-categories', permission: 'masters:view' },
+          { name: 'Skills', icon: Wrench, path: '/masters/skills', permission: 'masters:view' },
+          { name: 'Job Types', icon: Briefcase, path: '/masters/job-types', permission: 'masters:view' },
+          { name: 'Job Positions', icon: Star, path: '/masters/job-positions', permission: 'masters:view' },
+          { name: 'Experience Ranges', icon: Briefcase, path: '/masters/experiences', permission: 'masters:view' },
+          { name: 'Salary Ranges', icon: Banknote, path: '/masters/salaries', permission: 'masters:view' },
+          { name: 'Time Ranges', icon: Clock, path: '/masters/time-ranges', permission: 'masters:view' },
+          { name: 'Cooking Categories', icon: UtensilsCrossed, path: '/masters/cooking-categories', permission: 'masters:view' },
+          { name: 'Events', icon: Calendar, path: '/masters/events', permission: 'masters:view' },
+          { name: 'Cooking Preferences', icon: Heart, path: '/masters/cooking-preferences', permission: 'masters:view' },
+          { name: 'Cook Preferences', icon: Heart, path: '/masters/cook-preferences', permission: 'masters:view' },
+          { name: 'Food Preferences', icon: Heart, path: '/masters/food-preferences', permission: 'masters:view' },
+          { name: 'Gender Preferences', icon: Users, path: '/masters/gender-preferences', permission: 'masters:view' },
+          { name: 'Service Durations', icon: Clock, path: '/masters/service-durations', permission: 'masters:view' },
+          { name: 'Facilities', icon: Building2, path: '/masters/facilities', permission: 'masters:view' },
+          { name: 'Benefits', icon: Gift, path: '/masters/benefits', permission: 'masters:view' },
+          { name: 'Property Categories', icon: Layers, path: '/masters/property-categories', permission: 'masters:view' },
+          { name: 'Sliders', icon: ImageIcon, path: '/masters/sliders', permission: 'masters:view' },
+          { name: 'Videos', icon: Film, path: '/masters/videos', permission: 'masters:view' },
+          { name: 'CMS', icon: Globe, path: '/masters/cms', permission: 'masters:view' },
+          {
+            name: 'Location', icon: MapPin, path: '/masters/location', permission: 'masters:view',
+            children: [
+              { name: 'State List', icon: ListIcon, path: '/masters/states/list', permission: 'masters:view' },
+              { name: 'City List', icon: ListIcon, path: '/masters/cities/list', permission: 'masters:view' },
+            ]
+          },
+        ]
+      },
+      { name: 'Web Settings', icon: Settings, path: '/settings', permission: 'settings:view' },
+    ]
+  }
 ];
 
 const SidebarItem = ({ item, isCollapsed, onClose, depth = 0 }) => {
@@ -149,34 +180,21 @@ const SidebarItem = ({ item, isCollapsed, onClose, depth = 0 }) => {
       cursor="pointer"
       onClick={handleClick}
       position="relative"
-      bg={isActive && !hasChildren ? `${BRAND}18` : 'transparent'}
+      bg={isActive && !hasChildren ? '#ffffff' : 'transparent'}
       transition="all 0.18s"
       role="group"
-      _hover={{ bg: isActive && !hasChildren ? `${BRAND}22` : `${BRAND}10` }}
+      _hover={{ bg: isActive && !hasChildren ? '#ffffff' : 'rgba(255, 255, 255, 0.08)' }}
       justifyContent={isCollapsed && depth === 0 ? 'center' : 'flex-start'}
       pl={depth === 0 ? 3 : depth === 1 ? 10 : 14}
     >
-      {/* Active left bar indicator */}
-      {isActive && !hasChildren && depth === 0 && (
-        <Box
-          position="absolute"
-          left="-3px"
-          top="20%"
-          bottom="20%"
-          w="3px"
-          borderRadius="full"
-          bg={ACCENT}
-        />
-      )}
-
       {item.icon && (
         <Icon
           as={item.icon}
           boxSize={depth === 0 ? 5 : 4}
           mr={isCollapsed && depth === 0 ? 0 : 2.5}
-          color={isActive ? BRAND : '#94a3b8'}
+          color={isActive ? '#1e3a8a' : 'rgba(255, 255, 255, 0.8)'}
           transition="color 0.18s"
-          _groupHover={{ color: BRAND }}
+          _groupHover={{ color: isActive ? '#1e3a8a' : '#ffffff' }}
           flexShrink={0}
         />
       )}
@@ -186,21 +204,21 @@ const SidebarItem = ({ item, isCollapsed, onClose, depth = 0 }) => {
           <Text
             fontSize={depth === 0 ? 'sm' : 'xs'}
             fontWeight={isActive ? '700' : '500'}
-            color={isActive ? BRAND : '#475569'}
+            color={isActive ? '#1e3a8a' : 'rgba(255, 255, 255, 0.85)'}
             flex="1"
             noOfLines={1}
-            _groupHover={{ color: BRAND }}
+            _groupHover={{ color: isActive ? '#1e3a8a' : '#ffffff' }}
             transition="color 0.18s"
           >
             {item.name}
           </Text>
-          {hasChildren && (
+          {(depth === 0 && item.name !== 'Dashboard') && (
             <Icon
-              as={ChevronDown}
+              as={ChevronRight}
               boxSize={3.5}
-              color="#94a3b8"
+              color={isActive ? '#1e3a8a' : 'rgba(255, 255, 255, 0.8)'}
               transition="transform 0.2s"
-              transform={isOpen ? 'rotate(180deg)' : 'rotate(0deg)'}
+              transform={hasChildren && isOpen ? 'rotate(90deg)' : 'rotate(0deg)'}
               flexShrink={0}
             />
           )}
@@ -212,7 +230,7 @@ const SidebarItem = ({ item, isCollapsed, onClose, depth = 0 }) => {
   return (
     <Box w="full">
       {isCollapsed && depth === 0 && item.icon ? (
-        <Tooltip label={item.name} placement="right" hasArrow bg={BRAND} color="white" fontSize="xs">
+        <Tooltip label={item.name} placement="right" hasArrow bg="#ffffff" color="#1e3a8a" fontSize="xs">
           {itemContent}
         </Tooltip>
       ) : itemContent}
@@ -224,7 +242,7 @@ const SidebarItem = ({ item, isCollapsed, onClose, depth = 0 }) => {
             mt="0.5"
             mb="0.5"
             borderLeft="2px solid"
-            borderColor={isActive ? `${BRAND}40` : '#e2e8f0'}
+            borderColor={isActive ? '#ffffff' : 'rgba(255, 255, 255, 0.2)'}
             pl="2"
           >
             {item.children.map((child) => (
@@ -251,16 +269,16 @@ const SidebarContent = ({ isCollapsed, onClose, onLogoutOpen, ...rest }) => (
     transition="width 0.25s cubic-bezier(0.4,0,0.2,1)"
     display="flex"
     flexDirection="column"
-    bg="white"
-    borderRight="1px solid #e8edf5"
-    boxShadow="4px 0 24px rgba(0,74,173,0.06)"
+    bg="#1e3a8a"
+    borderRight="1px solid rgba(255, 255, 255, 0.1)"
     zIndex="100"
     overflow="hidden"
     {...rest}
   >
     {/* Logo Header */}
     <Box
-      bg={`linear-gradient(135deg, ${BRAND} 0%, #0062e6 100%)`}
+      bg="#1e3a8a"
+      borderBottom="1px solid rgba(255, 255, 255, 0.1)"
       px={isCollapsed ? '0' : '5'}
       py="4"
       minH="72px"
@@ -289,7 +307,7 @@ const SidebarContent = ({ isCollapsed, onClose, onLogoutOpen, ...rest }) => (
             <Text fontSize="lg" fontWeight="800" color="white" lineHeight="1.1" letterSpacing="-0.3px">
               ZomoCook
             </Text>
-            <Text fontSize="10px" fontWeight="500" color="rgba(255,255,255,0.7)" letterSpacing="0.5px">
+            <Text fontSize="10px" fontWeight="500" color="rgba(255, 255, 255, 0.7)" letterSpacing="0.5px">
               Admin Panel
             </Text>
           </Box>
@@ -300,48 +318,33 @@ const SidebarContent = ({ isCollapsed, onClose, onLogoutOpen, ...rest }) => (
     {/* Red accent strip */}
     <Box h="3px" bg={`linear-gradient(90deg, ${ACCENT} 0%, #ff4d53 100%)`} flexShrink={0} />
 
-    {/* Menu Label */}
-    {!isCollapsed && (
-      <Box px="6" pt="4" pb="1" flexShrink={0}>
-        <Text fontSize="9px" fontWeight="800" color="#94a3b8" textTransform="uppercase" letterSpacing="1.5px">
-          Navigation
-        </Text>
-      </Box>
-    )}
-
     {/* Scrollable Nav */}
     <Box
       flex="1"
       overflowY="auto"
       overflowX="hidden"
-      py="2"
+      py="4"
       px={isCollapsed ? '1' : '0'}
       css={{
         '&::-webkit-scrollbar': { width: '3px' },
         '&::-webkit-scrollbar-track': { background: 'transparent' },
-        '&::-webkit-scrollbar-thumb': { background: '#e2e8f0', borderRadius: '10px' },
-        '&::-webkit-scrollbar-thumb:hover': { background: '#cbd5e1' },
+        '&::-webkit-scrollbar-thumb': { background: 'rgba(255, 255, 255, 0.2)', borderRadius: '10px' },
+        '&::-webkit-scrollbar-thumb:hover': { background: 'rgba(255, 255, 255, 0.3)' },
       }}
     >
-      <VStack align="stretch" spacing="0.5">
-        {navItems.map((item) => {
+      <VStack align="stretch" spacing="5">
+        {navCategories.map((cat, catIdx) => {
           const adminData = JSON.parse(localStorage.getItem('adminData') || '{}');
           const userPermissions = adminData.role?.permissions || [];
           const isSuperAdmin = adminData.type === 'admin' || userPermissions.includes('global:full_access');
 
-          if (isSuperAdmin) {
-            return <SidebarItem key={item.name} item={item} isCollapsed={isCollapsed} onClose={onClose} />;
-          }
-
-          // Function to check if user has permission for item or any of its children recursively
+          // Helper to check access for an item or its children
           const hasAccess = (navItem) => {
-            // If user has full system access, grant access to everything
             if (userPermissions.includes('global:full_access')) return true;
-
             const checkPermission = (permToCheck) => {
               if (!permToCheck) return false;
               if (userPermissions.includes(permToCheck)) return true;
-
+              
               // Legacy normalization mapping
               const mapping = {
                 'dashboard:view': ['Dashboard', 'dashboard'],
@@ -378,35 +381,40 @@ const SidebarContent = ({ isCollapsed, onClose, onLogoutOpen, ...rest }) => (
               return false;
             };
 
-            // Check direct permission
             if (navItem.permission && checkPermission(navItem.permission)) return true;
-
-            // Check if any child has permission
             if (navItem.children) {
               return navItem.children.some(child => hasAccess(child));
             }
-
             return false;
           };
 
-          if (!hasAccess(item)) return null;
+          // Filter items user has access to
+          const filteredItems = cat.items.filter(item => isSuperAdmin || hasAccess(item)).map(item => {
+            if (item.children) {
+              return {
+                ...item,
+                children: item.children.filter(child => isSuperAdmin || hasAccess(child))
+              };
+            }
+            return item;
+          });
 
-          // Recursively filter children to only show those the user has access to
-          const getFilteredChildren = (children) => {
-            return children
-              .filter(child => hasAccess(child))
-              .map(child => ({
-                ...child,
-                children: child.children ? getFilteredChildren(child.children) : undefined
-              }));
-          };
+          if (filteredItems.length === 0) return null;
 
-          const filteredItem = {
-            ...item,
-            children: item.children ? getFilteredChildren(item.children) : undefined
-          };
-
-          return <SidebarItem key={item.name} item={filteredItem} isCollapsed={isCollapsed} onClose={onClose} />;
+          return (
+            <VStack key={catIdx} align="stretch" spacing="1">
+              {!isCollapsed && cat.category && (
+                <Box px="6" pt="2" pb="1">
+                  <Text fontSize="9px" fontWeight="800" color="rgba(255, 255, 255, 0.5)" textTransform="uppercase" letterSpacing="1.5px">
+                    {cat.category}
+                  </Text>
+                </Box>
+              )}
+              {filteredItems.map(item => (
+                <SidebarItem key={item.name} item={item} isCollapsed={isCollapsed} onClose={onClose} />
+              ))}
+            </VStack>
+          );
         })}
       </VStack>
     </Box>
@@ -414,22 +422,22 @@ const SidebarContent = ({ isCollapsed, onClose, onLogoutOpen, ...rest }) => (
     {/* Logout Footer */}
     <Box
       flexShrink={0}
-      borderTop="1px solid #f1f5f9"
+      borderTop="1px solid rgba(255, 255, 255, 0.1)"
       px={isCollapsed ? '1' : '3'}
       py="3"
-      bg="#fafbfc"
+      bg="#172554"
     >
       {isCollapsed ? (
-        <Tooltip label="Logout" placement="right" hasArrow bg={ACCENT} color="white" fontSize="xs">
+        <Tooltip label="Logout" placement="right" hasArrow bg="#ef4444" color="white" fontSize="xs">
           <Flex
             align="center"
             justify="center"
             p="2.5"
             borderRadius="lg"
             cursor="pointer"
-            color={ACCENT}
+            color="#f87171"
             onClick={onLogoutOpen}
-            _hover={{ bg: '#fff0f0' }}
+            _hover={{ bg: 'rgba(255, 255, 255, 0.08)' }}
             transition="all 0.18s"
           >
             <Icon as={LogOut} boxSize={5} />
@@ -442,9 +450,9 @@ const SidebarContent = ({ isCollapsed, onClose, onLogoutOpen, ...rest }) => (
           px="3"
           borderRadius="lg"
           cursor="pointer"
-          color={ACCENT}
+          color="#f87171"
           onClick={onLogoutOpen}
-          _hover={{ bg: '#fff0f0' }}
+          _hover={{ bg: 'rgba(255, 255, 255, 0.08)' }}
           transition="all 0.18s"
           gap="2.5"
         >

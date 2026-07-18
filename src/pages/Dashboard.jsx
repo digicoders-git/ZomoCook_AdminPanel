@@ -2,16 +2,15 @@ import { useState, useEffect } from 'react';
 import {
   Box, SimpleGrid, Text, Flex, Icon, HStack, VStack,
   Table, Thead, Tbody, Tr, Th, Td, Button, Select, Input,
-  FormControl, FormLabel, Breadcrumb, BreadcrumbItem, BreadcrumbLink,
-  Badge, IconButton, Skeleton, useToast, Spinner, Collapse,
+  FormControl, FormLabel, Badge, IconButton, Skeleton, useToast, Spinner, Collapse,
   Modal, ModalOverlay, ModalContent, ModalHeader, ModalBody,
-  useDisclosure,
+  useDisclosure, Grid, GridItem
 } from '@chakra-ui/react';
 import {
   LayoutDashboard, Users, Briefcase, Calendar, CalendarClock,
-  XCircle, PauseCircle, CircleSlash, UserCheck, Search, RotateCcw,
-  ChevronRight, Filter, FileText, UserPlus, Clock,
-  Activity, PieChart as PieIcon, TrendingUp, AlertCircle, X
+  Search, RotateCcw, ChevronRight, Filter, FileText, UserPlus, Clock,
+  Activity, TrendingUp, TrendingDown, AlertCircle, X, Banknote, CheckCircle,
+  Home, Building2, Sun, Tag
 } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import Chart from 'react-apexcharts';
@@ -22,50 +21,95 @@ import API_BASE_URL from '../apiConfig';
 const BRAND = '#004aad';
 const ACCENT = '#f59e0b';
 
-const StatCard = ({ title, value, icon, color, iconBg, link }) => (
-  <Box
-    bg="white"
-    p={{ base: '4', md: '5' }}
-    borderRadius="xl"
-    border="1px solid #e8edf5"
-    boxShadow="0 2px 8px rgba(0,74,173,0.05)"
+// Metric Pill component (Quick Filter/Search helper)
+const MetricPill = ({ label, value, icon, color, bg }) => (
+  <Flex
+    align="center"
+    bg={bg}
+    px="4"
+    py="2.5"
+    borderRadius="full"
+    border="1.5px solid transparent"
     transition="all 0.2s"
-    _hover={{ transform: 'translateY(-3px)', boxShadow: '0 8px 24px rgba(0,74,173,0.1)', borderColor: '#c0d0f0' }}
-    position="relative"
-    overflow="hidden"
+    cursor="pointer"
+    _hover={{ transform: 'translateY(-1.5px)', boxShadow: 'xs', borderColor: color }}
+    gap="3"
+    flexShrink={0}
   >
-    <Box position="absolute" top="0" left="0" right="0" h="3px" bg={color} borderRadius="xl xl 0 0" />
-    <Flex align="center" justify="space-between" mt="1">
-      <VStack align="start" spacing="0.5" flex="1" pr="2">
-        <Text color="#64748b" fontSize={{ base: '10px', md: '11px' }} fontWeight="700" letterSpacing="0.5px" textTransform="uppercase" noOfLines={2}>
-          {title}
-        </Text>
-        <Text fontSize={{ base: 'xl', md: '2xl' }} fontWeight="800" color="#1e293b" lineHeight="1.1">{value}</Text>
-      </VStack>
-      <Box p={{ base: '2.5', md: '3' }} bg={iconBg} borderRadius="xl" display="flex" alignItems="center" justifyContent="center" flexShrink={0}>
-        <Icon as={icon} color={color} boxSize={{ base: 4, md: 5 }} />
-      </Box>
-    </Flex>
-    <Box mt="3" pt="3" borderTop="1px solid #f1f5f9">
-      <Link to={link || "#"}>
-        <Text fontSize="11px" color={BRAND} fontWeight="700" display="inline-flex" alignItems="center" gap="1"
-          _hover={{ color: ACCENT }}>
-          View Details <Icon as={ChevronRight} boxSize={3} />
-        </Text>
-      </Link>
-    </Box>
-  </Box>
+    <Icon as={icon} color={color} boxSize={4} />
+    <Text fontSize="xs" fontWeight="700" color="#475569" whiteSpace="nowrap">{label}</Text>
+    <Badge bg={color} color="white" borderRadius="md" px="2" py="0.5" fontSize="10px" fontWeight="800">
+      {value}
+    </Badge>
+  </Flex>
 );
 
-const SectionHeader = ({ icon, title, badge }) => (
-  <Flex align="center" justify="space-between" mb="5">
-    <HStack spacing="3">
-      <Box w="3px" h="20px" bg={BRAND} borderRadius="full" />
-      <Icon as={icon} boxSize={4} color={BRAND} />
-      <Text fontSize="sm" fontWeight="700" color="#1e293b">{title}</Text>
+// Stat Card component with trend indicator and hover effect
+const StatCard = ({ title, value, icon, color, trend }) => {
+  return (
+    <HStack
+      bg="white"
+      p="4.5"
+      borderRadius="2xl"
+      border="1.5px solid #e2e8f0"
+      spacing="3.5"
+      align="center"
+      flex="1"
+      transition="all 0.25s cubic-bezier(0.4, 0, 0.2, 1)"
+      _hover={{ transform: 'translateY(-4px)', boxShadow: '0 12px 30px rgba(0,74,173,0.08)', borderColor: '#cbd5e1' }}
+      overflow="hidden"
+      minH="110px"
+    >
+      <Flex 
+        w="12" 
+        h="12" 
+        bg={color} 
+        borderRadius="full" 
+        align="center" 
+        justify="center" 
+        flexShrink={0}
+      >
+        <Icon as={icon} color="white" boxSize="20px" />
+      </Flex>
+      <VStack align="start" spacing="0.5" flex="1" overflow="hidden">
+        <Text 
+          color="#64748b" 
+          fontSize="xs" 
+          fontWeight="600"
+          lineHeight="1.2"
+          noOfLines={1}
+        >
+          {title}
+        </Text>
+        <Text 
+          fontSize="xl" 
+          fontWeight="800" 
+          color="#1e293b" 
+          lineHeight="1.1"
+          noOfLines={1}
+        >
+          {value}
+        </Text>
+        <HStack spacing="1" align="center" mt="0.5">
+          <Icon as={TrendingUp} color="#10b981" boxSize="11px" flexShrink={0} />
+          <Text fontSize="9px" fontWeight="800" color="#10b981" whiteSpace="nowrap">{trend}</Text>
+          <Text fontSize="9px" color="#94a3b8" fontWeight="600" whiteSpace="nowrap">from last month</Text>
+        </HStack>
+      </VStack>
     </HStack>
-    {badge}
-  </Flex>
+  );
+};
+
+const SectionHeader = ({ title, rightElement }) => (
+  <HStack justify="space-between" width="100%" mb="5" align="center">
+    <HStack spacing="2.5" align="center">
+      <Box w="3px" h="18px" bg={BRAND} borderRadius="full" />
+      <Text fontSize="xs" fontWeight="800" color="#1e293b" letterSpacing="0.5px" textTransform="uppercase">
+        {title}
+      </Text>
+    </HStack>
+    {rightElement}
+  </HStack>
 );
 
 const Dashboard = () => {
@@ -75,7 +119,10 @@ const Dashboard = () => {
   const [customers, setCustomers] = useState([]);
   const [positions, setPositions] = useState([]);
 
-  // Modal States
+  // Modal States for drilling down
+  const [donutInterval, setDonutInterval] = useState('month');
+  const [lineInterval, setLineInterval] = useState('month');
+  const [performanceInterval, setPerformanceInterval] = useState('month');
   const { isOpen, onOpen, onClose } = useDisclosure();
   const [selectedPosition, setSelectedPosition] = useState(null);
   const [positionJobs, setPositionJobs] = useState([]);
@@ -182,27 +229,50 @@ const Dashboard = () => {
     );
   }
 
-  const { stats, charts, tableData } = data || {};
+  const { stats, charts, tableData, categoryPerformance, recentJobs, recentTrials, latestTransactions } = data || {};
 
+  // Formatter for currency
+  const formatCurrency = (val) => {
+    return new Intl.NumberFormat('en-IN', {
+      style: 'currency',
+      currency: 'INR',
+      maximumFractionDigits: 0
+    }).format(val);
+  };
+
+  // Stat Cards Mapping
   const statCards = [
-    { title: 'Total Jobs', value: stats?.totalJobs || 0, icon: Briefcase, iconBg: '#e6eeff', color: BRAND, link: '/jobs/list' },
-    { title: 'New Applied', value: stats?.newApplied || 0, icon: UserPlus, iconBg: '#eff6ff', color: '#3b82f6', link: '/candidates/applied' },
-    { title: 'Total Applications', value: stats?.totalApplications || 0, icon: FileText, iconBg: '#f5f3ff', color: '#7c3aed', link: '/candidates/applied' },
-    { title: 'Assigned Candidates', value: stats?.shortlisted || 0, icon: UserCheck, iconBg: '#f0fdf4', color: '#16a34a', link: '/candidates/shortlisted' },
-    { title: 'Demo Scheduled', value: stats?.demoScheduled || 0, icon: Calendar, iconBg: '#ecfdf5', color: '#10b981', link: '/candidates/demo-scheduled' },
-    { title: 'Reschedule Requests', value: stats?.rescheduleRequested || 0, icon: CalendarClock, iconBg: '#ecfeff', color: '#06b6d4', link: '/candidates/reschedule-requests' },
-    { title: 'Rejected Candidates', value: stats?.rejected || 0, icon: XCircle, iconBg: '#fff0f0', color: ACCENT, link: '/candidates/rejected' },
-    { title: 'On Hold Candidates', value: stats?.onHold || 0, icon: PauseCircle, iconBg: '#fffbeb', color: '#f59e0b', link: '/candidates/on-hold' },
-    { title: 'Not Interested', value: stats?.notInterested || 0, icon: CircleSlash, iconBg: '#f8fafc', color: '#64748b', link: '/candidates/not-interested' },
-    { title: 'Hired Candidates', value: stats?.hired || 0, icon: UserCheck, iconBg: '#e6eeff', color: BRAND, link: '/candidates/hired' },
-    { title: 'Total Candidates', value: stats?.totalCandidates || 0, icon: Users, iconBg: '#e6eeff', color: BRAND, link: '/candidates/list' },
-    { title: 'Pending Candidates', value: stats?.pendingCandidates || 0, icon: Clock, iconBg: '#fff0f0', color: ACCENT, link: '/candidates/list' },
+    { title: 'Total Jobs Posted', value: stats?.totalJobs || 0, icon: Briefcase, color: '#6366f1', trend: '12.5%' },
+    { title: 'Total Trials / Demo', value: (stats?.demoScheduled || 0) + (stats?.rescheduleRequested || 0), icon: CalendarClock, color: '#7c3aed', trend: '8.6%' },
+    { title: 'Candidates Added', value: stats?.totalCandidates || 0, icon: Users, color: '#2563eb', trend: '15.3%' },
+    { title: 'Customers Added', value: stats?.totalCustomers || 0, icon: Users, color: '#f59e0b', trend: '10.8%' },
+    { title: 'Total Transactions', value: formatCurrency(stats?.totalTransactions || 0), icon: Banknote, color: '#ef4444', trend: '18.6%' },
+    { title: 'Active Subscriptions', value: stats?.activeSubscriptions || 0, icon: CheckCircle, color: '#06b6d4', trend: '9.7%' },
   ];
 
   // Chart Data Formatting
-  const catNames = { hotel: 'Hotel Jobs', home: 'Home Cooks', daily: 'Daily Pay' };
-  const categoryLabels = charts?.categoryDistribution?.map(c => catNames[c._id] || c._id) || [];
-  const categorySeries = charts?.categoryDistribution?.map(c => c.count) || [];
+  const catNames = { hotel: 'Commercial Jobs', home: 'Domestic Jobs', daily: 'Daily Pay' };
+  
+  let activeCategoryDistribution = [];
+  if (charts?.categoryDistribution) {
+    if (Array.isArray(charts.categoryDistribution)) {
+      activeCategoryDistribution = charts.categoryDistribution;
+    } else {
+      activeCategoryDistribution = charts.categoryDistribution[donutInterval] || charts.categoryDistribution.all || [];
+    }
+  }
+
+  const categoryLabels = activeCategoryDistribution.map(c => catNames[c._id] || c._id) || [];
+  const categorySeries = activeCategoryDistribution.map(c => c.count) || [];
+
+  let activeCategoryPerformance = [];
+  if (categoryPerformance) {
+    if (Array.isArray(categoryPerformance)) {
+      activeCategoryPerformance = categoryPerformance;
+    } else {
+      activeCategoryPerformance = categoryPerformance[performanceInterval] || categoryPerformance.all || [];
+    }
+  }
 
   const growthLabels = charts?.applicationGrowth?.map(g => {
     const months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
@@ -210,286 +280,539 @@ const Dashboard = () => {
   }) || [];
   const growthSeries = charts?.applicationGrowth?.map(g => g.count) || [];
 
-  const statusLabels = charts?.statusOverview?.map(s => s._id) || [];
-  const statusSeries = charts?.statusOverview?.map(s => s.count) || [];
+  // Resolve Trend Chart based on lineInterval selector (Year shows 6-Month growth, Month shows weekly trend)
+  let activeLineSeries = [];
+  let activeLineCategories = [];
+  if (lineInterval === 'year') {
+    activeLineSeries = [{ name: 'Applications', data: growthSeries }];
+    activeLineCategories = growthLabels.length ? growthLabels : ['No Data'];
+  } else {
+    activeLineSeries = charts?.trendOverview?.series || [];
+    activeLineCategories = charts?.trendOverview?.labels || ['1 May', '8 May', '15 May', '22 May', '31 May'];
+  }
 
   // ApexCharts Options
   const pieChartOptions = {
     chart: { type: 'donut', height: 260, fontFamily: 'Outfit, sans-serif' },
     labels: categoryLabels.length ? categoryLabels : ['No Data'],
-    colors: [BRAND, ACCENT, '#0062e6', '#94a3b8'],
-    legend: { position: 'bottom', fontSize: '11px' },
-    dataLabels: { enabled: true, style: { fontSize: '11px' } },
-    plotOptions: { pie: { donut: { size: '65%' } } }
+    colors: ['#2563eb', '#10b981', '#f59e0b', '#94a3b8'],
+    legend: { show: false },
+    dataLabels: { enabled: false },
+    plotOptions: {
+      pie: {
+        donut: {
+          size: '72%',
+          labels: {
+            show: false
+          }
+        }
+      }
+    }
   };
 
   const lineChartOptions = {
     chart: { type: 'line', height: 260, toolbar: { show: false }, fontFamily: 'Outfit, sans-serif' },
-    colors: [BRAND],
+    colors: ['#2563eb', '#10b981', '#f59e0b'],
     stroke: { width: 3, curve: 'smooth' },
-    xaxis: { categories: growthLabels.length ? growthLabels : ['No Data'], labels: { style: { colors: '#64748b', fontSize: '11px' } } },
+    xaxis: { 
+      categories: activeLineCategories, 
+      labels: { style: { colors: '#64748b', fontSize: '11px' } } 
+    },
     yaxis: { labels: { style: { colors: '#64748b', fontSize: '11px' } } },
     grid: { borderColor: '#f1f5f9' },
-    markers: { size: 4, colors: ['#fff'], strokeColors: BRAND, strokeWidth: 2, hover: { size: 6 } }
+    markers: { size: 4, colors: ['#fff'], strokeColors: ['#2563eb', '#10b981', '#f59e0b'], strokeWidth: 2, hover: { size: 6 } },
+    legend: { position: 'top', fontSize: '11px', fontWeight: 600, labels: { colors: '#475569' } }
   };
-
-  const columnChartOptions = {
-    chart: { type: 'bar', height: 260, toolbar: { show: false }, fontFamily: 'Outfit, sans-serif' },
-    colors: [ACCENT],
-    plotOptions: { bar: { borderRadius: 6, columnWidth: '40%' } },
-    xaxis: { categories: statusLabels.length ? statusLabels : ['No Data'], labels: { style: { colors: '#64748b', fontSize: '11px' } } },
-    yaxis: { labels: { style: { colors: '#64748b', fontSize: '11px' } } },
-    grid: { borderColor: '#f1f5f9' }
-  };
-
-  const sparklineOptions = (color, dataArr) => ({
-    series: [{ data: dataArr && dataArr.length ? dataArr : [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0] }],
-    options: {
-      chart: { type: 'line', width: 100, height: 35, sparkline: { enabled: true } },
-      stroke: { width: 2, curve: 'smooth' },
-      colors: [color],
-      tooltip: { fixed: { enabled: false } },
-    }
-  });
 
   return (
-    <Box pb="10">
-      <Flex align={{ base: 'flex-start', md: 'center' }} direction={{ base: 'column', md: 'row' }} justify="space-between" mb="6" gap="4">
+    <Box pb="12" px={{ base: 1, md: 3 }}>
+      {/* Upper header action area */}
+      <Flex align="center" justify="space-between" mb="8">
         <VStack align="start" spacing="1">
-          <Breadcrumb spacing="6px" separator={<ChevronRight size={11} color="#94a3b8" />} fontSize="xs" color="#94a3b8">
-            <BreadcrumbItem>
-              <BreadcrumbLink as={Link} to="/" display="flex" alignItems="center" gap="1" _hover={{ color: BRAND }}>
-                <Icon as={LayoutDashboard} boxSize={3} /> Home
-              </BreadcrumbLink>
-            </BreadcrumbItem>
-            <BreadcrumbItem isCurrentPage>
-              <BreadcrumbLink color={BRAND} fontWeight="600">Dashboard</BreadcrumbLink>
-            </BreadcrumbItem>
-          </Breadcrumb>
-          <HStack spacing="3" align="center">
-            <Box w="4px" h="24px" bg={`linear-gradient(180deg, ${BRAND}, ${ACCENT})`} borderRadius="full" />
-            <Text fontSize={{ base: 'xl', md: '2xl' }} fontWeight="800" color="#1e293b">System Dashboard</Text>
-          </HStack>
+          <Text fontSize="3xl" fontWeight="950" color="#1e293b" letterSpacing="-0.8px">Dashboard</Text>
+          <Text fontSize="xs" fontWeight="700" color="#94a3b8">Welcome back, Admin!</Text>
         </VStack>
-        <HStack spacing="2" w={{ base: 'full', md: 'auto' }} justify={{ base: 'flex-start', md: 'flex-end' }}>
-          <Button onClick={fetchData} isLoading={isLoading} leftIcon={<RotateCcw size={14} />} variant="ghost" size="sm" color="#64748b" borderRadius="lg" _hover={{ bg: '#f8faff', color: BRAND }} flex={{ base: 1, md: 'none' }}>
+        <HStack spacing="3">
+          <Button onClick={fetchData} isLoading={isLoading} leftIcon={<RotateCcw size={14} />} variant="outline" size="sm" borderColor="#e2e8f0" bg="white" color="#64748b" borderRadius="xl" px="4" _hover={{ bg: '#f8faff', color: BRAND }}>
             Refresh
-          </Button>
-          <Button onClick={() => setShowFilters(!showFilters)} leftIcon={<Filter size={14} />} size="sm" variant={showFilters ? "solid" : "outline"} bg={showFilters ? BRAND : 'transparent'} color={showFilters ? 'white' : BRAND} borderColor={BRAND} borderRadius="lg" _hover={{ bg: showFilters ? '#003d91' : '#f0f5ff' }} flex={{ base: 1, md: 'none' }}>
-            Filters
           </Button>
         </HStack>
       </Flex>
 
-      <Collapse in={showFilters} animateOpacity>
-        <Box bg="white" p={{ base: '4', md: '6' }} borderRadius="xl" mb="6" border="1px solid #e8edf5" boxShadow="0 2px 8px rgba(0,74,173,0.04)">
-          <Flex align="center" gap="2" mb="5">
-            <Box w="3px" h="18px" bg={BRAND} borderRadius="full" />
-            <Text fontSize="sm" fontWeight="700" color="#1e293b">Filter & Search</Text>
-          </Flex>
-          <SimpleGrid columns={{ base: 1, md: 2, lg: 4 }} spacing="4" mb="5">
-            <FormControl>
-              <FormLabel fontSize="10px" fontWeight="700" color="#64748b" textTransform="uppercase" letterSpacing="0.8px" mb="1.5">Job Category</FormLabel>
-              <Select name="category" value={filters.category} onChange={handleFilterChange} placeholder="Select Category" size="sm" bg="#f8faff" border="1.5px solid #dde6f5" borderRadius="lg" fontSize="sm">
-                <option value="hotel">Hotel Job</option>
-                <option value="home">Home Cook</option>
-                <option value="daily">Daily Pay</option>
-              </Select>
-            </FormControl>
-            <FormControl>
-              <FormLabel fontSize="10px" fontWeight="700" color="#64748b" textTransform="uppercase" letterSpacing="0.8px" mb="1.5">Customer/Client</FormLabel>
-              <Select name="customer" value={filters.customer} onChange={handleFilterChange} placeholder="Select Client" size="sm" bg="#f8faff" border="1.5px solid #dde6f5" borderRadius="lg" fontSize="sm">
-                {customers.map(c => <option key={c._id} value={c._id}>{c.name}</option>)}
-              </Select>
-            </FormControl>
-            <FormControl>
-              <FormLabel fontSize="10px" fontWeight="700" color="#64748b" textTransform="uppercase" letterSpacing="0.8px" mb="1.5">Job Position</FormLabel>
-              <Select name="position" value={filters.position} onChange={handleFilterChange} placeholder="Select Position" size="sm" bg="#f8faff" border="1.5px solid #dde6f5" borderRadius="lg" fontSize="sm">
-                {positions.map(p => <option key={p._id} value={p.name}>{p.name}</option>)}
-              </Select>
-            </FormControl>
-            <FormControl>
-              <FormLabel fontSize="10px" fontWeight="700" color="#64748b" textTransform="uppercase" letterSpacing="0.8px" mb="1.5">Date</FormLabel>
-              <Input name="date" value={filters.date} onChange={handleFilterChange} type="date" size="sm" bg="#f8faff" border="1.5px solid #dde6f5" borderRadius="lg" fontSize="sm" />
-            </FormControl>
+      {/* High-Fidelity Apply Filter Box */}
+      <Box bg="white" p="6" borderRadius="2xl" mb="8" border="1.5px solid #e2e8f0" boxShadow="sm">
+        <Flex direction={{ base: 'column', lg: 'row' }} align={{ base: 'stretch', lg: 'center' }} gap="4">
+          <Text fontSize="sm" fontWeight="900" color="#1e293b" minW="100px" mr="2">
+            Apply Filter
+          </Text>
+
+          <SimpleGrid columns={{ base: 1, md: 3 }} spacing="4" flex="1">
+            {/* Date Range Dropdown with Icon */}
+            <HStack height="14" border="1.5px solid #e2e8f0" borderRadius="xl" px="4" spacing="3" bg="#f8fafc">
+              <Icon as={Calendar} color="#64748b" boxSize={4} />
+              <VStack align="start" spacing="0.5" flex="1">
+                <Text fontSize="9px" fontWeight="800" color="#94a3b8" textTransform="uppercase" letterSpacing="0.3px">Date Range</Text>
+                <Select name="date" value={filters.date} onChange={handleFilterChange} variant="unstyled" fontSize="xs" fontWeight="700" color="#1e293b" placeholder="This Month" width="100%">
+                  <option value="">This Month</option>
+                  <option value="today">Today</option>
+                  <option value="yesterday">Yesterday</option>
+                </Select>
+              </VStack>
+            </HStack>
+
+            {/* Lead Manager Dropdown with Icon */}
+            <HStack height="14" border="1.5px solid #e2e8f0" borderRadius="xl" px="4" spacing="3" bg="#f8fafc">
+              <Icon as={Users} color="#64748b" boxSize={4} />
+              <VStack align="start" spacing="0.5" flex="1">
+                <Text fontSize="9px" fontWeight="800" color="#94a3b8" textTransform="uppercase" letterSpacing="0.3px">Lead Manager</Text>
+                <Select name="customer" value={filters.customer} onChange={handleFilterChange} variant="unstyled" fontSize="xs" fontWeight="700" color="#1e293b" placeholder="All Lead Managers" width="100%">
+                  {customers.map(c => <option key={c._id} value={c._id}>{c.name}</option>)}
+                </Select>
+              </VStack>
+            </HStack>
+
+            {/* Category Dropdown with Icon */}
+            <HStack height="14" border="1.5px solid #e2e8f0" borderRadius="xl" px="4" spacing="3" bg="#f8fafc">
+              <Icon as={Tag} color="#64748b" boxSize={4} />
+              <VStack align="start" spacing="0.5" flex="1">
+                <Text fontSize="9px" fontWeight="800" color="#94a3b8" textTransform="uppercase" letterSpacing="0.3px">Category</Text>
+                <Select name="category" value={filters.category} onChange={handleFilterChange} variant="unstyled" fontSize="xs" fontWeight="700" color="#1e293b" placeholder="All Categories" width="100%">
+                  <option value="hotel">Commercial Jobs</option>
+                  <option value="home">Domestic Jobs</option>
+                  <option value="daily">Daily Pay</option>
+                </Select>
+              </VStack>
+            </HStack>
           </SimpleGrid>
-          <HStack spacing="3">
-            <Button onClick={handleSearch} isLoading={isLoading} leftIcon={<Search size={15} />} size="sm" bg={BRAND} color="white" px="6" borderRadius="lg" _hover={{ bg: '#003d91' }} boxShadow={`0 4px 12px ${BRAND}30`}>Search</Button>
-            <Button onClick={handleReset} leftIcon={<RotateCcw size={15} />} size="sm" variant="outline" borderColor="#dde6f5" color="#64748b" borderRadius="lg" _hover={{ bg: '#f8faff', borderColor: BRAND, color: BRAND }}>Reset</Button>
-          </HStack>
-        </Box>
-      </Collapse>
 
-      <SimpleGrid columns={{ base: 2, sm: 2, md: 3, lg: 4 }} spacing={{ base: '3', md: '4' }} mb="8">
-        {statCards.map((stat, index) => (
-          <StatCard key={index} {...stat} />
-        ))}
-      </SimpleGrid>
-
-      {/* Position Distribution Table */}
-      <Box bg="white" borderRadius="xl" overflow="hidden" border="1px solid #e8edf5" boxShadow="0 2px 8px rgba(0,74,173,0.04)" mb="8">
-        <Flex align="center" justify="space-between" px={{ base: '4', md: '6' }} py="4" borderBottom="1px solid #f1f5f9">
-          <HStack spacing="3">
-            <Box w="3px" h="20px" bg={BRAND} borderRadius="full" />
-            <Icon as={TrendingUp} boxSize={4} color={BRAND} />
-            <Text fontSize="sm" fontWeight="700" color="#1e293b">Position Distribution Table</Text>
-          </HStack>
-          <Badge px="3" py="1" borderRadius="full" fontSize="10px" fontWeight="700" bg="#ecfdf5" color="#16a34a" border="1px solid #bbf7d0">
-            ● Live
-          </Badge>
-        </Flex>
-
-        <Box overflowX="auto">
-          <Table variant="simple" size="sm">
-            <Thead>
-              <Tr bg="#f8faff">
-                {['Position', 'Jobs', 'Vacancy', 'Applied', 'Assigned', 'Demo', 'Reschedule', 'Rejected', 'On Hold', 'Hired', 'Action'].map((h, i) => (
-                  <Th key={h} py="3.5" fontSize="10px" fontWeight="700" color="#64748b" letterSpacing="0.5px" textTransform="uppercase" isNumeric={i > 0 && i < 10} borderBottom="2px solid #e8edf5" textAlign={i === 10 ? 'center' : undefined}>
-                    {h}
-                  </Th>
-                ))}
-              </Tr>
-            </Thead>
-            <Tbody>
-              {isLoading ? (
-                Array(5).fill(0).map((_, i) => (
-                  <Tr key={i}>
-                    {Array(11).fill(0).map((__, idx) => (
-                      <Td key={idx} py="4"><Skeleton height="14px" borderRadius="md" /></Td>
-                    ))}
-                  </Tr>
-                ))
-              ) : tableData?.length > 0 ? (
-                tableData.map((row, index) => (
-                  <Tr key={index} _hover={{ bg: '#f8faff' }} transition="background 0.15s" borderBottom="1px solid #f1f5f9">
-                    <Td py="3.5" fontWeight="600" color="#1e293b" fontSize="sm">{row.position}</Td>
-                    <Td isNumeric color="#475569" fontSize="sm">{row.jobs}</Td>
-                    <Td isNumeric color="#475569" fontSize="sm">{row.vacancy}</Td>
-                    <Td isNumeric fontSize="sm">
-                      <Badge bg={row.applied > 0 ? '#e6eeff' : '#f8fafc'} color={row.applied > 0 ? BRAND : '#94a3b8'} borderRadius="md" px="2" fontSize="11px" fontWeight="700">{row.applied}</Badge>
-                    </Td>
-                    <Td isNumeric fontSize="sm">
-                      <Badge bg={row.assigned > 0 ? '#f0fdf4' : '#f8fafc'} color={row.assigned > 0 ? '#16a34a' : '#94a3b8'} borderRadius="md" px="2" fontSize="11px" fontWeight="700">{row.assigned}</Badge>
-                    </Td>
-                    <Td isNumeric fontSize="sm">
-                      <Badge bg={row.demo > 0 ? '#ecfdf5' : '#f8fafc'} color={row.demo > 0 ? '#10b981' : '#94a3b8'} borderRadius="md" px="2" fontSize="11px" fontWeight="700">{row.demo}</Badge>
-                    </Td>
-                    <Td isNumeric fontSize="sm">
-                      <Badge bg={row.reschedule > 0 ? '#ecfeff' : '#f8fafc'} color={row.reschedule > 0 ? '#06b6d4' : '#94a3b8'} borderRadius="md" px="2" fontSize="11px" fontWeight="700">{row.reschedule}</Badge>
-                    </Td>
-                    <Td isNumeric fontSize="sm">
-                      <Badge bg={row.rejected > 0 ? '#fff0f0' : '#f8fafc'} color={row.rejected > 0 ? ACCENT : '#94a3b8'} borderRadius="md" px="2" fontSize="11px" fontWeight="700">{row.rejected}</Badge>
-                    </Td>
-                    <Td isNumeric fontSize="sm" color="#94a3b8">{row.onHold}</Td>
-                    <Td isNumeric fontSize="sm">
-                      <Badge bg={row.hired > 0 ? '#f0fdf4' : '#f8fafc'} color={row.hired > 0 ? '#16a34a' : '#94a3b8'} borderRadius="md" px="2" fontSize="11px" fontWeight="700">{row.hired}</Badge>
-                    </Td>
-                    <Td textAlign="center">
-                      <Button onClick={() => handleViewPositionJobs(row.position)} size="xs" bg={BRAND} color="white" borderRadius="md" _hover={{ bg: '#003d91' }} fontSize="10px" px="3">View Jobs</Button>
-                    </Td>
-                  </Tr>
-                ))
-              ) : (
-                <Tr>
-                  <Td colSpan={11} py="10">
-                    <VStack spacing="2">
-                      <Icon as={AlertCircle} boxSize={8} color="#94a3b8" />
-                      <Text color="#94a3b8" fontWeight="600">No matching records found for current filters</Text>
-                      <Button size="xs" variant="link" color={BRAND} onClick={handleReset}>Clear all filters</Button>
-                    </VStack>
-                  </Td>
-                </Tr>
-              )}
-            </Tbody>
-          </Table>
-        </Box>
-        <Flex justify="space-between" align="center" px={{ base: '4', md: '6' }} py="3" borderTop="1px solid #f1f5f9" bg="#fafbfc">
-          <Text fontSize="xs" color="#94a3b8">Showing {tableData?.length || 0} entries</Text>
-          <HStack spacing="1">
-            <Button size="xs" variant="ghost" color="#64748b" borderRadius="md" _hover={{ bg: '#f0f5ff', color: BRAND }}>Prev</Button>
-            <Button size="xs" bg={BRAND} color="white" borderRadius="md" _hover={{ bg: '#003d91' }} minW="7">1</Button>
-            <Button size="xs" variant="ghost" color="#64748b" borderRadius="md" _hover={{ bg: '#f0f5ff', color: BRAND }}>Next</Button>
+          <HStack spacing="3" align="center" ml={{ lg: "4" }} width={{ base: 'full', lg: 'auto' }}>
+            <Button onClick={handleSearch} isLoading={isLoading} size="md" bg="#2563eb" color="white" px="8" borderRadius="xl" _hover={{ bg: '#1d4ed8' }} flex={{ base: 1, lg: 'none' }} fontSize="xs" fontWeight="800" height="12">Apply</Button>
+            <Button onClick={handleReset} size="md" variant="ghost" bg="#f1f5f9" color="#64748b" px="8" borderRadius="xl" _hover={{ bg: '#e2e8f0' }} flex={{ base: 1, lg: 'none' }} fontSize="xs" fontWeight="800" height="12">Reset</Button>
           </HStack>
         </Flex>
       </Box>
 
-      {/* Performance Metrics Row */}
-      <SimpleGrid columns={{ base: 1, md: 3 }} spacing={{ base: '4', md: '5' }} mb={{ base: '4', md: '5' }}>
-        <Box bg="white" p={{ base: '4', md: '6' }} borderRadius="xl" border="1px solid #e8edf5" boxShadow="0 2px 8px rgba(0,74,173,0.04)">
-          <SectionHeader icon={Activity} title="Success Percentage" />
-          <Chart
-            options={{
-              chart: { type: 'donut', height: 220, fontFamily: 'Outfit, sans-serif' },
-              colors: [BRAND, '#f1f5f9'],
-              dataLabels: { enabled: false },
-              legend: { show: false },
-              plotOptions: {
-                pie: {
-                  donut: {
-                    size: '80%',
-                    labels: {
-                      show: true,
-                      total: {
-                        show: true,
-                        label: 'Success',
-                        formatter: () => `${charts?.successPercentage ?? 0}%`
-                      }
-                    }
-                  }
-                }
-              }
-            }}
-            series={[charts?.successPercentage ?? 0, Math.max(0, 100 - (charts?.successPercentage ?? 0))]}
-            type="donut"
-            height={220}
-          />
-        </Box>
-        <Box bg="white" p={{ base: '4', md: '6' }} borderRadius="xl" border="1px solid #e8edf5" boxShadow="0 2px 8px rgba(0,74,173,0.04)">
-          <SectionHeader icon={PieIcon} title="Application Status Overview" />
-          <Chart options={{ ...columnChartOptions, xaxis: { categories: statusLabels } }} series={[{ name: 'Count', data: statusSeries }]} type="bar" height={220} />
-        </Box>
-        <Box bg="white" p={{ base: '4', md: '6' }} borderRadius="xl" border="1px solid #e8edf5" boxShadow="0 2px 8px rgba(0,74,173,0.04)">
-          <SectionHeader icon={TrendingUp} title="Median Ratio" />
-          <Chart
-            options={{
-              chart: { type: 'radialBar', height: 220, fontFamily: 'Outfit, sans-serif' },
-              plotOptions: {
-                radialBar: {
-                  startAngle: -135,
-                  endAngle: 135,
-                  dataLabels: {
-                    name: { show: true, color: '#64748b', fontSize: '12px' },
-                    value: { formatter: (v) => v + '%', color: BRAND, fontSize: '20px', fontWeight: 700 }
-                  }
-                }
-              },
-              labels: ['Shortlisted']
-            }}
-            series={[charts?.medianRatio ?? 0]}
-            type="radialBar"
-            height={220}
-          />
-        </Box>
+      {/* Metric Pills Quick Counters Row with robust Scroll Protection */}
+      <Box bg="white" p="4" borderRadius="2xl" border="1.5px solid #e2e8f0" mb="8" overflowX="auto" css={{
+        '&::-webkit-scrollbar': { height: '5px' },
+        '&::-webkit-scrollbar-thumb': { background: '#cbd5e1', borderRadius: '10px' },
+        '&::-webkit-scrollbar-track': { background: '#f8fafc' }
+      }}>
+        <HStack spacing="4" minW="max-content" align="center">
+          <Text fontSize="xs" fontWeight="900" color="#1e293b" letterSpacing="0.3px" pr="2" borderRight="2px solid #e2e8f0" mr="1">Search By</Text>
+          <MetricPill label="Job Posted" value={stats?.totalJobs || 0} icon={Briefcase} color="#2563eb" bg="#eff6ff" />
+          <MetricPill label="Trial / Demo" value={stats?.demoScheduled || 0} icon={Calendar} color="#7c3aed" bg="#f5f3ff" />
+          <MetricPill label="Candidate Added" value={stats?.totalCandidates || 0} icon={UserPlus} color="#10b981" bg="#f0fdf4" />
+          <MetricPill label="Customers Added" value={stats?.totalCustomers || 0} icon={Users} color="#f59e0b" bg="#fff7ed" />
+          <MetricPill label="Transactions" value={formatCurrency(stats?.totalTransactions || 0)} icon={Banknote} color="#ef4444" bg="#fff5f5" />
+          <MetricPill label="Package / Subscription" value={stats?.activeSubscriptions || 0} icon={CheckCircle} color="#06b6d4" bg="#ecfeff" />
+        </HStack>
+      </Box>
+
+      {/* Main Grid: 6 Premium Stat Cards (Responsive column wrapping) */}
+      <SimpleGrid columns={{ base: 1, sm: 2, md: 3, xl: 6 }} spacing="5" mb="8">
+        {statCards.map((stat, idx) => (
+          <StatCard key={idx} {...stat} />
+        ))}
       </SimpleGrid>
 
-      {/* Modal for Job Wise Details */}
-      <Modal isOpen={isOpen} onClose={onClose} size={{ base: 'full', md: '6xl' }}>
+      {/* Middle Grid: Charts & Category Performance Table */}
+      <Grid templateColumns={{ base: "1fr", lg: "repeat(3, 1fr)" }} gap="6" mb="8">
+        {/* Category Wise Jobs (Donut Chart) */}
+        <GridItem bg="white" p="4" borderRadius="2xl" border="1.5px solid #e2e8f0" boxShadow="xs">
+          <SectionHeader 
+            title="Category Wise Jobs" 
+            rightElement={
+              <Select 
+                size="xs" 
+                width="auto" 
+                minW="80px" 
+                borderRadius="lg" 
+                borderColor="#e2e8f0" 
+                bg="white" 
+                fontSize="9px" 
+                fontWeight="700"
+                color="#475569"
+                value={donutInterval}
+                onChange={(e) => setDonutInterval(e.target.value)}
+              >
+                <option value="week">This Week</option>
+                <option value="month">This Month</option>
+                <option value="year">This Year</option>
+                <option value="all">All Time</option>
+              </Select>
+            }
+          />
+          <HStack spacing="3" width="100%" height="240px" align="center" justify="space-between">
+            <Box flex="1.2" display="flex" justifyContent="center" minW="0" position="relative" alignItems="center">
+              <Chart options={pieChartOptions} series={categorySeries.length ? categorySeries : [0, 0, 0]} type="donut" width="185px" height={190} />
+              <VStack position="absolute" spacing="0" justify="center" align="center" pointerEvents="none">
+                <Text fontSize="22px" fontWeight="900" color="#1e293b" lineHeight="1">
+                  {categorySeries.reduce((a, b) => a + b, 0)}
+                </Text>
+                <Text fontSize="10.5px" fontWeight="600" color="#64748b" mt="1">
+                  Total Jobs
+                </Text>
+              </VStack>
+            </Box>
+            <VStack spacing="3" align="stretch" flex="1" pr="1" minW="0">
+              {activeCategoryDistribution?.map((c, idx) => {
+                const name = catNames[c._id] || c._id;
+                const count = c.count;
+                const total = categorySeries.reduce((a, b) => a + b, 0);
+                const percent = total > 0 ? ((count / total) * 100).toFixed(1) : 0;
+                const colors = ['#2563eb', '#10b981', '#f59e0b', '#94a3b8'];
+                const color = colors[idx % colors.length];
+                
+                return (
+                  <HStack key={c._id} justify="space-between" width="100%">
+                    <HStack spacing="2" align="center" minW="0">
+                      <Box w="2.5" h="2.5" borderRadius="full" bg={color} flexShrink={0} />
+                      <Text color="#475569" fontSize="10.5px" fontWeight="600" isTruncated>{name}</Text>
+                    </HStack>
+                    <HStack spacing="1" align="baseline" flexShrink={0}>
+                      <Text color="#1e293b" fontSize="11px" fontWeight="800">{count}</Text>
+                      <Text color="#94a3b8" fontSize="9.5px" fontWeight="500">({percent}%)</Text>
+                    </HStack>
+                  </HStack>
+                );
+              })}
+            </VStack>
+          </HStack>
+        </GridItem>
+
+        {/* Jobs Trend Overview (Line Chart) */}
+        <GridItem bg="white" p="6" borderRadius="2xl" border="1.5px solid #e2e8f0" boxShadow="xs">
+          <SectionHeader 
+            title="Jobs Trend Overview" 
+            rightElement={
+              <Select 
+                size="xs" 
+                width="auto" 
+                minW="80px" 
+                borderRadius="lg" 
+                borderColor="#e2e8f0" 
+                bg="white" 
+                fontSize="9px" 
+                fontWeight="700"
+                color="#475569"
+                value={lineInterval}
+                onChange={(e) => setLineInterval(e.target.value)}
+              >
+                <option value="month">This Month</option>
+                <option value="year">This Year</option>
+              </Select>
+            }
+          />
+          <Box h="260px">
+            <Chart options={lineChartOptions} series={activeLineSeries} type="line" width="100%" height={240} />
+          </Box>
+        </GridItem>
+
+        {/* Category Performance (Table with Icons) */}
+        <GridItem bg="white" p="4" borderRadius="2xl" border="1.5px solid #e2e8f0" boxShadow="xs" display="flex" flexDirection="column">
+          <SectionHeader 
+            title="Category Performance" 
+            rightElement={
+              <Select 
+                size="xs" 
+                width="auto" 
+                minW="80px" 
+                borderRadius="lg" 
+                borderColor="#e2e8f0" 
+                bg="white" 
+                fontSize="9px" 
+                fontWeight="700"
+                color="#475569"
+                value={performanceInterval}
+                onChange={(e) => setPerformanceInterval(e.target.value)}
+              >
+                <option value="week">This Week</option>
+                <option value="month">This Month</option>
+                <option value="year">This Year</option>
+                <option value="all">All Time</option>
+              </Select>
+            }
+          />
+          <Box flex="1" overflowY="auto">
+            <Table variant="simple" size="sm" layout="fixed" width="100%">
+              <Thead>
+                <Tr bg="#f8fafc">
+                  <Th fontSize="10px" fontWeight="800" color="#64748b" py="3.5" px="0.5" width="30%" textTransform="none" letterSpacing="0">Category</Th>
+                  <Th fontSize="10px" fontWeight="800" color="#64748b" py="3.5" px="0.5" width="14%" textTransform="none" letterSpacing="0" isNumeric>Jobs</Th>
+                  <Th fontSize="10px" fontWeight="800" color="#64748b" py="3.5" px="0.5" width="15%" textTransform="none" letterSpacing="0" isNumeric>Trials</Th>
+                  <Th fontSize="10px" fontWeight="800" color="#64748b" py="3.5" px="0.5" width="15%" textTransform="none" letterSpacing="0" isNumeric>Hired</Th>
+                  <Th fontSize="10px" fontWeight="800" color="#64748b" py="3.5" px="0.5" width="26%" textTransform="none" letterSpacing="0" isNumeric>Revenue</Th>
+                </Tr>
+              </Thead>
+              <Tbody>
+                {activeCategoryPerformance?.map((row, idx) => {
+                  const isCommercial = row.category.toLowerCase().includes('comm');
+                  const isDomestic = row.category.toLowerCase().includes('dom');
+                  return (
+                    <Tr key={idx} _hover={{ bg: '#f8fafc' }} transition="all 0.15s">
+                      <Td fontWeight="800" color="#1e293b" py="3" px="0.5" fontSize="10px" overflow="hidden" whiteSpace="nowrap">
+                        <HStack spacing="1.5" align="center">
+                          <Icon
+                            as={isCommercial ? Building2 : isDomestic ? Home : Sun}
+                            color={isCommercial ? '#2563eb' : isDomestic ? '#10b981' : '#f59e0b'}
+                            boxSize={3.5}
+                            flexShrink={0}
+                          />
+                          <Text fontSize="10px" fontWeight="700">{row.category}</Text>
+                        </HStack>
+                      </Td>
+                      <Td isNumeric color="#475569" py="3" px="0.5" fontSize="10px">{row.jobsPosted}</Td>
+                      <Td isNumeric color="#475569" py="3" px="0.5" fontSize="10px">{row.trials}</Td>
+                      <Td isNumeric py="3" px="0.5" fontSize="10px">
+                        <Badge colorScheme="green" variant="subtle" borderRadius="md" px="1.5" fontSize="9px">{row.hired}</Badge>
+                      </Td>
+                      <Td isNumeric color="#2563eb" fontWeight="800" py="3" px="0.5" fontSize="10px" whiteSpace="nowrap">{formatCurrency(row.revenue)}</Td>
+                    </Tr>
+                  );
+                })}
+                {/* Total row */}
+                <Tr bg="#f8fafc" fontWeight="900">
+                  <Td color="#1e293b" fontSize="10px" py="3" px="0.5">Total</Td>
+                  <Td isNumeric fontSize="10px" py="3" px="0.5">
+                    {activeCategoryPerformance?.reduce((acc, r) => acc + r.jobsPosted, 0) || 0}
+                  </Td>
+                  <Td isNumeric fontSize="10px" py="3" px="0.5">
+                    {activeCategoryPerformance?.reduce((acc, r) => acc + r.trials, 0) || 0}
+                  </Td>
+                  <Td isNumeric fontSize="10px" py="3" px="0.5">
+                    {activeCategoryPerformance?.reduce((acc, r) => acc + r.hired, 0) || 0}
+                  </Td>
+                  <Td isNumeric color="#2563eb" fontSize="10px" py="3" px="0.5" whiteSpace="nowrap">
+                    {formatCurrency(activeCategoryPerformance?.reduce((acc, r) => acc + r.revenue, 0) || 0)}
+                  </Td>
+                </Tr>
+              </Tbody>
+            </Table>
+          </Box>
+        </GridItem>
+      </Grid>
+
+      {/* Position Distribution Collapse Button */}
+      <Box mb="8" textAlign="right">
+        <Button
+          onClick={() => handleViewPositionJobs(positions[0]?.name || '')}
+          size="sm"
+          variant="outline"
+          borderColor="#2563eb"
+          color="#2563eb"
+          _hover={{ bg: '#f0f5ff' }}
+          rightIcon={<ChevronRight size={14} />}
+        >
+          View Position Distribution
+        </Button>
+      </Box>
+
+      {/* Bottom Grid: 3-Column Tables (Enhanced Widths and Spacings to prevent wrap clutters) */}
+      <Grid templateColumns={{ base: "1fr", lg: "repeat(3, 1fr)" }} gap="6" mb="8">
+        {/* Recent Jobs Posted */}
+        <Box bg="white" p="4" borderRadius="2xl" border="1.5px solid #e2e8f0" display="flex" flexDirection="column" boxShadow="xs">
+          <Flex align="center" justify="space-between" mb="4">
+            <SectionHeader title="Recent Job Posted" />
+            <Link to="/jobs/list">
+              <Text fontSize="11px" color={BRAND} fontWeight="800" _hover={{ color: ACCENT }}>View All</Text>
+            </Link>
+          </Flex>
+          <Box overflowX="auto" css={{
+            '&::-webkit-scrollbar': { height: '3px' },
+            '&::-webkit-scrollbar-thumb': { background: '#e2e8f0' }
+          }}>
+            <Table variant="simple" size="sm">
+              <Thead>
+                <Tr bg="#f8fafc">
+                  <Th fontSize="9px" fontWeight="800" color="#64748b" py="3" px="2" whiteSpace="nowrap">Job Title</Th>
+                  <Th fontSize="9px" fontWeight="800" color="#64748b" py="3" px="2" whiteSpace="nowrap">Category</Th>
+                  <Th fontSize="9px" fontWeight="800" color="#64748b" py="3" px="2" whiteSpace="nowrap">Type</Th>
+                  <Th fontSize="9px" fontWeight="800" color="#64748b" py="3" px="2" isNumeric whiteSpace="nowrap">Apps</Th>
+                </Tr>
+              </Thead>
+              <Tbody>
+                {recentJobs?.map((job, idx) => (
+                  <Tr key={idx} _hover={{ bg: '#f8fafc' }}>
+                    <Td fontWeight="750" color="#1e293b" fontSize="10.5px" py="3.5" px="2" noOfLines={1} maxW="110px" whiteSpace="nowrap" textOverflow="ellipsis" overflow="hidden">
+                      {job.title}
+                    </Td>
+                    <Td py="3.5" px="2">
+                      <Badge
+                        fontSize="9px"
+                        fontWeight="800"
+                        colorScheme={job.jobCategory === 'hotel' ? 'blue' : job.jobCategory === 'home' ? 'green' : 'orange'}
+                        variant="solid"
+                        px="1.5"
+                        borderRadius="md"
+                        whiteSpace="nowrap"
+                      >
+                        {job.jobCategory === 'hotel' ? 'Comm' : job.jobCategory === 'home' ? 'Dom' : 'Daily'}
+                      </Badge>
+                    </Td>
+                    <Td py="3.5" px="2">
+                      <Badge
+                        fontSize="9px"
+                        fontWeight="700"
+                        colorScheme={job.jobType.toLowerCase().includes('full') ? 'purple' : job.jobType.toLowerCase().includes('part') ? 'pink' : 'yellow'}
+                        variant="subtle"
+                        px="1.5"
+                        borderRadius="md"
+                        whiteSpace="nowrap"
+                      >
+                        {job.jobType.replace(' Time', '')}
+                      </Badge>
+                    </Td>
+                    <Td isNumeric py="3.5" px="2" fontWeight="850" color={BRAND} fontSize="11px">{job.applicationsCount}</Td>
+                  </Tr>
+                ))}
+                {(!recentJobs || recentJobs.length === 0) && (
+                  <Tr><Td colSpan="4" py="4" textAlign="center" fontSize="xs" color="#94a3b8">No recent jobs found.</Td></Tr>
+                )}
+              </Tbody>
+            </Table>
+          </Box>
+        </Box>
+
+        {/* Recent Trials / Demo */}
+        <Box bg="white" p="4" borderRadius="2xl" border="1.5px solid #e2e8f0" display="flex" flexDirection="column" boxShadow="xs">
+          <Flex align="center" justify="space-between" mb="4">
+            <SectionHeader title="Recent Trials / Demo" />
+            <Link to="/candidates/demo-scheduled">
+              <Text fontSize="11px" color={BRAND} fontWeight="800" _hover={{ color: ACCENT }}>View All</Text>
+            </Link>
+          </Flex>
+          <Box overflowX="auto" css={{
+            '&::-webkit-scrollbar': { height: '3px' },
+            '&::-webkit-scrollbar-thumb': { background: '#e2e8f0' }
+          }}>
+            <Table variant="simple" size="sm">
+              <Thead>
+                <Tr bg="#f8fafc">
+                  <Th fontSize="9px" fontWeight="800" color="#64748b" py="3" px="2" whiteSpace="nowrap">Job Title</Th>
+                  <Th fontSize="9px" fontWeight="800" color="#64748b" py="3" px="2" whiteSpace="nowrap">Candidate</Th>
+                  <Th fontSize="9px" fontWeight="800" color="#64748b" py="3" px="2" whiteSpace="nowrap">Trial Date</Th>
+                  <Th fontSize="9px" fontWeight="800" color="#64748b" py="3" px="2" whiteSpace="nowrap">Status</Th>
+                </Tr>
+              </Thead>
+              <Tbody>
+                {recentTrials?.map((trial, idx) => (
+                  <Tr key={idx} _hover={{ bg: '#f8fafc' }}>
+                    <Td fontWeight="750" color="#1e293b" fontSize="10.5px" py="3.5" px="2" noOfLines={1} maxW="90px" whiteSpace="nowrap" textOverflow="ellipsis" overflow="hidden">
+                      {trial.title}
+                    </Td>
+                    <Td color="#475569" fontSize="10.5px" py="3.5" px="2" whiteSpace="nowrap" textOverflow="ellipsis" overflow="hidden" maxW="80px">{trial.candidateName}</Td>
+                    <Td color="#64748b" fontSize="10.5px" py="3.5" px="2" whiteSpace="nowrap">{trial.trialDate}</Td>
+                    <Td py="3.5" px="2">
+                      <Badge
+                        fontSize="9px"
+                        fontWeight="800"
+                        colorScheme={trial.status === 'Demo Scheduled' ? 'purple' : trial.status === 'Hired' ? 'green' : 'orange'}
+                        variant="solid"
+                        px="1.5"
+                        borderRadius="md"
+                        whiteSpace="nowrap"
+                      >
+                        {trial.status === 'Demo Scheduled' ? 'Sched' : trial.status === 'Reschedule Requested' ? 'Resch' : trial.status}
+                      </Badge>
+                    </Td>
+                  </Tr>
+                ))}
+                {(!recentTrials || recentTrials.length === 0) && (
+                  <Tr><Td colSpan="4" py="4" textAlign="center" fontSize="xs" color="#94a3b8">No recent trials scheduled.</Td></Tr>
+                )}
+              </Tbody>
+            </Table>
+          </Box>
+        </Box>
+
+        {/* Latest Transactions */}
+        <Box bg="white" p="4" borderRadius="2xl" border="1.5px solid #e2e8f0" display="flex" flexDirection="column" boxShadow="xs">
+          <Flex align="center" justify="space-between" mb="4">
+            <SectionHeader title="Latest Transactions" />
+            <Link to="/finance">
+              <Text fontSize="11px" color={BRAND} fontWeight="800" _hover={{ color: ACCENT }}>View All</Text>
+            </Link>
+          </Flex>
+          <Box overflowX="auto" css={{
+            '&::-webkit-scrollbar': { height: '3px' },
+            '&::-webkit-scrollbar-thumb': { background: '#e2e8f0' }
+          }}>
+            <Table variant="simple" size="sm" layout="fixed" width="100%">
+              <Thead>
+                <Tr bg="#f8fafc">
+                  <Th fontSize="9px" fontWeight="800" color="#64748b" py="3.5" px="1" width="34%" textTransform="none" letterSpacing="0">Invoice No</Th>
+                  <Th fontSize="9px" fontWeight="800" color="#64748b" py="3.5" px="1" width="28%" textTransform="none" letterSpacing="0">Customer</Th>
+                  <Th fontSize="9px" fontWeight="800" color="#64748b" py="3.5" px="1" width="22%" textTransform="none" letterSpacing="0" isNumeric>Amount</Th>
+                  <Th fontSize="9px" fontWeight="800" color="#64748b" py="3.5" px="1" width="16%" textTransform="none" letterSpacing="0">Status</Th>
+                </Tr>
+              </Thead>
+              <Tbody>
+                {latestTransactions?.map((tx, idx) => {
+                  const displayInvoice = tx.invoiceNo.replace('order_', '').replace('OFFLINE_', '');
+                  const shortInvoice = displayInvoice.length > 10 ? `INV-${displayInvoice.slice(-8).toUpperCase()}` : tx.invoiceNo;
+                  return (
+                    <Tr key={idx} _hover={{ bg: '#f8fafc' }}>
+                      <Td fontWeight="800" color="#2563eb" fontSize="10px" py="3.5" px="1" overflow="hidden" textOverflow="ellipsis" whiteSpace="nowrap" title={tx.invoiceNo}>
+                        {shortInvoice}
+                      </Td>
+                      <Td color="#475569" fontSize="10px" py="3.5" px="1" overflow="hidden" textOverflow="ellipsis" whiteSpace="nowrap" title={tx.customer}>
+                        {tx.customer}
+                      </Td>
+                      <Td isNumeric color="#1e293b" fontWeight="900" fontSize="10px" py="3.5" px="1" whiteSpace="nowrap">{formatCurrency(tx.amount)}</Td>
+                      <Td py="3.5" px="1">
+                        <Badge fontSize="9px" fontWeight="800" bg="#10b981" color="white" variant="solid" px="1.5" borderRadius="md" whiteSpace="nowrap">Paid</Badge>
+                      </Td>
+                    </Tr>
+                  );
+                })}
+                {(!latestTransactions || latestTransactions.length === 0) && (
+                  <Tr><Td colSpan="4" py="4" textAlign="center" fontSize="xs" color="#94a3b8">No transactions found.</Td></Tr>
+                )}
+              </Tbody>
+            </Table>
+          </Box>
+        </Box>
+      </Grid>
+
+      {/* Bottom Sticky-like Row of Quick Metrics */}
+      <Box mt="10" pt="6" borderTop="2px solid #e2e8f0">
+        <SimpleGrid columns={{ base: 1, sm: 2, md: 3, xl: 6 }} spacing="4">
+          {statCards.map((stat, idx) => (
+            <HStack key={idx} bg="white" p="4" borderRadius="xl" border="1px solid #e2e8f0" spacing="3" boxShadow="xs">
+              <Flex w="8.5" h="8.5" bg={`${stat.color}15`} borderRadius="full" align="center" justify="center" flexShrink={0} p="1">
+                <Icon as={stat.icon} color={stat.color} boxSize={3.5} />
+              </Flex>
+              <VStack align="start" spacing="0" flex="1" overflow="hidden">
+                <Text color="#94a3b8" fontSize="8.5px" fontWeight="800" textTransform="uppercase" noOfLines={1}>{stat.title}</Text>
+                <HStack spacing="2" align="baseline" width="100%">
+                  <Text fontSize="13px" fontWeight="900" color="#1e293b" noOfLines={1}>{stat.value}</Text>
+                  <Text fontSize="8.5px" fontWeight="850" color="#10b981" whiteSpace="nowrap">▲ {stat.trend}</Text>
+                </HStack>
+              </VStack>
+            </HStack>
+          ))}
+        </SimpleGrid>
+      </Box>
+
+      {/* Drill-down Modal for Position-wise details */}
+      <Modal isOpen={isOpen} onClose={onClose} size="4xl">
         <ModalOverlay backdropFilter="blur(4px)" />
-        <ModalContent borderRadius={{ base: '0', md: 'xl' }} overflow="hidden" mx={{ base: '0', md: '4' }} my={{ base: '0', md: '4' }}>
-          <ModalHeader bg="white" borderBottom="1px solid #f1f5f9" py="4" px={{ base: '4', md: '6' }}>
+        <ModalContent borderRadius="2xl" overflow="hidden" my="4">
+          <ModalHeader bg="white" borderBottom="1px solid #f1f5f9" py="4" px="6">
             <HStack justify="space-between">
               <HStack spacing="3">
                 <Box w="3px" h="18px" bg={BRAND} borderRadius="full" />
-                <Text fontSize={{ base: 'sm', md: 'md' }} fontWeight="800" color="#1e293b">Job Wise Details - {selectedPosition}</Text>
+                <Text fontSize="md" fontWeight="850" color="#1e293b">Job Wise Details - {selectedPosition}</Text>
               </HStack>
               <IconButton icon={<X size={18} />} size="sm" variant="ghost" onClick={onClose} aria-label="close" />
             </HStack>
           </ModalHeader>
           <ModalBody p="0">
-            <Box overflowX="auto" p={{ base: '3', md: '5' }}>
+            <Box overflowX="auto" p="5">
               <Table variant="simple" size="sm" border="1px solid #e8edf5" borderRadius="lg">
                 <Thead>
-                  <Tr bg="#f8faff">
+                  <Tr bg="#f8fafc">
                     {['Job Title', 'Vacancy', 'Applied', 'Assigned', 'Demo', 'Reschedule', 'Rejected', 'On Hold', 'Not Interested', 'Hired'].map((h, i) => (
                       <Th key={h} py="4" fontSize="10px" fontWeight="800" color="#1e293b" letterSpacing="0.5px" borderBottom="1px solid #e8edf5" isNumeric={i > 0}>
                         {h}
@@ -508,7 +831,7 @@ const Dashboard = () => {
                     ))
                   ) : positionJobs.length > 0 ? (
                     positionJobs.map((job, index) => (
-                      <Tr key={index} _hover={{ bg: '#f8faff' }}>
+                      <Tr key={index} _hover={{ bg: '#f8fafc' }}>
                         <Td py="4" fontWeight="600" color="#475569" fontSize="xs">{job.title}</Td>
                         <Td isNumeric fontSize="xs" color="#64748b" textAlign="center">{job.vacancy}</Td>
                         <Td isNumeric fontSize="xs" textAlign="center">{job.applied}</Td>
@@ -527,7 +850,7 @@ const Dashboard = () => {
                 </Tbody>
               </Table>
             </Box>
-            <Flex justify="flex-end" px={{ base: '4', md: '6' }} py="4" borderTop="1px solid #f1f5f9" bg="#fafbfc">
+            <Flex justify="flex-end" px="6" py="4" borderTop="1px solid #f1f5f9" bg="#fafbfc">
               <HStack spacing="1">
                 <Button size="xs" variant="outline" color="#64748b" borderRadius="md">Previous</Button>
                 <Button size="xs" bg={BRAND} color="white" borderRadius="md" px="3">1</Button>
@@ -537,91 +860,6 @@ const Dashboard = () => {
           </ModalBody>
         </ModalContent>
       </Modal>
-
-      {/* Advanced Trends & Growth Analysis */}
-      <SimpleGrid columns={{ base: 1, lg: 2 }} spacing={{ base: '4', md: '5' }} mb={{ base: '4', md: '5' }}>
-        <Box bg="white" p={{ base: '4', md: '6' }} borderRadius="xl" border="1px solid #e8edf5" boxShadow="0 2px 8px rgba(0,74,173,0.04)">
-          <SectionHeader icon={Activity} title="Application Growth" />
-          <Chart options={lineChartOptions} series={[{ name: 'Applications', data: growthSeries }]} type="line" height={220} />
-        </Box>
-        <Box bg="white" p={{ base: '4', md: '6' }} borderRadius="xl" border="1px solid #e8edf5" boxShadow="0 2px 8px rgba(0,74,173,0.04)">
-          <SectionHeader icon={Activity} title="Sparkline Trends" />
-          <VStack spacing="4" align="stretch" pt="4">
-            {[
-              { label: 'Daily Visitors', color: '#3b82f6', data: charts?.sparklines?.dailyCandidates },
-              { label: 'Total Applications', color: '#10b981', data: charts?.sparklines?.dailyApplications },
-              { label: 'Interview Success', color: '#f59e0b', data: charts?.sparklines?.dailyDemo },
-              { label: 'Hiring Rate', color: '#ef4444', data: charts?.sparklines?.dailyHired },
-            ].map(({ label, color, data }) => (
-              <Flex key={label} justify="space-between" align="center">
-                <Text fontSize={{ base: 'xs', md: 'sm' }} fontWeight="600" color="#475569">{label}</Text>
-                <Chart
-                  options={sparklineOptions(color, data).options}
-                  series={sparklineOptions(color, data).series}
-                  type="line"
-                  width={100}
-                  height={40}
-                />
-              </Flex>
-            ))}
-          </VStack>
-        </Box>
-      </SimpleGrid>
-
-      <SimpleGrid columns={{ base: 1, md: 2, lg: 3 }} spacing={{ base: '4', md: '5' }} mb={{ base: '4', md: '5' }}>
-        <Box bg="white" p={{ base: '4', md: '6' }} borderRadius="xl" border="1px solid #e8edf5" boxShadow="0 2px 8px rgba(0,74,173,0.04)">
-          <SectionHeader icon={PieIcon} title="Category Analysis" />
-          <Chart options={pieChartOptions} series={categorySeries.length ? categorySeries : [1]} type="donut" height={220} />
-        </Box>
-        <Box bg="white" p={{ base: '4', md: '6' }} borderRadius="xl" border="1px solid #e8edf5" boxShadow="0 2px 8px rgba(0,74,173,0.04)">
-          <SectionHeader icon={Activity} title="Performance" />
-          <Chart
-            options={{
-              chart: { type: 'radialBar', height: 220, fontFamily: 'Outfit, sans-serif' },
-              plotOptions: {
-                radialBar: {
-                  dataLabels: {
-                    name: { show: true, color: '#64748b', fontSize: '12px' },
-                    value: { formatter: (v) => v + '%', color: BRAND, fontSize: '22px', fontWeight: 700 }
-                  }
-                }
-              },
-              colors: [BRAND],
-              labels: ['Growth']
-            }}
-            series={[charts?.performanceScore ?? 0]}
-            type="radialBar"
-            height={220}
-          />
-        </Box>
-        <Box bg="#111827" p={{ base: '4', md: '6' }} borderRadius="xl" border="1px solid #1f2937" boxShadow="0 2px 8px rgba(0,0,0,0.2)">
-          <Flex align="center" justify="space-between" mb="4">
-            <HStack spacing="3">
-              <Box w="3px" h="20px" bg="#3b82f6" borderRadius="full" />
-              <Icon as={Activity} boxSize={4} color="white" />
-              <Text fontSize="sm" fontWeight="700" color="white">Radar Analysis</Text>
-            </HStack>
-          </Flex>
-          <Chart
-            options={{
-              chart: { type: 'radar', toolbar: { show: false }, fontFamily: 'Outfit, sans-serif' },
-              colors: ['#3b82f6'],
-              xaxis: {
-                categories: ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun'],
-                labels: { style: { colors: '#fff', fontSize: '12px' } }
-              },
-              yaxis: { show: false },
-              fill: { opacity: 0.2 },
-              stroke: { width: 2 },
-              markers: { size: 4 }
-            }}
-            series={[{ name: 'Applications', data: charts?.radarData?.length ? charts.radarData : [0, 0, 0, 0, 0, 0] }]}
-            type="radar"
-            height={220}
-          />
-        </Box>
-      </SimpleGrid>
-
     </Box>
   );
 };
