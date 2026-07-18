@@ -4,13 +4,14 @@ import {
   Table, Thead, Tbody, Tr, Th, Td, Button, Select, Input,
   FormControl, FormLabel, Badge, IconButton, Skeleton, useToast, Spinner, Collapse,
   Modal, ModalOverlay, ModalContent, ModalHeader, ModalBody,
-  useDisclosure, Grid, GridItem
+  useDisclosure, Grid, GridItem,
+  Popover, PopoverTrigger, PopoverContent, PopoverBody, Portal
 } from '@chakra-ui/react';
 import {
   LayoutDashboard, Users, Briefcase, Calendar, CalendarClock,
   Search, RotateCcw, ChevronRight, Filter, FileText, UserPlus, Clock,
   Activity, TrendingUp, TrendingDown, AlertCircle, X, Banknote, CheckCircle,
-  Home, Building2, Sun, Tag
+  Home, Building2, Sun, Tag, ChevronDown
 } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import Chart from 'react-apexcharts';
@@ -20,6 +21,96 @@ import API_BASE_URL from '../apiConfig';
 
 const BRAND = '#004aad';
 const ACCENT = '#f59e0b';
+
+// Custom Searchable Dropdown Select Component
+const SearchableSelect = ({ label, value, options, onChange, icon, placeholder }) => {
+  const { isOpen, onOpen, onClose } = useDisclosure();
+  const [searchQuery, setSearchQuery] = useState('');
+
+  const filteredOptions = options.filter(opt => 
+    opt.label.toLowerCase().includes(searchQuery.toLowerCase())
+  );
+
+  const selectedOption = options.find(opt => opt.value === value);
+  const displayLabel = selectedOption ? selectedOption.label : placeholder;
+
+  return (
+    <Popover isOpen={isOpen} onOpen={onOpen} onClose={onClose} placement="bottom-start" matchWidth>
+      <PopoverTrigger>
+        <HStack 
+          height="14" 
+          border="1.5px solid" 
+          borderColor={isOpen ? '#2563eb' : '#e2e8f0'}
+          borderRadius="xl" 
+          px="4" 
+          spacing="3" 
+          bg={isOpen ? '#f0f5ff' : '#f8fafc'} 
+          cursor="pointer"
+          transition="all 0.18s"
+          _hover={{ bg: '#f0f5ff', borderColor: '#2563eb' }}
+          width="100%"
+          justify="space-between"
+        >
+          <HStack spacing="3" minW="0" flex="1">
+            <Icon as={icon} color="#64748b" boxSize={4} flexShrink={0} />
+            <VStack align="start" spacing="0.5" minW="0" flex="1">
+              <Text fontSize="9px" fontWeight="800" color="#94a3b8" textTransform="uppercase" letterSpacing="0.3px">{label}</Text>
+              <Text fontSize="11px" fontWeight="700" color="#1e293b" isTruncated>{displayLabel}</Text>
+            </VStack>
+          </HStack>
+          <Icon as={ChevronDown} color="#64748b" boxSize={3.5} transform={isOpen ? 'rotate(180deg)' : 'none'} transition="transform 0.2s" />
+        </HStack>
+      </PopoverTrigger>
+      <Portal>
+        <PopoverContent borderRadius="xl" border="1.5px solid #cbd5e1" boxShadow="lg" p="2" minW="220px" zIndex="9999">
+          <PopoverBody p="0">
+            <Input 
+              placeholder="Search..." 
+              size="sm" 
+              mb="2" 
+              value={searchQuery} 
+              onChange={(e) => setSearchQuery(e.target.value)} 
+              borderRadius="md"
+              borderColor="#cbd5e1"
+              fontSize="11px"
+              _focus={{ borderColor: '#2563eb', boxShadow: 'none' }}
+            />
+            <VStack align="stretch" maxH="200px" overflowY="auto" spacing="1" css={{
+              '&::-webkit-scrollbar': { width: '4px' },
+              '&::-webkit-scrollbar-thumb': { background: '#cbd5e1', borderRadius: '4px' }
+            }}>
+              {filteredOptions.length === 0 ? (
+                <Text fontSize="10px" color="#94a3b8" py="2" px="3" textAlign="center">No options found</Text>
+              ) : (
+                filteredOptions.map((opt) => (
+                  <Box
+                    key={opt.value}
+                    py="2.5"
+                    px="3"
+                    borderRadius="md"
+                    fontSize="11px"
+                    fontWeight="700"
+                    color={opt.value === value ? '#2563eb' : '#475569'}
+                    bg={opt.value === value ? '#eff6ff' : 'transparent'}
+                    cursor="pointer"
+                    _hover={{ bg: '#f1f5f9', color: '#1e293b' }}
+                    onClick={() => {
+                      onChange(opt.value);
+                      setSearchQuery('');
+                      onClose();
+                    }}
+                  >
+                    {opt.label}
+                  </Box>
+                ))
+              )}
+            </VStack>
+          </PopoverBody>
+        </PopoverContent>
+      </Portal>
+    </Popover>
+  );
+};
 
 // Metric Pill component (Quick Filter/Search helper)
 const MetricPill = ({ label, value, icon, color, bg }) => (
@@ -139,7 +230,7 @@ const Dashboard = () => {
     category: '',
     customer: '',
     position: '',
-    date: ''
+    date: 'all'
   });
 
   const toast = useToast();
@@ -153,10 +244,10 @@ const Dashboard = () => {
     setIsLoading(true);
     try {
       const params = new URLSearchParams();
-      if (filters.category) params.append('category', filters.category);
-      if (filters.customer) params.append('customer', filters.customer);
-      if (filters.position) params.append('position', filters.position);
-      if (filters.date) params.append('date', filters.date);
+      if (filters.category && filters.category !== 'all') params.append('category', filters.category);
+      if (filters.customer && filters.customer !== 'all') params.append('customer', filters.customer);
+      if (filters.position && filters.position !== 'all') params.append('position', filters.position);
+      if (filters.date && filters.date !== 'all') params.append('date', filters.date);
 
       const response = await axios.get(`${API_BASE_URL}/dashboard?${params.toString()}`, {
         headers: { Authorization: `Bearer ${token}` }
@@ -200,9 +291,9 @@ const Dashboard = () => {
   };
 
   const handleReset = () => {
-    setFilters({ category: '', customer: '', position: '', date: '' });
+    setFilters({ category: 'all', customer: 'all', position: '', date: 'all' });
     setIsLoading(true);
-    axios.get(`${API_BASE_URL}/dashboard`, { headers: { Authorization: `Bearer ${token}` } })
+    axios.get(`${API_BASE_URL}/dashboard?date=all`, { headers: { Authorization: `Bearer ${token}` } })
       .then(res => { if (res.data.success) setData(res.data); })
       .catch(() => { })
       .finally(() => setIsLoading(false));
@@ -354,41 +445,49 @@ const Dashboard = () => {
 
           <SimpleGrid columns={{ base: 1, md: 3 }} spacing="4" flex="1">
             {/* Date Range Dropdown with Icon */}
-            <HStack height="14" border="1.5px solid #e2e8f0" borderRadius="xl" px="4" spacing="3" bg="#f8fafc">
-              <Icon as={Calendar} color="#64748b" boxSize={4} />
-              <VStack align="start" spacing="0.5" flex="1">
-                <Text fontSize="9px" fontWeight="800" color="#94a3b8" textTransform="uppercase" letterSpacing="0.3px">Date Range</Text>
-                <Select name="date" value={filters.date} onChange={handleFilterChange} variant="unstyled" fontSize="xs" fontWeight="700" color="#1e293b" placeholder="This Month" width="100%">
-                  <option value="">This Month</option>
-                  <option value="today">Today</option>
-                  <option value="yesterday">Yesterday</option>
-                </Select>
-              </VStack>
-            </HStack>
+            <SearchableSelect 
+              label="Date Range"
+              value={filters.date}
+              options={[
+                { value: 'all', label: 'All Time' },
+                { value: 'today', label: 'Today' },
+                { value: 'yesterday', label: 'Yesterday' },
+                { value: 'week', label: 'This Week' },
+                { value: 'month', label: 'This Month' },
+                { value: 'year', label: 'This Year' }
+              ]}
+              onChange={(val) => setFilters(prev => ({ ...prev, date: val }))}
+              icon={Calendar}
+              placeholder="All Time"
+            />
 
             {/* Lead Manager Dropdown with Icon */}
-            <HStack height="14" border="1.5px solid #e2e8f0" borderRadius="xl" px="4" spacing="3" bg="#f8fafc">
-              <Icon as={Users} color="#64748b" boxSize={4} />
-              <VStack align="start" spacing="0.5" flex="1">
-                <Text fontSize="9px" fontWeight="800" color="#94a3b8" textTransform="uppercase" letterSpacing="0.3px">Lead Manager</Text>
-                <Select name="customer" value={filters.customer} onChange={handleFilterChange} variant="unstyled" fontSize="xs" fontWeight="700" color="#1e293b" placeholder="All Lead Managers" width="100%">
-                  {customers.map(c => <option key={c._id} value={c._id}>{c.name}</option>)}
-                </Select>
-              </VStack>
-            </HStack>
+            <SearchableSelect 
+              label="Lead Manager"
+              value={filters.customer}
+              options={[
+                { value: 'all', label: 'All Lead Managers' },
+                ...customers.map(c => ({ value: c._id, label: c.name }))
+              ]}
+              onChange={(val) => setFilters(prev => ({ ...prev, customer: val }))}
+              icon={Users}
+              placeholder="All Lead Managers"
+            />
 
             {/* Category Dropdown with Icon */}
-            <HStack height="14" border="1.5px solid #e2e8f0" borderRadius="xl" px="4" spacing="3" bg="#f8fafc">
-              <Icon as={Tag} color="#64748b" boxSize={4} />
-              <VStack align="start" spacing="0.5" flex="1">
-                <Text fontSize="9px" fontWeight="800" color="#94a3b8" textTransform="uppercase" letterSpacing="0.3px">Category</Text>
-                <Select name="category" value={filters.category} onChange={handleFilterChange} variant="unstyled" fontSize="xs" fontWeight="700" color="#1e293b" placeholder="All Categories" width="100%">
-                  <option value="hotel">Commercial Jobs</option>
-                  <option value="home">Domestic Jobs</option>
-                  <option value="daily">Daily Pay</option>
-                </Select>
-              </VStack>
-            </HStack>
+            <SearchableSelect 
+              label="Category"
+              value={filters.category}
+              options={[
+                { value: 'all', label: 'All Categories' },
+                { value: 'hotel', label: 'Commercial Jobs' },
+                { value: 'home', label: 'Domestic Jobs' },
+                { value: 'daily', label: 'Daily Pay' }
+              ]}
+              onChange={(val) => setFilters(prev => ({ ...prev, category: val }))}
+              icon={Tag}
+              placeholder="All Categories"
+            />
           </SimpleGrid>
 
           <HStack spacing="3" align="center" ml={{ lg: "4" }} width={{ base: 'full', lg: 'auto' }}>
