@@ -25,8 +25,8 @@ import {
 } from '@chakra-ui/react';
 import { Search, Plus, MoreHorizontal, Filter, Download, Edit2, Trash2, Eye } from 'lucide-react';
 
-const BRAND = '#004aad';
-const ACCENT = '#f59e0b';
+const BRAND = '#2D2B75';
+const ACCENT = '#4C49ED';
 
 const DataTable = ({ 
   columns, 

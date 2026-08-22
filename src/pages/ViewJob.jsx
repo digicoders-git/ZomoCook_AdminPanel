@@ -192,13 +192,13 @@ const ViewJob = () => {
                 <Tr borderBottom="1px solid #f1f5f9">
                   <Td py="3" px="6" bg="#fcfdfe" w="300px" fontSize="sm" fontWeight="700" color="#1e293b" borderRight="1px solid #f1f5f9">Transaction ID</Td>
                   <Td py="3" px="6" fontSize="sm" color="#475569" fontWeight="500">
-                    {transaction.razorpayPaymentId || transaction._id}
+                    {transaction.paymentId || transaction.cfPaymentId || transaction.razorpayPaymentId || transaction._id}
                   </Td>
                 </Tr>
                 <Tr borderBottom="1px solid #f1f5f9">
                   <Td py="3" px="6" bg="#fcfdfe" w="300px" fontSize="sm" fontWeight="700" color="#1e293b" borderRight="1px solid #f1f5f9">Order ID / Reference</Td>
                   <Td py="3" px="6" fontSize="sm" color="#475569" fontWeight="500">
-                    {transaction.razorpayOrderId || '-'}
+                    {transaction.orderId || transaction.cfOrderId || transaction.razorpayOrderId || '-'}
                   </Td>
                 </Tr>
                 <Tr borderBottom="1px solid #f1f5f9">

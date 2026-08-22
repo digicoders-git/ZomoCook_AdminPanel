@@ -9,8 +9,9 @@ import { keyframes } from '@emotion/react';
 import { ChevronRight, LayoutDashboard, Filter, Plus } from 'lucide-react';
 import { Link } from 'react-router-dom';
 
-export const BRAND = '#004aad';
-export const ACCENT = '#f59e0b'; // Soothing Amber color instead of aggressive red
+export const BRAND = '#2D2B75';
+export const ACCENT = '#4C49ED';
+export const RED_ACCENT = '#ED1C24';
 
 // Page header with breadcrumb + title + optional action buttons
 export const PageHeader = ({ title, breadcrumb, actions }) => (

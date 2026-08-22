@@ -407,10 +407,12 @@ const SubscriptionList = () => {
                         <Td>{formatDateTime(sub.startDate)}</Td>
                         <Td>{formatDateTime(sub.endDate)}</Td>
                         <Td fontSize="xs" color="gray.600">
-                          {sub.razorpayPaymentId ? (
+                          {(sub.paymentId || sub.cfPaymentId || sub.razorpayPaymentId) ? (
                             <Box>
-                              <Text>Pay ID: <Text as="span" fontFamily="mono" color="blue.600">{sub.razorpayPaymentId}</Text></Text>
-                              <Text>Order ID: <Text as="span" fontFamily="mono" color="gray.500">{sub.razorpayOrderId}</Text></Text>
+                              <Text>Pay ID: <Text as="span" fontFamily="mono" color="blue.600">{sub.paymentId || sub.cfPaymentId || sub.razorpayPaymentId}</Text></Text>
+                              {(sub.orderId || sub.cfOrderId || sub.razorpayOrderId) && (
+                                <Text>Order ID: <Text as="span" fontFamily="mono" color="gray.500">{sub.orderId || sub.cfOrderId || sub.razorpayOrderId}</Text></Text>
+                              )}
                             </Box>
                           ) : (
                             <Text color="gray.400">Manual / Direct</Text>

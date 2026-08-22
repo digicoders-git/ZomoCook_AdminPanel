@@ -17,8 +17,9 @@ import { Link, useLocation, useNavigate } from 'react-router-dom';
 import React from 'react';
 import logo from '../assets/logo.png';
 
-const BRAND = '#004aad';
-const ACCENT = '#f59e0b';
+const BRAND = '#2D2B75';
+const ACCENT = '#4C49ED';
+const RED_ACCENT = '#ED1C24';
 
 const navCategories = [
   {
@@ -192,9 +193,9 @@ const SidebarItem = ({ item, isCollapsed, onClose, depth = 0 }) => {
           as={item.icon}
           boxSize={depth === 0 ? 5 : 4}
           mr={isCollapsed && depth === 0 ? 0 : 2.5}
-          color={isActive ? '#1e3a8a' : 'rgba(255, 255, 255, 0.8)'}
+          color={isActive ? '#2D2B75' : 'rgba(255, 255, 255, 0.8)'}
           transition="color 0.18s"
-          _groupHover={{ color: isActive ? '#1e3a8a' : '#ffffff' }}
+          _groupHover={{ color: isActive ? '#2D2B75' : '#ffffff' }}
           flexShrink={0}
         />
       )}
@@ -204,10 +205,10 @@ const SidebarItem = ({ item, isCollapsed, onClose, depth = 0 }) => {
           <Text
             fontSize={depth === 0 ? 'sm' : 'xs'}
             fontWeight={isActive ? '700' : '500'}
-            color={isActive ? '#1e3a8a' : 'rgba(255, 255, 255, 0.85)'}
+            color={isActive ? '#2D2B75' : 'rgba(255, 255, 255, 0.85)'}
             flex="1"
             noOfLines={1}
-            _groupHover={{ color: isActive ? '#1e3a8a' : '#ffffff' }}
+            _groupHover={{ color: isActive ? '#2D2B75' : '#ffffff' }}
             transition="color 0.18s"
           >
             {item.name}
@@ -216,7 +217,7 @@ const SidebarItem = ({ item, isCollapsed, onClose, depth = 0 }) => {
             <Icon
               as={ChevronRight}
               boxSize={3.5}
-              color={isActive ? '#1e3a8a' : 'rgba(255, 255, 255, 0.8)'}
+              color={isActive ? '#2D2B75' : 'rgba(255, 255, 255, 0.8)'}
               transition="transform 0.2s"
               transform={hasChildren && isOpen ? 'rotate(90deg)' : 'rotate(0deg)'}
               flexShrink={0}
@@ -230,7 +231,7 @@ const SidebarItem = ({ item, isCollapsed, onClose, depth = 0 }) => {
   return (
     <Box w="full">
       {isCollapsed && depth === 0 && item.icon ? (
-        <Tooltip label={item.name} placement="right" hasArrow bg="#ffffff" color="#1e3a8a" fontSize="xs">
+        <Tooltip label={item.name} placement="right" hasArrow bg="#ffffff" color="#2D2B75" fontSize="xs">
           {itemContent}
         </Tooltip>
       ) : itemContent}
@@ -269,7 +270,7 @@ const SidebarContent = ({ isCollapsed, onClose, onLogoutOpen, ...rest }) => (
     transition="width 0.25s cubic-bezier(0.4,0,0.2,1)"
     display="flex"
     flexDirection="column"
-    bg="#1e3a8a"
+    bg="#2D2B75"
     borderRight="1px solid rgba(255, 255, 255, 0.1)"
     zIndex="100"
     overflow="hidden"
@@ -277,7 +278,7 @@ const SidebarContent = ({ isCollapsed, onClose, onLogoutOpen, ...rest }) => (
   >
     {/* Logo Header */}
     <Box
-      bg="#1e3a8a"
+      bg="#2D2B75"
       borderBottom="1px solid rgba(255, 255, 255, 0.1)"
       px={isCollapsed ? '0' : '5'}
       py="4"
@@ -316,7 +317,7 @@ const SidebarContent = ({ isCollapsed, onClose, onLogoutOpen, ...rest }) => (
     </Box>
 
     {/* Red accent strip */}
-    <Box h="3px" bg={`linear-gradient(90deg, ${ACCENT} 0%, #ff4d53 100%)`} flexShrink={0} />
+    <Box h="3px" bg={`linear-gradient(90deg, ${ACCENT} 0%, ${RED_ACCENT} 100%)`} flexShrink={0} />
 
     {/* Scrollable Nav */}
     <Box

@@ -1,11 +1,12 @@
 @import url('https://fonts.googleapis.com/css2?family=Outfit:wght@100;200;300;400;500;600;700;800;900&display=swap');
 
 :root {
-  --brand: #004aad;
-  --accent: #f59e0b;
-  --sidebar-bg: #ffffff;
+  --brand: #2D2B75;
+  --secondary: #4C49ED;
+  --accent-red: #ED1C24;
+  --sidebar-bg: #2D2B75;
   --main-bg: #f4f7fb;
-  --glass-border: rgba(0, 74, 173, 0.08);
+  --glass-border: rgba(45, 43, 117, 0.08);
 }
 
 * {

@@ -10,8 +10,8 @@ import { useNavigate } from 'react-router-dom';
 import axios from 'axios';
 import API_BASE_URL from '../apiConfig';
 
-const BRAND = '#004aad';
-const ACCENT = '#f59e0b';
+const BRAND = '#2D2B75';
+const ACCENT = '#4C49ED';
 
 const darkThStyle = {
   color: 'white',

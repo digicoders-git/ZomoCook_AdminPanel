@@ -10,7 +10,7 @@ import axios from 'axios';
 import CandidateCVPreview from './CandidateCVPreview';
 import API_BASE_URL from '../apiConfig';
 
-const BRAND = '#004aad';
+const BRAND = '#2D2B75';
 
 const CandidateCVModal = ({ isOpen, onClose, candidateId, preloadedCandidate }) => {
   const [candidate, setCandidate] = useState(preloadedCandidate || null);

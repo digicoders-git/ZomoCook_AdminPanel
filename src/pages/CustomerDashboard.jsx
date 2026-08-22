@@ -8,8 +8,8 @@ import axios from 'axios';
 import API_BASE_URL from '../apiConfig';
 import PageContentLoader from '../components/PageContentLoader';
 
-const BRAND = '#004aad';
-const ACCENT = '#e60000';
+const BRAND = '#2D2B75';
+const ACCENT = '#ED1C24';
 
 const StatCard = ({ icon, label, value, colorScheme = 'blue', subLabel }) => {
   const colorMap = {

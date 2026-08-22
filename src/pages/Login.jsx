@@ -9,8 +9,9 @@ import axios from 'axios';
 
 import API_BASE_URL from '../apiConfig';
 
-const BRAND = '#004aad';
-const ACCENT = '#f59e0b'; // Soothing Amber color instead of aggressive red
+const BRAND = '#2D2B75';
+const SECONDARY = '#4C49ED';
+const ACCENT = '#ED1C24';
 
 const Login = () => {
   const [showPassword, setShowPassword] = useState(false);
@@ -86,7 +87,7 @@ const Login = () => {
         flexDirection="column"
         alignItems="center"
         justifyContent="center"
-        bg={`linear-gradient(145deg, ${BRAND} 0%, #0062e6 100%)`}
+        bg={`linear-gradient(145deg, ${BRAND} 0%, ${SECONDARY} 100%)`}
         borderBottomRadius="24px"
         position="relative"
         py="6"
@@ -127,7 +128,7 @@ const Login = () => {
         display={{ base: 'none', lg: 'flex' }}
         w="45%"
         flexDirection="column"
-        bg={`linear-gradient(145deg, ${BRAND} 0%, #0062e6 60%, #0040a0 100%)`}
+        bg={`linear-gradient(145deg, ${BRAND} 0%, ${SECONDARY} 60%, #1d1b4e 100%)`}
         position="relative"
         overflow="hidden"
         p="12"

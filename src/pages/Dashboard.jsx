@@ -19,8 +19,9 @@ import axios from 'axios';
 
 import API_BASE_URL from '../apiConfig';
 
-const BRAND = '#004aad';
-const ACCENT = '#f59e0b';
+const BRAND = '#2D2B75';
+const ACCENT = '#4C49ED';
+const RED_ACCENT = '#ED1C24';
 
 // Custom Searchable Dropdown Select Component
 const SearchableSelect = ({ label, value, options, onChange, icon, placeholder }) => {

@@ -2,8 +2,8 @@ import { Box, Text, Button, HStack, Icon } from '@chakra-ui/react';
 import { ShieldX, ArrowLeft, Home } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 
-const BRAND = '#004aad';
-const ACCENT = '#f59e0b';
+const BRAND = '#2D2B75';
+const ACCENT = '#ED1C24';
 
 const Unauthorized = () => {
   const navigate = useNavigate();

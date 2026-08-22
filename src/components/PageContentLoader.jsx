@@ -1,6 +1,6 @@
 import { Flex, Spinner } from '@chakra-ui/react';
 
-const BRAND = '#004aad';
+const BRAND = '#2D2B75';
 
 const PageContentLoader = () => (
   <Flex h="80vh" align="center" justify="center">

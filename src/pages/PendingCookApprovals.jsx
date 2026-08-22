@@ -10,8 +10,8 @@ import { PageHeader, PageFooter, BRAND, ACCENT, TableCard, TableControls, TableF
 import axios from 'axios';
 import API_BASE_URL from '../apiConfig';
 
-const BRAND_COLOR = '#004aad';
-const ACCENT_COLOR = '#f59e0b';
+const BRAND_COLOR = '#2D2B75';
+const ACCENT_COLOR = '#4C49ED';
 
 const PendingCookApprovals = () => {
   const toast = useToast();
