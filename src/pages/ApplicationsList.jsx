@@ -81,8 +81,12 @@ const ApplicationsList = () => {
       case 'Applied': return '#1a83ff';
       case 'Shortlisted': return '#10b981';
       case 'Demo Scheduled': return '#ffb800';
+      case 'Demo In Progress': return '#8b5cf6';
+      case 'Demo Completed': return '#059669';
+      case 'Demo Cancelled': return '#ef4444';
       case 'Reschedule Requested': return '#06b6d4';
       case 'Rejected': return '#ef4444';
+      case 'Cancelled': return '#ef4444';
       case 'On Hold': return '#6366f1';
       case 'Not Interested': return '#64748b';
       case 'Hired': return '#059669';
@@ -211,11 +215,15 @@ const ApplicationsList = () => {
                           <option value="Applied">Applied</option>
                           <option value="Shortlisted">Shortlisted</option>
                           <option value="Demo Scheduled">Demo Scheduled</option>
+                          <option value="Demo In Progress">Demo In Progress</option>
+                          <option value="Demo Completed">Demo Completed</option>
+                          <option value="Demo Cancelled">Demo Cancelled</option>
                           <option value="Reschedule Requested">Reschedule Requested</option>
                           <option value="Hired">Hired</option>
                           <option value="Rejected">Rejected</option>
                           <option value="On Hold">On Hold</option>
                           <option value="Not Interested">Not Interested</option>
+                          <option value="Cancelled">Cancelled</option>
                         </Select>
                         <Badge
                           variant="outline"

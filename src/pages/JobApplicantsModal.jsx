@@ -15,13 +15,15 @@ const UPLOAD_BASE = API_BASE_URL.replace("/api", "");
 
 const statusGroups = {
   Applied:  (s) => s === "Applied",
-  Shortlisted: (s) => s === "Shortlisted" || s === "Demo Scheduled" || s === "Reschedule Requested",
+  Shortlisted: (s) => ["Shortlisted", "Demo Scheduled", "Demo In Progress", "Demo Completed", "Reschedule Requested"].includes(s),
   Hired: (s) => s === "Hired",
-  Rejected: (s) => s === "Rejected" || s === "Not Interested" || s === "On Hold" || s === "Cancelled",
+  Rejected: (s) => ["Rejected", "Not Interested", "On Hold", "Cancelled", "Demo Cancelled"].includes(s),
 };
 
 const getStatusColorScheme = (s) => {
   if (["Applied"].includes(s)) return "blue";
+  if (["Demo In Progress"].includes(s)) return "purple";
+  if (["Demo Completed"].includes(s)) return "teal";
   if (["Shortlisted", "Demo Scheduled", "Reschedule Requested"].includes(s)) return "orange";
   if (["Hired"].includes(s)) return "green";
   return "red";
@@ -99,7 +101,7 @@ const CandidateCard = ({ app, navigate, selectable, isSelected, onToggleSelect, 
             </>
           )}
 
-          {onUpdateStatus && ["Shortlisted", "Demo Scheduled", "Reschedule Requested"].includes(app.status) && (
+          {onUpdateStatus && ["Shortlisted", "Demo Scheduled", "Demo In Progress", "Demo Completed", "Reschedule Requested"].includes(app.status) && (
             <>
               <Text fontSize="sm" color="#cbd5e1">|</Text>
               <Text fontSize="sm" color="green.600" fontWeight="700" cursor="pointer" onClick={(e) => { e.stopPropagation(); onUpdateStatus(app._id, "Hired"); }}>Hire</Text>
