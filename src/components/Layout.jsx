@@ -80,7 +80,8 @@ const navCategories = [
         name: 'Subscription Plans', icon: Star, path: '/plans/list?tab=packages', permission: 'service_packages:view',
         children: [
           { name: 'Platform Fees Settings', path: '/plans/list?tab=fee', permission: 'service_packages:view' },
-          { name: 'Daily Basis Charges', path: '/plans/list?tab=service_packages', permission: 'service_packages:view' },
+          { name: 'Daily Basis Charges', path: '/plans/list?tab=daily_charges', permission: 'service_packages:view' },
+          { name: 'Hiring & Support Packages', path: '/plans/list?tab=service_packages', permission: 'service_packages:view' },
           { name: 'Subscription Plans', path: '/plans/list?tab=packages', permission: 'service_packages:view' },
           { name: 'Add Subscription Plan', path: '/plans/add', permission: 'service_packages:add' },
           { name: 'Subscription History', path: '/plans/subscriptions', permission: 'service_packages:view' },

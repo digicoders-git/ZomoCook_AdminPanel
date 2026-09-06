@@ -41,6 +41,34 @@ const PlanList = () => {
     description: ''
   });
 
+  // Daily Basis Charges Form
+  const [dailyChargesForm, setDailyChargesForm] = useState({
+    isActive: true,
+    staffCategories: [
+      { category: 'chef', label: 'Chef / Main Cook', rate: 1499, description: 'Experienced commercial/party chef', isActive: true },
+      { category: 'cook', label: 'Home Cook', rate: 1199, description: 'Domestic / daily meal cook', isActive: true },
+      { category: 'helper', label: 'Kitchen Helper', rate: 699, description: 'Vegetable cutting & kitchen support', isActive: true },
+      { category: 'waiter', label: 'Waiter / Steward', rate: 899, description: 'Food serving & guest hospitality', isActive: true },
+      { category: 'cleaner', label: 'Cleaner / Housekeeping', rate: 599, description: 'Kitchen and dining cleaning', isActive: true },
+      { category: 'manager', label: 'Kitchen Manager / Supervisor', rate: 1699, description: 'Kitchen & banquet event manager', isActive: true },
+      { category: 'bartender', label: 'Bartender / Beverage Staff', rate: 1299, description: 'Bar & mocktail/cocktail service', isActive: true }
+    ],
+    domesticCharges: {
+      breakfastRate: 399,
+      lunchRate: 499,
+      dinnerRate: 499,
+      twoMealsRate: 899,
+      threeMealsRate: 1399,
+      guestRatePerDay: 65
+    },
+    advancePercentage: 25,
+    platformFeePercentage: 10,
+    gstPercentage: 18
+  });
+  const [isUpdatingDailyCharges, setIsUpdatingDailyCharges] = useState(false);
+  const [isAddCategoryOpen, setIsAddCategoryOpen] = useState(false);
+  const [newCategory, setNewCategory] = useState({ category: '', label: '', rate: '', description: '', isActive: true });
+
   const fetchData = async () => {
     setIsLoading(true);
     try {
@@ -69,6 +97,34 @@ const PlanList = () => {
           status: s.jobPostFeeStatus !== false ? 'Active' : 'Inactive',
           description: s.jobPostFeeDescription || 'Hiring processing fee is a one-time amount charged from customers while posting a job. This amount is non-refundable.'
         });
+
+        if (s.dailyCharges) {
+          setDailyChargesForm({
+            isActive: s.dailyCharges.isActive !== false,
+            staffCategories: s.dailyCharges.staffCategories && s.dailyCharges.staffCategories.length > 0
+              ? s.dailyCharges.staffCategories
+              : [
+                { category: 'chef', label: 'Chef / Main Cook', rate: 1499, description: 'Experienced commercial/party chef', isActive: true },
+                { category: 'cook', label: 'Home Cook', rate: 1199, description: 'Domestic / daily meal cook', isActive: true },
+                { category: 'helper', label: 'Kitchen Helper', rate: 699, description: 'Vegetable cutting & kitchen support', isActive: true },
+                { category: 'waiter', label: 'Waiter / Steward', rate: 899, description: 'Food serving & guest hospitality', isActive: true },
+                { category: 'cleaner', label: 'Cleaner / Housekeeping', rate: 599, description: 'Kitchen and dining cleaning', isActive: true },
+                { category: 'manager', label: 'Kitchen Manager / Supervisor', rate: 1699, description: 'Kitchen & banquet event manager', isActive: true },
+                { category: 'bartender', label: 'Bartender / Beverage Staff', rate: 1299, description: 'Bar & mocktail/cocktail service', isActive: true }
+              ],
+            domesticCharges: {
+              breakfastRate: s.dailyCharges.domesticCharges?.breakfastRate ?? 399,
+              lunchRate: s.dailyCharges.domesticCharges?.lunchRate ?? 499,
+              dinnerRate: s.dailyCharges.domesticCharges?.dinnerRate ?? 499,
+              twoMealsRate: s.dailyCharges.domesticCharges?.twoMealsRate ?? 899,
+              threeMealsRate: s.dailyCharges.domesticCharges?.threeMealsRate ?? 1399,
+              guestRatePerDay: s.dailyCharges.domesticCharges?.guestRatePerDay ?? 65
+            },
+            advancePercentage: s.dailyCharges.advancePercentage ?? 25,
+            platformFeePercentage: s.dailyCharges.platformFeePercentage ?? 10,
+            gstPercentage: s.dailyCharges.gstPercentage ?? 18
+          });
+        }
       }
     } catch (err) {
       toast({
@@ -238,6 +294,70 @@ const PlanList = () => {
     }
   };
 
+  const handleUpdateDailyCharges = async () => {
+    setIsUpdatingDailyCharges(true);
+    try {
+      const token = localStorage.getItem('adminToken');
+      const apiUrl = import.meta.env.VITE_API_URL;
+      const res = await axios.put(`${apiUrl}/settings`, { dailyCharges: dailyChargesForm }, {
+        headers: { Authorization: `Bearer ${token}` }
+      });
+      if (res.data.success) {
+        toast({ title: 'Daily Basis Charges updated successfully!', status: 'success', duration: 2000, isClosable: true });
+        fetchData();
+      }
+    } catch (err) {
+      toast({
+        title: 'Error updating daily charges',
+        description: err.response?.data?.message || err.message,
+        status: 'error',
+        duration: 3000,
+        isClosable: true
+      });
+    } finally {
+      setIsUpdatingDailyCharges(false);
+    }
+  };
+
+  const handleStaffCategoryRateChange = (index, newRate) => {
+    const updated = [...dailyChargesForm.staffCategories];
+    updated[index].rate = Number(newRate) || 0;
+    setDailyChargesForm({ ...dailyChargesForm, staffCategories: updated });
+  };
+
+  const handleToggleCategoryActive = (index) => {
+    const updated = [...dailyChargesForm.staffCategories];
+    updated[index].isActive = !updated[index].isActive;
+    setDailyChargesForm({ ...dailyChargesForm, staffCategories: updated });
+  };
+
+  const handleDeleteStaffCategory = (index) => {
+    const updated = dailyChargesForm.staffCategories.filter((_, i) => i !== index);
+    setDailyChargesForm({ ...dailyChargesForm, staffCategories: updated });
+  };
+
+  const handleAddCustomCategory = () => {
+    if (!newCategory.label || !newCategory.rate) {
+      toast({ title: 'Please provide category label and rate', status: 'warning', duration: 2000 });
+      return;
+    }
+    const catKey = newCategory.category.trim() || newCategory.label.toLowerCase().replace(/[^a-z0-9]/g, '_');
+    const newCatObj = {
+      category: catKey,
+      label: newCategory.label,
+      rate: Number(newCategory.rate) || 0,
+      description: newCategory.description || '',
+      isActive: newCategory.isActive !== false
+    };
+    setDailyChargesForm({
+      ...dailyChargesForm,
+      staffCategories: [...dailyChargesForm.staffCategories, newCatObj]
+    });
+    setNewCategory({ category: '', label: '', rate: '', description: '', isActive: true });
+    setIsAddCategoryOpen(false);
+    toast({ title: 'Category added to list. Click "Save All Daily Charges" to persist.', status: 'info', duration: 3000 });
+  };
+
   const getPlanIcon = (name) => {
     const n = name.toLowerCase();
     if (n.includes('premium')) return { icon: Crown, color: '#f59e0b', bg: '#fef3c7' };
@@ -272,15 +392,18 @@ const PlanList = () => {
       </Flex>
 
       {/* Tabs / Navigation */}
-      <Flex borderBottom="1px solid #e2e8f0" mb="6">
+      <Flex borderBottom="1px solid #e2e8f0" mb="6" overflowX="auto">
         <Box borderBottom={activeTab === 'fee' ? "2px solid #2563eb" : "none"} pb="3" px="4" cursor="pointer" onClick={() => navigate('/plans/list?tab=fee')}>
-          <Text color={activeTab === 'fee' ? "#2563eb" : "#64748b"} fontWeight="600" fontSize="sm">Hiring Processing Fee</Text>
+          <Text color={activeTab === 'fee' ? "#2563eb" : "#64748b"} fontWeight="600" fontSize="sm" whiteSpace="nowrap">Hiring Processing Fee</Text>
+        </Box>
+        <Box borderBottom={activeTab === 'daily_charges' ? "2px solid #2563eb" : "none"} pb="3" px="4" cursor="pointer" onClick={() => navigate('/plans/list?tab=daily_charges')}>
+          <Text color={activeTab === 'daily_charges' ? "#2563eb" : "#64748b"} fontWeight="600" fontSize="sm" whiteSpace="nowrap">Daily Basis Charges</Text>
         </Box>
         <Box borderBottom={activeTab === 'packages' ? "2px solid #2563eb" : "none"} pb="3" px="4" cursor="pointer" onClick={() => navigate('/plans/list?tab=packages')}>
-          <Text color={activeTab === 'packages' ? "#2563eb" : "#64748b"} fontWeight="600" fontSize="sm">Subscription Plans</Text>
+          <Text color={activeTab === 'packages' ? "#2563eb" : "#64748b"} fontWeight="600" fontSize="sm" whiteSpace="nowrap">Subscription Plans</Text>
         </Box>
         <Box borderBottom={activeTab === 'service_packages' ? "2px solid #2563eb" : "none"} pb="3" px="4" cursor="pointer" onClick={() => navigate('/plans/list?tab=service_packages')}>
-          <Text color={activeTab === 'service_packages' ? "#2563eb" : "#64748b"} fontWeight="600" fontSize="sm">Hiring & Support Packages</Text>
+          <Text color={activeTab === 'service_packages' ? "#2563eb" : "#64748b"} fontWeight="600" fontSize="sm" whiteSpace="nowrap">Hiring & Support Packages</Text>
         </Box>
         <Box ml="auto" pb="2">
           {activeTab === 'fee' ? (
@@ -290,6 +413,15 @@ const PlanList = () => {
             }}>
               + Add / Update Fee
             </Button>
+          ) : activeTab === 'daily_charges' ? (
+            <HStack spacing="2">
+              <Button size="sm" variant="outline" colorScheme="blue" leftIcon={<Plus size={16} />} onClick={() => setIsAddCategoryOpen(true)}>
+                Add Category
+              </Button>
+              <Button size="sm" colorScheme="blue" bg="#2563eb" isLoading={isUpdatingDailyCharges} onClick={handleUpdateDailyCharges}>
+                Save Daily Charges
+              </Button>
+            </HStack>
           ) : activeTab === 'packages' ? (
             <Button size="sm" colorScheme="blue" bg="#2563eb" leftIcon={<Plus size={16} />} onClick={() => navigate('/plans/add')}>
               Add Package
@@ -619,6 +751,360 @@ const PlanList = () => {
           </Box>
         </Box>
       )}
+
+      {/* Daily Basis Charges Tab Content */}
+      {activeTab === 'daily_charges' && (
+        <Box>
+          {/* Info Alert */}
+          <Flex bg="#eff6ff" border="1px solid #bfdbfe" p="4" borderRadius="lg" mb="6" justify="space-between" align="center">
+            <HStack spacing="3">
+              <Icon as={Info} color="#2563eb" size={20} />
+              <VStack align="start" spacing="0">
+                <Text fontSize="sm" fontWeight="bold" color="#1e3a8a">Daily Basis Staff Charges & Rate Configuration</Text>
+                <Text fontSize="xs" color="#3b82f6">Customize per-day rates for all staff categories (Chef, Helper, Waiter, Cleaner, etc.), domestic meal rates, and billing percentages applied in customer booking.</Text>
+              </VStack>
+            </HStack>
+            <Button
+              size="sm"
+              colorScheme="blue"
+              bg="#2563eb"
+              isLoading={isUpdatingDailyCharges}
+              onClick={handleUpdateDailyCharges}
+            >
+              Save All Daily Charges
+            </Button>
+          </Flex>
+
+          {/* Section 1: Staff Category Daily Charges */}
+          <Box bg="white" p="6" borderRadius="xl" boxShadow="sm" border="1px solid #e2e8f0" mb="8">
+            <Flex justify="space-between" align="center" mb="4">
+              <Box>
+                <Text fontSize="md" fontWeight="bold" color="#1e293b">Commercial / Party Staff Category Daily Rates</Text>
+                <Text fontSize="xs" color="#64748b">These daily charges will be dynamically applied when customers book daily / commercial staff.</Text>
+              </Box>
+              <Button size="xs" colorScheme="blue" variant="outline" leftIcon={<Plus size={14} />} onClick={() => setIsAddCategoryOpen(true)}>
+                Add Custom Category
+              </Button>
+            </Flex>
+
+            <Table variant="simple" size="sm" border="1px solid #f1f5f9">
+              <Thead bg="#f8fafc">
+                <Tr>
+                  <Th fontSize="xs" color="#64748b" fontWeight="700">SR</Th>
+                  <Th fontSize="xs" color="#64748b" fontWeight="700">ROLE / DISPLAY LABEL</Th>
+                  <Th fontSize="xs" color="#64748b" fontWeight="700">CATEGORY KEY</Th>
+                  <Th fontSize="xs" color="#64748b" fontWeight="700">DAILY RATE (₹ / DAY)</Th>
+                  <Th fontSize="xs" color="#64748b" fontWeight="700">DESCRIPTION / NOTE</Th>
+                  <Th fontSize="xs" color="#64748b" fontWeight="700">STATUS</Th>
+                  <Th fontSize="xs" color="#64748b" fontWeight="700" textAlign="center">ACTION</Th>
+                </Tr>
+              </Thead>
+              <Tbody>
+                {dailyChargesForm.staffCategories.map((cat, idx) => (
+                  <Tr key={idx} _hover={{ bg: '#f8fafc' }}>
+                    <Td fontWeight="600" color="#64748b">{idx + 1}</Td>
+                    <Td>
+                      <Text fontWeight="bold" color="#1e293b" fontSize="sm">{cat.label}</Text>
+                    </Td>
+                    <Td>
+                      <Badge colorScheme="purple" fontSize="11px">{cat.category}</Badge>
+                    </Td>
+                    <Td w="180px">
+                      <HStack>
+                        <Text fontWeight="bold" color="#10b981">₹</Text>
+                        <Input
+                          size="sm"
+                          type="number"
+                          fontWeight="bold"
+                          color="#10b981"
+                          borderRadius="md"
+                          value={cat.rate}
+                          onChange={(e) => handleStaffCategoryRateChange(idx, e.target.value)}
+                        />
+                      </HStack>
+                    </Td>
+                    <Td>
+                      <Input
+                        size="xs"
+                        borderRadius="md"
+                        value={cat.description || ''}
+                        placeholder="e.g. Daily rate for party / kitchen"
+                        onChange={(e) => {
+                          const updated = [...dailyChargesForm.staffCategories];
+                          updated[idx].description = e.target.value;
+                          setDailyChargesForm({ ...dailyChargesForm, staffCategories: updated });
+                        }}
+                      />
+                    </Td>
+                    <Td>
+                      <VStack spacing={0} align="start">
+                        <Switch
+                          size="sm"
+                          colorScheme="green"
+                          isChecked={cat.isActive !== false}
+                          onChange={() => handleToggleCategoryActive(idx)}
+                        />
+                        <Text fontSize="10px" color={cat.isActive !== false ? 'green.500' : 'gray.400'}>
+                          {cat.isActive !== false ? 'Active' : 'Inactive'}
+                        </Text>
+                      </VStack>
+                    </Td>
+                    <Td textAlign="center">
+                      <IconButton
+                        icon={<Trash2 size={14} />}
+                        aria-label="Delete Category"
+                        size="xs"
+                        colorScheme="red"
+                        variant="ghost"
+                        onClick={() => handleDeleteStaffCategory(idx)}
+                      />
+                    </Td>
+                  </Tr>
+                ))}
+              </Tbody>
+            </Table>
+          </Box>
+
+          {/* Section 2: Domestic Meal & Guest Rates */}
+          <Box bg="white" p="6" borderRadius="xl" boxShadow="sm" border="1px solid #e2e8f0" mb="8">
+            <Text fontSize="md" fontWeight="bold" color="#1e293b" mb="1">Domestic / Home Daily Meal Charges (₹ / Day)</Text>
+            <Text fontSize="xs" color="#64748b" mb="6">Per-day rates charged according to selected meals and guest volume.</Text>
+
+            <SimpleGrid columns={{ base: 1, sm: 2, md: 3 }} spacing="5">
+              <Box p="4" borderRadius="lg" border="1px solid #e2e8f0" bg="#f8fafc">
+                <Text fontSize="xs" fontWeight="bold" color="#475569" mb="2">Breakfast Rate (1 Meal)</Text>
+                <HStack>
+                  <Text fontWeight="bold" color="#10b981">₹</Text>
+                  <Input
+                    size="sm"
+                    type="number"
+                    bg="white"
+                    fontWeight="bold"
+                    value={dailyChargesForm.domesticCharges?.breakfastRate ?? 399}
+                    onChange={(e) => setDailyChargesForm({
+                      ...dailyChargesForm,
+                      domesticCharges: { ...dailyChargesForm.domesticCharges, breakfastRate: Number(e.target.value) || 0 }
+                    })}
+                  />
+                </HStack>
+              </Box>
+
+              <Box p="4" borderRadius="lg" border="1px solid #e2e8f0" bg="#f8fafc">
+                <Text fontSize="xs" fontWeight="bold" color="#475569" mb="2">Lunch Rate (1 Meal)</Text>
+                <HStack>
+                  <Text fontWeight="bold" color="#10b981">₹</Text>
+                  <Input
+                    size="sm"
+                    type="number"
+                    bg="white"
+                    fontWeight="bold"
+                    value={dailyChargesForm.domesticCharges?.lunchRate ?? 499}
+                    onChange={(e) => setDailyChargesForm({
+                      ...dailyChargesForm,
+                      domesticCharges: { ...dailyChargesForm.domesticCharges, lunchRate: Number(e.target.value) || 0 }
+                    })}
+                  />
+                </HStack>
+              </Box>
+
+              <Box p="4" borderRadius="lg" border="1px solid #e2e8f0" bg="#f8fafc">
+                <Text fontSize="xs" fontWeight="bold" color="#475569" mb="2">Dinner Rate (1 Meal)</Text>
+                <HStack>
+                  <Text fontWeight="bold" color="#10b981">₹</Text>
+                  <Input
+                    size="sm"
+                    type="number"
+                    bg="white"
+                    fontWeight="bold"
+                    value={dailyChargesForm.domesticCharges?.dinnerRate ?? 499}
+                    onChange={(e) => setDailyChargesForm({
+                      ...dailyChargesForm,
+                      domesticCharges: { ...dailyChargesForm.domesticCharges, dinnerRate: Number(e.target.value) || 0 }
+                    })}
+                  />
+                </HStack>
+              </Box>
+
+              <Box p="4" borderRadius="lg" border="1px solid #e2e8f0" bg="#f8fafc">
+                <Text fontSize="xs" fontWeight="bold" color="#475569" mb="2">2 Meals Combined (e.g. Lunch + Dinner)</Text>
+                <HStack>
+                  <Text fontWeight="bold" color="#10b981">₹</Text>
+                  <Input
+                    size="sm"
+                    type="number"
+                    bg="white"
+                    fontWeight="bold"
+                    value={dailyChargesForm.domesticCharges?.twoMealsRate ?? 899}
+                    onChange={(e) => setDailyChargesForm({
+                      ...dailyChargesForm,
+                      domesticCharges: { ...dailyChargesForm.domesticCharges, twoMealsRate: Number(e.target.value) || 0 }
+                    })}
+                  />
+                </HStack>
+              </Box>
+
+              <Box p="4" borderRadius="lg" border="1px solid #e2e8f0" bg="#f8fafc">
+                <Text fontSize="xs" fontWeight="bold" color="#475569" mb="2">3 Meals (Breakfast + Lunch + Dinner)</Text>
+                <HStack>
+                  <Text fontWeight="bold" color="#10b981">₹</Text>
+                  <Input
+                    size="sm"
+                    type="number"
+                    bg="white"
+                    fontWeight="bold"
+                    value={dailyChargesForm.domesticCharges?.threeMealsRate ?? 1399}
+                    onChange={(e) => setDailyChargesForm({
+                      ...dailyChargesForm,
+                      domesticCharges: { ...dailyChargesForm.domesticCharges, threeMealsRate: Number(e.target.value) || 0 }
+                    })}
+                  />
+                </HStack>
+              </Box>
+
+              <Box p="4" borderRadius="lg" border="1px solid #e2e8f0" bg="#f8fafc">
+                <Text fontSize="xs" fontWeight="bold" color="#475569" mb="2">Guest Rate Per Person / Day</Text>
+                <HStack>
+                  <Text fontWeight="bold" color="#10b981">₹</Text>
+                  <Input
+                    size="sm"
+                    type="number"
+                    bg="white"
+                    fontWeight="bold"
+                    value={dailyChargesForm.domesticCharges?.guestRatePerDay ?? 65}
+                    onChange={(e) => setDailyChargesForm({
+                      ...dailyChargesForm,
+                      domesticCharges: { ...dailyChargesForm.domesticCharges, guestRatePerDay: Number(e.target.value) || 0 }
+                    })}
+                  />
+                </HStack>
+              </Box>
+            </SimpleGrid>
+          </Box>
+
+          {/* Section 3: Billing Percentages */}
+          <Box bg="white" p="6" borderRadius="xl" boxShadow="sm" border="1px solid #e2e8f0" mb="8">
+            <Text fontSize="md" fontWeight="bold" color="#1e293b" mb="1">Advance Booking & Platform Fee Percentages</Text>
+            <Text fontSize="xs" color="#64748b" mb="6">Control customer advance payment requirement and platform commission percentage for daily bookings.</Text>
+
+            <SimpleGrid columns={{ base: 1, sm: 3 }} spacing="5">
+              <Box p="4" borderRadius="lg" border="1px solid #e2e8f0" bg="#f8fafc">
+                <Text fontSize="xs" fontWeight="bold" color="#475569" mb="2">Advance Payment Required (%)</Text>
+                <HStack>
+                  <Input
+                    size="sm"
+                    type="number"
+                    bg="white"
+                    fontWeight="bold"
+                    value={dailyChargesForm.advancePercentage ?? 25}
+                    onChange={(e) => setDailyChargesForm({ ...dailyChargesForm, advancePercentage: Number(e.target.value) || 0 })}
+                  />
+                  <Text fontWeight="bold" color="#64748b">%</Text>
+                </HStack>
+              </Box>
+
+              <Box p="4" borderRadius="lg" border="1px solid #e2e8f0" bg="#f8fafc">
+                <Text fontSize="xs" fontWeight="bold" color="#475569" mb="2">Platform Fee Commission (%)</Text>
+                <HStack>
+                  <Input
+                    size="sm"
+                    type="number"
+                    bg="white"
+                    fontWeight="bold"
+                    value={dailyChargesForm.platformFeePercentage ?? 10}
+                    onChange={(e) => setDailyChargesForm({ ...dailyChargesForm, platformFeePercentage: Number(e.target.value) || 0 })}
+                  />
+                  <Text fontWeight="bold" color="#64748b">%</Text>
+                </HStack>
+              </Box>
+
+              <Box p="4" borderRadius="lg" border="1px solid #e2e8f0" bg="#f8fafc">
+                <Text fontSize="xs" fontWeight="bold" color="#475569" mb="2">GST Rate (%)</Text>
+                <HStack>
+                  <Input
+                    size="sm"
+                    type="number"
+                    bg="white"
+                    fontWeight="bold"
+                    value={dailyChargesForm.gstPercentage ?? 18}
+                    onChange={(e) => setDailyChargesForm({ ...dailyChargesForm, gstPercentage: Number(e.target.value) || 0 })}
+                  />
+                  <Text fontWeight="bold" color="#64748b">%</Text>
+                </HStack>
+              </Box>
+            </SimpleGrid>
+
+            <Flex justify="flex-end" mt="6">
+              <Button
+                colorScheme="blue"
+                bg="#2563eb"
+                isLoading={isUpdatingDailyCharges}
+                onClick={handleUpdateDailyCharges}
+              >
+                Save All Daily Charges
+              </Button>
+            </Flex>
+          </Box>
+        </Box>
+      )}
+
+      {/* Add Custom Category Modal */}
+      <Modal isOpen={isAddCategoryOpen} onClose={() => setIsAddCategoryOpen(false)}>
+        <ModalOverlay backdropFilter="blur(3px)" />
+        <ModalContent borderRadius="xl">
+          <ModalHeader borderBottom="1px solid #e2e8f0" color="#1e293b" fontSize="md">
+            Add New Staff Category
+          </ModalHeader>
+          <ModalCloseButton />
+          <ModalBody py="5">
+            <VStack spacing="4">
+              <FormControl isRequired>
+                <FormLabel fontSize="xs" fontWeight="bold" color="#475569">Role / Category Label</FormLabel>
+                <Input
+                  size="sm"
+                  placeholder="e.g. Bartender / Mixologist"
+                  value={newCategory.label}
+                  onChange={(e) => setNewCategory({ ...newCategory, label: e.target.value })}
+                />
+              </FormControl>
+
+              <FormControl>
+                <FormLabel fontSize="xs" fontWeight="bold" color="#475569">Category Key (Optional)</FormLabel>
+                <Input
+                  size="sm"
+                  placeholder="e.g. bartender"
+                  value={newCategory.category}
+                  onChange={(e) => setNewCategory({ ...newCategory, category: e.target.value })}
+                />
+              </FormControl>
+
+              <FormControl isRequired>
+                <FormLabel fontSize="xs" fontWeight="bold" color="#475569">Daily Rate (₹ / Day)</FormLabel>
+                <Input
+                  size="sm"
+                  type="number"
+                  placeholder="e.g. 1299"
+                  value={newCategory.rate}
+                  onChange={(e) => setNewCategory({ ...newCategory, rate: e.target.value })}
+                />
+              </FormControl>
+
+              <FormControl>
+                <FormLabel fontSize="xs" fontWeight="bold" color="#475569">Description / Note</FormLabel>
+                <Input
+                  size="sm"
+                  placeholder="e.g. Drinks & bar service for parties"
+                  value={newCategory.description}
+                  onChange={(e) => setNewCategory({ ...newCategory, description: e.target.value })}
+                />
+              </FormControl>
+            </VStack>
+          </ModalBody>
+          <ModalFooter borderTop="1px solid #e2e8f0" gap="3">
+            <Button size="sm" variant="outline" onClick={() => setIsAddCategoryOpen(false)}>Cancel</Button>
+            <Button size="sm" colorScheme="blue" bg="#2563eb" onClick={handleAddCustomCategory}>Add to List</Button>
+          </ModalFooter>
+        </ModalContent>
+      </Modal>
 
       {/* Edit Service Package Modal */}
       {selectedPackage && (
