@@ -62,8 +62,20 @@ const ViewCandidate = () => {
     return true;
   };
 
-  const apiUrl = import.meta.env.VITE_API_URL;
+  const apiUrl = import.meta.env.VITE_API_URL || 'https://api.zomocook.in/api';
   const apiBase = apiUrl.replace('/api', '');
+
+  const getMediaUrl = (path) => {
+    if (!path || typeof path !== 'string') return '';
+    if (path.startsWith('http://') || path.startsWith('https://')) {
+      return path.replaceAll('https://zomocook-backend.onrender.com', apiBase);
+    }
+    let cleanPath = path.replace(/\\/g, '/').replace(/^\/+/, '');
+    if (!cleanPath.startsWith('uploads/')) {
+      cleanPath = `uploads/${cleanPath}`;
+    }
+    return `${apiBase}/${cleanPath}`;
+  };
 
   const DetailRow = ({ label, value, isTag = false }) => (
     <Tr borderBottom="1px solid #f1f5f9">
@@ -182,12 +194,16 @@ const ViewCandidate = () => {
                 <Tbody>
                   {['idProof', 'addressProof', 'policeVerification', 'resume', 'academicCertificate', 'experienceCertificate'].map(doc => (
                     <Tr key={doc} borderBottom="1px solid #f1f5f9">
-                      <Td py="3" px="6" bg="#fcfdfe" w="300px" fontSize="sm" fontWeight="700" color="#475569" borderRight="1px solid #f1f5f9" textTransform="capitalize">{doc.replace(/([A-Z])/g, ' $1')}</Td>
+                      <Td py="3" px="6" bg="#fcfdfe" w="300px" fontSize="sm" fontWeight="700" color="#475569" borderRight="1px solid #f1f5f9" textTransform="capitalize">
+                        {doc === 'idProof' ? `${candidate.documents?.idProofType || 'Aadhaar'} Card (Front)` : doc === 'addressProof' ? `${candidate.documents?.idProofType || 'Aadhaar'} Card (Back / Address)` : doc.replace(/([A-Z])/g, ' $1')}
+                      </Td>
                       <Td py="3" px="6">
                         {candidate.documents?.[doc] ? (
                           <HStack spacing="4">
-                            <ChakraLink href={`${apiBase}/${candidate.documents[doc]}`} isExternal color="#ff6b00" fontWeight="600" fontSize="sm">View Document</ChakraLink>
-                            <Badge colorScheme="green">Verified</Badge>
+                            <ChakraLink href={getMediaUrl(candidate.documents[doc])} isExternal color="#ff6b00" fontWeight="600" fontSize="sm" display="flex" alignItems="center" gap="1">
+                              View Document <ExternalLink size={14} />
+                            </ChakraLink>
+                            <Badge colorScheme="green">Uploaded</Badge>
                           </HStack>
                         ) : <Text fontSize="sm" color="red.400">Not Uploaded</Text>}
                       </Td>

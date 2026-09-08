@@ -1,14 +1,14 @@
 import React, { useState, useEffect } from 'react';
 import axios from 'axios';
 import Swal from 'sweetalert2';
-import API_BASE_URL from '../apiConfig';
+import API_BASE_URL, { UPLOAD_BASE_URL } from '../apiConfig';
 import {
   Box, Button, Table, Thead, Tbody, Tr, Th, Td, IconButton,
   useToast, Modal, ModalOverlay, ModalContent, ModalHeader,
   ModalCloseButton, ModalBody, ModalFooter, FormControl,
   FormLabel, Input, Switch, Flex, Heading, Tooltip, Badge, Image, Text, Select, SimpleGrid, VStack
 } from '@chakra-ui/react';
-import { Pencil, Trash2, Plus } from 'lucide-react';
+import { Pencil, Trash2, Plus, Eye, ExternalLink, Image as ImageIcon } from 'lucide-react';
 import { Icon } from '@chakra-ui/react';
 
 const audienceLabel = (val) => {
@@ -30,9 +30,22 @@ const BannerList = () => {
   const [formData, setFormData] = useState({ title: '', link: '', status: 'active', targetAudience: 'both' });
   const [imageFile, setImageFile] = useState(null);
   const [imagePreview, setImagePreview] = useState('');
+  const [previewBannerImage, setPreviewBannerImage] = useState(null);
   const [saving, setSaving] = useState(false);
   const toast = useToast();
   const token = localStorage.getItem('adminToken');
+
+  const getImageUrl = (imgPath) => {
+    if (!imgPath || typeof imgPath !== 'string') return '';
+    if (imgPath.startsWith('http://') || imgPath.startsWith('https://')) {
+      return imgPath.replaceAll('https://zomocook-backend.onrender.com', UPLOAD_BASE_URL);
+    }
+    let cleanPath = imgPath.replace(/\\/g, '/').replace(/^\/+/, '');
+    if (!cleanPath.startsWith('uploads/')) {
+      cleanPath = `uploads/${cleanPath}`;
+    }
+    return `${UPLOAD_BASE_URL}/${cleanPath}`;
+  };
 
   const fetchBanners = async () => {
     try {
@@ -58,7 +71,7 @@ const BannerList = () => {
         status: banner.status,
         targetAudience: banner.targetAudience || 'both',
       });
-      setImagePreview(banner.image ? `${API_BASE_URL.replace('/api', '')}/${banner.image}` : '');
+      setImagePreview(banner.image ? getImageUrl(banner.image) : '');
     } else {
       setCurrentBanner(null);
       setFormData({ title: '', subtitle: '', cta: '', link: '', status: 'active', targetAudience: 'both' });
@@ -152,12 +165,6 @@ const BannerList = () => {
     }
   };
 
-  const getImageUrl = (imgPath) => {
-    if (!imgPath) return '';
-    if (imgPath.startsWith('http')) return imgPath;
-    return `${API_BASE_URL.replace('/api', '')}/${imgPath}`;
-  };
-
   return (
     <Box p={6} bg="white" borderRadius="lg" shadow="sm">
       <Flex justify="space-between" align="center" mb={6}>
@@ -171,29 +178,52 @@ const BannerList = () => {
         <Table variant="simple" size="sm">
           <Thead bg="gray.50">
             <Tr>
-              <Th>Image</Th>
-              <Th>Title</Th>
-              <Th>Show To</Th>
-              <Th>Link</Th>
-              <Th>Status</Th>
-              <Th>Actions</Th>
+              <Th py="4" px="4">Banner Image</Th>
+              <Th py="4" px="4">Title</Th>
+              <Th py="4" px="4">Show To</Th>
+              <Th py="4" px="4">Link</Th>
+              <Th py="4" px="4">Status</Th>
+              <Th py="4" px="4">Actions</Th>
             </Tr>
           </Thead>
           <Tbody>
             {banners.map((b) => (
-              <Tr key={b._id}>
-                <Td>
+              <Tr key={b._id} _hover={{ bg: 'gray.50' }}>
+                <Td py="3" px="4">
                   {b.image ? (
-                    <Image
-                      src={getImageUrl(b.image)}
-                      alt={b.title}
-                      boxSize="40px"
-                      objectFit="cover"
+                    <Box
+                      w="110px"
+                      h="55px"
                       borderRadius="md"
-                    />
+                      overflow="hidden"
+                      border="1.5px solid #e2e8f0"
+                      bg="#f8fafc"
+                      cursor="pointer"
+                      boxShadow="sm"
+                      position="relative"
+                      _hover={{ transform: 'scale(1.04)', borderColor: 'blue.400' }}
+                      transition="all 0.2s ease-in-out"
+                      onClick={() => setPreviewBannerImage({ title: b.title, url: getImageUrl(b.image) })}
+                      title="Click to view full banner"
+                    >
+                      <Image
+                        src={getImageUrl(b.image)}
+                        alt={b.title}
+                        w="100%"
+                        h="100%"
+                        objectFit="cover"
+                        fallback={
+                          <Flex w="100%" h="100%" align="center" justify="center" bg="gray.100" direction="column">
+                            <Icon as={ImageIcon} color="gray.400" boxSize={5} />
+                            <Text fontSize="9px" color="gray.500" fontWeight="600">Preview</Text>
+                          </Flex>
+                        }
+                      />
+                    </Box>
                   ) : (
-                    <Box boxSize="40px" bg="gray.100" borderRadius="md" display="flex" alignItems="center" justifyContent="center">
-                      <Icon as={ImageIcon} color="gray.400" />
+                    <Box w="110px" h="55px" bg="gray.100" borderRadius="md" border="1px dashed #cbd5e1" display="flex" alignItems="center" justifyContent="center" direction="column">
+                      <Icon as={ImageIcon} color="gray.400" boxSize={5} />
+                      <Text fontSize="9px" color="gray.500" ml="1">No image</Text>
                     </Box>
                   )}
                 </Td>
@@ -382,6 +412,39 @@ const BannerList = () => {
             <Button variant="ghost" mr={3} onClick={handleClose}>Cancel</Button>
             <Button colorScheme="blue" onClick={handleSubmit} isLoading={saving} size="lg" px={8}>
               {currentBanner ? 'Update Banner' : 'Publish Banner'}
+            </Button>
+          </ModalFooter>
+        </ModalContent>
+      </Modal>
+
+      {/* Full Resolution Banner Preview Modal */}
+      <Modal isOpen={Boolean(previewBannerImage)} onClose={() => setPreviewBannerImage(null)} size="3xl" isCentered>
+        <ModalOverlay bg="blackAlpha.700" backdropFilter="blur(5px)" />
+        <ModalContent borderRadius="xl" overflow="hidden">
+          <ModalHeader bg="gray.50" borderBottomWidth="1px" display="flex" justifyContent="space-between" alignItems="center">
+            <Text fontSize="md" fontWeight="bold" noOfLines={1}>
+              {previewBannerImage?.title || 'Banner Preview'}
+            </Text>
+            <ModalCloseButton position="static" />
+          </ModalHeader>
+          <ModalBody p={4} bg="gray.900" display="flex" justifyContent="center" alignItems="center">
+            {previewBannerImage && (
+              <Image
+                src={previewBannerImage.url}
+                alt={previewBannerImage.title}
+                maxH="70vh"
+                w="auto"
+                objectFit="contain"
+                borderRadius="md"
+              />
+            )}
+          </ModalBody>
+          <ModalFooter bg="gray.50" borderTopWidth="1px" py={3}>
+            <Button colorScheme="blue" size="sm" onClick={() => window.open(previewBannerImage?.url, '_blank')} mr={3}>
+              Open in New Tab
+            </Button>
+            <Button variant="ghost" size="sm" onClick={() => setPreviewBannerImage(null)}>
+              Close
             </Button>
           </ModalFooter>
         </ModalContent>

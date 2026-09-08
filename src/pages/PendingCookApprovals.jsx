@@ -5,7 +5,7 @@ import {
   ModalBody, ModalFooter, FormControl, FormLabel, Textarea, Select, Spinner,
   Icon, IconButton, SimpleGrid, Card, CardBody, Image
 } from '@chakra-ui/react';
-import { CheckCircle, XCircle, Eye, AlertCircle, Clock } from 'lucide-react';
+import { CheckCircle, XCircle, Eye, AlertCircle, Clock, FileText, ExternalLink, Image as ImageIcon } from 'lucide-react';
 import { PageHeader, PageFooter, BRAND, ACCENT, TableCard, TableControls, TableFooter } from '../components/ui';
 import axios from 'axios';
 import API_BASE_URL, { UPLOAD_BASE_URL } from '../apiConfig';
@@ -14,10 +14,41 @@ const BRAND_COLOR = '#2D2B75';
 const ACCENT_COLOR = '#4C49ED';
 
 const getMediaUrl = (path) => {
-  if (!path) return '';
-  if (path.startsWith('http://') || path.startsWith('https://')) return path;
-  const cleanPath = path.replace(/\\/g, '/').replace(/^\/+/, '');
+  if (!path || typeof path !== 'string') return '';
+  if (path.startsWith('http://') || path.startsWith('https://')) {
+    return path.replaceAll('https://zomocook-backend.onrender.com', UPLOAD_BASE_URL);
+  }
+  let cleanPath = path.replace(/\\/g, '/').replace(/^\/+/, '');
+  if (!cleanPath.startsWith('uploads/')) {
+    cleanPath = `uploads/${cleanPath}`;
+  }
   return `${UPLOAD_BASE_URL}/${cleanPath}`;
+};
+
+const extractDocuments = (cook) => {
+  if (!cook) return { idProof: '', addressProof: '', resume: '', idProofType: 'Aadhaar Card' };
+  let docs = cook.documents || {};
+  if (typeof docs === 'string') {
+    try {
+      docs = JSON.parse(docs);
+    } catch (e) {
+      docs = {};
+    }
+  }
+  return {
+    idProof: docs.idProof || docs.aadharFront || docs.aadhar || cook.idProof || '',
+    addressProof: docs.addressProof || docs.aadharBack || cook.addressProof || '',
+    resume: docs.resume || docs.cv || cook.cv || '',
+    policeVerification: docs.policeVerification || cook.policeVerification || '',
+    academicCertificate: docs.academicCertificate || cook.academicCertificate || '',
+    experienceCertificate: docs.experienceCertificate || cook.experienceCertificate || '',
+    idProofType: docs.idProofType || cook.idProofType || 'Aadhaar Card'
+  };
+};
+
+const isPdfDocument = (path) => {
+  if (!path || typeof path !== 'string') return false;
+  return path.toLowerCase().split('?')[0].endsWith('.pdf');
 };
 
 const PendingCookApprovals = () => {
@@ -338,132 +369,229 @@ const PendingCookApprovals = () => {
                 )}
 
                 {/* Documents & Aadhaar Card */}
-                <Box>
-                  <Text fontSize="sm" fontWeight="700" color={BRAND_COLOR} mb="3" textTransform="uppercase" letterSpacing="0.5px">
-                    Identity & Verification Documents
-                  </Text>
-                  {selectedCook.documents && (selectedCook.documents.idProof || selectedCook.documents.addressProof || selectedCook.documents.resume) ? (
-                    <SimpleGrid columns={{ base: 1, sm: 2 }} spacing="4">
-                      {/* ID Proof (Aadhaar Card Front) */}
-                      {selectedCook.documents.idProof && (
-                        <Box p="3" borderRadius="lg" border="1px solid #e2e8f0" bg="#f8fafc">
-                          <HStack justify="space-between" mb="2">
-                            <Text fontSize="xs" fontWeight="700" color="#1e293b">
-                              {selectedCook.documents.idProofType || 'Aadhaar Card'} (Front)
-                            </Text>
-                            <Badge colorScheme="blue" fontSize="10px">ID PROOF</Badge>
-                          </HStack>
-                          {selectedCook.documents.idProof.match(/\.(jpeg|jpg|png|webp)$/i) ? (
-                            <Box
-                              h="130px"
-                              w="100%"
-                              borderRadius="md"
-                              overflow="hidden"
-                              border="1px solid #cbd5e1"
-                              mb="2"
-                              cursor="pointer"
-                              bg="#fff"
-                              onClick={() => setPreviewDoc({
-                                title: `${selectedCook.name} - ${selectedCook.documents.idProofType || 'Aadhaar Card'} (Front)`,
-                                url: getMediaUrl(selectedCook.documents.idProof)
-                              })}
-                            >
-                              <Image
-                                src={getMediaUrl(selectedCook.documents.idProof)}
-                                alt="ID Proof Front"
-                                objectFit="contain"
-                                w="100%"
-                                h="100%"
-                                fallback={<Flex h="100%" align="center" justify="center" fontSize="xs" color="gray.400">Loading document...</Flex>}
-                              />
-                            </Box>
-                          ) : null}
-                          <HStack spacing="2">
-                            <Button
-                              size="xs"
-                              colorScheme="blue"
-                              variant="solid"
-                              flex="1"
-                              onClick={() => setPreviewDoc({
-                                title: `${selectedCook.name} - ${selectedCook.documents.idProofType || 'Aadhaar Card'} (Front)`,
-                                url: getMediaUrl(selectedCook.documents.idProof)
-                              })}
-                            >
-                              View Aadhaar Front
-                            </Button>
-                            <Button
-                              size="xs"
-                              variant="outline"
-                              onClick={() => window.open(getMediaUrl(selectedCook.documents.idProof), '_blank')}
-                            >
-                              Open Tab
-                            </Button>
-                          </HStack>
-                        </Box>
-                      )}
+                {(() => {
+                  const cookDocs = extractDocuments(selectedCook);
+                  const hasAnyDoc = Boolean(cookDocs.idProof || cookDocs.addressProof || cookDocs.resume || cookDocs.policeVerification);
 
-                      {/* Address Proof (Aadhaar Card Back) */}
-                      {selectedCook.documents.addressProof && (
-                        <Box p="3" borderRadius="lg" border="1px solid #e2e8f0" bg="#f8fafc">
-                          <HStack justify="space-between" mb="2">
-                            <Text fontSize="xs" fontWeight="700" color="#1e293b">
-                              {selectedCook.documents.idProofType || 'Aadhaar Card'} (Back / Address)
-                            </Text>
-                            <Badge colorScheme="purple" fontSize="10px">ADDRESS PROOF</Badge>
-                          </HStack>
-                          {selectedCook.documents.addressProof.match(/\.(jpeg|jpg|png|webp)$/i) ? (
-                            <Box
-                              h="130px"
-                              w="100%"
-                              borderRadius="md"
-                              overflow="hidden"
-                              border="1px solid #cbd5e1"
-                              mb="2"
-                              cursor="pointer"
-                              bg="#fff"
-                              onClick={() => setPreviewDoc({
-                                title: `${selectedCook.name} - Aadhaar Card (Back)`,
-                                url: getMediaUrl(selectedCook.documents.addressProof)
-                              })}
-                            >
-                              <Image
-                                src={getMediaUrl(selectedCook.documents.addressProof)}
-                                alt="ID Proof Back"
-                                objectFit="contain"
-                                w="100%"
-                                h="100%"
-                                fallback={<Flex h="100%" align="center" justify="center" fontSize="xs" color="gray.400">Loading document...</Flex>}
-                              />
+                  return (
+                    <Box>
+                      <HStack justify="space-between" mb="3">
+                        <Text fontSize="sm" fontWeight="700" color={BRAND_COLOR} textTransform="uppercase" letterSpacing="0.5px">
+                          Identity & Verification Documents (Aadhaar Card)
+                        </Text>
+                        <Badge colorScheme={hasAnyDoc ? 'green' : 'red'} fontSize="xs" px="2" py="0.5" borderRadius="md">
+                          {hasAnyDoc ? 'Documents Attached' : 'No Documents Uploaded'}
+                        </Badge>
+                      </HStack>
+
+                      {hasAnyDoc ? (
+                        <SimpleGrid columns={{ base: 1, sm: 2 }} spacing="4">
+                          {/* ID Proof (Aadhaar Card Front) */}
+                          {cookDocs.idProof ? (
+                            <Box p="3.5" borderRadius="xl" border="1.5px solid #e2e8f0" bg="#f8fafc" boxShadow="sm">
+                              <HStack justify="space-between" mb="2.5">
+                                <HStack spacing="2">
+                                  <Icon as={cookDocs.idProofType?.toLowerCase().includes('aadhar') || cookDocs.idProofType?.toLowerCase().includes('adhar') ? ImageIcon : FileText} color={BRAND_COLOR} boxSize={4} />
+                                  <Text fontSize="xs" fontWeight="700" color="#1e293b">
+                                    {cookDocs.idProofType || 'Aadhaar Card'} (Front Side)
+                                  </Text>
+                                </HStack>
+                                <Badge colorScheme="blue" fontSize="10px" px="2" py="0.5" borderRadius="full">ID PROOF</Badge>
+                              </HStack>
+
+                              {isPdfDocument(cookDocs.idProof) ? (
+                                <Flex
+                                  h="130px"
+                                  w="100%"
+                                  borderRadius="lg"
+                                  direction="column"
+                                  align="center"
+                                  justify="center"
+                                  bg="white"
+                                  border="1px solid #cbd5e1"
+                                  mb="3"
+                                  cursor="pointer"
+                                  onClick={() => setPreviewDoc({
+                                    title: `${selectedCook.name} - ${cookDocs.idProofType || 'Aadhaar Card'} (Front)`,
+                                    url: getMediaUrl(cookDocs.idProof)
+                                  })}
+                                >
+                                  <Icon as={FileText} boxSize={8} color="red.500" mb="1" />
+                                  <Text fontSize="xs" fontWeight="700" color="#1e293b">PDF Document</Text>
+                                  <Text fontSize="10px" color="gray.500">Click to view Aadhaar Front</Text>
+                                </Flex>
+                              ) : (
+                                <Box
+                                  h="140px"
+                                  w="100%"
+                                  borderRadius="lg"
+                                  overflow="hidden"
+                                  border="1px solid #cbd5e1"
+                                  mb="3"
+                                  cursor="pointer"
+                                  bg="#fff"
+                                  position="relative"
+                                  _hover={{ opacity: 0.9 }}
+                                  onClick={() => setPreviewDoc({
+                                    title: `${selectedCook.name} - ${cookDocs.idProofType || 'Aadhaar Card'} (Front)`,
+                                    url: getMediaUrl(cookDocs.idProof)
+                                  })}
+                                >
+                                  <Image
+                                    src={getMediaUrl(cookDocs.idProof)}
+                                    alt="ID Proof Front"
+                                    objectFit="contain"
+                                    w="100%"
+                                    h="100%"
+                                    p="1"
+                                    fallback={
+                                      <Flex h="100%" w="100%" align="center" justify="center" direction="column" bg="gray.50" p="2">
+                                        <Icon as={ImageIcon} color="gray.400" boxSize={6} mb="1" />
+                                        <Text fontSize="10px" color="gray.600" fontWeight="600">Click below to open</Text>
+                                      </Flex>
+                                    }
+                                  />
+                                </Box>
+                              )}
+
+                              <HStack spacing="2">
+                                <Button
+                                  size="xs"
+                                  colorScheme="blue"
+                                  variant="solid"
+                                  flex="1"
+                                  leftIcon={<Eye size={12} />}
+                                  onClick={() => setPreviewDoc({
+                                    title: `${selectedCook.name} - ${cookDocs.idProofType || 'Aadhaar Card'} (Front)`,
+                                    url: getMediaUrl(cookDocs.idProof)
+                                  })}
+                                >
+                                  View Aadhaar Front
+                                </Button>
+                                <IconButton
+                                  size="xs"
+                                  variant="outline"
+                                  icon={<ExternalLink size={12} />}
+                                  aria-label="Open in new tab"
+                                  onClick={() => window.open(getMediaUrl(cookDocs.idProof), '_blank')}
+                                  title="Open in new tab"
+                                />
+                              </HStack>
                             </Box>
-                          ) : null}
-                          <HStack spacing="2">
-                            <Button
-                              size="xs"
-                              colorScheme="purple"
-                              variant="solid"
-                              flex="1"
-                              onClick={() => setPreviewDoc({
-                                title: `${selectedCook.name} - Aadhaar Card (Back)`,
-                                url: getMediaUrl(selectedCook.documents.addressProof)
-                              })}
-                            >
-                              View Aadhaar Back
-                            </Button>
-                            <Button
-                              size="xs"
-                              variant="outline"
-                              onClick={() => window.open(getMediaUrl(selectedCook.documents.addressProof), '_blank')}
-                            >
-                              Open Tab
-                            </Button>
-                          </HStack>
+                          ) : (
+                            <Box p="4" borderRadius="xl" border="1.5px dashed #e2e8f0" bg="#f8fafc" textAlign="center">
+                              <Text fontSize="xs" color="#94a3b8" fontWeight="600">Aadhaar Front not uploaded</Text>
+                            </Box>
+                          )}
+
+                          {/* Address Proof (Aadhaar Card Back) */}
+                          {cookDocs.addressProof ? (
+                            <Box p="3.5" borderRadius="xl" border="1.5px solid #e2e8f0" bg="#f8fafc" boxShadow="sm">
+                              <HStack justify="space-between" mb="2.5">
+                                <HStack spacing="2">
+                                  <Icon as={cookDocs.idProofType?.toLowerCase().includes('aadhar') || cookDocs.idProofType?.toLowerCase().includes('adhar') ? ImageIcon : FileText} color="purple.600" boxSize={4} />
+                                  <Text fontSize="xs" fontWeight="700" color="#1e293b">
+                                    {cookDocs.idProofType || 'Aadhaar Card'} (Back / Address)
+                                  </Text>
+                                </HStack>
+                                <Badge colorScheme="purple" fontSize="10px" px="2" py="0.5" borderRadius="full">ADDRESS PROOF</Badge>
+                              </HStack>
+
+                              {isPdfDocument(cookDocs.addressProof) ? (
+                                <Flex
+                                  h="130px"
+                                  w="100%"
+                                  borderRadius="lg"
+                                  direction="column"
+                                  align="center"
+                                  justify="center"
+                                  bg="white"
+                                  border="1px solid #cbd5e1"
+                                  mb="3"
+                                  cursor="pointer"
+                                  onClick={() => setPreviewDoc({
+                                    title: `${selectedCook.name} - Aadhaar Card (Back / Address)`,
+                                    url: getMediaUrl(cookDocs.addressProof)
+                                  })}
+                                >
+                                  <Icon as={FileText} boxSize={8} color="red.500" mb="1" />
+                                  <Text fontSize="xs" fontWeight="700" color="#1e293b">PDF Document</Text>
+                                  <Text fontSize="10px" color="gray.500">Click to view Aadhaar Back</Text>
+                                </Flex>
+                              ) : (
+                                <Box
+                                  h="140px"
+                                  w="100%"
+                                  borderRadius="lg"
+                                  overflow="hidden"
+                                  border="1px solid #cbd5e1"
+                                  mb="3"
+                                  cursor="pointer"
+                                  bg="#fff"
+                                  position="relative"
+                                  _hover={{ opacity: 0.9 }}
+                                  onClick={() => setPreviewDoc({
+                                    title: `${selectedCook.name} - Aadhaar Card (Back / Address)`,
+                                    url: getMediaUrl(cookDocs.addressProof)
+                                  })}
+                                >
+                                  <Image
+                                    src={getMediaUrl(cookDocs.addressProof)}
+                                    alt="ID Proof Back"
+                                    objectFit="contain"
+                                    w="100%"
+                                    h="100%"
+                                    p="1"
+                                    fallback={
+                                      <Flex h="100%" w="100%" align="center" justify="center" direction="column" bg="gray.50" p="2">
+                                        <Icon as={ImageIcon} color="gray.400" boxSize={6} mb="1" />
+                                        <Text fontSize="10px" color="gray.600" fontWeight="600">Click below to open</Text>
+                                      </Flex>
+                                    }
+                                  />
+                                </Box>
+                              )}
+
+                              <HStack spacing="2">
+                                <Button
+                                  size="xs"
+                                  colorScheme="purple"
+                                  variant="solid"
+                                  flex="1"
+                                  leftIcon={<Eye size={12} />}
+                                  onClick={() => setPreviewDoc({
+                                    title: `${selectedCook.name} - Aadhaar Card (Back / Address)`,
+                                    url: getMediaUrl(cookDocs.addressProof)
+                                  })}
+                                >
+                                  View Aadhaar Back
+                                </Button>
+                                <IconButton
+                                  size="xs"
+                                  variant="outline"
+                                  icon={<ExternalLink size={12} />}
+                                  aria-label="Open in new tab"
+                                  onClick={() => window.open(getMediaUrl(cookDocs.addressProof), '_blank')}
+                                  title="Open in new tab"
+                                />
+                              </HStack>
+                            </Box>
+                          ) : (
+                            <Box p="4" borderRadius="xl" border="1.5px dashed #e2e8f0" bg="#f8fafc" textAlign="center">
+                              <Text fontSize="xs" color="#94a3b8" fontWeight="600">Aadhaar Back not uploaded</Text>
+                            </Box>
+                          )}
+                        </SimpleGrid>
+                      ) : (
+                        <Box p="6" borderRadius="xl" border="1.5px dashed #cbd5e1" bg="#f8fafc" textAlign="center">
+                          <Icon as={AlertCircle} boxSize={8} color="#94a3b8" mb="2" />
+                          <Text fontSize="sm" fontWeight="700" color="#475569">No ID proof or documents uploaded by candidate.</Text>
+                          <Text fontSize="xs" color="#94a3b8">The cook has not uploaded their Aadhaar Card yet.</Text>
                         </Box>
                       )}
-                    </SimpleGrid>
-                  ) : (
-                    <Text fontSize="xs" color="#94a3b8" fontStyle="italic">No ID proof or documents uploaded by candidate.</Text>
-                  )}
-                </Box>
+                    </Box>
+                  );
+                })()}
 
                 {/* Verification Checklist */}
                 <Box>
@@ -576,7 +704,7 @@ const PendingCookApprovals = () => {
       </Modal>
 
       {/* Document / Image Fullscreen Preview Modal */}
-      <Modal isOpen={!!previewDoc} onClose={() => setPreviewDoc(null)} size="3xl" isCentered>
+      <Modal isOpen={!!previewDoc} onClose={() => setPreviewDoc(null)} size="4xl" isCentered>
         <ModalOverlay bg="blackAlpha.700" backdropFilter="blur(5px)" />
         <ModalContent borderRadius="xl" overflow="hidden">
           <ModalHeader bg="#f8faff" borderBottom="1px solid #e8edf5" fontSize="md" fontWeight="700">
@@ -584,16 +712,42 @@ const PendingCookApprovals = () => {
           </ModalHeader>
           <ModalBody p="4" textAlign="center" bg="#f1f5f9">
             {previewDoc?.url && (
-              <Flex justify="center" align="center" minH="300px" maxH="75vh" overflow="auto">
-                <Image
-                  src={previewDoc.url}
-                  alt={previewDoc.title}
-                  maxH="70vh"
-                  objectFit="contain"
-                  borderRadius="md"
-                  boxShadow="md"
-                />
-              </Flex>
+              isPdfDocument(previewDoc.url) ? (
+                <Box h="70vh" w="100%" borderRadius="md" overflow="hidden" bg="white">
+                  <iframe
+                    src={previewDoc.url}
+                    title={previewDoc.title}
+                    width="100%"
+                    height="100%"
+                    style={{ border: 'none' }}
+                  />
+                </Box>
+              ) : (
+                <Flex justify="center" align="center" minH="300px" maxH="75vh" overflow="auto">
+                  <Image
+                    src={previewDoc.url}
+                    alt={previewDoc.title}
+                    maxH="70vh"
+                    objectFit="contain"
+                    borderRadius="md"
+                    boxShadow="md"
+                    fallback={
+                      <VStack p="8" bg="white" borderRadius="lg" spacing="3">
+                        <Icon as={AlertCircle} boxSize={8} color="red.400" />
+                        <Text fontSize="sm" fontWeight="700" color="gray.700">Unable to preview image directly</Text>
+                        <Button
+                          size="sm"
+                          colorScheme="blue"
+                          leftIcon={<ExternalLink size={14} />}
+                          onClick={() => window.open(previewDoc.url, '_blank')}
+                        >
+                          Open in New Tab
+                        </Button>
+                      </VStack>
+                    }
+                  />
+                </Flex>
+              )
             )}
           </ModalBody>
           <ModalFooter bg="#f8faff" borderTop="1px solid #e8edf5" py="3" px="6" justify="space-between">
@@ -601,6 +755,7 @@ const PendingCookApprovals = () => {
               size="sm"
               variant="outline"
               colorScheme="blue"
+              leftIcon={<ExternalLink size={14} />}
               onClick={() => previewDoc?.url && window.open(previewDoc.url, '_blank')}
             >
               Open in New Window
