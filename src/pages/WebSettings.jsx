@@ -35,7 +35,17 @@ const WebSettings = () => {
     rescheduleMessage: '',
     logo: null,
     favicon: null,
-    responsibilities: {}
+    responsibilities: {},
+    appVersion: {
+      latestVersion: '1.0.7',
+      latestBuildNumber: 8,
+      minRequiredVersion: '1.0.7',
+      minRequiredBuildNumber: 8,
+      forceUpdate: true,
+      title: 'New Update Available! 🚀',
+      message: 'A new version of ZomoCook is available on the Play Store. Please update now to continue using the app.',
+      playStoreUrl: 'https://play.google.com/store/apps/details?id=digi.coders.zomocook'
+    }
   });
 
   const [previews, setPreviews] = useState({
@@ -69,8 +79,18 @@ const WebSettings = () => {
       if (data.success) {
         setSettings({
           ...data.settings,
-          logo: null, // We handle files separately
-          favicon: null
+          logo: null,
+          favicon: null,
+          appVersion: data.settings.appVersion || {
+            latestVersion: '1.0.7',
+            latestBuildNumber: 8,
+            minRequiredVersion: '1.0.7',
+            minRequiredBuildNumber: 8,
+            forceUpdate: true,
+            title: 'New Update Available! 🚀',
+            message: 'A new version of ZomoCook is available on the Play Store. Please update now to continue using the app.',
+            playStoreUrl: 'https://play.google.com/store/apps/details?id=digi.coders.zomocook'
+          }
         });
         const serverBaseUrl = API_BASE_URL.replace('/api', '');
         setPreviews({
@@ -94,6 +114,17 @@ const WebSettings = () => {
   const handleInputChange = (e) => {
     const { name, value } = e.target;
     setSettings(prev => ({ ...prev, [name]: value }));
+  };
+
+  const handleAppVersionChange = (e) => {
+    const { name, value, type, checked } = e.target;
+    setSettings(prev => ({
+      ...prev,
+      appVersion: {
+        ...prev.appVersion,
+        [name]: type === 'checkbox' ? checked : (name.includes('Build') ? parseInt(value) || 0 : value)
+      }
+    }));
   };
 
   const handleQuillChange = (content) => {
@@ -129,11 +160,11 @@ const WebSettings = () => {
     setSelectedCategoryKey(newKey);
   };
 
-  const handleFileChange = (e, type) => {
+  const handleFileChange = (e, fieldName) => {
     const file = e.target.files[0];
     if (file) {
-      setSettings(prev => ({ ...prev, [type]: file }));
-      setPreviews(prev => ({ ...prev, [type]: URL.createObjectURL(file) }));
+      setSettings(prev => ({ ...prev, [fieldName]: file }));
+      setPreviews(prev => ({ ...prev, [fieldName]: URL.createObjectURL(file) }));
     }
   };
 
@@ -143,7 +174,6 @@ const WebSettings = () => {
       const token = localStorage.getItem('adminToken');
       const formData = new FormData();
 
-      // Sync local textarea text to the responsibilities object before saving
       const currentWillDo = willDoText.split('\n').map(l => l.trim()).filter(l => l.length > 0);
       const currentWillNotDo = willNotDoText.split('\n').map(l => l.trim()).filter(l => l.length > 0);
 
@@ -156,9 +186,11 @@ const WebSettings = () => {
 
       // Append all fields
       Object.keys(settings).forEach(key => {
-        if (settings[key] !== null) {
+        if (settings[key] !== null && settings[key] !== undefined) {
           if (key === 'responsibilities') {
             formData.append(key, JSON.stringify(updatedResp));
+          } else if (key === 'appVersion') {
+            formData.append(key, JSON.stringify(settings.appVersion));
           } else {
             formData.append(key, settings[key]);
           }
@@ -174,7 +206,7 @@ const WebSettings = () => {
 
       if (data.success) {
         toast({
-          title: 'Settings updated',
+          title: 'Settings updated successfully!',
           status: 'success',
           duration: 3000,
           isClosable: true,
@@ -209,7 +241,7 @@ const WebSettings = () => {
       <Box bg="white" borderRadius="xl" overflow="hidden" border="1px solid #e8edf5" boxShadow="0 2px 8px rgba(0,74,173,0.04)">
         <Tabs variant="unstyled">
           <TabList bg="#f8faff" px="4" pt="3" borderBottom="2px solid #e8edf5" gap="1" display="flex" overflowX="auto" sx={{ WebkitOverflowScrolling: 'touch', scrollbarWidth: 'none', '&::-webkit-scrollbar': { display: 'none' } }}>
-            {[{ icon: Globe, label: 'General Settings' }, { icon: MapPin, label: 'Address Settings' }, { icon: Share2, label: 'Social Media Settings' }, { icon: ClipboardList, label: 'Responsibilities' }].map(({ icon, label }) => (
+            {[{ icon: Globe, label: 'General Settings' }, { icon: MapPin, label: 'Address Settings' }, { icon: Share2, label: 'Social Media Settings' }, { icon: ClipboardList, label: 'Responsibilities' }, { icon: Globe, label: 'App Update Settings' }].map(({ icon, label }) => (
               <Tab key={label}
                 _selected={{ color: BRAND, bg: 'white', borderBottom: `2px solid ${BRAND}`, mb: '-2px' }}
                 borderRadius="lg lg 0 0" px="5" py="3" fontSize="sm" fontWeight="600" color="#64748b"
@@ -251,13 +283,13 @@ const WebSettings = () => {
                       <VStack align="start" spacing="2">
                         <input type="file" hidden ref={faviconInputRef} onChange={(e) => handleFileChange(e, 'favicon')} accept="image/*" />
                         <Button size="xs" variant="outline" borderColor="#dde6f5" color="#64748b" borderRadius="lg" leftIcon={<Upload size={12} />} _hover={{ borderColor: BRAND, color: BRAND }} onClick={() => faviconInputRef.current.click()}>Upload</Button>
-                        {previews.favicon && <Image src={previews.favicon} w="32px" h="32px" bg="#f8faff" borderRadius="md" border="1px solid #e8edf5" />}
+                        {previews.favicon && <Image src={previews.favicon} h="36px" bg="white" p="1" borderRadius="md" border="1px solid #e8edf5" />}
                       </VStack>
                     </FormControl>
                   </SimpleGrid>
                 </SimpleGrid>
                 <Flex pt="4">
-                  <Button isLoading={saving} onClick={handleSave} leftIcon={<Save size={15} />} bg={BRAND} color="white" size="sm" px="6" borderRadius="lg" _hover={{ bg: '#003d91' }} boxShadow={`0 4px 12px ${BRAND}30`}>Save Changes</Button>
+                  <Button isLoading={saving} onClick={handleSave} leftIcon={<Save size={15} />} bg={BRAND} color="white" size="sm" px="6" borderRadius="lg" _hover={{ bg: '#003d91' }} boxShadow={`0 4px 12px ${BRAND}30`}>Update Settings</Button>
                 </Flex>
               </VStack>
             </TabPanel>
@@ -265,21 +297,23 @@ const WebSettings = () => {
             {/* Address Settings */}
             <TabPanel p="0">
               <VStack align="stretch" spacing="6">
-                <SectionTitle>Contact & Legal</SectionTitle>
+                <SectionTitle>Location & Legal</SectionTitle>
                 <FormControl>
                   <FormLabel {...labelStyle}>Full Address</FormLabel>
-                  <Textarea {...inputStyle} name="fullAddress" value={settings.fullAddress} onChange={handleInputChange} minH="90px" />
+                  <Textarea {...inputStyle} name="fullAddress" value={settings.fullAddress} onChange={handleInputChange} minH="80px" />
                 </FormControl>
-                <FormControl>
-                  <FormLabel {...labelStyle}>Copyright Text</FormLabel>
-                  <Input {...inputStyle} name="copyrightText" value={settings.copyrightText} onChange={handleInputChange} />
-                </FormControl>
-                <FormControl>
-                  <FormLabel {...labelStyle}>Google Map Script</FormLabel>
-                  <Textarea {...inputStyle} name="googleMapScript" value={settings.googleMapScript} onChange={handleInputChange} placeholder="Paste your iframe code here..." minH="110px" />
-                </FormControl>
+                <SimpleGrid columns={{ base: 1, md: 2 }} spacing="5">
+                  <FormControl>
+                    <FormLabel {...labelStyle}>Copyright Text</FormLabel>
+                    <Input {...inputStyle} name="copyrightText" value={settings.copyrightText} onChange={handleInputChange} />
+                  </FormControl>
+                  <FormControl>
+                    <FormLabel {...labelStyle}>Google Map iFrame Script</FormLabel>
+                    <Textarea {...inputStyle} name="googleMapScript" value={settings.googleMapScript} onChange={handleInputChange} minH="80px" />
+                  </FormControl>
+                </SimpleGrid>
                 <Flex pt="4">
-                  <Button isLoading={saving} onClick={handleSave} leftIcon={<Save size={15} />} bg={BRAND} color="white" size="sm" px="6" borderRadius="lg" _hover={{ bg: '#003d91' }} boxShadow={`0 4px 12px ${BRAND}30`}>Update Address</Button>
+                  <Button isLoading={saving} onClick={handleSave} leftIcon={<Save size={15} />} bg={BRAND} color="white" size="sm" px="6" borderRadius="lg" _hover={{ bg: '#003d91' }} boxShadow={`0 4px 12px ${BRAND}30`}>Update Settings</Button>
                 </Flex>
               </VStack>
             </TabPanel>
@@ -287,16 +321,31 @@ const WebSettings = () => {
             {/* Social Media Settings */}
             <TabPanel p="0">
               <VStack align="stretch" spacing="6">
-                <SectionTitle>Social Media Links</SectionTitle>
-                <SimpleGrid columns={{ base: 1, md: 3 }} spacing="5">
-                  <FormControl><FormLabel {...labelStyle}>Facebook URL</FormLabel><Input {...inputStyle} name="facebookUrl" value={settings.facebookUrl} onChange={handleInputChange} /></FormControl>
-                  <FormControl><FormLabel {...labelStyle}>Instagram URL</FormLabel><Input {...inputStyle} name="instagramUrl" value={settings.instagramUrl} onChange={handleInputChange} /></FormControl>
-                  <FormControl><FormLabel {...labelStyle}>Twitter URL</FormLabel><Input {...inputStyle} name="twitterUrl" value={settings.twitterUrl} onChange={handleInputChange} /></FormControl>
-                  <FormControl><FormLabel {...labelStyle}>LinkedIn URL</FormLabel><Input {...inputStyle} name="linkedinUrl" value={settings.linkedinUrl} onChange={handleInputChange} /></FormControl>
-                  <FormControl><FormLabel {...labelStyle}>YouTube URL</FormLabel><Input {...inputStyle} name="youtubeUrl" value={settings.youtubeUrl} onChange={handleInputChange} /></FormControl>
+                <SectionTitle>Social Links & Instructions</SectionTitle>
+                <SimpleGrid columns={{ base: 1, md: 2 }} spacing="5">
+                  <FormControl>
+                    <FormLabel {...labelStyle}>Facebook URL</FormLabel>
+                    <Input {...inputStyle} name="facebookUrl" value={settings.facebookUrl} onChange={handleInputChange} />
+                  </FormControl>
+                  <FormControl>
+                    <FormLabel {...labelStyle}>Instagram URL</FormLabel>
+                    <Input {...inputStyle} name="instagramUrl" value={settings.instagramUrl} onChange={handleInputChange} />
+                  </FormControl>
+                  <FormControl>
+                    <FormLabel {...labelStyle}>Twitter URL</FormLabel>
+                    <Input {...inputStyle} name="twitterUrl" value={settings.twitterUrl} onChange={handleInputChange} />
+                  </FormControl>
+                  <FormControl>
+                    <FormLabel {...labelStyle}>LinkedIn URL</FormLabel>
+                    <Input {...inputStyle} name="linkedinUrl" value={settings.linkedinUrl} onChange={handleInputChange} />
+                  </FormControl>
+                  <FormControl>
+                    <FormLabel {...labelStyle}>YouTube URL</FormLabel>
+                    <Input {...inputStyle} name="youtubeUrl" value={settings.youtubeUrl} onChange={handleInputChange} />
+                  </FormControl>
                 </SimpleGrid>
                 <FormControl>
-                  <FormLabel {...labelStyle}>Important Instruction</FormLabel>
+                  <FormLabel {...labelStyle}>Important Instruction (Rich Text)</FormLabel>
                   <Box bg="white" borderRadius="lg" overflow="hidden" border="1.5px solid #dde6f5">
                     <ReactQuill theme="snow" value={settings.importantInstruction} onChange={handleQuillChange} />
                   </Box>
@@ -375,6 +424,49 @@ const WebSettings = () => {
                   >
                     Save Responsibilities
                   </Button>
+                </Flex>
+              </VStack>
+            </TabPanel>
+
+            {/* App Update Settings */}
+            <TabPanel p="0">
+              <VStack align="stretch" spacing="6">
+                <SectionTitle>Mobile App Version & Force Update Settings</SectionTitle>
+                <SimpleGrid columns={{ base: 1, md: 2 }} spacing="5">
+                  <FormControl>
+                    <FormLabel {...labelStyle}>Latest App Version (e.g. 1.0.8)</FormLabel>
+                    <Input {...inputStyle} name="latestVersion" value={settings.appVersion?.latestVersion || ''} onChange={handleAppVersionChange} placeholder="1.0.8" />
+                  </FormControl>
+                  <FormControl>
+                    <FormLabel {...labelStyle}>Latest Build Number (e.g. 9)</FormLabel>
+                    <Input {...inputStyle} type="number" name="latestBuildNumber" value={settings.appVersion?.latestBuildNumber || ''} onChange={handleAppVersionChange} placeholder="9" />
+                  </FormControl>
+                  <FormControl>
+                    <FormLabel {...labelStyle}>Minimum Required Version (e.g. 1.0.8)</FormLabel>
+                    <Input {...inputStyle} name="minRequiredVersion" value={settings.appVersion?.minRequiredVersion || ''} onChange={handleAppVersionChange} placeholder="1.0.8" />
+                  </FormControl>
+                  <FormControl>
+                    <FormLabel {...labelStyle}>Force Update Required?</FormLabel>
+                    <Select {...inputStyle} name="forceUpdate" value={settings.appVersion?.forceUpdate ? 'true' : 'false'} onChange={(e) => setSettings(prev => ({ ...prev, appVersion: { ...prev.appVersion, forceUpdate: e.target.value === 'true' } }))}>
+                      <option value="true">Yes (Mandatory Update - Cannot close popup)</option>
+                      <option value="false">No (Optional Update - Can dismiss popup)</option>
+                    </Select>
+                  </FormControl>
+                  <FormControl gridColumn={{ md: 'span 2' }}>
+                    <FormLabel {...labelStyle}>Update Popup Title</FormLabel>
+                    <Input {...inputStyle} name="title" value={settings.appVersion?.title || ''} onChange={handleAppVersionChange} placeholder="New Update Available! 🚀" />
+                  </FormControl>
+                  <FormControl gridColumn={{ md: 'span 2' }}>
+                    <FormLabel {...labelStyle}>Update Popup Message</FormLabel>
+                    <Textarea {...inputStyle} name="message" value={settings.appVersion?.message || ''} onChange={handleAppVersionChange} minH="80px" placeholder="A new version of ZomoCook is available on the Play Store..." />
+                  </FormControl>
+                  <FormControl gridColumn={{ md: 'span 2' }}>
+                    <FormLabel {...labelStyle}>Google Play Store URL</FormLabel>
+                    <Input {...inputStyle} name="playStoreUrl" value={settings.appVersion?.playStoreUrl || ''} onChange={handleAppVersionChange} placeholder="https://play.google.com/store/apps/details?id=digi.coders.zomocook" />
+                  </FormControl>
+                </SimpleGrid>
+                <Flex pt="4">
+                  <Button isLoading={saving} onClick={handleSave} leftIcon={<Save size={15} />} bg={BRAND} color="white" size="sm" px="6" borderRadius="lg" _hover={{ bg: '#003d91' }} boxShadow={`0 4px 12px ${BRAND}30`}>Save App Version Settings</Button>
                 </Flex>
               </VStack>
             </TabPanel>

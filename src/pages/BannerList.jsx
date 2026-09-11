@@ -23,6 +23,91 @@ const audienceColor = (val) => {
   return 'purple';
 };
 
+const BannerImageCell = ({ image, title, getImageUrl, onClick }) => {
+  const [attempt, setAttempt] = useState(0);
+  const primaryUrl = getImageUrl(image);
+
+  const getUrl = () => {
+    if (!primaryUrl) return '';
+    if (attempt === 0) return primaryUrl;
+    if (attempt === 1) {
+      if (primaryUrl.includes('/uploads/')) {
+        return primaryUrl.replace('/uploads/', '/api/uploads/');
+      } else if (primaryUrl.includes('/api/uploads/')) {
+        return primaryUrl.replace('/api/uploads/', '/uploads/');
+      }
+    }
+    return '';
+  };
+
+  const currentUrl = getUrl();
+
+  if (!image || attempt >= 2 || !currentUrl) {
+    return (
+      <Box
+        w="110px"
+        h="55px"
+        bg="gray.100"
+        borderRadius="md"
+        border="1px dashed #cbd5e1"
+        display="flex"
+        alignItems="center"
+        justifyContent="center"
+        flexDirection="column"
+        cursor={primaryUrl ? "pointer" : "default"}
+        onClick={() => primaryUrl && onClick({ title, url: primaryUrl })}
+        _hover={{ bg: 'gray.150' }}
+      >
+        <Icon as={ImageIcon} color="gray.400" boxSize={5} />
+        <Text fontSize="9px" color="gray.500" fontWeight="600" mt="1px">
+          {attempt >= 2 ? 'No Preview' : 'No image'}
+        </Text>
+      </Box>
+    );
+  }
+
+  return (
+    <Box
+      w="110px"
+      h="55px"
+      borderRadius="md"
+      overflow="hidden"
+      border="1.5px solid #e2e8f0"
+      bg="#f8fafc"
+      cursor="pointer"
+      boxShadow="sm"
+      position="relative"
+      role="group"
+      _hover={{ transform: 'scale(1.04)', borderColor: 'blue.400' }}
+      transition="all 0.2s ease-in-out"
+      onClick={() => onClick({ title, url: currentUrl })}
+      title="Click to view full banner"
+    >
+      <Image
+        src={currentUrl}
+        alt=""
+        w="100%"
+        h="100%"
+        objectFit="cover"
+        onError={() => setAttempt((prev) => prev + 1)}
+      />
+      <Box
+        position="absolute"
+        inset={0}
+        bg="blackAlpha.500"
+        display="flex"
+        alignItems="center"
+        justifyContent="center"
+        opacity={0}
+        _groupHover={{ opacity: 1 }}
+        transition="opacity 0.2s ease-in-out"
+      >
+        <Icon as={Eye} color="white" boxSize={5} />
+      </Box>
+    </Box>
+  );
+};
+
 const BannerList = () => {
   const [banners, setBanners] = useState([]);
   const [isOpen, setIsOpen] = useState(false);
@@ -37,14 +122,23 @@ const BannerList = () => {
 
   const getImageUrl = (imgPath) => {
     if (!imgPath || typeof imgPath !== 'string') return '';
-    if (imgPath.startsWith('http://') || imgPath.startsWith('https://')) {
-      return imgPath.replaceAll('https://zomocook-backend.onrender.com', UPLOAD_BASE_URL);
+    let normalized = imgPath.replace(/\\/g, '/').trim();
+    const serverHost = 'https://api.zomocook.in';
+
+    if (normalized.startsWith('http://') || normalized.startsWith('https://')) {
+      if (normalized.includes('onrender.com') || normalized.includes('localhost')) {
+        normalized = normalized.replace(/^https?:\/\/[^\/]+/, serverHost);
+      }
+      return normalized;
     }
-    let cleanPath = imgPath.replace(/\\/g, '/').replace(/^\/+/, '');
-    if (!cleanPath.startsWith('uploads/')) {
-      cleanPath = `uploads/${cleanPath}`;
+    const uploadsIdx = normalized.indexOf('uploads/');
+    if (uploadsIdx !== -1) {
+      normalized = normalized.substring(uploadsIdx);
+    } else {
+      normalized = `uploads/${normalized.replace(/^\/+/, '')}`;
     }
-    return `${UPLOAD_BASE_URL}/${cleanPath}`;
+    const baseUrl = (UPLOAD_BASE_URL || serverHost).replace(/\/+$/, '');
+    return `${baseUrl}/${normalized}`;
   };
 
   const fetchBanners = async () => {
@@ -190,42 +284,12 @@ const BannerList = () => {
             {banners.map((b) => (
               <Tr key={b._id} _hover={{ bg: 'gray.50' }}>
                 <Td py="3" px="4">
-                  {b.image ? (
-                    <Box
-                      w="110px"
-                      h="55px"
-                      borderRadius="md"
-                      overflow="hidden"
-                      border="1.5px solid #e2e8f0"
-                      bg="#f8fafc"
-                      cursor="pointer"
-                      boxShadow="sm"
-                      position="relative"
-                      _hover={{ transform: 'scale(1.04)', borderColor: 'blue.400' }}
-                      transition="all 0.2s ease-in-out"
-                      onClick={() => setPreviewBannerImage({ title: b.title, url: getImageUrl(b.image) })}
-                      title="Click to view full banner"
-                    >
-                      <Image
-                        src={getImageUrl(b.image)}
-                        alt={b.title}
-                        w="100%"
-                        h="100%"
-                        objectFit="cover"
-                        fallback={
-                          <Flex w="100%" h="100%" align="center" justify="center" bg="gray.100" direction="column">
-                            <Icon as={ImageIcon} color="gray.400" boxSize={5} />
-                            <Text fontSize="9px" color="gray.500" fontWeight="600">Preview</Text>
-                          </Flex>
-                        }
-                      />
-                    </Box>
-                  ) : (
-                    <Box w="110px" h="55px" bg="gray.100" borderRadius="md" border="1px dashed #cbd5e1" display="flex" alignItems="center" justifyContent="center" direction="column">
-                      <Icon as={ImageIcon} color="gray.400" boxSize={5} />
-                      <Text fontSize="9px" color="gray.500" ml="1">No image</Text>
-                    </Box>
-                  )}
+                  <BannerImageCell
+                    image={b.image}
+                    title={b.title}
+                    getImageUrl={getImageUrl}
+                    onClick={setPreviewBannerImage}
+                  />
                 </Td>
                 <Td fontWeight="semibold">{b.title}</Td>
                 <Td>

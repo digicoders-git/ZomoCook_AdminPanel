@@ -127,6 +127,8 @@ const navCategories = [
           { name: 'Experience Ranges', icon: Briefcase, path: '/masters/experiences', permission: 'masters:view' },
           { name: 'Salary Ranges', icon: Banknote, path: '/masters/salaries', permission: 'masters:view' },
           { name: 'Time Ranges', icon: Clock, path: '/masters/time-ranges', permission: 'masters:view' },
+          { name: 'Joining Types', icon: Clock, path: '/masters/joining-types', permission: 'masters:view' },
+          { name: 'Leaves / Month', icon: Calendar, path: '/masters/leaves', permission: 'masters:view' },
           { name: 'Cooking Categories', icon: UtensilsCrossed, path: '/masters/cooking-categories', permission: 'masters:view' },
           { name: 'Events', icon: Calendar, path: '/masters/events', permission: 'masters:view' },
           { name: 'Cooking Preferences', icon: Heart, path: '/masters/cooking-preferences', permission: 'masters:view' },
