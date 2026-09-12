@@ -25,6 +25,11 @@ const audienceColor = (val) => {
 
 const BannerImageCell = ({ image, title, getImageUrl, onClick }) => {
   const [attempt, setAttempt] = useState(0);
+
+  React.useEffect(() => {
+    setAttempt(0);
+  }, [image]);
+
   const primaryUrl = getImageUrl(image);
 
   const getUrl = () => {

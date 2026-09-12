@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import {
   Box, Flex, Text, HStack, VStack, Icon, Spinner, useToast, Grid, Badge, Table, Thead, Tbody, Tr, Th, Td, Tabs, TabList, TabPanels, Tab, TabPanel, Button, IconButton, Divider, Input, useDisclosure, Modal, ModalOverlay, ModalContent, ModalHeader, ModalFooter, ModalBody, ModalCloseButton, Textarea
 } from '@chakra-ui/react';
-import { Briefcase, Users, CreditCard, Award, Calendar, CheckCircle, Clock, MapPin, Building, ArrowLeft, Phone, Mail, MoreVertical, LayoutDashboard, Ban, Trash2, Plus } from 'lucide-react';
+import { Briefcase, Users, CreditCard, Award, Calendar, CheckCircle, Clock, MapPin, Building, ArrowLeft, Phone, Mail, MoreVertical, LayoutDashboard, Ban, Trash2, Plus, Copy, Check } from 'lucide-react';
 import { useParams, useNavigate, useLocation } from 'react-router-dom';
 import axios from 'axios';
 import API_BASE_URL from '../apiConfig';
@@ -46,6 +46,30 @@ const CustomerDashboard = () => {
   const [data, setData] = useState(null);
   const [isLoading, setIsLoading] = useState(true);
   const [tabIndex, setTabIndex] = useState(0);
+  const [copiedKey, setCopiedKey] = useState('');
+
+  const handleCopy = (text, label) => {
+    if (!text || text === 'N/A') {
+      toast({ title: 'No detail to copy', status: 'warning', duration: 2000, isClosable: true });
+      return;
+    }
+    navigator.clipboard.writeText(text);
+    setCopiedKey(label);
+    setTimeout(() => setCopiedKey(''), 2000);
+    toast({ title: `${label} copied to clipboard!`, status: 'success', duration: 2000, isClosable: true });
+  };
+
+  const handleCopyAllDetails = () => {
+    if (!data?.customer) return;
+    const { customer } = data;
+    const clientSince = formatDate(customer.createdAt);
+    const textToCopy = `Client Name: ${customer.name || 'N/A'}\nCategory: ${customer.propertyCategory || 'N/A'}\nPhone: ${customer.contactPhone || 'N/A'}\nEmail: ${customer.email || 'N/A'}\nAddress: ${customer.contactAddress || 'N/A'}\nClient Since: ${clientSince}`;
+
+    navigator.clipboard.writeText(textToCopy);
+    setCopiedKey('all');
+    setTimeout(() => setCopiedKey(''), 2000);
+    toast({ title: 'All client details copied to clipboard!', status: 'success', duration: 2000, isClosable: true });
+  };
 
   // Notes Modal state
   const { isOpen: isNoteOpen, onOpen: onNoteOpen, onClose: onNoteClose } = useDisclosure();
@@ -152,26 +176,127 @@ const CustomerDashboard = () => {
       <Grid templateColumns={{ base: '1fr', lg: '350px 1fr' }} gap="6" mb="6">
         
         {/* Profile Card */}
-        <Box bg="white" p="6" borderRadius="2xl" border="1px solid #e2e8f0" boxShadow="sm">
-          <HStack spacing="4" mb="5">
-            <Flex w="70px" h="70px" bg="#eff6ff" borderRadius="full" justify="center" align="center" border="2px solid #bfdbfe">
-              <Building size={32} color={BRAND} />
-            </Flex>
-            <Box>
-              <HStack>
-                <Text fontSize="xl" fontWeight="800" color="#0f172a">{customer.name}</Text>
-                <Badge colorScheme="blue" variant="subtle" fontSize="2xs" px="2" borderRadius="full">Verified</Badge>
-              </HStack>
-              <Text fontSize="sm" color="#64748b" fontWeight="600" textTransform="capitalize">Category: {customer.propertyCategory || 'N/A'}</Text>
-            </Box>
-          </HStack>
-          
-          <VStack align="start" spacing="3">
-            <HStack color="#475569"><Phone size={16} /><Text fontSize="sm" fontWeight="600">{customer.contactPhone || 'N/A'}</Text></HStack>
-            <HStack color="#475569"><Mail size={16} /><Text fontSize="sm" fontWeight="600">{customer.email || 'N/A'}</Text></HStack>
-            <HStack color="#475569" align="start"><MapPin size={16} mt="1" /><Text fontSize="sm" fontWeight="600">{customer.contactAddress || 'N/A'}</Text></HStack>
-            <HStack color="#475569" mt="2"><Clock size={16} /><Text fontSize="sm" fontWeight="600">Client Since: {formatDate(customer.createdAt)}</Text></HStack>
-          </VStack>
+        <Box bg="white" p="6" borderRadius="2xl" border="1px solid #e2e8f0" boxShadow="sm" display="flex" flexDirection="column" justify="space-between">
+          <Box>
+            <HStack spacing="4" mb="5">
+              <Flex w="64px" h="64px" bg="#eff6ff" borderRadius="2xl" justify="center" align="center" border="1.5px solid #bfdbfe" flexShrink={0}>
+                <Building size={30} color={BRAND} />
+              </Flex>
+              <Box>
+                <HStack spacing="2">
+                  <Text fontSize="xl" fontWeight="800" color="#0f172a">{customer.name}</Text>
+                  <Badge colorScheme="blue" variant="subtle" fontSize="2xs" px="2" py="0.5" borderRadius="full">VERIFIED</Badge>
+                </HStack>
+                <Text fontSize="xs" color="#64748b" fontWeight="600" textTransform="capitalize" mt="0.5">Category: {customer.propertyCategory || 'N/A'}</Text>
+              </Box>
+            </HStack>
+            
+            <VStack align="stretch" spacing="1.5" mb="5" divider={<Divider borderColor="#f1f5f9" />}>
+              <Flex align="center" justify="space-between" py="1.5">
+                <HStack spacing="3" color="#475569" flex="1" minW={0}>
+                  <Phone size={17} color="#64748b" />
+                  <Text fontSize="xs" fontWeight="700" color="#64748b" w="55px">Phone</Text>
+                  <Text fontSize="sm" fontWeight="700" color="#0f172a" isTruncated>{customer.contactPhone || 'N/A'}</Text>
+                </HStack>
+                <Button
+                  size="xs"
+                  variant="outline"
+                  borderColor="#cbd5e1"
+                  color="#2563eb"
+                  _hover={{ bg: '#eff6ff', borderColor: '#93c5fd' }}
+                  leftIcon={copiedKey === 'Phone' ? <Check size={13} /> : <Copy size={13} />}
+                  onClick={() => handleCopy(customer.contactPhone, 'Phone')}
+                  borderRadius="lg"
+                  px="2.5"
+                  fontWeight="600"
+                >
+                  {copiedKey === 'Phone' ? 'Copied' : 'Copy'}
+                </Button>
+              </Flex>
+
+              <Flex align="center" justify="space-between" py="1.5">
+                <HStack spacing="3" color="#475569" flex="1" minW={0}>
+                  <Mail size={17} color="#64748b" />
+                  <Text fontSize="xs" fontWeight="700" color="#64748b" w="55px">Email</Text>
+                  <Text fontSize="sm" fontWeight="700" color="#0f172a" isTruncated>{customer.email || 'N/A'}</Text>
+                </HStack>
+                <Button
+                  size="xs"
+                  variant="outline"
+                  borderColor="#cbd5e1"
+                  color="#2563eb"
+                  _hover={{ bg: '#eff6ff', borderColor: '#93c5fd' }}
+                  leftIcon={copiedKey === 'Email' ? <Check size={13} /> : <Copy size={13} />}
+                  onClick={() => handleCopy(customer.email, 'Email')}
+                  borderRadius="lg"
+                  px="2.5"
+                  fontWeight="600"
+                >
+                  {copiedKey === 'Email' ? 'Copied' : 'Copy'}
+                </Button>
+              </Flex>
+
+              <Flex align="center" justify="space-between" py="1.5">
+                <HStack spacing="3" color="#475569" flex="1" minW={0}>
+                  <MapPin size={17} color="#64748b" />
+                  <Text fontSize="xs" fontWeight="700" color="#64748b" w="55px">Address</Text>
+                  <Text fontSize="sm" fontWeight="700" color="#0f172a" isTruncated>{customer.contactAddress || 'N/A'}</Text>
+                </HStack>
+                <Button
+                  size="xs"
+                  variant="outline"
+                  borderColor="#cbd5e1"
+                  color="#2563eb"
+                  _hover={{ bg: '#eff6ff', borderColor: '#93c5fd' }}
+                  leftIcon={copiedKey === 'Address' ? <Check size={13} /> : <Copy size={13} />}
+                  onClick={() => handleCopy(customer.contactAddress, 'Address')}
+                  borderRadius="lg"
+                  px="2.5"
+                  fontWeight="600"
+                >
+                  {copiedKey === 'Address' ? 'Copied' : 'Copy'}
+                </Button>
+              </Flex>
+
+              <Flex align="center" justify="space-between" py="1.5">
+                <HStack spacing="3" color="#475569" flex="1" minW={0}>
+                  <Clock size={17} color="#64748b" />
+                  <Text fontSize="xs" fontWeight="700" color="#64748b" w="75px">Client Since</Text>
+                  <Text fontSize="sm" fontWeight="700" color="#0f172a" isTruncated>{formatDate(customer.createdAt)}</Text>
+                </HStack>
+                <Button
+                  size="xs"
+                  variant="outline"
+                  borderColor="#cbd5e1"
+                  color="#2563eb"
+                  _hover={{ bg: '#eff6ff', borderColor: '#93c5fd' }}
+                  leftIcon={copiedKey === 'Client Since' ? <Check size={13} /> : <Copy size={13} />}
+                  onClick={() => handleCopy(formatDate(customer.createdAt), 'Client Since')}
+                  borderRadius="lg"
+                  px="2.5"
+                  fontWeight="600"
+                >
+                  {copiedKey === 'Client Since' ? 'Copied' : 'Copy'}
+                </Button>
+              </Flex>
+            </VStack>
+          </Box>
+
+          <Button
+            w="100%"
+            colorScheme="blue"
+            bg="#0284c7"
+            _hover={{ bg: '#0369a1' }}
+            leftIcon={copiedKey === 'all' ? <Check size={18} /> : <Copy size={18} />}
+            onClick={handleCopyAllDetails}
+            borderRadius="xl"
+            size="md"
+            py="5"
+            fontWeight="700"
+            boxShadow="sm"
+          >
+            {copiedKey === 'all' ? 'All Details Copied!' : 'Copy All Details'}
+          </Button>
         </Box>
 
         {/* Stats Grid */}
