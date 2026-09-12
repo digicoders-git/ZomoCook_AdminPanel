@@ -15,14 +15,27 @@ const ACCENT_COLOR = '#4C49ED';
 
 const getMediaUrl = (path) => {
   if (!path || typeof path !== 'string') return '';
-  if (path.startsWith('http://') || path.startsWith('https://')) {
-    return path.replaceAll('https://zomocook-backend.onrender.com', UPLOAD_BASE_URL);
+  let normalized = path.replace(/\\/g, '/').trim();
+  const serverHost = 'https://api.zomocook.in';
+
+  if (normalized.startsWith('http://') || normalized.startsWith('https://')) {
+    if (normalized.includes('onrender.com') || normalized.includes('localhost')) {
+      normalized = normalized.replace(/^https?:\/\/[^\/]+/, serverHost);
+    }
+    return normalized;
   }
-  let cleanPath = path.replace(/\\/g, '/').replace(/^\/+/, '');
-  if (!cleanPath.startsWith('uploads/')) {
-    cleanPath = `uploads/${cleanPath}`;
+  const uploadsIdx = normalized.indexOf('uploads/');
+  if (uploadsIdx !== -1) {
+    normalized = normalized.substring(uploadsIdx);
+  } else {
+    normalized = `uploads/${normalized.replace(/^\/+/, '')}`;
   }
-  return `${UPLOAD_BASE_URL}/${cleanPath}`;
+  const baseUrl = (UPLOAD_BASE_URL || serverHost).replace(/\/+$/, '');
+  let fullUrl = `${baseUrl}/${normalized}`;
+  if (fullUrl.includes('onrender.com')) {
+    fullUrl = fullUrl.replace(/^https?:\/\/[^\/]+/, serverHost);
+  }
+  return fullUrl;
 };
 
 const extractDocuments = (cook) => {
