@@ -24,30 +24,15 @@ const audienceColor = (val) => {
 };
 
 const BannerImageCell = ({ image, title, getImageUrl, onClick }) => {
-  const [attempt, setAttempt] = useState(0);
+  const [hasError, setHasError] = useState(false);
 
   React.useEffect(() => {
-    setAttempt(0);
+    setHasError(false);
   }, [image]);
 
-  const primaryUrl = getImageUrl(image);
+  const imageUrl = getImageUrl(image);
 
-  const getUrl = () => {
-    if (!primaryUrl) return '';
-    if (attempt === 0) return primaryUrl;
-    if (attempt === 1) {
-      if (primaryUrl.includes('/uploads/')) {
-        return primaryUrl.replace('/uploads/', '/api/uploads/');
-      } else if (primaryUrl.includes('/api/uploads/')) {
-        return primaryUrl.replace('/api/uploads/', '/uploads/');
-      }
-    }
-    return '';
-  };
-
-  const currentUrl = getUrl();
-
-  if (!image || attempt >= 2 || !currentUrl) {
+  if (!image || !imageUrl || hasError) {
     return (
       <Box
         w="110px"
@@ -59,13 +44,13 @@ const BannerImageCell = ({ image, title, getImageUrl, onClick }) => {
         alignItems="center"
         justifyContent="center"
         flexDirection="column"
-        cursor={primaryUrl ? "pointer" : "default"}
-        onClick={() => primaryUrl && onClick({ title, url: primaryUrl })}
+        cursor={imageUrl ? "pointer" : "default"}
+        onClick={() => imageUrl && onClick({ title, url: imageUrl })}
         _hover={{ bg: 'gray.150' }}
       >
         <Icon as={ImageIcon} color="gray.400" boxSize={5} />
         <Text fontSize="9px" color="gray.500" fontWeight="600" mt="1px">
-          {attempt >= 2 ? 'No Preview' : 'No image'}
+          {hasError ? 'No Preview' : 'No image'}
         </Text>
       </Box>
     );
@@ -85,16 +70,14 @@ const BannerImageCell = ({ image, title, getImageUrl, onClick }) => {
       role="group"
       _hover={{ transform: 'scale(1.04)', borderColor: 'blue.400' }}
       transition="all 0.2s ease-in-out"
-      onClick={() => onClick({ title, url: currentUrl })}
+      onClick={() => onClick({ title, url: imageUrl })}
       title="Click to view full banner"
     >
-      <Image
-        src={currentUrl}
-        alt=""
-        w="100%"
-        h="100%"
-        objectFit="cover"
-        onError={() => setAttempt((prev) => prev + 1)}
+      <img
+        src={imageUrl}
+        alt={title || 'Banner'}
+        style={{ width: '100%', height: '100%', objectFit: 'cover' }}
+        onError={() => setHasError(true)}
       />
       <Box
         position="absolute"

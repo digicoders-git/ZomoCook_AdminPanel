@@ -450,20 +450,19 @@ const PendingCookApprovals = () => {
                                     url: getMediaUrl(cookDocs.idProof)
                                   })}
                                 >
-                                  <Image
+                                  <img
                                     src={getMediaUrl(cookDocs.idProof)}
                                     alt="ID Proof Front"
-                                    objectFit="contain"
-                                    w="100%"
-                                    h="100%"
-                                    p="1"
-                                    fallback={
-                                      <Flex h="100%" w="100%" align="center" justify="center" direction="column" bg="gray.50" p="2">
-                                        <Icon as={ImageIcon} color="gray.400" boxSize={6} mb="1" />
-                                        <Text fontSize="10px" color="gray.600" fontWeight="600">Click below to open</Text>
-                                      </Flex>
-                                    }
+                                    style={{ width: '100%', height: '100%', objectFit: 'contain', padding: '4px' }}
+                                    onError={(e) => {
+                                      e.target.style.display = 'none';
+                                      if (e.target.nextSibling) e.target.nextSibling.style.display = 'flex';
+                                    }}
                                   />
+                                  <Flex display="none" h="100%" w="100%" align="center" justify="center" direction="column" bg="gray.50" p="2">
+                                    <Icon as={ImageIcon} color="gray.400" boxSize={6} mb="1" />
+                                    <Text fontSize="10px" color="gray.600" fontWeight="600">Click below to open</Text>
+                                  </Flex>
                                 </Box>
                               )}
 
@@ -548,20 +547,19 @@ const PendingCookApprovals = () => {
                                     url: getMediaUrl(cookDocs.addressProof)
                                   })}
                                 >
-                                  <Image
+                                  <img
                                     src={getMediaUrl(cookDocs.addressProof)}
                                     alt="ID Proof Back"
-                                    objectFit="contain"
-                                    w="100%"
-                                    h="100%"
-                                    p="1"
-                                    fallback={
-                                      <Flex h="100%" w="100%" align="center" justify="center" direction="column" bg="gray.50" p="2">
-                                        <Icon as={ImageIcon} color="gray.400" boxSize={6} mb="1" />
-                                        <Text fontSize="10px" color="gray.600" fontWeight="600">Click below to open</Text>
-                                      </Flex>
-                                    }
+                                    style={{ width: '100%', height: '100%', objectFit: 'contain', padding: '4px' }}
+                                    onError={(e) => {
+                                      e.target.style.display = 'none';
+                                      if (e.target.nextSibling) e.target.nextSibling.style.display = 'flex';
+                                    }}
                                   />
+                                  <Flex display="none" h="100%" w="100%" align="center" justify="center" direction="column" bg="gray.50" p="2">
+                                    <Icon as={ImageIcon} color="gray.400" boxSize={6} mb="1" />
+                                    <Text fontSize="10px" color="gray.600" fontWeight="600">Click below to open</Text>
+                                  </Flex>
                                 </Box>
                               )}
 
