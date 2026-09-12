@@ -114,7 +114,7 @@ const BannerList = () => {
     const serverHost = 'https://api.zomocook.in';
 
     if (normalized.startsWith('http://') || normalized.startsWith('https://')) {
-      if (normalized.includes('onrender.com') || normalized.includes('localhost')) {
+      if (normalized.includes('onrender.com') || normalized.includes('localhost') || normalized.includes('admin.zomocook.in')) {
         normalized = normalized.replace(/^https?:\/\/[^\/]+/, serverHost);
       }
       return normalized;
@@ -125,7 +125,7 @@ const BannerList = () => {
     } else {
       normalized = `uploads/${normalized.replace(/^\/+/, '')}`;
     }
-    const baseUrl = (UPLOAD_BASE_URL || serverHost).replace(/\/+$/, '');
+    const baseUrl = (UPLOAD_BASE_URL && UPLOAD_BASE_URL !== '/' && !UPLOAD_BASE_URL.includes('admin.zomocook.in') ? UPLOAD_BASE_URL : serverHost).replace(/\/+$/, '');
     return `${baseUrl}/${normalized}`;
   };
 

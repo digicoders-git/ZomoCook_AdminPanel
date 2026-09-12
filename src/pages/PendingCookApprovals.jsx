@@ -19,7 +19,7 @@ const getMediaUrl = (path) => {
   const serverHost = 'https://api.zomocook.in';
 
   if (normalized.startsWith('http://') || normalized.startsWith('https://')) {
-    if (normalized.includes('onrender.com') || normalized.includes('localhost')) {
+    if (normalized.includes('onrender.com') || normalized.includes('localhost') || normalized.includes('admin.zomocook.in')) {
       normalized = normalized.replace(/^https?:\/\/[^\/]+/, serverHost);
     }
     return normalized;
@@ -30,9 +30,9 @@ const getMediaUrl = (path) => {
   } else {
     normalized = `uploads/${normalized.replace(/^\/+/, '')}`;
   }
-  const baseUrl = (UPLOAD_BASE_URL || serverHost).replace(/\/+$/, '');
+  const baseUrl = (UPLOAD_BASE_URL && UPLOAD_BASE_URL !== '/' && !UPLOAD_BASE_URL.includes('admin.zomocook.in') ? UPLOAD_BASE_URL : serverHost).replace(/\/+$/, '');
   let fullUrl = `${baseUrl}/${normalized}`;
-  if (fullUrl.includes('onrender.com')) {
+  if (fullUrl.includes('onrender.com') || fullUrl.includes('admin.zomocook.in')) {
     fullUrl = fullUrl.replace(/^https?:\/\/[^\/]+/, serverHost);
   }
   return fullUrl;
