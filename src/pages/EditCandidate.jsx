@@ -19,10 +19,21 @@ const EditCandidate = () => {
   const [isLoading, setIsLoading] = useState(false);
   const [isFetching, setIsFetching] = useState(true);
 
+  const adminData = JSON.parse(localStorage.getItem('adminData') || '{}');
+  const roleName = (adminData?.role?.name || '').toLowerCase();
+  const isSuperAdmin =
+    adminData?.email?.toLowerCase() === 'zomocookadmin@gmail.com' ||
+    adminData?.isSuperAdmin === true ||
+    (adminData?.type === 'admin' && !adminData?.role) ||
+    roleName === 'super admin';
+
+  const [leadManagers, setLeadManagers] = useState([]);
+
   // Form State
   const [formData, setFormData] = useState({
     name: '', email: '', phone: '', altPhone: '', dob: '', gender: '', maritalStatus: '', state: '', city: '', address: '',
     languages: [], kycStatus: 'pending', profileStatus: 'active',
+    leadManager: '',
     jobCategory: [], jobType: [], experienceValue: '', experienceUnit: 'years', currentSalary: '', expectedSalary: '', preferredCities: [], jobPositions: [],
     cookingPreference: '', cookingSkills: [],
     lastCompany: { name: '', workplaceType: '', role: '', duration: '', experienceType: '', reasonForLeaving: '' },
@@ -98,6 +109,7 @@ const EditCandidate = () => {
           const c = response.data.candidate;
           setFormData({
             ...c,
+            leadManager: c.leadManager || '',
             dob: c.dob ? new Date(c.dob).toISOString().split('T')[0] : '',
             languages: Array.isArray(c.languages) ? c.languages.join(', ') : (c.languages || ''),
             jobCategory: c.jobPreference?.jobCategory || [],
@@ -120,6 +132,11 @@ const EditCandidate = () => {
             applications: c.applications || []
           });
         }
+
+        try {
+          const lmRes = await axios.get(`${apiUrl}/users?limit=1000`, { headers: { 'Authorization': `Bearer ${token}` } });
+          if (lmRes.data.success) setLeadManagers(lmRes.data.users || []);
+        } catch (lmErr) { console.error('Error fetching lead managers:', lmErr); }
       } catch (error) {
         toast({ title: 'Error', description: 'Failed to load candidate details.', status: 'error' });
       } finally { setIsFetching(false); }
@@ -300,10 +317,17 @@ const EditCandidate = () => {
               </SimpleGrid>
               <FormControl mb="5" isRequired><FormLabel {...labelStyle}>Full Address</FormLabel><Textarea name="address" value={formData.address || ''} onChange={handleChange} {...inputStyle} minH="90px" /></FormControl>
               <FormControl mb="5" isRequired><FormLabel {...labelStyle}>Languages (Comma separated)</FormLabel><Input name="languages" value={formData.languages || ''} onChange={handleChange} {...inputStyle} /></FormControl>
-              <SimpleGrid columns={{ base: 1, md: 3 }} spacing="6" mb="6">
+              <SimpleGrid columns={{ base: 1, md: 2, lg: 4 }} spacing="6" mb="6">
                 <FormControl><FormLabel {...labelStyle}>Profile Image</FormLabel><Input type="file" onChange={(e) => handleFileChange('image', e)} p="1" {...inputStyle} /></FormControl>
                 <FormControl isRequired><FormLabel {...labelStyle}>KYC Status</FormLabel><Select name="kycStatus" value={formData.kycStatus || 'pending'} onChange={handleChange} {...selectStyle}><option value="pending">Pending</option><option value="approved">Approved</option></Select></FormControl>
                 <FormControl isRequired><FormLabel {...labelStyle}>Profile Status</FormLabel><Select name="profileStatus" value={formData.profileStatus || 'active'} onChange={handleChange} {...selectStyle}><option value="active">Active</option><option value="inactive">Inactive</option></Select></FormControl>
+                <FormControl><FormLabel {...labelStyle}>Assign Lead Manager</FormLabel>
+                  <Select name="leadManager" value={formData.leadManager || ''} onChange={handleChange} {...selectStyle} placeholder="Select Lead Manager" isDisabled={!isSuperAdmin}>
+                    {leadManagers.map(lm => (
+                      <option key={lm._id} value={lm._id}>{lm.name} ({lm.role?.name || 'Staff'})</option>
+                    ))}
+                  </Select>
+                </FormControl>
               </SimpleGrid>
               <HStack justify="flex-end"><Button onClick={() => setActiveTab(1)} bg={BRAND} color="white" size="sm" px="6">Next</Button></HStack>
             </TabPanel>

@@ -2,11 +2,13 @@ import { useState, useEffect } from 'react';
 import {
   Box, Flex, Text, HStack, VStack, Table, Thead, Tbody, Tr, Th, Td, Badge,
   Button, Menu, MenuButton, MenuList, MenuItem, Icon, Spinner, useToast,
-  Select, Avatar, useDisclosure, MenuDivider
+  Select, Avatar, useDisclosure, MenuDivider, IconButton,
+  Modal, ModalOverlay, ModalContent, ModalHeader, ModalCloseButton, ModalBody, ModalFooter,
+  FormControl, FormLabel
 } from '@chakra-ui/react';
 import {
   Plus, Settings, ChevronDown,
-  Briefcase, CalendarDays, FileType, Edit3, CheckCircle, UserCircle, Trash2
+  Briefcase, CalendarDays, FileType, Edit3, CheckCircle, UserCircle, Trash2, UserCheck
 } from 'lucide-react';
 import { Link, useNavigate } from 'react-router-dom';
 import {
@@ -27,6 +29,25 @@ const CandidateList = () => {
   const [selectedCandidateForCV, setSelectedCandidateForCV] = useState(null);
   const { isOpen: isCVModalOpen, onOpen: onOpenCVModal, onClose: onCloseCVModal } = useDisclosure();
   const [statusFilter, setStatusFilter] = useState('');
+  const [leadManagerFilter, setLeadManagerFilter] = useState('');
+
+  // Admin role detection
+  const adminData = JSON.parse(localStorage.getItem('adminData') || '{}');
+  const roleName = (adminData?.role?.name || '').toLowerCase();
+  const isSuperAdmin =
+    adminData?.email?.toLowerCase() === 'zomocookadmin@gmail.com' ||
+    adminData?.isSuperAdmin === true ||
+    (adminData?.type === 'admin' && !adminData?.role) ||
+    roleName === 'super admin';
+
+  const isLeadManager = !isSuperAdmin && (adminData?.type === 'user' || (adminData?.type === 'admin' && !!adminData?.role && roleName !== 'super admin'));
+
+  // Lead Managers state
+  const [leadManagers, setLeadManagers] = useState([]);
+  const [isAssignModalOpen, setIsAssignModalOpen] = useState(false);
+  const [selectedCandidate, setSelectedCandidate] = useState(null);
+  const [selectedLeadManager, setSelectedLeadManager] = useState('');
+  const [isAssigning, setIsAssigning] = useState(false);
 
   // Confirmation State
   const { isOpen, onOpen, onClose } = useDisclosure();
@@ -54,15 +75,79 @@ const CandidateList = () => {
     }
   };
 
+  const fetchLeadManagers = async () => {
+    try {
+      const apiUrl = import.meta.env.VITE_API_URL;
+      const token = localStorage.getItem('adminToken');
+      const response = await axios.get(`${apiUrl}/users?limit=1000`, {
+        headers: { 'Authorization': `Bearer ${token}` }
+      });
+      if (response.data.success) {
+        setLeadManagers(response.data.users || []);
+      }
+    } catch (error) {
+      console.error('Error fetching lead managers:', error);
+    }
+  };
+
   useEffect(() => {
     fetchCandidates();
+    fetchLeadManagers();
   }, [searchTerm, statusFilter]);
 
-  // Pagination Logic
+  const getLeadManagerName = (candidate) => {
+    if (!candidate || !candidate.leadManager) return 'Not Assigned';
+    const lm = String(candidate.leadManager).toLowerCase().trim();
+    const found = leadManagers.find(m =>
+      String(m._id).toLowerCase() === lm ||
+      String(m.name || '').toLowerCase().trim() === lm ||
+      String(m.email || '').toLowerCase().trim() === lm
+    );
+    return found ? found.name : candidate.leadManager;
+  };
+
+  const handleAssignLeadManager = async () => {
+    if (!selectedCandidate) return;
+    setIsAssigning(true);
+    try {
+      const token = localStorage.getItem('adminToken');
+      const response = await axios.put(`${API_BASE_URL}/candidates/${selectedCandidate._id}`, {
+        leadManager: selectedLeadManager
+      }, {
+        headers: { 'Authorization': `Bearer ${token}` }
+      });
+      if (response.data.success) {
+        setCandidates(prev => prev.map(c => c._id === selectedCandidate._id ? { ...c, leadManager: selectedLeadManager } : c));
+        toast({ title: 'Success', description: 'Lead Manager assigned successfully.', status: 'success', duration: 2000 });
+        setIsAssignModalOpen(false);
+      }
+    } catch (err) {
+      toast({ title: 'Error', description: err.response?.data?.message || 'Failed to assign lead manager', status: 'error', duration: 2000 });
+    } finally {
+      setIsAssigning(false);
+    }
+  };
+
+  // Filter and Pagination Logic
+  const filteredCandidates = candidates.filter(c => {
+    if (isLeadManager) {
+      const myId = String(adminData?.id || adminData?._id || '').toLowerCase().trim();
+      const myName = String(adminData?.name || '').toLowerCase().trim();
+      const myEmail = String(adminData?.email || '').toLowerCase().trim();
+      const lm = String(c.leadManager || '').toLowerCase().trim();
+      const isAssigned = (myId && lm === myId) || 
+                         (myName && lm === myName) || 
+                         (myEmail && lm === myEmail);
+      if (!isAssigned) return false;
+    }
+    if (leadManagerFilter && c.leadManager !== leadManagerFilter) return false;
+    return true;
+  });
+
   const indexOfLastRecord = currentPage * entriesPerPage;
   const indexOfFirstRecord = indexOfLastRecord - entriesPerPage;
-  const currentRecords = candidates.slice(indexOfFirstRecord, indexOfLastRecord);
-  const totalPages = Math.ceil(candidates.length / entriesPerPage);
+  const currentRecords = filteredCandidates.slice(indexOfFirstRecord, indexOfLastRecord);
+  const totalPages = Math.ceil(filteredCandidates.length / entriesPerPage);
 
   const handleDeleteCandidate = (id) => {
     setConfirmConfig({
@@ -124,8 +209,16 @@ const CandidateList = () => {
       <TableCard>
         <Flex px="5" py="4" borderBottom="1px solid #f1f5f9" align="center" justify="space-between" flexWrap="wrap" gap="4">
           <HStack><Box w="3px" h="18px" bg={BRAND} borderRadius="full" mr="2" /><Text fontSize="sm" fontWeight="700" color="#1e293b">Candidate Record List</Text></HStack>
-          <HStack spacing="3">
-            <Select size="sm" w="150px" borderRadius="lg" value={statusFilter} onChange={(e) => setStatusFilter(e.target.value)} fontSize="xs">
+          <HStack spacing="3" flexWrap="wrap">
+            {!isLeadManager && (
+              <Select size="sm" w="170px" borderRadius="lg" value={leadManagerFilter} onChange={(e) => setLeadManagerFilter(e.target.value)} fontSize="xs">
+                <option value="">All Lead Managers</option>
+                {leadManagers.map(lm => (
+                  <option key={lm._id} value={lm._id}>{lm.name}</option>
+                ))}
+              </Select>
+            )}
+            <Select size="sm" w="130px" borderRadius="lg" value={statusFilter} onChange={(e) => setStatusFilter(e.target.value)} fontSize="xs">
               <option value="">All Status</option>
               <option value="active">Active</option>
               <option value="inactive">Inactive</option>
@@ -151,6 +244,7 @@ const CandidateList = () => {
                   <Th {...thStyle} border="1px solid #edf2f7">Profile Image</Th>
                   <Th {...thStyle} border="1px solid #edf2f7">Basic Details</Th>
                   <Th {...thStyle} border="1px solid #edf2f7">Job Preference</Th>
+                  <Th {...thStyle} border="1px solid #edf2f7">Lead Manager</Th>
                   <Th {...thStyle} border="1px solid #edf2f7">Job History</Th>
                   <Th {...thStyle} border="1px solid #edf2f7">Status</Th>
                   <Th {...thStyle} border="1px solid #edf2f7" textAlign="center">Action</Th>
@@ -196,6 +290,40 @@ const CandidateList = () => {
                       </VStack>
                     </Td>
                     <Td py="4" border="1px solid #edf2f7" verticalAlign="top">
+                      <VStack align="start" spacing="1.5">
+                        <Badge
+                          px="2.5"
+                          py="0.5"
+                          borderRadius="full"
+                          fontSize="11px"
+                          fontWeight="700"
+                          bg={c.leadManager ? '#eff6ff' : '#f8fafc'}
+                          color={c.leadManager ? '#1d4ed8' : '#94a3b8'}
+                          border={`1px solid ${c.leadManager ? '#bfdbfe' : '#e2e8f0'}`}
+                          textTransform="none"
+                        >
+                          {getLeadManagerName(c)}
+                        </Badge>
+                        {!isLeadManager && (
+                          <Button
+                            size="xs"
+                            variant="outline"
+                            colorScheme="blue"
+                            leftIcon={<UserCheck size={12} />}
+                            fontSize="10px"
+                            h="24px"
+                            onClick={() => {
+                              setSelectedCandidate(c);
+                              setSelectedLeadManager(c.leadManager || '');
+                              setIsAssignModalOpen(true);
+                            }}
+                          >
+                            Assign
+                          </Button>
+                        )}
+                      </VStack>
+                    </Td>
+                    <Td py="4" border="1px solid #edf2f7" verticalAlign="top">
                       <Text fontSize="xs" color="#475569">
                         {c.workExperience?.lastCompany?.name ? (
                           <>
@@ -233,6 +361,15 @@ const CandidateList = () => {
                           Manage Profile
                         </MenuButton>
                         <MenuList borderRadius="xl" border="1px solid #e8edf5" boxShadow="0 10px 25px rgba(0,0,0,0.08)" p="2" minW="220px">
+                          {!isLeadManager && (
+                            <MenuItem icon={<UserCheck size={16} color="#0f62fe" />} borderRadius="lg" fontSize="sm" fontWeight="600" color="#475569" _hover={{ bg: '#f0f7ff', color: '#0f62fe' }} onClick={() => {
+                              setSelectedCandidate(c);
+                              setSelectedLeadManager(c.leadManager || '');
+                              setIsAssignModalOpen(true);
+                            }}>
+                              Assign Lead Manager
+                            </MenuItem>
+                          )}
                           <MenuItem icon={<Edit3 size={16} color="#ff6b00" />} borderRadius="lg" fontSize="sm" fontWeight="600" color="#475569" _hover={{ bg: '#fff5f0', color: '#ff6b00' }} onClick={() => navigate(`/candidates/edit/${c._id}`)}>
                             Edit Profile
                           </MenuItem>
@@ -257,12 +394,12 @@ const CandidateList = () => {
                     </Td>
                   </Tr>
                 ))}
-                {!isLoading && candidates.length === 0 && <Tr><Td colSpan={7} py="10" textAlign="center" color="#94a3b8">No records found.</Td></Tr>}
+                {!isLoading && filteredCandidates.length === 0 && <Tr><Td colSpan={8} py="10" textAlign="center" color="#94a3b8">No records found.</Td></Tr>}
               </Tbody>
             </Table>
           )}
         </Box>
-        <TableFooter showing={`${indexOfFirstRecord + 1} to ${Math.min(indexOfLastRecord, candidates.length)}`} total={candidates.length} onPageChange={setCurrentPage} currentPage={currentPage} totalPages={totalPages} />
+        <TableFooter showing={`${indexOfFirstRecord + 1} to ${Math.min(indexOfLastRecord, filteredCandidates.length)}`} total={filteredCandidates.length} onPageChange={setCurrentPage} currentPage={currentPage} totalPages={totalPages} />
       </TableCard>
 
       <ConfirmationModal
@@ -283,6 +420,56 @@ const CandidateList = () => {
         }}
         candidateId={selectedCandidateForCV}
       />
+
+      {/* Assign Lead Manager Modal */}
+      <Modal isOpen={isAssignModalOpen} onClose={() => setIsAssignModalOpen(false)} isCentered size="md">
+        <ModalOverlay bg="blackAlpha.300" backdropFilter="blur(3px)" />
+        <ModalContent borderRadius="xl">
+          <ModalHeader fontSize="md" fontWeight="bold" color="#0B1A30" pb="2">
+            Assign Lead Manager
+          </ModalHeader>
+          <ModalCloseButton />
+          <ModalBody py="4">
+            <Text fontSize="xs" color="#64748b" mb="3">
+              Assign a Lead Manager to <strong>{selectedCandidate?.name}</strong>. Only this manager and Super Admin will have access to this candidate.
+            </Text>
+            <FormControl>
+              <FormLabel fontSize="xs" fontWeight="700" color="#475569">Select Manager</FormLabel>
+              <Select
+                size="sm"
+                h="40px"
+                borderRadius="lg"
+                bg="#f8faff"
+                border="1.5px solid #dde6f5"
+                value={selectedLeadManager}
+                onChange={(e) => setSelectedLeadManager(e.target.value)}
+              >
+                <option value="">-- Unassigned --</option>
+                {leadManagers.map(lm => (
+                  <option key={lm._id} value={lm._id}>
+                    {lm.name} ({lm.role?.name || 'Staff'})
+                  </option>
+                ))}
+              </Select>
+            </FormControl>
+          </ModalBody>
+          <ModalFooter pt="2">
+            <Button size="sm" variant="ghost" mr="3" onClick={() => setIsAssignModalOpen(false)}>
+              Cancel
+            </Button>
+            <Button
+              size="sm"
+              bg={BRAND}
+              color="white"
+              _hover={{ bg: '#003d91' }}
+              isLoading={isAssigning}
+              onClick={handleAssignLeadManager}
+            >
+              Save Assignment
+            </Button>
+          </ModalFooter>
+        </ModalContent>
+      </Modal>
 
       <PageFooter />
     </Box>

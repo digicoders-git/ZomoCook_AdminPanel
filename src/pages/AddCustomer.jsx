@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Box, SimpleGrid, FormControl, FormLabel, Input, Select, Textarea, HStack, Button } from '@chakra-ui/react';
 import { Send, RotateCcw } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
@@ -21,8 +21,28 @@ const AddCustomer = () => {
     contactAddress: '',
     customerStatus: 'running',
     accountStatus: 'active',
+    leadManager: '',
   });
+  const [leadManagers, setLeadManagers] = useState([]);
   const [profilePic, setProfilePic] = useState(null);
+
+  useEffect(() => {
+    const fetchLeadManagers = async () => {
+      try {
+        const apiUrl = import.meta.env.VITE_API_URL;
+        const token = localStorage.getItem('adminToken');
+        const response = await axios.get(`${apiUrl}/users?limit=1000`, {
+          headers: { 'Authorization': `Bearer ${token}` }
+        });
+        if (response.data.success) {
+          setLeadManagers(response.data.users || []);
+        }
+      } catch (error) {
+        console.error('Error fetching lead managers:', error);
+      }
+    };
+    fetchLeadManagers();
+  }, []);
 
   const handleChange = (e) => {
     const { name, value } = e.target;
@@ -132,6 +152,14 @@ const AddCustomer = () => {
               <Select name="accountStatus" value={formData.accountStatus} onChange={handleChange} {...selectStyle} placeholder="Select Status">
                 <option value="active">Active</option>
                 <option value="inactive">Inactive</option>
+              </Select>
+            </FormControl>
+            <FormControl>
+              <FormLabel {...labelStyle}>Lead Manager</FormLabel>
+              <Select name="leadManager" value={formData.leadManager} onChange={handleChange} {...selectStyle} placeholder="Select Lead Manager">
+                {leadManagers.map(lm => (
+                  <option key={lm._id} value={lm._id}>{lm.name} ({lm.role?.name || 'Staff'})</option>
+                ))}
               </Select>
             </FormControl>
           </SimpleGrid>

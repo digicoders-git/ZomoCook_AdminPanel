@@ -8,12 +8,23 @@ import { Trash2, Save, X, Plus } from 'lucide-react';
 import { useNavigate, Link } from 'react-router-dom';
 import { PageHeader, PageFooter, BRAND, inputStyle, selectStyle, labelStyle } from '../components/ui';
 import axios from 'axios';
+import API_BASE_URL from '../apiConfig';
 
 const AddCandidate = () => {
   const navigate = useNavigate();
   const toast = useToast();
   const [activeTab, setActiveTab] = useState(0);
   const [isLoading, setIsLoading] = useState(false);
+
+  const adminData = JSON.parse(localStorage.getItem('adminData') || '{}');
+  const roleName = (adminData?.role?.name || '').toLowerCase();
+  const isSuperAdmin =
+    adminData?.email?.toLowerCase() === 'zomocookadmin@gmail.com' ||
+    adminData?.isSuperAdmin === true ||
+    (adminData?.type === 'admin' && !adminData?.role) ||
+    roleName === 'super admin';
+
+  const [leadManagers, setLeadManagers] = useState([]);
 
   // Master Data
   const [masters, setMasters] = useState({
@@ -33,6 +44,7 @@ const AddCandidate = () => {
   const [formData, setFormData] = useState({
     name: '', email: '', phone: '', altPhone: '', dob: '', gender: '', maritalStatus: 'single', state: '', city: '', address: '',
     languages: '', kycStatus: 'pending', profileStatus: 'active',
+    leadManager: !isSuperAdmin ? (adminData._id || adminData.name || '') : '',
     jobCategory: [], jobType: [], experienceValue: '', experienceUnit: 'years', currentSalary: '', expectedSalary: '', preferredCities: [], jobPositions: [],
     cookingPreference: '', cookingSkills: [],
     lastCompany: { name: '', workplaceType: '', role: '', duration: '', experienceType: '', reasonForLeaving: '' },
@@ -55,7 +67,7 @@ const AddCandidate = () => {
     image: null, cv: null, idProof: null, addressProof: null, policeVerification: null, academicCertificate: null, experienceCertificate: null, gallery: []
   });
 
-  const apiUrl = import.meta.env.VITE_API_URL;
+  const apiUrl = API_BASE_URL;
   const token = localStorage.getItem('adminToken');
 
   const fetchMasterData = async (category, key) => {
@@ -79,6 +91,20 @@ const AddCandidate = () => {
     fetchMasterData('cooking-preferences', 'cookingPreferences');
     fetchMasterData('salaries', 'salaryRanges');
     fetchMasterData('experiences', 'experienceRanges');
+
+    const fetchLeadManagers = async () => {
+      try {
+        const response = await axios.get(`${apiUrl}/users?limit=1000`, {
+          headers: { 'Authorization': `Bearer ${token}` }
+        });
+        if (response.data.success) {
+          setLeadManagers(response.data.users || []);
+        }
+      } catch (error) {
+        console.error('Error fetching lead managers:', error);
+      }
+    };
+    fetchLeadManagers();
   }, []);
 
   useEffect(() => {
@@ -226,10 +252,17 @@ const AddCandidate = () => {
               </SimpleGrid>
               <FormControl mb="5" isRequired><FormLabel {...labelStyle}>Full Address</FormLabel><Textarea name="address" value={formData.address} onChange={handleChange} {...inputStyle} /></FormControl>
               <FormControl mb="5"><FormLabel {...labelStyle}>Languages (Comma separated)</FormLabel><Input name="languages" value={formData.languages} onChange={handleChange} placeholder="e.g. Hindi, English" {...inputStyle} /></FormControl>
-              <SimpleGrid columns={{ base: 1, md: 3 }} spacing="6" mb="6">
+              <SimpleGrid columns={{ base: 1, md: 2, lg: 4 }} spacing="6" mb="6">
                 <FormControl><FormLabel {...labelStyle}>Profile Image</FormLabel><Input type="file" onChange={(e) => handleFileChange('image', e)} p="1" {...inputStyle} /></FormControl>
                 <FormControl isRequired><FormLabel {...labelStyle}>KYC Status</FormLabel><Select name="kycStatus" value={formData.kycStatus} onChange={handleChange} {...selectStyle}><option value="pending">Pending</option><option value="approved">Approved</option></Select></FormControl>
                 <FormControl isRequired><FormLabel {...labelStyle}>Profile Status</FormLabel><Select name="profileStatus" value={formData.profileStatus} onChange={handleChange} {...selectStyle}><option value="active">Active</option><option value="inactive">Inactive</option></Select></FormControl>
+                <FormControl><FormLabel {...labelStyle}>Assign Lead Manager</FormLabel>
+                  <Select name="leadManager" value={formData.leadManager || ''} onChange={handleChange} {...selectStyle} placeholder="Select Lead Manager" isDisabled={!isSuperAdmin}>
+                    {leadManagers.map(lm => (
+                      <option key={lm._id} value={lm._id}>{lm.name} ({lm.role?.name || 'Staff'})</option>
+                    ))}
+                  </Select>
+                </FormControl>
               </SimpleGrid>
               <HStack justify="flex-end"><Button onClick={() => setActiveTab(1)} bg={BRAND} color="white" size="sm" px="6">Next</Button></HStack>
             </TabPanel>

@@ -2,10 +2,11 @@ import { useEffect, useState } from 'react';
 import {
   Box, Flex, Text, HStack, VStack, Table, Thead, Tbody, Tr, Th, Td, Avatar, Switch,
   IconButton, Icon, useToast, Button, useDisclosure, Collapse, SimpleGrid,
-  FormControl, FormLabel, Select, Input,
-  Menu, MenuButton, MenuList, MenuItem, MenuDivider
+  FormControl, FormLabel, Select, Input, Badge,
+  Menu, MenuButton, MenuList, MenuItem, MenuDivider,
+  Modal, ModalOverlay, ModalContent, ModalHeader, ModalCloseButton, ModalBody, ModalFooter
 } from '@chakra-ui/react';
-import { Edit3, Filter, Plus, Trash2, Search, RotateCcw, Eye, MoreVertical, LayoutDashboard, Package, CreditCard, Ban, CheckCircle } from 'lucide-react';
+import { Edit3, Filter, Plus, Trash2, Search, RotateCcw, Eye, MoreVertical, LayoutDashboard, Package, CreditCard, Ban, CheckCircle, UserCheck } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import {
   PageHeader, TableCard, TableControls, TableFooter, PageFooter,
@@ -20,6 +21,24 @@ const CustomerList = () => {
   const { isOpen, onOpen, onClose } = useDisclosure();
   const [customers, setCustomers] = useState([]);
   const [isLoading, setIsLoading] = useState(true);
+
+  // Current admin data
+  const adminData = JSON.parse(localStorage.getItem('adminData') || '{}');
+  const roleName = (adminData?.role?.name || '').toLowerCase();
+  const isSuperAdmin =
+    adminData?.email?.toLowerCase() === 'zomocookadmin@gmail.com' ||
+    adminData?.isSuperAdmin === true ||
+    (adminData?.type === 'admin' && !adminData?.role) ||
+    roleName === 'super admin';
+
+  const isLeadManager = !isSuperAdmin && (adminData?.type === 'user' || (adminData?.type === 'admin' && !!adminData?.role && roleName !== 'super admin'));
+
+  // Lead Managers state
+  const [leadManagers, setLeadManagers] = useState([]);
+  const [isAssignModalOpen, setIsAssignModalOpen] = useState(false);
+  const [selectedCustomer, setSelectedCustomer] = useState(null);
+  const [selectedLeadManager, setSelectedLeadManager] = useState('');
+  const [isAssigning, setIsAssigning] = useState(false);
 
   // Confirmation State
   const [confirmConfig, setConfirmConfig] = useState({
@@ -40,7 +59,8 @@ const CustomerList = () => {
   const [filters, setFilters] = useState({
     category: '',
     namePhone: '',
-    status: ''
+    status: '',
+    leadManager: ''
   });
 
   const fetchCustomers = async () => {
@@ -60,22 +80,83 @@ const CustomerList = () => {
     }
   };
 
+  const fetchLeadManagers = async () => {
+    try {
+      const apiUrl = import.meta.env.VITE_API_URL;
+      const token = localStorage.getItem('adminToken');
+      const response = await axios.get(`${apiUrl}/users?limit=1000`, {
+        headers: { 'Authorization': `Bearer ${token}` }
+      });
+      if (response.data.success) {
+        setLeadManagers(response.data.users || []);
+      }
+    } catch (error) {
+      console.error('Error fetching lead managers:', error);
+    }
+  };
+
   useEffect(() => {
     fetchCustomers();
+    fetchLeadManagers();
   }, []);
+
+  const getLeadManagerName = (customer) => {
+    if (!customer || !customer.leadManager) return 'Not Assigned';
+    const lm = String(customer.leadManager).toLowerCase().trim();
+    const found = leadManagers.find(m =>
+      String(m._id).toLowerCase() === lm ||
+      String(m.name || '').toLowerCase().trim() === lm ||
+      String(m.email || '').toLowerCase().trim() === lm
+    );
+    return found ? found.name : customer.leadManager;
+  };
+
+  const handleAssignLeadManager = async () => {
+    if (!selectedCustomer) return;
+    setIsAssigning(true);
+    try {
+      const apiUrl = import.meta.env.VITE_API_URL;
+      const token = localStorage.getItem('adminToken');
+      const response = await axios.put(`${apiUrl}/customers/${selectedCustomer._id}`, {
+        leadManager: selectedLeadManager
+      }, {
+        headers: { 'Authorization': `Bearer ${token}` }
+      });
+      if (response.data.success) {
+        setCustomers(prev => prev.map(c => c._id === selectedCustomer._id ? { ...c, leadManager: selectedLeadManager } : c));
+        toast({ title: 'Success', description: 'Lead Manager assigned successfully.', status: 'success', duration: 2000, position: 'top-right' });
+        setIsAssignModalOpen(false);
+      }
+    } catch (err) {
+      toast({ title: 'Error', description: err.response?.data?.message || 'Failed to assign lead manager', status: 'error', duration: 2000, position: 'top-right' });
+    } finally {
+      setIsAssigning(false);
+    }
+  };
 
   const handleFilterChange = (name, value) => {
     setFilters(prev => ({ ...prev, [name]: value }));
   };
 
   const resetFilters = () => {
-    setFilters({ category: '', namePhone: '', status: '' });
+    setFilters({ category: '', namePhone: '', status: '', leadManager: '' });
     setSearch('');
     setCurrentPage(1);
   };
 
   // Filter and Paginate Data
   const filteredCustomers = customers.filter(customer => {
+    if (isLeadManager) {
+      const myId = String(adminData?.id || adminData?._id || '').toLowerCase().trim();
+      const myName = String(adminData?.name || '').toLowerCase().trim();
+      const myEmail = String(adminData?.email || '').toLowerCase().trim();
+      const lm = String(customer.leadManager || '').toLowerCase().trim();
+      const isAssigned = (myId && lm === myId) || 
+                         (myName && lm === myName) || 
+                         (myEmail && lm === myEmail);
+      if (!isAssigned) return false;
+    }
+
     const matchesSearch =
       (customer.name || '').toLowerCase().includes(search.toLowerCase()) ||
       (customer.email || '').toLowerCase().includes(search.toLowerCase()) ||
@@ -86,8 +167,9 @@ const CustomerList = () => {
       (customer.name || '').toLowerCase().includes(filters.namePhone.toLowerCase()) ||
       (customer.contactPhone || '').includes(filters.namePhone);
     const matchesStatus = !filters.status || customer.accountStatus === filters.status;
+    const matchesLeadManager = !filters.leadManager || customer.leadManager === filters.leadManager;
 
-    return matchesSearch && matchesCategory && matchesNamePhone && matchesStatus;
+    return matchesSearch && matchesCategory && matchesNamePhone && matchesStatus && matchesLeadManager;
   });
 
   const totalPages = Math.ceil(filteredCustomers.length / parseInt(entries));
@@ -233,6 +315,25 @@ const CustomerList = () => {
                 <option value="inactive">Inactive</option>
               </Select>
             </Box>
+            {!isLeadManager && (
+              <Box w={{ base: 'full', md: 'auto' }} flex={{ md: '1' }} minW={{ md: '180px' }}>
+                <FormLabel fontSize="xs" fontWeight="700" color="#475569" mb="2">Lead Manager</FormLabel>
+                <Select
+                  size="sm"
+                  h="40px"
+                  borderRadius="lg"
+                  bg="#f8faff"
+                  border="1.5px solid #dde6f5"
+                  placeholder="All Lead Managers"
+                  value={filters.leadManager}
+                  onChange={(e) => handleFilterChange('leadManager', e.target.value)}
+                >
+                  {leadManagers.map(lm => (
+                    <option key={lm._id} value={lm._id}>{lm.name}</option>
+                  ))}
+                </Select>
+              </Box>
+            )}
             <Flex gap="3" w={{ base: 'full', md: 'auto' }} direction={{ base: 'row', md: 'row' }}>
               <Button flex={{ base: '1', md: 'none' }} h="40px" px={{ base: '4', md: '8' }} bg={ACCENT} color="white" leftIcon={<Search size={16} />} _hover={{ bg: '#c8151c' }} borderRadius="lg" fontSize="sm" fontWeight="700" onClick={() => setCurrentPage(1)}>Search</Button>
               <Button flex={{ base: '1', md: 'none' }} h="40px" px={{ base: '4', md: '8' }} variant="outline" color="#475569" borderColor="#dde6f5" leftIcon={<RotateCcw size={16} />} _hover={{ bg: '#f1f5f9' }} borderRadius="lg" fontSize="sm" fontWeight="700" onClick={resetFilters}>Reset</Button>
@@ -255,10 +356,10 @@ const CustomerList = () => {
         />
 
         <Box overflowX="auto" sx={{ WebkitOverflowScrolling: 'touch' }}>
-          <Table variant="simple" size="sm" minW="650px">
+          <Table variant="simple" size="sm" minW="750px">
             <Thead {...tableHeadStyle}>
               <Tr>
-                {['Sr.No.', 'Profile Image', 'Customer/Client Details', 'Password', 'Customer Status', 'Status', 'Action'].map(h => (
+                {['Sr.No.', 'Profile Image', 'Customer/Client Details', 'Lead Manager', 'Customer Status', 'Status', 'Action'].map(h => (
                   <Th key={h} {...thStyle} whiteSpace="nowrap">{h}</Th>
                 ))}
               </Tr>
@@ -278,7 +379,38 @@ const CustomerList = () => {
                       <HStack spacing="1" flexWrap="wrap"><Text fontSize="xs" color="#94a3b8" whiteSpace="nowrap">Email:</Text><Text fontSize="xs" color="#475569">{row.email}</Text></HStack>
                     </VStack>
                   </Td>
-                  <Td py="3.5" minW="75px"><Text fontSize="sm" color="#475569" fontFamily="mono">******</Text></Td>
+                  <Td py="3.5" minW="140px">
+                    <HStack spacing="1.5">
+                      <Badge
+                        px="2.5"
+                        py="0.5"
+                        borderRadius="full"
+                        fontSize="11px"
+                        fontWeight="700"
+                        bg={row.leadManager ? '#eff6ff' : '#f8fafc'}
+                        color={row.leadManager ? '#1d4ed8' : '#94a3b8'}
+                        border={`1px solid ${row.leadManager ? '#bfdbfe' : '#e2e8f0'}`}
+                        textTransform="none"
+                      >
+                        {getLeadManagerName(row)}
+                      </Badge>
+                      {!isLeadManager && (
+                        <IconButton
+                          size="xs"
+                          variant="ghost"
+                          colorScheme="blue"
+                          icon={<UserCheck size={13} />}
+                          aria-label="Assign Lead Manager"
+                          title="Assign Lead Manager"
+                          onClick={() => {
+                            setSelectedCustomer(row);
+                            setSelectedLeadManager(row.leadManager || '');
+                            setIsAssignModalOpen(true);
+                          }}
+                        />
+                      )}
+                    </HStack>
+                  </Td>
                   <Td py="3.5" minW="105px">
                     <Text fontSize="xs" fontWeight="700" color={row.customerStatus === 'running' ? '#16a34a' : '#ef4444'}
                       bg={row.customerStatus === 'running' ? '#ecfdf5' : '#fef2f2'}
@@ -298,6 +430,24 @@ const CustomerList = () => {
                     <Menu placement="bottom-end">
                       <MenuButton as={IconButton} icon={<MoreVertical size={16} />} size="sm" variant="ghost" color="#64748b" _hover={{ bg: '#f1f5f9', color: BRAND }} borderRadius="lg" aria-label="Options" />
                       <MenuList minW="180px" boxShadow="lg" p="1.5" borderRadius="xl" border="1px solid #e8edf5">
+                        {!isLeadManager && (
+                          <MenuItem
+                            borderRadius="md"
+                            py="2"
+                            fontSize="sm"
+                            fontWeight="600"
+                            color="#1e293b"
+                            _hover={{ bg: '#f8fafc', color: BRAND }}
+                            icon={<UserCheck size={16} />}
+                            onClick={() => {
+                              setSelectedCustomer(row);
+                              setSelectedLeadManager(row.leadManager || '');
+                              setIsAssignModalOpen(true);
+                            }}
+                          >
+                            Assign Lead Manager
+                          </MenuItem>
+                        )}
                         <MenuItem borderRadius="md" py="2" fontSize="sm" fontWeight="600" color="#1e293b" _hover={{ bg: '#f8fafc', color: BRAND }}
                           icon={<LayoutDashboard size={16} />}
                           onClick={() => {
@@ -367,6 +517,56 @@ const CustomerList = () => {
         type={confirmConfig.type}
         confirmColor={confirmConfig.type === 'danger' ? ACCENT : BRAND}
       />
+
+      {/* Assign Lead Manager Modal */}
+      <Modal isOpen={isAssignModalOpen} onClose={() => setIsAssignModalOpen(false)} isCentered size="md">
+        <ModalOverlay bg="blackAlpha.300" backdropFilter="blur(3px)" />
+        <ModalContent borderRadius="xl">
+          <ModalHeader fontSize="md" fontWeight="bold" color="#0B1A30" pb="2">
+            Assign Lead Manager
+          </ModalHeader>
+          <ModalCloseButton />
+          <ModalBody py="4">
+            <Text fontSize="xs" color="#64748b" mb="3">
+              Assign a Lead Manager to <strong>{selectedCustomer?.name}</strong>. Only this manager and Super Admin will have access to this customer.
+            </Text>
+            <FormControl>
+              <FormLabel fontSize="xs" fontWeight="700" color="#475569">Select Manager</FormLabel>
+              <Select
+                size="sm"
+                h="40px"
+                borderRadius="lg"
+                bg="#f8faff"
+                border="1.5px solid #dde6f5"
+                value={selectedLeadManager}
+                onChange={(e) => setSelectedLeadManager(e.target.value)}
+              >
+                <option value="">-- Unassigned --</option>
+                {leadManagers.map(lm => (
+                  <option key={lm._id} value={lm._id}>
+                    {lm.name} ({lm.role?.name || 'Staff'})
+                  </option>
+                ))}
+              </Select>
+            </FormControl>
+          </ModalBody>
+          <ModalFooter pt="2">
+            <Button size="sm" variant="ghost" mr="3" onClick={() => setIsAssignModalOpen(false)}>
+              Cancel
+            </Button>
+            <Button
+              size="sm"
+              bg={BRAND}
+              color="white"
+              _hover={{ bg: '#003d91' }}
+              isLoading={isAssigning}
+              onClick={handleAssignLeadManager}
+            >
+              Save Assignment
+            </Button>
+          </ModalFooter>
+        </ModalContent>
+      </Modal>
 
       <PageFooter />
         </>

@@ -23,8 +23,28 @@ const EditCustomer = () => {
     contactAddress: '',
     customerStatus: 'running',
     accountStatus: 'active',
+    leadManager: '',
   });
+  const [leadManagers, setLeadManagers] = useState([]);
   const [profilePic, setProfilePic] = useState(null);
+
+  useEffect(() => {
+    const fetchLeadManagers = async () => {
+      try {
+        const apiUrl = import.meta.env.VITE_API_URL;
+        const token = localStorage.getItem('adminToken');
+        const response = await axios.get(`${apiUrl}/users?limit=1000`, {
+          headers: { 'Authorization': `Bearer ${token}` }
+        });
+        if (response.data.success) {
+          setLeadManagers(response.data.users || []);
+        }
+      } catch (error) {
+        console.error('Error fetching lead managers:', error);
+      }
+    };
+    fetchLeadManagers();
+  }, []);
 
   useEffect(() => {
     const fetchCustomer = async () => {
@@ -163,6 +183,14 @@ const EditCustomer = () => {
               <Select name="accountStatus" value={formData.accountStatus} onChange={handleChange} {...selectStyle} placeholder="Select Status">
                 <option value="active">Active</option>
                 <option value="inactive">Inactive</option>
+              </Select>
+            </FormControl>
+            <FormControl>
+              <FormLabel {...labelStyle}>Lead Manager</FormLabel>
+              <Select name="leadManager" value={formData.leadManager || ''} onChange={handleChange} {...selectStyle} placeholder="Select Lead Manager">
+                {leadManagers.map(lm => (
+                  <option key={lm._id} value={lm._id}>{lm.name} ({lm.role?.name || 'Staff'})</option>
+                ))}
               </Select>
             </FormControl>
           </SimpleGrid>
