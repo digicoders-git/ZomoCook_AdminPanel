@@ -129,6 +129,8 @@ const CustomerDashboard = () => {
     customNotes: '',
     expiresInHours: '',
     expiresAt: '',
+    customPaymentEnabled: false,
+    advancePaymentPercentage: 50,
     isPublished: true
   });
   const [isSubmittingPlan, setIsSubmittingPlan] = useState(false);
@@ -223,6 +225,8 @@ const CustomerDashboard = () => {
         customNotes: planForm.customNotes,
         expiresInHours: planForm.expiresInHours || undefined,
         expiresAt: planForm.expiresAt || undefined,
+        customPaymentEnabled: planForm.customPaymentEnabled,
+        advancePaymentPercentage: Number(planForm.advancePaymentPercentage || 50),
         isPublished: planForm.isPublished
       };
 
@@ -252,6 +256,8 @@ const CustomerDashboard = () => {
           customNotes: '',
           expiresInHours: '',
           expiresAt: '',
+          customPaymentEnabled: false,
+          advancePaymentPercentage: 50,
           isPublished: true
         });
         fetchDashboardData();
@@ -1416,6 +1422,109 @@ const CustomerDashboard = () => {
                   h="40px"
                 />
               </FormControl>
+
+              {/* Custom Payment (Prepaid / Advance) */}
+              <Box p="3.5" bg="#f8f7ff" borderRadius="xl" border="1px solid #e9d5ff">
+                <Flex align="center" justify="space-between" mb={planForm.customPaymentEnabled ? "3" : "0"}>
+                  <Box>
+                    <Text fontSize="sm" fontWeight="700" color="#4c1d95">
+                      Custom Payment (Prepaid / Advance)
+                    </Text>
+                    <Text fontSize="xs" color="#6b7280" mt="0.5">
+                      Set the advance (prepaid) payment terms for this custom package.
+                    </Text>
+                  </Box>
+                  <HStack spacing="2">
+                    <Text fontSize="xs" fontWeight="600" color="#6b7280">Enable</Text>
+                    <Switch
+                      isChecked={planForm.customPaymentEnabled}
+                      onChange={(e) => setPlanForm({ ...planForm, customPaymentEnabled: e.target.checked })}
+                      colorScheme="purple"
+                      size="md"
+                    />
+                  </HStack>
+                </Flex>
+
+                {planForm.customPaymentEnabled && (
+                  <SimpleGrid columns={{ base: 1, sm: 2 }} gap="3" pt="1">
+                    <Box
+                      p="3"
+                      borderRadius="lg"
+                      border="1.5px solid"
+                      borderColor={planForm.advancePaymentPercentage === 50 ? '#7c3aed' : '#e2e8f0'}
+                      bg={planForm.advancePaymentPercentage === 50 ? '#ede9fe' : 'white'}
+                      cursor="pointer"
+                      onClick={() => setPlanForm({ ...planForm, advancePaymentPercentage: 50 })}
+                      transition="all 0.2s"
+                      _hover={{ borderColor: '#7c3aed' }}
+                    >
+                      <HStack spacing="2.5" align="flex-start">
+                        <Box
+                          mt="0.5"
+                          w="16px"
+                          h="16px"
+                          borderRadius="full"
+                          border="2px solid"
+                          borderColor={planForm.advancePaymentPercentage === 50 ? '#7c3aed' : '#94a3b8'}
+                          display="flex"
+                          alignItems="center"
+                          justifyContent="center"
+                        >
+                          {planForm.advancePaymentPercentage === 50 && (
+                            <Box w="8px" h="8px" borderRadius="full" bg="#7c3aed" />
+                          )}
+                        </Box>
+                        <Box>
+                          <Text fontSize="xs" fontWeight="700" color="#1e1b4b">
+                            50% Advance
+                          </Text>
+                          <Text fontSize="2xs" color="#64748b" mt="0.5">
+                            50% at Booking, 50% After Joining
+                          </Text>
+                        </Box>
+                      </HStack>
+                    </Box>
+
+                    <Box
+                      p="3"
+                      borderRadius="lg"
+                      border="1.5px solid"
+                      borderColor={planForm.advancePaymentPercentage === 75 ? '#7c3aed' : '#e2e8f0'}
+                      bg={planForm.advancePaymentPercentage === 75 ? '#ede9fe' : 'white'}
+                      cursor="pointer"
+                      onClick={() => setPlanForm({ ...planForm, advancePaymentPercentage: 75 })}
+                      transition="all 0.2s"
+                      _hover={{ borderColor: '#7c3aed' }}
+                    >
+                      <HStack spacing="2.5" align="flex-start">
+                        <Box
+                          mt="0.5"
+                          w="16px"
+                          h="16px"
+                          borderRadius="full"
+                          border="2px solid"
+                          borderColor={planForm.advancePaymentPercentage === 75 ? '#7c3aed' : '#94a3b8'}
+                          display="flex"
+                          alignItems="center"
+                          justifyContent="center"
+                        >
+                          {planForm.advancePaymentPercentage === 75 && (
+                            <Box w="8px" h="8px" borderRadius="full" bg="#7c3aed" />
+                          )}
+                        </Box>
+                        <Box>
+                          <Text fontSize="xs" fontWeight="700" color="#1e1b4b">
+                            75% Advance
+                          </Text>
+                          <Text fontSize="2xs" color="#64748b" mt="0.5">
+                            75% at Booking, 25% After Joining
+                          </Text>
+                        </Box>
+                      </HStack>
+                    </Box>
+                  </SimpleGrid>
+                )}
+              </Box>
 
               <Box p="3.5" bg="#fff7ed" borderRadius="xl" border="1px solid #fed7aa">
                 <FormControl>
