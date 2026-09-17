@@ -1,4 +1,4 @@
-import { useState, useRef } from 'react';
+import { useState, useRef, useEffect } from 'react';
 import {
   Box, Flex, Icon, Text, IconButton, Avatar, VStack, HStack, Collapse,
   useDisclosure, Drawer, DrawerContent, DrawerOverlay,
@@ -159,11 +159,28 @@ const navCategories = [
 const SidebarItem = ({ item, isCollapsed, onClose, depth = 0 }) => {
   const { pathname } = useLocation();
   const navigate = useNavigate();
-  const [isOpen, setIsOpen] = useState(false);
   const hasChildren = item.children && item.children.length > 0;
-  const isActive = pathname === item.path || (hasChildren && item.children.some(child =>
-    pathname === child.path || (child.children && child.children.some(sub => pathname === sub.path))
-  ));
+
+  const isDirectActive = pathname === item.path;
+  const isChildActive = Boolean(
+    hasChildren &&
+    item.children.some(child =>
+      pathname === child.path || (child.children && child.children.some(sub => pathname === sub.path))
+    )
+  );
+  const isActive = isDirectActive || isChildActive;
+
+  // Solid white background only for active leaf items (without children)
+  const isSolidActive = isDirectActive && !hasChildren;
+
+  // Automatically keep parent menu open if its child is active
+  const [isOpen, setIsOpen] = useState(isChildActive);
+
+  useEffect(() => {
+    if (isChildActive) {
+      setIsOpen(true);
+    }
+  }, [isChildActive, pathname]);
 
   const handleClick = () => {
     if (hasChildren) {
@@ -173,6 +190,44 @@ const SidebarItem = ({ item, isCollapsed, onClose, depth = 0 }) => {
       if (onClose) onClose();
     }
   };
+
+  // Dynamic visual styling:
+  // - Leaf active item (like Customer List or Dashboard): white background, dark blue text & icon
+  // - Parent active item (like Customers / Clients when a child is active): translucent highlight, bright white text & icons
+  // - Inactive item: transparent background, semi-transparent white text & icons
+  const itemBg = isSolidActive
+    ? '#ffffff'
+    : isChildActive
+    ? 'rgba(255, 255, 255, 0.12)'
+    : 'transparent';
+
+  const itemHoverBg = isSolidActive
+    ? '#ffffff'
+    : isChildActive
+    ? 'rgba(255, 255, 255, 0.18)'
+    : 'rgba(255, 255, 255, 0.08)';
+
+  const itemColor = isSolidActive
+    ? '#2D2B75'
+    : isChildActive
+    ? '#ffffff'
+    : 'rgba(255, 255, 255, 0.85)';
+
+  const itemHoverColor = isSolidActive
+    ? '#2D2B75'
+    : '#ffffff';
+
+  const iconColor = isSolidActive
+    ? '#2D2B75'
+    : isChildActive
+    ? '#ffffff'
+    : 'rgba(255, 255, 255, 0.8)';
+
+  const chevronColor = isSolidActive
+    ? '#2D2B75'
+    : isChildActive
+    ? '#ffffff'
+    : 'rgba(255, 255, 255, 0.7)';
 
   const itemContent = (
     <Flex
@@ -184,21 +239,22 @@ const SidebarItem = ({ item, isCollapsed, onClose, depth = 0 }) => {
       cursor="pointer"
       onClick={handleClick}
       position="relative"
-      bg={isActive && !hasChildren ? '#ffffff' : 'transparent'}
-      transition="all 0.18s"
+      bg={itemBg}
+      boxShadow={isSolidActive ? '0 2px 8px rgba(0, 0, 0, 0.15)' : 'none'}
+      transition="all 0.18s ease-in-out"
       role="group"
-      _hover={{ bg: isActive && !hasChildren ? '#ffffff' : 'rgba(255, 255, 255, 0.08)' }}
+      _hover={{ bg: itemHoverBg }}
       justifyContent={isCollapsed && depth === 0 ? 'center' : 'flex-start'}
-      pl={depth === 0 ? 3 : depth === 1 ? 10 : 14}
+      pl={depth === 0 ? 3 : depth === 1 ? 5 : 8}
     >
       {item.icon && (
         <Icon
           as={item.icon}
           boxSize={depth === 0 ? 5 : 4}
           mr={isCollapsed && depth === 0 ? 0 : 2.5}
-          color={isActive ? '#2D2B75' : 'rgba(255, 255, 255, 0.8)'}
+          color={iconColor}
           transition="color 0.18s"
-          _groupHover={{ color: isActive ? '#2D2B75' : '#ffffff' }}
+          _groupHover={{ color: itemHoverColor }}
           flexShrink={0}
         />
       )}
@@ -208,10 +264,10 @@ const SidebarItem = ({ item, isCollapsed, onClose, depth = 0 }) => {
           <Text
             fontSize={depth === 0 ? 'sm' : 'xs'}
             fontWeight={isActive ? '700' : '500'}
-            color={isActive ? '#2D2B75' : 'rgba(255, 255, 255, 0.85)'}
+            color={itemColor}
             flex="1"
             noOfLines={1}
-            _groupHover={{ color: isActive ? '#2D2B75' : '#ffffff' }}
+            _groupHover={{ color: itemHoverColor }}
             transition="color 0.18s"
           >
             {item.name}
@@ -220,9 +276,10 @@ const SidebarItem = ({ item, isCollapsed, onClose, depth = 0 }) => {
             <Icon
               as={ChevronRight}
               boxSize={3.5}
-              color={isActive ? '#2D2B75' : 'rgba(255, 255, 255, 0.8)'}
-              transition="transform 0.2s"
+              color={chevronColor}
+              transition="transform 0.2s, color 0.18s"
               transform={hasChildren && isOpen ? 'rotate(90deg)' : 'rotate(0deg)'}
+              _groupHover={{ color: itemHoverColor }}
               flexShrink={0}
             />
           )}

@@ -60,8 +60,54 @@ const getAdminData = () => {
   }
 };
 
+// ─── Permission Check Helper ─────────────────────────────────────────────
+export const checkUserHasPermission = (adminData, permToCheck) => {
+  if (!permToCheck) return true;
+  if (!adminData) return false;
+  if (adminData.type === 'admin') return true;
+
+  const userPermissions = adminData?.role?.permissions || [];
+  if (userPermissions.includes('global:full_access')) return true;
+  if (userPermissions.includes(permToCheck)) return true;
+
+  // Legacy normalization mapping
+  const mapping = {
+    'dashboard:view': ['Dashboard', 'dashboard'],
+    'customer_client:view': ['Customer/Client', 'Customer/Client List', 'Customer List', 'customer_client'],
+    'customer_client:add': ['Add Customer/Client', 'Add Customer', 'customer_client'],
+    'customer_client:edit': ['Edit Customer', 'customer_client'],
+    'job_management:view': ['Jobs', 'Job List', 'Pending Jobs', 'job_management'],
+    'job_management:add': ['Add Job', 'job_management'],
+    'candidates:view': ['Candidates', 'Candidate List', 'All Applications', 'Applied Candidates List', 'Shortlisted Candidate List', 'candidates'],
+    'candidates:add': ['Add Candidate', 'candidates'],
+    'service_packages:view': ['Subscription Plans', 'Plan List', 'Subscription History', 'service_packages'],
+    'service_packages:add': ['Add Plan', 'service_packages'],
+    'offer_management:view': ['Offers', 'offer_management'],
+    'banner_management:view': ['Banners', 'banner_management'],
+    'cook_approvals:view': ['Cook Approvals', 'cook_approvals'],
+    'notifications:view': ['Notifications', 'Notification List', 'notifications'],
+    'notifications:add': ['Add Notification', 'notifications'],
+    'query_management:view': ['Query History', 'query_management'],
+    'finance_revenue:view': ['Finance / Revenue', 'finance_revenue'],
+    'role_permission:view': ['Roles & Permissions', 'User List', 'role_permission'],
+    'role_permission:add': ['Add Role', 'Add User', 'role_permission'],
+    'role_permission:manage': ['Manage Roles', 'role_permission'],
+    'masters:view': ['Masters', 'masters'],
+    'settings:view': ['Web Settings', 'settings']
+  };
+
+  const legacyNames = mapping[permToCheck];
+  if (legacyNames) {
+    return legacyNames.some(name => 
+      userPermissions.includes(name) || 
+      userPermissions.some(up => String(up).toLowerCase() === name.toLowerCase())
+    );
+  }
+  return false;
+};
+
 // ─── PermissionRoute ─────────────────────────────────────────────────────────
-// permission = string (e.g. 'Dashboard') or null (open to all logged-in users)
+// permission = string (e.g. 'dashboard:view') or null (open to all logged-in users)
 // Super Admin (type === 'admin') → access to everything
 // Regular User → must have the permission in their role.permissions array
 const PermissionRoute = ({ children, permission = null }) => {
@@ -73,61 +119,50 @@ const PermissionRoute = ({ children, permission = null }) => {
   }
 
   const adminData = getAdminData();
+  if (checkUserHasPermission(adminData, permission)) {
+    return children;
+  }
 
-  // 2. Super Admin → full access
-  const isSuperAdmin = adminData.type === 'admin';
-  if (isSuperAdmin) return children;
+  // 2. Permission denied → show 403
+  return <Navigate to="/unauthorized" replace />;
+};
 
-  // 3. No specific permission required (e.g. /profile) → any logged-in user can access
-  if (!permission) return children;
+// ─── DashboardRoute ──────────────────────────────────────────────────────────
+// Subuser with dashboard:view or Super Admin -> Dashboard
+// Subuser without dashboard:view -> redirects to first permitted module route
+const DashboardRoute = () => {
+  const token = localStorage.getItem('adminToken');
+  if (!token) {
+    return <Navigate to="/login" replace />;
+  }
 
-  // 4. Check role permissions
-  const userPermissions = adminData?.role?.permissions || [];
-  if (userPermissions.includes('global:full_access')) return children;
+  const adminData = getAdminData();
+  if (checkUserHasPermission(adminData, 'dashboard:view')) {
+    return <Layout><Dashboard /></Layout>;
+  }
 
-  const checkPermission = (permToCheck) => {
-    if (!permToCheck) return true;
-    if (userPermissions.includes(permToCheck)) return true;
+  // If the user doesn't have dashboard permission, find first authorized module
+  const moduleRoutes = [
+    { perm: 'customer_client:view', path: '/customers/list' },
+    { perm: 'candidates:view', path: '/candidates/list' },
+    { perm: 'job_management:view', path: '/jobs/list' },
+    { perm: 'query_management:view', path: '/queries' },
+    { perm: 'cook_approvals:view', path: '/cook-approvals' },
+    { perm: 'finance_revenue:view', path: '/finance' },
+    { perm: 'service_packages:view', path: '/plans/list' },
+    { perm: 'offer_management:view', path: '/offers' },
+    { perm: 'banner_management:view', path: '/banners' },
+    { perm: 'notifications:view', path: '/notifications/list' },
+    { perm: 'role_permission:view', path: '/users/list' },
+    { perm: 'masters:view', path: '/masters' },
+    { perm: 'settings:view', path: '/settings' }
+  ];
 
-    // Legacy normalization mapping
-    const mapping = {
-      'dashboard:view': ['Dashboard', 'dashboard'],
-      'customer_client:view': ['Customer/Client', 'Customer/Client List', 'Customer List', 'customer_client'],
-      'customer_client:add': ['Add Customer/Client', 'Add Customer', 'customer_client'],
-      'customer_client:edit': ['Edit Customer', 'customer_client'],
-      'job_management:view': ['Jobs', 'Job List', 'Pending Jobs', 'job_management'],
-      'job_management:add': ['Add Job', 'job_management'],
-      'candidates:view': ['Candidates', 'Candidate List', 'All Applications', 'Applied Candidates List', 'Shortlisted Candidate List', 'candidates'],
-      'candidates:add': ['Add Candidate', 'candidates'],
-      'service_packages:view': ['Subscription Plans', 'Plan List', 'Subscription History', 'service_packages'],
-      'service_packages:add': ['Add Plan', 'service_packages'],
-      'offer_management:view': ['Offers', 'offer_management'],
-      'banner_management:view': ['Banners', 'banner_management'],
-      'cook_approvals:view': ['Cook Approvals', 'cook_approvals'],
-      'notifications:view': ['Notifications', 'Notification List', 'notifications'],
-      'notifications:add': ['Add Notification', 'notifications'],
-      'query_management:view': ['Query History', 'query_management'],
-      'finance_revenue:view': ['Finance / Revenue', 'finance_revenue'],
-      'role_permission:view': ['Roles & Permissions', 'User List', 'role_permission'],
-      'role_permission:add': ['Add Role', 'Add User', 'role_permission'],
-      'role_permission:manage': ['Manage Roles', 'role_permission'],
-      'masters:view': ['Masters', 'masters'],
-      'settings:view': ['Web Settings', 'settings']
-    };
+  const firstPermitted = moduleRoutes.find(r => checkUserHasPermission(adminData, r.perm));
+  if (firstPermitted) {
+    return <Navigate to={firstPermitted.path} replace />;
+  }
 
-    const legacyNames = mapping[permToCheck];
-    if (legacyNames) {
-      return legacyNames.some(name => 
-        userPermissions.includes(name) || 
-        userPermissions.some(up => String(up).toLowerCase() === name.toLowerCase())
-      );
-    }
-    return false;
-  };
-
-  if (checkPermission(permission)) return children;
-
-  // 5. Permission denied → show 403
   return <Navigate to="/unauthorized" replace />;
 };
 
@@ -215,11 +250,7 @@ function App() {
         <Route path="/unauthorized" element={<Unauthorized />} />
 
         {/* ── Dashboard ──────────────────────────────────────────────── */}
-        <Route path="/" element={
-          <PermissionRoute permission={null}>
-            <Layout><Dashboard /></Layout>
-          </PermissionRoute>
-        } />
+        <Route path="/" element={<DashboardRoute />} />
         
         {/* ── Finance / Revenue ──────────────────────────────────────── */}
         <Route path="/finance" element={

@@ -3,9 +3,10 @@ import {
   Box, Flex, Text, Button, Input, InputGroup, InputLeftElement,
   VStack, HStack, Badge, Table, Thead, Tbody, Tr, Th, Td, TableContainer,
   IconButton, Spinner, useToast, Checkbox, Icon, Divider, Tab, TabList, Tabs, TabPanels, TabPanel,
-  Menu, MenuButton, MenuList, MenuItem
+  Menu, MenuButton, MenuList, MenuItem, Modal, ModalOverlay, ModalContent,
+  ModalHeader, ModalBody, ModalFooter, ModalCloseButton, useDisclosure, FormControl, FormLabel, Select
 } from '@chakra-ui/react';
-import { Search, Plus, MoreVertical, Copy, Edit, Check, X, Minus, Users, Award } from 'lucide-react';
+import { Search, Plus, MoreVertical, Copy, Edit, Check, X, Minus, Users, Award, Trash2, CheckSquare } from 'lucide-react';
 import axios from 'axios';
 import API_BASE_URL from '../apiConfig';
 import { useNavigate } from 'react-router-dom';
@@ -13,20 +14,18 @@ import { useNavigate } from 'react-router-dom';
 const modules = [
   { id: 'dashboard', name: 'Dashboard', desc: 'View dashboard and analytics' },
   { id: 'customer_client', name: 'Customer / Client', desc: 'Manage customers and inquiries' },
-  { id: 'job_management', name: 'Job Management', desc: 'Create and manage job posts' },
   { id: 'candidates', name: 'Candidates', desc: 'View and manage candidates' },
-  { id: 'hiring_processing_fee', name: 'Hiring Processing Fee', desc: 'Manage hiring processing fee' },
-  { id: 'service_packages', name: 'Service Packages', desc: 'Manage service packages' },
+  { id: 'cook_approvals', name: 'Cook Approvals', desc: 'Approve / reject cook profiles' },
+  { id: 'job_management', name: 'Job Management', desc: 'Create and manage job posts' },
+  { id: 'query_management', name: 'Query History', desc: 'Manage customer queries' },
+  { id: 'finance_revenue', name: 'Finance / Revenue', desc: 'Manage revenue and transactions' },
+  { id: 'service_packages', name: 'Subscription Plans', desc: 'Manage platform fees, packages and plans' },
   { id: 'offer_management', name: 'Offer Management', desc: 'Create and manage offers' },
   { id: 'banner_management', name: 'Banner Management', desc: 'Manage banners and promotions' },
-  { id: 'cook_approvals', name: 'Cook Approvals', desc: 'Approve / reject cook profiles' },
-  { id: 'query_management', name: 'Query Management', desc: 'Manage customer queries' },
-  { id: 'reports_analytics', name: 'Reports & Analytics', desc: 'View reports and analytics' },
-  { id: 'finance_revenue', name: 'Finance / Revenue', desc: 'Manage revenue and transactions' },
-  { id: 'role_permission', name: 'Role & Permission', desc: 'Manage roles and permissions' },
-  { id: 'settings', name: 'Settings', desc: 'System settings and configuration' },
-  { id: 'masters', name: 'Master Data', desc: 'Manage all system master data' },
   { id: 'notifications', name: 'Notifications', desc: 'Manage push notifications' },
+  { id: 'role_permission', name: 'Role & Permission', desc: 'Manage roles and staff users' },
+  { id: 'masters', name: 'Master Data', desc: 'Manage all system master data' },
+  { id: 'settings', name: 'Web Settings', desc: 'System settings and configuration' },
 ];
 
 const actions = [
@@ -39,6 +38,143 @@ const actions = [
   { id: 'manage', name: 'MANAGE' }
 ];
 
+// Helper to normalize legacy permission strings to canonical format
+const normalizePermissionsList = (rawPerms) => {
+  if (!Array.isArray(rawPerms)) return [];
+  const normalized = new Set();
+  
+  const mapping = {
+    'dashboard': 'dashboard:view',
+    'Dashboard': 'dashboard:view',
+    
+    'customer_client': 'customer_client:view',
+    'Customer/Client': 'customer_client:view',
+    'Customer/Client List': 'customer_client:view',
+    'Customer List': 'customer_client:view',
+    'Add Customer/Client': 'customer_client:add',
+    'Add Customer': 'customer_client:add',
+    'Edit Customer': 'customer_client:edit',
+    
+    'job_management': 'job_management:view',
+    'Jobs': 'job_management:view',
+    'Job List': 'job_management:view',
+    'Pending Jobs': 'job_management:view',
+    'Add Job': 'job_management:add',
+    'Edit Job': 'job_management:edit',
+    
+    'candidates': 'candidates:view',
+    'Candidates': 'candidates:view',
+    'Candidate List': 'candidates:view',
+    'All Applications': 'candidates:view',
+    'Applied Candidates List': 'candidates:view',
+    'Shortlisted Candidate List': 'candidates:view',
+    'Add Candidate': 'candidates:add',
+    'Edit Candidate': 'candidates:edit',
+    
+    'cook_approvals': 'cook_approvals:view',
+    'Cook Approvals': 'cook_approvals:view',
+    
+    'query_management': 'query_management:view',
+    'Query History': 'query_management:view',
+    
+    'finance_revenue': 'finance_revenue:view',
+    'Finance / Revenue': 'finance_revenue:view',
+    
+    'service_packages': 'service_packages:view',
+    'Subscription Plans': 'service_packages:view',
+    'Plan List': 'service_packages:view',
+    'Subscription History': 'service_packages:view',
+    'Hiring Processing Fee': 'service_packages:view',
+    'hiring_processing_fee': 'service_packages:view',
+    'Add Plan': 'service_packages:add',
+    'Edit Plan': 'service_packages:edit',
+    
+    'offer_management': 'offer_management:view',
+    'Offers': 'offer_management:view',
+    'Offer List': 'offer_management:view',
+    'Add Offer': 'offer_management:add',
+    
+    'banner_management': 'banner_management:view',
+    'Banners': 'banner_management:view',
+    'Banner List': 'banner_management:view',
+    'Add Banner': 'banner_management:add',
+    
+    'notifications': 'notifications:view',
+    'Notifications': 'notifications:view',
+    'Notification List': 'notifications:view',
+    'Add Notification': 'notifications:add',
+    
+    'role_permission': 'role_permission:view',
+    'Roles & Permissions': 'role_permission:view',
+    'Roles': 'role_permission:view',
+    'Role List': 'role_permission:view',
+    'Users': 'role_permission:view',
+    'User List': 'role_permission:view',
+    'Add Role': 'role_permission:add',
+    'Add User': 'role_permission:add',
+    'Manage Roles': 'role_permission:manage',
+    'Permissions': 'role_permission:manage',
+    'Permission List': 'role_permission:manage',
+    
+    'masters': 'masters:view',
+    'Masters': 'masters:view',
+    'Master Data': 'masters:view',
+    'States': 'masters:view',
+    'State List': 'masters:view',
+    'Cities': 'masters:view',
+    'City List': 'masters:view',
+    'Facility': 'masters:view',
+    'Property Category': 'masters:view',
+    'Position': 'masters:view',
+    'Salary Range': 'masters:view',
+    'Experience Range': 'masters:view',
+    'Cooking Preference': 'masters:view',
+    'Cook Preference': 'masters:view',
+    'Food Preference': 'masters:view',
+    'Gender Preference': 'masters:view',
+    'Service Duration': 'masters:view',
+    'Job Type': 'masters:view',
+    'Event': 'masters:view',
+    'Cooking Category': 'masters:view',
+    'Time Range': 'masters:view',
+    'Outlet Status': 'masters:view',
+    'Benefits': 'masters:view',
+    'Outlets': 'masters:view',
+    'CMS': 'masters:view',
+    'Sliders': 'masters:view',
+    'Videos': 'masters:view',
+    'Menu Item': 'masters:view',
+    'Job Category': 'masters:view',
+    'Skill Category': 'masters:view',
+    'Skill': 'masters:view',
+    'Add State': 'masters:add',
+    'Add City': 'masters:add',
+    
+    'settings': 'settings:view',
+    'Web Settings': 'settings:view',
+    'Settings': 'settings:view'
+  };
+
+  rawPerms.forEach(p => {
+    if (typeof p !== 'string') return;
+    if (p.includes(':')) {
+      normalized.add(p);
+    } else if (mapping[p]) {
+      normalized.add(mapping[p]);
+    } else {
+      const lower = p.toLowerCase();
+      const matchKey = Object.keys(mapping).find(k => k.toLowerCase() === lower);
+      if (matchKey) {
+        normalized.add(mapping[matchKey]);
+      } else {
+        normalized.add(p);
+      }
+    }
+  });
+
+  return Array.from(normalized);
+};
+
 export default function RolePermissionManagement() {
   const [roles, setRoles] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -48,6 +184,15 @@ export default function RolePermissionManagement() {
   const [isEditing, setIsEditing] = useState(false);
   const [localPermissions, setLocalPermissions] = useState([]);
   
+  // Modals
+  const { isOpen: isAddOpen, onOpen: onAddOpen, onClose: onAddClose } = useDisclosure();
+  const { isOpen: isDeleteOpen, onOpen: onDeleteOpen, onClose: onDeleteClose } = useDisclosure();
+  const [newRoleName, setNewRoleName] = useState('');
+  const [newRoleStatus, setNewRoleStatus] = useState('active');
+  const [isCreatingRole, setIsCreatingRole] = useState(false);
+  const [roleToDelete, setRoleToDelete] = useState(null);
+  const [isDeletingRole, setIsDeletingRole] = useState(false);
+
   const toast = useToast();
   const navigate = useNavigate();
 
@@ -81,7 +226,7 @@ export default function RolePermissionManagement() {
 
   const handleSelectRole = (role) => {
     setSelectedRole(role);
-    setLocalPermissions(role.permissions || []);
+    setLocalPermissions(normalizePermissionsList(role.permissions || []));
     setIsEditing(false);
   };
 
@@ -96,43 +241,34 @@ export default function RolePermissionManagement() {
   };
 
   const hasPermission = (moduleId, actionId) => {
-    const permString = `${moduleId}:${actionId}`;
-    if (localPermissions.includes(permString)) return true;
+    return localPermissions.includes(`${moduleId}:${actionId}`);
+  };
 
-    // Normalization mapping for legacy formats
-    const mapping = {
-      'dashboard:view': ['Dashboard', 'dashboard'],
-      'customer_client:view': ['Customer/Client', 'Customer/Client List', 'Customer List', 'customer_client'],
-      'customer_client:add': ['Add Customer/Client', 'Add Customer', 'customer_client'],
-      'customer_client:edit': ['Edit Customer', 'customer_client'],
-      'job_management:view': ['Jobs', 'Job List', 'Pending Jobs', 'job_management'],
-      'job_management:add': ['Add Job', 'job_management'],
-      'candidates:view': ['Candidates', 'Candidate List', 'All Applications', 'Applied Candidates List', 'Shortlisted Candidate List', 'candidates'],
-      'candidates:add': ['Add Candidate', 'candidates'],
-      'service_packages:view': ['Subscription Plans', 'Plan List', 'Subscription History', 'service_packages'],
-      'service_packages:add': ['Add Plan', 'service_packages'],
-      'offer_management:view': ['Offers', 'offer_management'],
-      'banner_management:view': ['Banners', 'banner_management'],
-      'cook_approvals:view': ['Cook Approvals', 'cook_approvals'],
-      'notifications:view': ['Notifications', 'Notification List', 'notifications'],
-      'notifications:add': ['Add Notification', 'notifications'],
-      'query_management:view': ['Query History', 'query_management'],
-      'finance_revenue:view': ['Finance / Revenue', 'finance_revenue'],
-      'role_permission:view': ['Roles & Permissions', 'User List', 'role_permission'],
-      'role_permission:add': ['Add Role', 'Add User', 'role_permission'],
-      'role_permission:manage': ['Manage Roles', 'role_permission'],
-      'masters:view': ['Masters', 'masters'],
-      'settings:view': ['Web Settings', 'settings']
-    };
-
-    const legacyNames = mapping[permString];
-    if (legacyNames) {
-      return legacyNames.some(name => 
-        localPermissions.includes(name) || 
-        localPermissions.some(up => String(up).toLowerCase() === name.toLowerCase())
-      );
+  const toggleModuleRow = (moduleId) => {
+    if (!isEditing) return;
+    const rowPerms = actions.map(act => `${moduleId}:${act.id}`);
+    const allSelected = rowPerms.every(p => localPermissions.includes(p));
+    if (allSelected) {
+      setLocalPermissions(localPermissions.filter(p => !rowPerms.includes(p)));
+    } else {
+      const updated = new Set(localPermissions);
+      rowPerms.forEach(p => updated.add(p));
+      setLocalPermissions(Array.from(updated));
     }
-    return false;
+  };
+
+  const toggleAllMatrix = () => {
+    if (!isEditing) return;
+    const allPerms = [];
+    modules.forEach(m => {
+      actions.forEach(a => allPerms.push(`${m.id}:${a.id}`));
+    });
+    const allSelected = allPerms.every(p => localPermissions.includes(p));
+    if (allSelected) {
+      setLocalPermissions([]);
+    } else {
+      setLocalPermissions(allPerms);
+    }
   };
 
   const savePermissions = async () => {
@@ -144,13 +280,69 @@ export default function RolePermissionManagement() {
         { headers: { Authorization: `Bearer ${token}` } }
       );
       if (response.data.success) {
-        toast({ title: 'Permissions updated!', status: 'success', duration: 2000 });
+        toast({ title: 'Permissions updated successfully!', status: 'success', duration: 2000 });
         setIsEditing(false);
         fetchRoles(); 
       }
     } catch (error) {
        console.error(error);
-       toast({ title: 'Failed to update permissions', status: 'error', duration: 3000 });
+       toast({ title: 'Failed to update permissions', description: error.response?.data?.message || 'Error', status: 'error', duration: 3000 });
+    }
+  };
+
+  const handleCreateRole = async (e) => {
+    e.preventDefault();
+    if (!newRoleName.trim()) {
+      return toast({ title: 'Please enter a role name', status: 'warning' });
+    }
+    setIsCreatingRole(true);
+    try {
+      const token = localStorage.getItem('adminToken');
+      const response = await axios.post(`${API_BASE_URL}/roles`, {
+        name: newRoleName.trim(),
+        status: newRoleStatus,
+        permissions: []
+      }, {
+        headers: { Authorization: `Bearer ${token}` }
+      });
+      if (response.data.success) {
+        toast({ title: 'Role created successfully!', status: 'success' });
+        setNewRoleName('');
+        onAddClose();
+        await fetchRoles();
+        if (response.data.role) {
+          handleSelectRole(response.data.role);
+          setIsEditing(true);
+        }
+      }
+    } catch (error) {
+      toast({ title: 'Error creating role', description: error.response?.data?.message || 'Error', status: 'error' });
+    } finally {
+      setIsCreatingRole(false);
+    }
+  };
+
+  const handleDeleteRole = async () => {
+    if (!roleToDelete) return;
+    setIsDeletingRole(true);
+    try {
+      const token = localStorage.getItem('adminToken');
+      const response = await axios.delete(`${API_BASE_URL}/roles/${roleToDelete._id}`, {
+        headers: { Authorization: `Bearer ${token}` }
+      });
+      if (response.data.success) {
+        toast({ title: 'Role deleted successfully!', status: 'success' });
+        onDeleteClose();
+        setRoleToDelete(null);
+        if (selectedRole?._id === roleToDelete._id) {
+          setSelectedRole(null);
+        }
+        fetchRoles();
+      }
+    } catch (error) {
+      toast({ title: 'Error deleting role', description: error.response?.data?.message || 'Error', status: 'error' });
+    } finally {
+      setIsDeletingRole(false);
     }
   };
 
@@ -158,16 +350,29 @@ export default function RolePermissionManagement() {
 
   return (
     <Box>
-      <Flex justify="space-between" align="center" mb="6">
+      {/* Header */}
+      <Flex justify="space-between" align="center" mb="6" wrap="wrap" gap="4">
         <Box>
           <Text fontSize="2xl" fontWeight="800" color="#1e293b">Role & Permission Management</Text>
-          <Text fontSize="sm" color="#64748b" mt="1" fontWeight="500">Create user roles and manage permissions for different modules in the system.</Text>
+          <Text fontSize="sm" color="#64748b" mt="1" fontWeight="500">Create staff roles and configure access permissions for system modules.</Text>
         </Box>
         <Flex gap="3">
-          <Button variant="outline" color="#004aad" borderColor="#004aad" leftIcon={<Icon as={Plus} size={16} />}>
+          <Button 
+            variant="outline" 
+            color="#004aad" 
+            borderColor="#004aad" 
+            leftIcon={<Icon as={Plus} size={16} />}
+            onClick={onAddOpen}
+          >
             Add Role
           </Button>
-          <Button bg="#004aad" color="white" _hover={{ bg: '#003a8c' }}>
+          <Button 
+            bg="#004aad" 
+            color="white" 
+            _hover={{ bg: '#003a8c' }}
+            leftIcon={<Icon as={Users} size={16} />}
+            onClick={() => navigate('/users/add')}
+          >
             Assign Role to User
           </Button>
         </Flex>
@@ -182,7 +387,16 @@ export default function RolePermissionManagement() {
               <InputLeftElement pointerEvents="none"><Icon as={Search} color="gray.400" size={14} /></InputLeftElement>
               <Input placeholder="Search role..." value={searchRole} onChange={(e) => setSearchRole(e.target.value)} borderRadius="md" />
             </InputGroup>
-            <Button size="sm" bg="#004aad" color="white" _hover={{ bg: '#003a8c' }} px="4" borderRadius="md" minW="100px">
+            <Button 
+              size="sm" 
+              bg="#004aad" 
+              color="white" 
+              _hover={{ bg: '#003a8c' }} 
+              px="4" 
+              borderRadius="md" 
+              minW="100px"
+              onClick={onAddOpen}
+            >
               + New Role
             </Button>
           </Flex>
@@ -260,15 +474,16 @@ export default function RolePermissionManagement() {
                             setIsEditing(true);
                           }}
                         >
-                          Edit Role
+                          Edit Permissions
                         </MenuItem>
                         <MenuItem 
                           fontSize="sm" 
                           color="red.500"
-                          icon={<Icon as={X} size={14} />} 
+                          icon={<Icon as={Trash2} size={14} />} 
                           onClick={(e) => { 
                             e.stopPropagation(); 
-                            toast({ title: 'Delete Role functionality not yet implemented.', status: 'info', duration: 2000 });
+                            setRoleToDelete(role);
+                            onDeleteOpen();
                           }}
                         >
                           Delete Role
@@ -287,25 +502,32 @@ export default function RolePermissionManagement() {
         <Box flex="1" bg="white" borderRadius="xl" border="1px solid #e2e8f0" overflow="hidden" w="full">
           {selectedRole ? (
             <>
-              <Flex justify="space-between" align="center" p="5" borderBottom="1px solid #e2e8f0">
+              <Flex justify="space-between" align="center" p="5" borderBottom="1px solid #e2e8f0" wrap="wrap" gap="3">
                 <Flex align="center" gap="3">
                   <Text fontSize="md" fontWeight="700" color="#1e293b">Permissions for: {selectedRole.name}</Text>
                   {selectedRole.name === 'Super Admin' && <Badge bg="#ecfdf5" color="#10b981" textTransform="none" fontSize="10px" px="2" py="1" borderRadius="md">System Role</Badge>}
                 </Flex>
-                <Flex gap="3">
-                  <Button size="sm" variant="outline" leftIcon={<Icon as={Copy} size={14} />} borderRadius="md">
-                    Copy Permissions
-                  </Button>
-                  {isEditing ? (
-                    <Button size="sm" bg="#10b981" color="white" _hover={{ bg: '#059669' }} onClick={savePermissions} borderRadius="md" leftIcon={<Icon as={Check} size={14} />}>
-                      Save Permissions
+                <HStack spacing="3">
+                  {isEditing && (
+                    <Button size="sm" variant="ghost" color="#004aad" onClick={toggleAllMatrix}>
+                      Toggle All Modules
                     </Button>
+                  )}
+                  {isEditing ? (
+                    <>
+                      <Button size="sm" variant="outline" onClick={() => { setIsEditing(false); handleSelectRole(selectedRole); }}>
+                        Cancel
+                      </Button>
+                      <Button size="sm" bg="#10b981" color="white" _hover={{ bg: '#059669' }} onClick={savePermissions} borderRadius="md" leftIcon={<Icon as={Check} size={14} />}>
+                        Save Permissions
+                      </Button>
+                    </>
                   ) : (
                     <Button size="sm" bg="#004aad" color="white" _hover={{ bg: '#003a8c' }} onClick={() => setIsEditing(true)} borderRadius="md" leftIcon={<Icon as={Edit} size={14} />}>
                       Edit Permissions
                     </Button>
                   )}
-                </Flex>
+                </HStack>
               </Flex>
               
               <Tabs colorScheme="blue" size="sm">
@@ -316,66 +538,77 @@ export default function RolePermissionManagement() {
                 <TabPanels>
                   <TabPanel p={0}>
                     <TableContainer>
-                <Table size="sm" variant="simple">
-                  <Thead>
-                    <Tr>
-                      <Th py="4" fontSize="10px" fontWeight="800" color="#64748b" borderColor="#f1f5f9">MODULE</Th>
-                      {actions.map(act => (
-                        <Th key={act.id} textAlign="center" fontSize="10px" fontWeight="800" color="#64748b" borderColor="#f1f5f9">{act.name}</Th>
-                      ))}
-                    </Tr>
-                  </Thead>
-                  <Tbody>
-                    {modules.map((mod) => (
-                      <Tr key={mod.id} _hover={{ bg: '#f8fafc' }}>
-                        <Td py="3" borderColor="#f1f5f9">
-                          <Flex align="center" gap="3">
-                            <Flex align="center" justify="center" w="8" h="8" borderRadius="md" bg="#eff6ff" color="#004aad">
-                              <Icon as={Search} size={14} />
-                            </Flex>
-                            <Box>
-                              <Text fontSize="13px" fontWeight="700" color="#1e293b">{mod.name}</Text>
-                              <Text fontSize="11px" color="#94a3b8" fontWeight="500">{mod.desc}</Text>
-                            </Box>
-                          </Flex>
-                        </Td>
-                        {actions.map(act => {
-                           const hasPerm = hasPermission(mod.id, act.id);
-                           return (
-                            <Td key={act.id} textAlign="center" borderColor="#f1f5f9">
-                                {isEditing ? (
-                                    <Checkbox 
-                                      colorScheme="green" 
-                                      isChecked={hasPerm} 
-                                      onChange={() => togglePermission(mod.id, act.id)}
-                                      size="lg"
-                                    />
-                                ) : (
-                                    hasPerm ? (
-                                        <Flex align="center" justify="center" w="6" h="6" borderRadius="md" bg="#ecfdf5" color="#10b981" mx="auto">
-                                            <Icon as={Check} boxSize={4} />
-                                        </Flex>
-                                    ) : (
-                                        <Flex align="center" justify="center" w="6" h="6" borderRadius="md" bg="#fef2f2" color="#ef4444" mx="auto">
-                                            <Icon as={X} boxSize={4} />
-                                        </Flex>
-                                    )
-                                )}
-                            </Td>
-                           );
-                        })}
-                      </Tr>
-                    ))}
-                  </Tbody>
-                </Table>
-              </TableContainer>
+                      <Table size="sm" variant="simple">
+                        <Thead>
+                          <Tr>
+                            <Th py="4" fontSize="10px" fontWeight="800" color="#64748b" borderColor="#f1f5f9">MODULE</Th>
+                            {actions.map(act => (
+                              <Th key={act.id} textAlign="center" fontSize="10px" fontWeight="800" color="#64748b" borderColor="#f1f5f9">{act.name}</Th>
+                            ))}
+                            {isEditing && (
+                              <Th textAlign="center" fontSize="10px" fontWeight="800" color="#64748b" borderColor="#f1f5f9">ACTIONS</Th>
+                            )}
+                          </Tr>
+                        </Thead>
+                        <Tbody>
+                          {modules.map((mod) => (
+                            <Tr key={mod.id} _hover={{ bg: '#f8fafc' }}>
+                              <Td py="3" borderColor="#f1f5f9">
+                                <Flex align="center" gap="3">
+                                  <Flex align="center" justify="center" w="8" h="8" borderRadius="md" bg="#eff6ff" color="#004aad">
+                                    <Icon as={CheckSquare} size={14} />
+                                  </Flex>
+                                  <Box>
+                                    <Text fontSize="13px" fontWeight="700" color="#1e293b">{mod.name}</Text>
+                                    <Text fontSize="11px" color="#94a3b8" fontWeight="500">{mod.desc}</Text>
+                                  </Box>
+                                </Flex>
+                              </Td>
+                              {actions.map(act => {
+                                 const hasPerm = hasPermission(mod.id, act.id);
+                                 return (
+                                  <Td key={act.id} textAlign="center" borderColor="#f1f5f9">
+                                      {isEditing ? (
+                                          <Checkbox 
+                                            colorScheme="green" 
+                                            isChecked={hasPerm} 
+                                            onChange={() => togglePermission(mod.id, act.id)}
+                                            size="lg"
+                                          />
+                                      ) : (
+                                          hasPerm ? (
+                                              <Flex align="center" justify="center" w="6" h="6" borderRadius="md" bg="#ecfdf5" color="#10b981" mx="auto">
+                                                  <Icon as={Check} boxSize={4} />
+                                              </Flex>
+                                          ) : (
+                                              <Flex align="center" justify="center" w="6" h="6" borderRadius="md" bg="#fef2f2" color="#ef4444" mx="auto">
+                                                  <Icon as={X} boxSize={4} />
+                                              </Flex>
+                                          )
+                                      )}
+                                  </Td>
+                                 );
+                              })}
+                              {isEditing && (
+                                <Td textAlign="center" borderColor="#f1f5f9">
+                                  <Button size="xs" variant="outline" color="#004aad" borderColor="#cbd5e1" onClick={() => toggleModuleRow(mod.id)}>
+                                    Toggle Row
+                                  </Button>
+                                </Td>
+                              )}
+                            </Tr>
+                          ))}
+                        </Tbody>
+                      </Table>
+                    </TableContainer>
 
-              <Flex justify="center" gap="6" p="4" borderTop="1px solid #e2e8f0" bg="#f8fafc">
-                <Flex align="center" gap="2"><Flex align="center" justify="center" w="5" h="5" borderRadius="sm" bg="#ecfdf5" color="#10b981"><Icon as={Check} boxSize={3} /></Flex><Text fontSize="xs" fontWeight="600" color="#475569">Allowed</Text></Flex>
-                <Flex align="center" gap="2"><Flex align="center" justify="center" w="5" h="5" borderRadius="sm" bg="#fef2f2" color="#ef4444"><Icon as={X} boxSize={3} /></Flex><Text fontSize="xs" fontWeight="600" color="#475569">Denied</Text></Flex>
-                <Flex align="center" gap="2"><Flex align="center" justify="center" w="5" h="5" borderRadius="sm" bg="#f1f5f9" color="#94a3b8"><Icon as={Minus} boxSize={3} /></Flex><Text fontSize="xs" fontWeight="600" color="#475569">Not Applicable</Text></Flex>
-                <Text fontSize="xs" color="#94a3b8" ml="auto">ⓘ Changes will be saved automatically</Text>
-              </Flex>
+                    <Flex justify="center" gap="6" p="4" borderTop="1px solid #e2e8f0" bg="#f8fafc">
+                      <Flex align="center" gap="2"><Flex align="center" justify="center" w="5" h="5" borderRadius="sm" bg="#ecfdf5" color="#10b981"><Icon as={Check} boxSize={3} /></Flex><Text fontSize="xs" fontWeight="600" color="#475569">Allowed</Text></Flex>
+                      <Flex align="center" gap="2"><Flex align="center" justify="center" w="5" h="5" borderRadius="sm" bg="#fef2f2" color="#ef4444"><Icon as={X} boxSize={3} /></Flex><Text fontSize="xs" fontWeight="600" color="#475569">Denied</Text></Flex>
+                      <Text fontSize="xs" color="#64748b" ml="auto">
+                        {isEditing ? 'Click checkboxes and then click "Save Permissions"' : 'Click "Edit Permissions" to make changes'}
+                      </Text>
+                    </Flex>
                   </TabPanel>
 
                   <TabPanel p={5}>
@@ -416,6 +649,59 @@ export default function RolePermissionManagement() {
           )}
         </Box>
       </Flex>
+
+      {/* Add Role Modal */}
+      <Modal isOpen={isAddOpen} onClose={onAddClose}>
+        <ModalOverlay />
+        <ModalContent>
+          <form onSubmit={handleCreateRole}>
+            <ModalHeader>Add New Role</ModalHeader>
+            <ModalCloseButton />
+            <ModalBody>
+              <VStack spacing={4}>
+                <FormControl isRequired>
+                  <FormLabel fontSize="sm" fontWeight="600">Role Name</FormLabel>
+                  <Input 
+                    placeholder="e.g. Telecaller, HR Manager, Supervisor"
+                    value={newRoleName}
+                    onChange={(e) => setNewRoleName(e.target.value)}
+                  />
+                </FormControl>
+                <FormControl isRequired>
+                  <FormLabel fontSize="sm" fontWeight="600">Status</FormLabel>
+                  <Select value={newRoleStatus} onChange={(e) => setNewRoleStatus(e.target.value)}>
+                    <option value="active">Active</option>
+                    <option value="inactive">Inactive</option>
+                  </Select>
+                </FormControl>
+              </VStack>
+            </ModalBody>
+            <ModalFooter>
+              <Button variant="ghost" mr={3} onClick={onAddClose}>Cancel</Button>
+              <Button type="submit" colorScheme="blue" isLoading={isCreatingRole}>Create Role</Button>
+            </ModalFooter>
+          </form>
+        </ModalContent>
+      </Modal>
+
+      {/* Delete Role Modal */}
+      <Modal isOpen={isDeleteOpen} onClose={onDeleteClose}>
+        <ModalOverlay />
+        <ModalContent>
+          <ModalHeader>Delete Role</ModalHeader>
+          <ModalCloseButton />
+          <ModalBody>
+            <Text fontSize="sm">
+              Are you sure you want to delete role <strong>"{roleToDelete?.name}"</strong>?
+              This action cannot be undone.
+            </Text>
+          </ModalBody>
+          <ModalFooter>
+            <Button variant="ghost" mr={3} onClick={onDeleteClose}>Cancel</Button>
+            <Button colorScheme="red" onClick={handleDeleteRole} isLoading={isDeletingRole}>Delete Role</Button>
+          </ModalFooter>
+        </ModalContent>
+      </Modal>
     </Box>
   );
 }

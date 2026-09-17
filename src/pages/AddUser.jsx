@@ -33,7 +33,10 @@ const AddUser = () => {
           headers: { 'Authorization': `Bearer ${token}` }
         });
         if (response.data.success) {
-          setRoles(response.data.roles);
+          const staffRoles = (response.data.roles || []).filter(r => 
+            !['cook', 'user', 'customer'].includes(r.name.toLowerCase().trim())
+          );
+          setRoles(staffRoles);
         }
       } catch (error) {
         console.error('Failed to fetch roles');
@@ -60,7 +63,7 @@ const AddUser = () => {
       if (profilePic) data.append('profilePic', profilePic);
 
       const response = await axios.post(`${apiUrl}/admin/users`, data, {
-        headers: { 'Authorization': `Bearer ${token}`, 'Content-Type': 'multipart/form-data' }
+        headers: { 'Authorization': `Bearer ${token}` }
       });
 
       if (response.data.success) {

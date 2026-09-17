@@ -37,7 +37,12 @@ const EditUser = () => {
         const rolesRes = await axios.get(`${apiUrl}/roles`, {
           headers: { 'Authorization': `Bearer ${token}` }
         });
-        if (rolesRes.data.success) setRoles(rolesRes.data.roles);
+        if (rolesRes.data.success) {
+          const staffRoles = (rolesRes.data.roles || []).filter(r => 
+            !['cook', 'user', 'customer'].includes((r.name || '').trim().toLowerCase())
+          );
+          setRoles(staffRoles);
+        }
 
         // Fetch User details
         const userRes = await axios.get(`${apiUrl}/admin/users/${id}`, {
@@ -83,7 +88,7 @@ const EditUser = () => {
       if (profilePic) data.append('profilePic', profilePic);
 
       const response = await axios.put(`${apiUrl}/admin/users/${id}`, data, {
-        headers: { 'Authorization': `Bearer ${token}`, 'Content-Type': 'multipart/form-data' }
+        headers: { 'Authorization': `Bearer ${token}` }
       });
 
       if (response.data.success) {
