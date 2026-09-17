@@ -1,8 +1,8 @@
 import React, { useState, useEffect } from 'react';
 import {
-  Box, Flex, Text, HStack, VStack, Icon, Spinner, useToast, Grid, Badge, Table, Thead, Tbody, Tr, Th, Td, Tabs, TabList, TabPanels, Tab, TabPanel, Button, IconButton, Divider, Input, useDisclosure, Modal, ModalOverlay, ModalContent, ModalHeader, ModalFooter, ModalBody, ModalCloseButton, Textarea
+  Box, Flex, Text, HStack, VStack, Icon, Spinner, useToast, Grid, Badge, Table, Thead, Tbody, Tr, Th, Td, Tabs, TabList, TabPanels, Tab, TabPanel, Button, IconButton, Divider, Input, useDisclosure, Modal, ModalOverlay, ModalContent, ModalHeader, ModalFooter, ModalBody, ModalCloseButton, Textarea, Switch, FormControl, FormLabel, SimpleGrid
 } from '@chakra-ui/react';
-import { Briefcase, Users, CreditCard, Award, Calendar, CheckCircle, Clock, MapPin, Building, ArrowLeft, Phone, Mail, MoreVertical, LayoutDashboard, Ban, Trash2, Plus, Copy, Check } from 'lucide-react';
+import { Briefcase, Users, CreditCard, Award, Calendar, CheckCircle, Clock, MapPin, Building, ArrowLeft, Phone, Mail, MoreVertical, LayoutDashboard, Ban, Trash2, Plus, Copy, Check, Sparkles, Eye, EyeOff, ShieldCheck } from 'lucide-react';
 import { useParams, useNavigate, useLocation } from 'react-router-dom';
 import axios from 'axios';
 import API_BASE_URL from '../apiConfig';
@@ -76,9 +76,28 @@ const CustomerDashboard = () => {
   const [newNote, setNewNote] = useState('');
   const [isSubmittingNote, setIsSubmittingNote] = useState(false);
 
+  // Custom Plan Modal state
+  const { isOpen: isPlanModalOpen, onOpen: onPlanModalOpen, onClose: onPlanModalClose } = useDisclosure();
+  const [planForm, setPlanForm] = useState({
+    name: '',
+    price: '',
+    durationDays: '30',
+    jobPostLimit: '3',
+    hiringLimit: '5',
+    replacementLimit: '2',
+    features: 'Dedicated Relationship Manager\nFree Cook Replacements\nPriority Cook Matching',
+    customNotes: '',
+    isPublished: true
+  });
+  const [isSubmittingPlan, setIsSubmittingPlan] = useState(false);
+  const [togglingPlanId, setTogglingPlanId] = useState(null);
+
   useEffect(() => {
     if (location.state?.activeTab !== undefined) {
       setTabIndex(location.state.activeTab);
+    }
+    if (location.state?.openCustomPlanModal) {
+      onPlanModalOpen();
     }
   }, [location]);
 
@@ -134,6 +153,110 @@ const CustomerDashboard = () => {
     }
   };
 
+  const handleCreateCustomPlan = async (e) => {
+    e?.preventDefault();
+    if (!planForm.name || !planForm.price || !planForm.durationDays) {
+      toast({
+        title: 'Validation Error',
+        description: 'Please provide Package Name, Price, and Duration in days',
+        status: 'warning',
+        duration: 3000
+      });
+      return;
+    }
+    setIsSubmittingPlan(true);
+    try {
+      const token = localStorage.getItem('adminToken');
+      const featureList = planForm.features
+        ? planForm.features.split('\n').map(f => f.trim()).filter(Boolean)
+        : [];
+      const payload = {
+        name: planForm.name,
+        price: Number(planForm.price),
+        durationDays: Number(planForm.durationDays),
+        jobPostLimit: Number(planForm.jobPostLimit || 0),
+        hiringLimit: Number(planForm.hiringLimit || 0),
+        replacementLimit: Number(planForm.replacementLimit || 0),
+        features: featureList,
+        customNotes: planForm.customNotes,
+        isPublished: planForm.isPublished
+      };
+
+      const res = await axios.post(`${API_BASE_URL}/plans/customer/${id}`, payload, {
+        headers: { 'Authorization': `Bearer ${token}` }
+      });
+
+      if (res.data.success) {
+        toast({
+          title: 'Custom Package Created!',
+          description: planForm.isPublished
+            ? 'Package has been created and published on the App for this customer!'
+            : 'Package created in draft mode.',
+          status: 'success',
+          duration: 3000,
+          position: 'top-right'
+        });
+        onPlanModalClose();
+        setPlanForm({
+          name: '',
+          price: '',
+          durationDays: '30',
+          jobPostLimit: '3',
+          hiringLimit: '5',
+          replacementLimit: '2',
+          features: 'Dedicated Relationship Manager\nFree Cook Replacements\nPriority Cook Matching',
+          customNotes: '',
+          isPublished: true
+        });
+        fetchDashboardData();
+        setTabIndex(1); // Switch to Packages & Subscriptions tab
+      }
+    } catch (err) {
+      toast({
+        title: 'Failed to create custom package',
+        description: err.response?.data?.message || err.message,
+        status: 'error',
+        duration: 3000,
+        position: 'top-right'
+      });
+    } finally {
+      setIsSubmittingPlan(false);
+    }
+  };
+
+  const handleTogglePublish = async (planId) => {
+    setTogglingPlanId(planId);
+    try {
+      const token = localStorage.getItem('adminToken');
+      const res = await axios.patch(`${API_BASE_URL}/plans/${planId}/publish`, {}, {
+        headers: { 'Authorization': `Bearer ${token}` }
+      });
+      if (res.data.success) {
+        const isNowPublished = res.data.data.isPublished;
+        toast({
+          title: isNowPublished ? 'Published on App!' : 'Unpublished from App',
+          description: isNowPublished
+            ? 'Only this customer will now see this custom package in their app.'
+            : 'Package is hidden from customer app.',
+          status: isNowPublished ? 'success' : 'info',
+          duration: 3000,
+          position: 'top-right'
+        });
+        fetchDashboardData();
+      }
+    } catch (err) {
+      toast({
+        title: 'Error updating publish status',
+        description: err.response?.data?.message || err.message,
+        status: 'error',
+        duration: 3000,
+        position: 'top-right'
+      });
+    } finally {
+      setTogglingPlanId(null);
+    }
+  };
+
   const formatDate = (dateStr) => {
     if (!dateStr) return 'N/A';
     const date = new Date(dateStr);
@@ -157,7 +280,7 @@ const CustomerDashboard = () => {
 
   return (
     <Box pb="10">
-      <Flex justify="space-between" align="center" mb="6">
+      <Flex justify="space-between" align="center" mb="6" wrap="wrap" gap="3">
         <Box>
           <Text fontSize="xs" color="#64748b" fontWeight="600" mb="1">
             Home &gt; Client Management &gt; Client Dashboard
@@ -167,9 +290,24 @@ const CustomerDashboard = () => {
             <Badge colorScheme={customer.accountStatus === 'active' ? 'green' : 'red'} variant="subtle" borderRadius="md" px="2">{customer.accountStatus === 'active' ? 'Active' : 'Blocked'}</Badge>
           </HStack>
         </Box>
-        <Button leftIcon={<ArrowLeft size={16} />} variant="outline" size="sm" onClick={() => navigate('/customers/list')} borderRadius="lg" bg="white">
-          Back to Client List
-        </Button>
+        <HStack spacing="3">
+          <Button 
+            leftIcon={<Sparkles size={16} />} 
+            bg="#7c3aed" 
+            color="white" 
+            _hover={{ bg: '#6d28d9' }} 
+            size="sm" 
+            borderRadius="lg"
+            fontWeight="700"
+            onClick={onPlanModalOpen}
+            boxShadow="0 2px 8px rgba(124, 58, 237, 0.25)"
+          >
+            + Create Custom Package
+          </Button>
+          <Button leftIcon={<ArrowLeft size={16} />} variant="outline" size="sm" onClick={() => navigate('/customers/list')} borderRadius="lg" bg="white">
+            Back to Client List
+          </Button>
+        </HStack>
       </Flex>
 
       {/* Top Section: Profile & Stats */}
@@ -307,9 +445,9 @@ const CustomerDashboard = () => {
           <StatCard icon={LayoutDashboard} label="Total Bookings" value={stats.totalBookings} colorScheme="cyan" />
           <StatCard icon={CreditCard} label="Total Transactions" value={`₹${stats.totalSpent.toLocaleString('en-IN')}`} colorScheme="orange" />
           <StatCard icon={Award} label="Active Package" 
-            value={activeSubscriptions?.length > 0 ? activeSubscriptions[0].plan?.name : 'None'} 
-            subLabel={activeSubscriptions?.length > 0 ? `Valid till: ${formatDate(activeSubscriptions[0].endDate)}` : ''}
-            colorScheme="blue" />
+            value={activeSubscriptions?.length > 0 ? (activeSubscriptions[0].plan?.name || 'Active') : 'No Active Plan'} 
+            subLabel={activeSubscriptions?.length > 0 ? `Valid till: ${formatDate(activeSubscriptions[0].endDate)}` : 'Click to create custom package'}
+            colorScheme={activeSubscriptions?.length > 0 ? 'green' : 'purple'} />
         </Grid>
       </Grid>
 
@@ -317,7 +455,7 @@ const CustomerDashboard = () => {
       <Box bg="white" borderRadius="2xl" border="1px solid #e2e8f0" overflow="hidden" mb="6" boxShadow="sm">
         <Tabs colorScheme="blue" index={tabIndex} onChange={(index) => setTabIndex(index)}>
           <TabList px="2" pt="2" borderBottom="1px solid #e2e8f0" overflowX="auto">
-            {['Overview', 'Jobs Posted', 'Hired Candidates', 'Demo Scheduled', 'Transactions', 'Bookings', 'Blocked History', 'Activity Log'].map((tab, idx) => (
+            {['Overview', 'Packages & Subscriptions', 'Jobs Posted', 'Hired Candidates', 'Demo Scheduled', 'Transactions', 'Bookings', 'Blocked History', 'Activity Log'].map((tab, idx) => (
               <Tab key={idx} fontSize="sm" fontWeight="600" color="#64748b" _selected={{ color: BRAND, borderBottom: `2px solid ${BRAND}` }} whiteSpace="nowrap" pb="4">
                 {tab}
               </Tab>
@@ -413,6 +551,191 @@ const CustomerDashboard = () => {
                 </Box>
 
               </Grid>
+            </TabPanel>
+
+            {/* Packages & Subscriptions Tab */}
+            <TabPanel p="0">
+              <VStack align="stretch" spacing="6">
+                
+                {/* Active Subscription Banner / Card */}
+                <Box bg="white" p="6" borderRadius="xl" border="1px solid #e2e8f0" boxShadow="sm">
+                  <Flex justify="space-between" align={{ base: 'start', md: 'center' }} direction={{ base: 'column', md: 'row' }} gap="4" mb="4">
+                    <Box>
+                      <HStack spacing="2">
+                        <Text fontSize="lg" fontWeight="800" color="#0f172a">Current Active Subscription</Text>
+                        {activeSubscriptions?.length > 0 ? (
+                          <Badge colorScheme="green" variant="solid" px="2.5" py="0.5" borderRadius="full">ACTIVE</Badge>
+                        ) : (
+                          <Badge colorScheme="red" variant="subtle" px="2.5" py="0.5" borderRadius="full">NO ACTIVE PACKAGE</Badge>
+                        )}
+                      </HStack>
+                      <Text fontSize="xs" color="#64748b" mt="1">
+                        Subscription package details, validity, and hiring limits currently active for this customer
+                      </Text>
+                    </Box>
+                    <Button
+                      leftIcon={<Sparkles size={16} />}
+                      bg="#7c3aed"
+                      color="white"
+                      _hover={{ bg: '#6d28d9' }}
+                      size="sm"
+                      borderRadius="lg"
+                      onClick={onPlanModalOpen}
+                    >
+                      + Create Custom Package
+                    </Button>
+                  </Flex>
+
+                  {activeSubscriptions?.length > 0 ? (
+                    <SimpleGrid columns={{ base: 1, md: 4 }} gap="4" p="4" bg="#f8fafc" borderRadius="xl" border="1px solid #e2e8f0">
+                      <Box>
+                        <Text fontSize="xs" color="#64748b" fontWeight="600">Plan Name</Text>
+                        <HStack mt="1">
+                          <Text fontSize="md" fontWeight="800" color="#0f172a">{activeSubscriptions[0].plan?.name || 'Active Plan'}</Text>
+                          {activeSubscriptions[0].plan?.isCustom && (
+                            <Badge colorScheme="purple" fontSize="2xs">CUSTOM</Badge>
+                          )}
+                        </HStack>
+                      </Box>
+                      <Box>
+                        <Text fontSize="xs" color="#64748b" fontWeight="600">Price Paid</Text>
+                        <Text fontSize="md" fontWeight="800" color="#16a34a" mt="1">
+                          ₹{(activeSubscriptions[0].amount || activeSubscriptions[0].plan?.price || 0).toLocaleString('en-IN')}
+                        </Text>
+                      </Box>
+                      <Box>
+                        <Text fontSize="xs" color="#64748b" fontWeight="600">Validity Period</Text>
+                        <Text fontSize="sm" fontWeight="700" color="#0f172a" mt="1">
+                          {formatDate(activeSubscriptions[0].startDate)} → {formatDate(activeSubscriptions[0].endDate)}
+                        </Text>
+                      </Box>
+                      <Box>
+                        <Text fontSize="xs" color="#64748b" fontWeight="600">Limits</Text>
+                        <Text fontSize="sm" fontWeight="700" color="#0f172a" mt="1">
+                          Posts: {activeSubscriptions[0].plan?.jobPostLimit ?? 'N/A'} • Replacements: {activeSubscriptions[0].plan?.replacementLimit ?? 0}
+                        </Text>
+                      </Box>
+                    </SimpleGrid>
+                  ) : (
+                    <Box p="6" textAlign="center" bg="#f8fafc" borderRadius="xl" border="1px dashed #cbd5e1">
+                      <Text fontSize="sm" fontWeight="700" color="#475569" mb="1">This customer has not purchased any package yet.</Text>
+                      <Text fontSize="xs" color="#64748b" mb="3">You can create a tailored package with custom price and limits, and publish it directly to their app.</Text>
+                      <Button size="sm" bg={BRAND} color="white" _hover={{ bg: '#1e1c52' }} onClick={onPlanModalOpen} leftIcon={<Sparkles size={14} />}>
+                        Create Custom Package
+                      </Button>
+                    </Box>
+                  )}
+                </Box>
+
+                {/* Custom Packages Created for Customer */}
+                <Box bg="white" p="6" borderRadius="xl" border="1px solid #e2e8f0" boxShadow="sm">
+                  <Flex justify="space-between" align="center" mb="4" wrap="wrap" gap="2">
+                    <Box>
+                      <Text fontSize="lg" fontWeight="800" color="#0f172a">Custom Packages for this Customer</Text>
+                      <Text fontSize="xs" color="#64748b" mt="0.5">
+                        These packages are targeted exclusively to this customer. Clicking "Publish on App" allows them to purchase it from their app.
+                      </Text>
+                    </Box>
+                    <Badge colorScheme="purple" px="2.5" py="1" borderRadius="full" fontSize="xs">
+                      {data.customPlans?.length || 0} Custom {data.customPlans?.length === 1 ? 'Package' : 'Packages'}
+                    </Badge>
+                  </Flex>
+
+                  {(!data.customPlans || data.customPlans.length === 0) ? (
+                    <Box p="8" textAlign="center" bg="#faf5ff" borderRadius="xl" border="1px dashed #d8b4fe">
+                      <Text fontSize="sm" fontWeight="700" color="#7c3aed" mb="1">No custom packages created yet.</Text>
+                      <Text fontSize="xs" color="#64748b" mb="3">Design a special offer with custom pricing, hiring limit, and cook replacement count.</Text>
+                      <Button size="sm" bg="#7c3aed" color="white" _hover={{ bg: '#6d28d9' }} onClick={onPlanModalOpen} leftIcon={<Plus size={14} />}>
+                        Create Custom Package Now
+                      </Button>
+                    </Box>
+                  ) : (
+                    <Box overflowX="auto">
+                      <Table variant="simple" size="sm">
+                        <Thead bg="#f8fafc">
+                          <Tr>
+                            <Th py="3.5" color="#64748b">Package Name</Th>
+                            <Th py="3.5" color="#64748b">Price</Th>
+                            <Th py="3.5" color="#64748b">Validity</Th>
+                            <Th py="3.5" color="#64748b">Limits (Posts / Hires / Replacements)</Th>
+                            <Th py="3.5" color="#64748b">Features</Th>
+                            <Th py="3.5" color="#64748b">App Status</Th>
+                            <Th py="3.5" color="#64748b" textAlign="center">Action</Th>
+                          </Tr>
+                        </Thead>
+                        <Tbody>
+                          {data.customPlans.map((plan) => (
+                            <Tr key={plan._id}>
+                              <Td py="3.5">
+                                <VStack align="start" spacing="0.5">
+                                  <Text fontSize="sm" fontWeight="700" color="#0f172a">{plan.name}</Text>
+                                  {plan.customNotes && (
+                                    <Text fontSize="xs" color="#64748b" fontStyle="italic">"{plan.customNotes}"</Text>
+                                  )}
+                                </VStack>
+                              </Td>
+                              <Td py="3.5">
+                                <Text fontSize="sm" fontWeight="800" color="#16a34a">₹{plan.price.toLocaleString('en-IN')}</Text>
+                              </Td>
+                              <Td py="3.5">
+                                <Text fontSize="sm" fontWeight="600" color="#475569">{plan.durationDays} Days</Text>
+                              </Td>
+                              <Td py="3.5">
+                                <VStack align="start" spacing="0.5">
+                                  <Text fontSize="xs" color="#1e293b" fontWeight="600">
+                                    Posts: <b>{plan.jobPostLimit}</b> • Hires: <b>{plan.hiringLimit}</b>
+                                  </Text>
+                                  <Text fontSize="xs" color="#64748b">
+                                    Replacements: <b>{plan.replacementLimit || 0}</b>
+                                  </Text>
+                                </VStack>
+                              </Td>
+                              <Td py="3.5" maxW="200px">
+                                <VStack align="start" spacing="0.5">
+                                  {(plan.features || []).slice(0, 2).map((f, i) => (
+                                    <Text key={i} fontSize="xs" color="#475569" isTruncated maxW="180px">• {f}</Text>
+                                  ))}
+                                  {(plan.features || []).length > 2 && (
+                                    <Text fontSize="2xs" color="#94a3b8">+{plan.features.length - 2} more</Text>
+                                  )}
+                                </VStack>
+                              </Td>
+                              <Td py="3.5">
+                                {plan.isPublished ? (
+                                  <Badge colorScheme="green" px="2.5" py="1" borderRadius="full" fontSize="xs">
+                                    ● Published on App
+                                  </Badge>
+                                ) : (
+                                  <Badge colorScheme="gray" px="2.5" py="1" borderRadius="full" fontSize="xs">
+                                    ○ Draft (Hidden)
+                                  </Badge>
+                                )}
+                              </Td>
+                              <Td py="3.5" textAlign="center">
+                                <Button
+                                  size="xs"
+                                  colorScheme={plan.isPublished ? "red" : "purple"}
+                                  variant={plan.isPublished ? "outline" : "solid"}
+                                  bg={plan.isPublished ? "transparent" : "#7c3aed"}
+                                  color={plan.isPublished ? "#dc2626" : "white"}
+                                  _hover={plan.isPublished ? { bg: '#fef2f2' } : { bg: '#6d28d9' }}
+                                  isLoading={togglingPlanId === plan._id}
+                                  onClick={() => handleTogglePublish(plan._id)}
+                                  leftIcon={plan.isPublished ? <EyeOff size={13} /> : <Eye size={13} />}
+                                  borderRadius="lg"
+                                >
+                                  {plan.isPublished ? 'Unpublish' : 'Publish on App'}
+                                </Button>
+                              </Td>
+                            </Tr>
+                          ))}
+                        </Tbody>
+                      </Table>
+                    </Box>
+                  )}
+                </Box>
+
+              </VStack>
             </TabPanel>
 
             {/* Jobs Posted Tab */}
@@ -623,6 +946,161 @@ const CustomerDashboard = () => {
           <ModalFooter>
             <Button variant="ghost" mr={3} onClick={onNoteClose}>Cancel</Button>
             <Button colorScheme="blue" bg={BRAND} onClick={handleAddNote} isLoading={isSubmittingNote}>Save Note</Button>
+          </ModalFooter>
+        </ModalContent>
+      </Modal>
+
+      {/* Create Custom Package Modal */}
+      <Modal isOpen={isPlanModalOpen} onClose={onPlanModalClose} size="xl" isCentered>
+        <ModalOverlay backdropFilter="blur(3px)" />
+        <ModalContent borderRadius="2xl" overflow="hidden">
+          <ModalHeader bg="#f8fafc" borderBottom="1px solid #e2e8f0" py="4">
+            <HStack spacing="2">
+              <Sparkles size={20} color="#7c3aed" />
+              <Text fontSize="lg" fontWeight="800" color="#0f172a">Create Custom Package for {customer.name}</Text>
+            </HStack>
+            <Text fontSize="xs" color="#64748b" fontWeight="normal" mt="1">
+              This package will be assigned exclusively to {customer.name} ({customer.contactPhone}).
+            </Text>
+          </ModalHeader>
+          <ModalCloseButton />
+          <ModalBody py="5">
+            <VStack spacing="4" align="stretch">
+              <FormControl isRequired>
+                <FormLabel fontSize="xs" fontWeight="700" color="#334155">Package Name</FormLabel>
+                <Input
+                  placeholder="e.g. Special Chef Hiring Package"
+                  value={planForm.name}
+                  onChange={(e) => setPlanForm({ ...planForm, name: e.target.value })}
+                  borderRadius="lg"
+                  size="sm"
+                  h="40px"
+                />
+              </FormControl>
+
+              <SimpleGrid columns={{ base: 1, sm: 2 }} gap="3">
+                <FormControl isRequired>
+                  <FormLabel fontSize="xs" fontWeight="700" color="#334155">Price (₹)</FormLabel>
+                  <Input
+                    type="number"
+                    placeholder="e.g. 2999"
+                    value={planForm.price}
+                    onChange={(e) => setPlanForm({ ...planForm, price: e.target.value })}
+                    borderRadius="lg"
+                    size="sm"
+                    h="40px"
+                  />
+                </FormControl>
+                <FormControl isRequired>
+                  <FormLabel fontSize="xs" fontWeight="700" color="#334155">Duration / Validity (Days)</FormLabel>
+                  <Input
+                    type="number"
+                    placeholder="e.g. 30"
+                    value={planForm.durationDays}
+                    onChange={(e) => setPlanForm({ ...planForm, durationDays: e.target.value })}
+                    borderRadius="lg"
+                    size="sm"
+                    h="40px"
+                  />
+                </FormControl>
+              </SimpleGrid>
+
+              <SimpleGrid columns={{ base: 1, sm: 3 }} gap="3">
+                <FormControl>
+                  <FormLabel fontSize="xs" fontWeight="700" color="#334155">Job Post Limit</FormLabel>
+                  <Input
+                    type="number"
+                    placeholder="e.g. 5"
+                    value={planForm.jobPostLimit}
+                    onChange={(e) => setPlanForm({ ...planForm, jobPostLimit: e.target.value })}
+                    borderRadius="lg"
+                    size="sm"
+                    h="40px"
+                  />
+                </FormControl>
+                <FormControl>
+                  <FormLabel fontSize="xs" fontWeight="700" color="#334155">Hiring Limit</FormLabel>
+                  <Input
+                    type="number"
+                    placeholder="e.g. 10"
+                    value={planForm.hiringLimit}
+                    onChange={(e) => setPlanForm({ ...planForm, hiringLimit: e.target.value })}
+                    borderRadius="lg"
+                    size="sm"
+                    h="40px"
+                  />
+                </FormControl>
+                <FormControl>
+                  <FormLabel fontSize="xs" fontWeight="700" color="#334155">Replacement Limit</FormLabel>
+                  <Input
+                    type="number"
+                    placeholder="e.g. 2"
+                    value={planForm.replacementLimit}
+                    onChange={(e) => setPlanForm({ ...planForm, replacementLimit: e.target.value })}
+                    borderRadius="lg"
+                    size="sm"
+                    h="40px"
+                  />
+                </FormControl>
+              </SimpleGrid>
+
+              <FormControl>
+                <FormLabel fontSize="xs" fontWeight="700" color="#334155">Included Features (one per line)</FormLabel>
+                <Textarea
+                  rows={3}
+                  placeholder="Dedicated Relationship Manager&#10;Free Cook Replacements&#10;Priority Cook Allocation"
+                  value={planForm.features}
+                  onChange={(e) => setPlanForm({ ...planForm, features: e.target.value })}
+                  borderRadius="lg"
+                  size="sm"
+                />
+              </FormControl>
+
+              <FormControl>
+                <FormLabel fontSize="xs" fontWeight="700" color="#334155">Special Note for Customer (Optional)</FormLabel>
+                <Input
+                  placeholder="e.g. Exclusive discounted offer created specially for your kitchen requirements"
+                  value={planForm.customNotes}
+                  onChange={(e) => setPlanForm({ ...planForm, customNotes: e.target.value })}
+                  borderRadius="lg"
+                  size="sm"
+                  h="40px"
+                />
+              </FormControl>
+
+              <Box p="3" bg="#f5f3ff" borderRadius="xl" border="1px solid #ddd6fe">
+                <Flex align="center" justify="space-between">
+                  <Box>
+                    <Text fontSize="sm" fontWeight="700" color="#5b21b6">Publish on App Immediately</Text>
+                    <Text fontSize="xs" color="#6d28d9">
+                      When enabled, ONLY this customer will see this package on their mobile app and can purchase it directly.
+                    </Text>
+                  </Box>
+                  <Switch
+                    isChecked={planForm.isPublished}
+                    onChange={(e) => setPlanForm({ ...planForm, isPublished: e.target.checked })}
+                    colorScheme="purple"
+                    size="lg"
+                  />
+                </Flex>
+              </Box>
+            </VStack>
+          </ModalBody>
+          <ModalFooter bg="#f8fafc" borderTop="1px solid #e2e8f0" py="3">
+            <Button variant="ghost" mr={3} onClick={onPlanModalClose} size="sm">Cancel</Button>
+            <Button
+              bg="#7c3aed"
+              color="white"
+              _hover={{ bg: '#6d28d9' }}
+              onClick={handleCreateCustomPlan}
+              isLoading={isSubmittingPlan}
+              leftIcon={<Sparkles size={16} />}
+              size="sm"
+              borderRadius="lg"
+              px="5"
+            >
+              {planForm.isPublished ? 'Create & Publish on App' : 'Save as Draft'}
+            </Button>
           </ModalFooter>
         </ModalContent>
       </Modal>

@@ -6,7 +6,7 @@ import {
   Menu, MenuButton, MenuList, MenuItem, MenuDivider,
   Modal, ModalOverlay, ModalContent, ModalHeader, ModalCloseButton, ModalBody, ModalFooter
 } from '@chakra-ui/react';
-import { Edit3, Filter, Plus, Trash2, Search, RotateCcw, Eye, MoreVertical, LayoutDashboard, Package, CreditCard, Ban, CheckCircle, UserCheck } from 'lucide-react';
+import { Edit3, Filter, Plus, Trash2, Search, RotateCcw, Eye, MoreVertical, LayoutDashboard, Package, CreditCard, Ban, CheckCircle, UserCheck, Sparkles } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import {
   PageHeader, TableCard, TableControls, TableFooter, PageFooter,
@@ -372,10 +372,10 @@ const CustomerList = () => {
         />
 
         <Box overflowX="auto" sx={{ WebkitOverflowScrolling: 'touch' }}>
-          <Table variant="simple" size="sm" minW="750px">
+          <Table variant="simple" size="sm" minW="850px">
             <Thead {...tableHeadStyle}>
               <Tr>
-                {['Sr.No.', 'Profile Image', 'Customer/Client Details', 'Lead Manager', 'Customer Status', 'Status', 'Action'].map(h => (
+                {['Sr.No.', 'Profile Image', 'Customer/Client Details', 'Lead Manager', 'Active Package', 'Customer Status', 'Status', 'Action'].map(h => (
                   <Th key={h} {...thStyle} whiteSpace="nowrap">{h}</Th>
                 ))}
               </Tr>
@@ -423,6 +423,42 @@ const CustomerList = () => {
                       )}
                     </HStack>
                   </Td>
+                  <Td py="3.5" minW="135px">
+                    {row.activePackage ? (
+                      <VStack align="start" spacing="1">
+                        <Badge
+                          px="2.5"
+                          py="0.5"
+                          borderRadius="full"
+                          fontSize="11px"
+                          fontWeight="700"
+                          bg={row.activePackage.isCustom ? '#fdf4ff' : '#ecfdf5'}
+                          color={row.activePackage.isCustom ? '#9333ea' : '#16a34a'}
+                          border={`1px solid ${row.activePackage.isCustom ? '#f0abfc' : '#bbf7d0'}`}
+                          textTransform="none"
+                        >
+                          {row.activePackage.isCustom ? '⭐ ' : ''}{row.activePackage.name}
+                        </Badge>
+                        <Text fontSize="11px" color="#64748b" fontWeight="600">
+                          ₹{row.activePackage.price} • {row.activePackage.daysLeft != null ? `${row.activePackage.daysLeft}d left` : `${row.activePackage.durationDays || 30}d`}
+                        </Text>
+                      </VStack>
+                    ) : (
+                      <Badge
+                        px="2"
+                        py="0.5"
+                        borderRadius="full"
+                        fontSize="11px"
+                        fontWeight="600"
+                        bg="#f8fafc"
+                        color="#94a3b8"
+                        border="1px solid #e2e8f0"
+                        textTransform="none"
+                      >
+                        No Package
+                      </Badge>
+                    )}
+                  </Td>
                   <Td py="3.5" minW="105px">
                     <Text fontSize="xs" fontWeight="700" color={row.customerStatus === 'running' ? '#16a34a' : '#ef4444'}
                       bg={row.customerStatus === 'running' ? '#ecfdf5' : '#fef2f2'}
@@ -463,17 +499,24 @@ const CustomerList = () => {
                           }}>
                           View Dashboard
                         </MenuItem>
+                        <MenuItem borderRadius="md" py="2" fontSize="sm" fontWeight="600" color="#7c3aed" _hover={{ bg: '#f5f3ff', color: '#6d28d9' }}
+                          icon={<Sparkles size={16} />}
+                          onClick={() => {
+                            navigate(`/customers/dashboard/${row._id}`, { state: { activeTab: 1, openCustomPlanModal: true } });
+                          }}>
+                          Create Custom Package
+                        </MenuItem>
                         <MenuItem borderRadius="md" py="2" fontSize="sm" fontWeight="600" color="#1e293b" _hover={{ bg: '#f8fafc', color: BRAND }}
                           icon={<Package size={16} />}
                           onClick={() => {
-                            navigate(`/customers/dashboard/${row._id}`, { state: { activeTab: 0 } });
+                            navigate(`/customers/dashboard/${row._id}`, { state: { activeTab: 1 } });
                           }}>
-                          View Package
+                          View Packages
                         </MenuItem>
                         <MenuItem borderRadius="md" py="2" fontSize="sm" fontWeight="600" color="#1e293b" _hover={{ bg: '#f8fafc', color: BRAND }}
                           icon={<CreditCard size={16} />}
                           onClick={() => {
-                            navigate(`/customers/dashboard/${row._id}`, { state: { activeTab: 4 } }); // Transactions is index 4
+                            navigate(`/customers/dashboard/${row._id}`, { state: { activeTab: 5 } }); // Transactions
                           }}>
                           Transactions
                         </MenuItem>
