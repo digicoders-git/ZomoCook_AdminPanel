@@ -56,12 +56,15 @@ const CustomerList = () => {
   const [currentPage, setCurrentPage] = useState(1);
 
   // Filter states
-  const [showFilters, setShowFilters] = useState(false);
+  const [showFilters, setShowFilters] = useState(true);
   const [filters, setFilters] = useState({
-    category: '',
-    namePhone: '',
-    status: '',
-    leadManager: ''
+    leadType: '',
+    subscription: '',
+    leadStatus: '',
+    customerStatus: '',
+    salesperson: '',
+    dateFrom: '',
+    dateTo: ''
   });
 
   const fetchCustomers = async () => {
@@ -152,10 +155,19 @@ const CustomerList = () => {
 
   const handleFilterChange = (name, value) => {
     setFilters(prev => ({ ...prev, [name]: value }));
+    setCurrentPage(1);
   };
 
   const resetFilters = () => {
-    setFilters({ category: '', namePhone: '', status: '', leadManager: '' });
+    setFilters({
+      leadType: '',
+      subscription: '',
+      leadStatus: '',
+      customerStatus: '',
+      salesperson: '',
+      dateFrom: '',
+      dateTo: ''
+    });
     setSearch('');
     setCurrentPage(1);
   };
@@ -178,17 +190,36 @@ const CustomerList = () => {
       (customer.email || '').toLowerCase().includes(search.toLowerCase()) ||
       (customer.contactPhone || '').includes(search);
 
-    const matchesCategory = !filters.category || customer.propertyCategory === filters.category;
-    const matchesNamePhone = !filters.namePhone ||
-      (customer.name || '').toLowerCase().includes(filters.namePhone.toLowerCase()) ||
-      (customer.contactPhone || '').includes(filters.namePhone);
-    const matchesStatus = !filters.status || customer.accountStatus === filters.status;
-    const matchesLeadManager = !filters.leadManager || customer.leadManager === filters.leadManager;
+    const matchesLeadType = !filters.leadType || (customer.leadType || (customer.activePackage ? 'Paid' : 'Unpaid')).toLowerCase() === filters.leadType.toLowerCase();
+    
+    const matchesSubscription = !filters.subscription || (
+      filters.subscription === 'none'
+        ? !customer.activePackage
+        : (customer.activePackage?.name || '').toLowerCase().includes(filters.subscription.toLowerCase())
+    );
 
-    return matchesSearch && matchesCategory && matchesNamePhone && matchesStatus && matchesLeadManager;
+    const matchesLeadStatus = !filters.leadStatus || (customer.leadStatus || '').toLowerCase() === filters.leadStatus.toLowerCase();
+    const matchesCustomerStatus = !filters.customerStatus || (customer.customerStatus || '').toLowerCase() === filters.customerStatus.toLowerCase();
+    const matchesSalesperson = !filters.salesperson || customer.leadManager === filters.salesperson;
+
+    // Date range filter
+    let matchesDate = true;
+    if (filters.dateFrom) {
+      const fromDate = new Date(filters.dateFrom);
+      const custDate = new Date(customer.createdAt);
+      if (custDate < fromDate) matchesDate = false;
+    }
+    if (filters.dateTo) {
+      const toDate = new Date(filters.dateTo);
+      toDate.setHours(23, 59, 59, 999);
+      const custDate = new Date(customer.createdAt);
+      if (custDate > toDate) matchesDate = false;
+    }
+
+    return matchesSearch && matchesLeadType && matchesSubscription && matchesLeadStatus && matchesCustomerStatus && matchesSalesperson && matchesDate;
   });
 
-  const totalPages = Math.ceil(filteredCustomers.length / parseInt(entries));
+  const totalPages = Math.ceil(filteredCustomers.length / parseInt(entries)) || 1;
   const startIndex = (currentPage - 1) * parseInt(entries);
   const paginatedCustomers = filteredCustomers.slice(startIndex, startIndex + parseInt(entries));
 
@@ -251,6 +282,115 @@ const CustomerList = () => {
     return `${apiBase}/${path.replace(/\\/g, '/')}`;
   };
 
+  const formatActivityDate = (dateStr) => {
+    if (!dateStr) return '';
+    const d = new Date(dateStr);
+    if (isNaN(d.getTime())) return '';
+    const day = d.toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' });
+    const time = d.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit', hour12: true });
+    return { day, time };
+  };
+
+  const renderLeadStatusBadge = (status) => {
+    const s = (status || 'New Lead').toLowerCase();
+    let bg = '#eff6ff';
+    let color = '#2563eb';
+    let border = '#bfdbfe';
+
+    if (s.includes('hired') || s.includes('joined')) {
+      bg = '#ecfdf5';
+      color = '#059669';
+      border = '#a7f3d0';
+    } else if (s.includes('demo')) {
+      bg = '#fefce8';
+      color = '#ca8a04';
+      border = '#fef08a';
+    } else if (s.includes('shortlist') || s.includes('review')) {
+      bg = '#eff6ff';
+      color = '#2563eb';
+      border = '#bfdbfe';
+    } else if (s.includes('select')) {
+      bg = '#f5f3ff';
+      color = '#7c3aed';
+      border = '#ddd6fe';
+    } else if (s.includes('reject') || s.includes('cancel')) {
+      bg = '#fef2f2';
+      color = '#dc2626';
+      border = '#fecaca';
+    }
+
+    return (
+      <Badge
+        px="3"
+        py="1"
+        borderRadius="md"
+        fontSize="xs"
+        fontWeight="700"
+        bg={bg}
+        color={color}
+        border={`1px solid ${border}`}
+        textTransform="capitalize"
+      >
+        {status || 'New'}
+      </Badge>
+    );
+  };
+
+  const renderSubscriptionBadge = (pkg) => {
+    if (!pkg) {
+      return (
+        <Badge
+          px="3"
+          py="1"
+          borderRadius="md"
+          fontSize="xs"
+          fontWeight="600"
+          bg="#f1f5f9"
+          color="#64748b"
+          border="1px solid #e2e8f0"
+          textTransform="capitalize"
+        >
+          Basic
+        </Badge>
+      );
+    }
+
+    const name = (pkg.name || '').toLowerCase();
+    let bg = '#f5f3ff';
+    let color = '#7c3aed';
+    let border = '#ddd6fe';
+
+    if (name.includes('standard')) {
+      bg = '#fefce8';
+      color = '#b45309';
+      border = '#fde68a';
+    } else if (name.includes('premium') || name.includes('vip')) {
+      bg = '#f5f3ff';
+      color = '#7c3aed';
+      border = '#e9d5ff';
+    } else if (name.includes('basic') || name.includes('starter')) {
+      bg = '#eff6ff';
+      color = '#2563eb';
+      border = '#bfdbfe';
+    }
+
+    return (
+      <Badge
+        px="3"
+        py="1"
+        borderRadius="md"
+        fontSize="xs"
+        fontWeight="700"
+        bg={bg}
+        color={color}
+        border={`1px solid ${border}`}
+        textTransform="capitalize"
+      >
+        {pkg.name}
+      </Badge>
+    );
+  };
+
   return (
     <Box pb="10">
       {isLoading ? (
@@ -258,312 +398,391 @@ const CustomerList = () => {
       ) : (
         <>
           <PageHeader
-        title="Customer/Client Record List"
-        breadcrumb="Customer/Client Record List"
-        actions={[
-          <Button
-            key="filter"
-            leftIcon={<Filter size={14} />}
-            size="sm"
-            variant={showFilters ? "solid" : "outline"}
-            bg={showFilters ? BRAND : "transparent"}
-            color={showFilters ? "white" : "#64748b"}
-            borderColor="#dde6f5"
-            borderRadius="lg"
-            _hover={{ borderColor: BRAND, color: showFilters ? "white" : BRAND }}
-            onClick={() => setShowFilters(!showFilters)}
-          >
-            Filter
-          </Button>,
-          <Button key="add" leftIcon={<Plus size={14} />} size="sm" bg={BRAND} color="white" borderRadius="lg" _hover={{ bg: '#003d91' }} onClick={() => navigate('/customers/add')}>Add</Button>,
-        ]}
-      />
+            title="Customer/Client Record List"
+            breadcrumb="Customer/Client Record List"
+            actions={[
+              <Button
+                key="filter"
+                leftIcon={<Filter size={14} />}
+                size="sm"
+                variant={showFilters ? "solid" : "outline"}
+                bg={showFilters ? BRAND : "transparent"}
+                color={showFilters ? "white" : "#64748b"}
+                borderColor="#dde6f5"
+                borderRadius="lg"
+                _hover={{ borderColor: BRAND, color: showFilters ? "white" : BRAND }}
+                onClick={() => setShowFilters(!showFilters)}
+              >
+                Filter
+              </Button>,
+              <Button key="add" leftIcon={<Plus size={14} />} size="sm" bg={BRAND} color="white" borderRadius="lg" _hover={{ bg: '#003d91' }} onClick={() => navigate('/customers/add')}>Add</Button>,
+            ]}
+          />
 
-      <Collapse in={showFilters} animateOpacity>
-        <Box bg="white" p={{ base: '4', md: '5' }} borderRadius="xl" border="1px solid #e8edf5" mb="6" boxShadow="0 2px 12px rgba(0,74,173,0.05)">
-          <Flex align={{ base: 'stretch', md: 'flex-end' }} gap="3" direction={{ base: 'column', md: 'row' }} wrap="wrap">
-            <Box w={{ base: 'full', md: 'auto' }} flex={{ md: '1' }} minW={{ md: '180px' }}>
-              <FormLabel fontSize="xs" fontWeight="700" color="#475569" mb="2">Category</FormLabel>
-              <Select
-                size="sm"
-                h="40px"
-                borderRadius="lg"
-                bg="#f8faff"
-                border="1.5px solid #dde6f5"
-                placeholder="Select Category"
-                value={filters.category}
-                onChange={(e) => handleFilterChange('category', e.target.value)}
-              >
-                <option value="hotel">Hotel</option>
-                <option value="resort">Resort</option>
-                <option value="villa">Private Villa</option>
-                <option value="canteen">Canteen</option>
-                <option value="restaurant">Restaurant</option>
-                <option value="home">Home</option>
-              </Select>
-            </Box>
-            <Box w={{ base: 'full', md: 'auto' }} flex={{ md: '1' }} minW={{ md: '180px' }}>
-              <FormLabel fontSize="xs" fontWeight="700" color="#475569" mb="2">Customer Name/Phone</FormLabel>
-              <Input
-                size="sm"
-                h="40px"
-                borderRadius="lg"
-                bg="#f8faff"
-                border="1.5px solid #dde6f5"
-                placeholder="Name or Phone"
-                value={filters.namePhone}
-                onChange={(e) => handleFilterChange('namePhone', e.target.value)}
-              />
-            </Box>
-            <Box w={{ base: 'full', md: 'auto' }} flex={{ md: '1' }} minW={{ md: '150px' }}>
-              <FormLabel fontSize="xs" fontWeight="700" color="#475569" mb="2">Status</FormLabel>
-              <Select
-                size="sm"
-                h="40px"
-                borderRadius="lg"
-                bg="#f8faff"
-                border="1.5px solid #dde6f5"
-                placeholder="-- Select Status --"
-                value={filters.status}
-                onChange={(e) => handleFilterChange('status', e.target.value)}
-              >
-                <option value="active">Active</option>
-                <option value="inactive">Inactive</option>
-              </Select>
-            </Box>
-            {!isLeadManager && (
-              <Box w={{ base: 'full', md: 'auto' }} flex={{ md: '1' }} minW={{ md: '180px' }}>
-                <FormLabel fontSize="xs" fontWeight="700" color="#475569" mb="2">Lead Manager</FormLabel>
-                <Select
+          {/* Filter Card */}
+          <Collapse in={showFilters} animateOpacity>
+            <Box bg="white" p={{ base: '4', md: '5' }} borderRadius="2xl" border="1px solid #e8edf5" mb="6" boxShadow="0 2px 12px rgba(0,74,173,0.04)">
+              <HStack spacing="2" mb="4">
+                <Filter size={18} color="#2D2B75" />
+                <Text fontSize="sm" fontWeight="800" color="#1e1b4b">
+                  Filter Customers
+                </Text>
+              </HStack>
+
+              <SimpleGrid columns={{ base: 1, sm: 2, md: 4, lg: 7 }} gap="3" alignItems="flex-end">
+                <Box>
+                  <FormLabel fontSize="xs" fontWeight="700" color="#475569" mb="1.5">Lead Type</FormLabel>
+                  <Select
+                    size="sm"
+                    h="38px"
+                    borderRadius="lg"
+                    bg="#f8faff"
+                    border="1.5px solid #dde6f5"
+                    value={filters.leadType}
+                    onChange={(e) => handleFilterChange('leadType', e.target.value)}
+                  >
+                    <option value="">All</option>
+                    <option value="Paid">Paid</option>
+                    <option value="Unpaid">Unpaid</option>
+                  </Select>
+                </Box>
+
+                <Box>
+                  <FormLabel fontSize="xs" fontWeight="700" color="#475569" mb="1.5">Subscription</FormLabel>
+                  <Select
+                    size="sm"
+                    h="38px"
+                    borderRadius="lg"
+                    bg="#f8faff"
+                    border="1.5px solid #dde6f5"
+                    value={filters.subscription}
+                    onChange={(e) => handleFilterChange('subscription', e.target.value)}
+                  >
+                    <option value="">All</option>
+                    <option value="Basic">Basic</option>
+                    <option value="Standard">Standard</option>
+                    <option value="Premium">Premium</option>
+                    <option value="none">No Subscription</option>
+                  </Select>
+                </Box>
+
+                <Box>
+                  <FormLabel fontSize="xs" fontWeight="700" color="#475569" mb="1.5">Lead Status</FormLabel>
+                  <Select
+                    size="sm"
+                    h="38px"
+                    borderRadius="lg"
+                    bg="#f8faff"
+                    border="1.5px solid #dde6f5"
+                    value={filters.leadStatus}
+                    onChange={(e) => handleFilterChange('leadStatus', e.target.value)}
+                  >
+                    <option value="">All</option>
+                    <option value="Hired">Hired</option>
+                    <option value="Demo">Demo</option>
+                    <option value="Shortlisted">Shortlisted</option>
+                    <option value="Selected">Selected</option>
+                    <option value="Rejected">Rejected</option>
+                    <option value="Job Posted">Job Posted</option>
+                  </Select>
+                </Box>
+
+                <Box>
+                  <FormLabel fontSize="xs" fontWeight="700" color="#475569" mb="1.5">Customer Status</FormLabel>
+                  <Select
+                    size="sm"
+                    h="38px"
+                    borderRadius="lg"
+                    bg="#f8faff"
+                    border="1.5px solid #dde6f5"
+                    value={filters.customerStatus}
+                    onChange={(e) => handleFilterChange('customerStatus', e.target.value)}
+                  >
+                    <option value="">All</option>
+                    <option value="running">Running</option>
+                    <option value="closed">Closed / Inactive</option>
+                  </Select>
+                </Box>
+
+                <Box>
+                  <FormLabel fontSize="xs" fontWeight="700" color="#475569" mb="1.5">Salesperson</FormLabel>
+                  <Select
+                    size="sm"
+                    h="38px"
+                    borderRadius="lg"
+                    bg="#f8faff"
+                    border="1.5px solid #dde6f5"
+                    value={filters.salesperson}
+                    onChange={(e) => handleFilterChange('salesperson', e.target.value)}
+                  >
+                    <option value="">All</option>
+                    {leadManagers.map(lm => (
+                      <option key={lm._id} value={lm._id}>{lm.name}</option>
+                    ))}
+                  </Select>
+                </Box>
+
+                <Box>
+                  <FormLabel fontSize="xs" fontWeight="700" color="#475569" mb="1.5">Date From</FormLabel>
+                  <Input
+                    type="date"
+                    size="sm"
+                    h="38px"
+                    borderRadius="lg"
+                    bg="#f8faff"
+                    border="1.5px solid #dde6f5"
+                    value={filters.dateFrom}
+                    onChange={(e) => handleFilterChange('dateFrom', e.target.value)}
+                  />
+                </Box>
+
+                <Box>
+                  <FormLabel fontSize="xs" fontWeight="700" color="#475569" mb="1.5">Date To</FormLabel>
+                  <Input
+                    type="date"
+                    size="sm"
+                    h="38px"
+                    borderRadius="lg"
+                    bg="#f8faff"
+                    border="1.5px solid #dde6f5"
+                    value={filters.dateTo}
+                    onChange={(e) => handleFilterChange('dateTo', e.target.value)}
+                  />
+                </Box>
+              </SimpleGrid>
+
+              <Flex justify="flex-end" gap="2.5" mt="4" pt="3" borderTop="1px solid #f1f5f9">
+                <Button
                   size="sm"
-                  h="40px"
+                  h="36px"
+                  px="4"
+                  variant="outline"
+                  color="#475569"
+                  borderColor="#dde6f5"
+                  leftIcon={<RotateCcw size={14} />}
+                  _hover={{ bg: '#f8fafc' }}
                   borderRadius="lg"
-                  bg="#f8faff"
-                  border="1.5px solid #dde6f5"
-                  placeholder="All Lead Managers"
-                  value={filters.leadManager}
-                  onChange={(e) => handleFilterChange('leadManager', e.target.value)}
+                  fontSize="xs"
+                  fontWeight="700"
+                  onClick={resetFilters}
                 >
-                  {leadManagers.map(lm => (
-                    <option key={lm._id} value={lm._id}>{lm.name}</option>
-                  ))}
-                </Select>
-              </Box>
-            )}
-            <Flex gap="3" w={{ base: 'full', md: 'auto' }} direction={{ base: 'row', md: 'row' }}>
-              <Button flex={{ base: '1', md: 'none' }} h="40px" px={{ base: '4', md: '8' }} bg={ACCENT} color="white" leftIcon={<Search size={16} />} _hover={{ bg: '#c8151c' }} borderRadius="lg" fontSize="sm" fontWeight="700" onClick={() => setCurrentPage(1)}>Search</Button>
-              <Button flex={{ base: '1', md: 'none' }} h="40px" px={{ base: '4', md: '8' }} variant="outline" color="#475569" borderColor="#dde6f5" leftIcon={<RotateCcw size={16} />} _hover={{ bg: '#f1f5f9' }} borderRadius="lg" fontSize="sm" fontWeight="700" onClick={resetFilters}>Reset</Button>
+                  Clear All
+                </Button>
+                <Button
+                  size="sm"
+                  h="36px"
+                  px="5"
+                  bg="#2D2B75"
+                  color="white"
+                  leftIcon={<Search size={14} />}
+                  _hover={{ bg: '#1e1b4b' }}
+                  borderRadius="lg"
+                  fontSize="xs"
+                  fontWeight="700"
+                  onClick={() => setCurrentPage(1)}
+                >
+                  Apply Filter
+                </Button>
+              </Flex>
+            </Box>
+          </Collapse>
+
+          <TableCard>
+            <Flex px="5" py="4" borderBottom="1px solid #f1f5f9" align="center">
+              <Box w="3px" h="18px" bg={BRAND} borderRadius="full" mr="3" />
+              <Text fontSize="sm" fontWeight="700" color="#1e293b">Customer/Client Record List</Text>
             </Flex>
-          </Flex>
-        </Box>
-      </Collapse>
 
-      <TableCard>
-        <Flex px="5" py="4" borderBottom="1px solid #f1f5f9" align="center">
-          <Box w="3px" h="18px" bg={BRAND} borderRadius="full" mr="3" />
-          <Text fontSize="sm" fontWeight="700" color="#1e293b">Customer/Client Record List</Text>
-        </Flex>
+            <TableControls
+              search={search}
+              onSearch={(val) => { setSearch(val); setCurrentPage(1); }}
+              entries={entries}
+              onEntriesChange={(val) => { setEntries(val); setCurrentPage(1); }}
+            />
 
-        <TableControls
-          search={search}
-          onSearch={(val) => { setSearch(val); setCurrentPage(1); }}
-          entries={entries}
-          onEntriesChange={(val) => { setEntries(val); setCurrentPage(1); }}
-        />
+            <Box overflowX="auto" sx={{ WebkitOverflowScrolling: 'touch' }}>
+              <Table variant="simple" size="sm" minW="1050px">
+                <Thead {...tableHeadStyle}>
+                  <Tr>
+                    {['SR.NO.', 'PROFILE IMAGE', 'CUSTOMER/CLIENT DETAILS', 'LEAD TYPE', 'SUBSCRIPTION', 'LEAD STATUS', 'CUSTOMER STATUS', 'LATEST ACTIVITY', 'STATUS', 'ACTION'].map(h => (
+                      <Th key={h} {...thStyle} fontSize="11px" letterSpacing="0.5px" whiteSpace="nowrap">{h}</Th>
+                    ))}
+                  </Tr>
+                </Thead>
+                <Tbody>
+                  {paginatedCustomers.map((row, index) => {
+                    const activity = row.latestActivity;
+                    const formattedDate = activity?.date ? formatActivityDate(activity.date) : null;
+                    const isPaid = (row.leadType || (row.activePackage ? 'Paid' : 'Unpaid')) === 'Paid';
 
-        <Box overflowX="auto" sx={{ WebkitOverflowScrolling: 'touch' }}>
-          <Table variant="simple" size="sm" minW="850px">
-            <Thead {...tableHeadStyle}>
-              <Tr>
-                {['Sr.No.', 'Profile Image', 'Customer/Client Details', 'Lead Manager', 'Active Package', 'Customer Status', 'Status', 'Action'].map(h => (
-                  <Th key={h} {...thStyle} whiteSpace="nowrap">{h}</Th>
-                ))}
-              </Tr>
-            </Thead>
-            <Tbody>
-              {paginatedCustomers.map((row, index) => (
-                <Tr key={row._id} {...trHover}>
-                  <Td py="3.5" color="#64748b" fontSize="sm" fontWeight="600" minW="55px">{startIndex + index + 1}</Td>
-                  <Td py="3.5" minW="65px">
-                    <Avatar size="md" src={getProfileImg(row.profilePic)} bg="#e6eeff" border="2px solid #e8edf5" />
-                  </Td>
-                  <Td py="3.5" minW="180px">
-                    <VStack align="start" spacing="0.5">
-                      <HStack spacing="1" flexWrap="wrap"><Text fontSize="xs" color="#94a3b8" whiteSpace="nowrap">Category:</Text><Text fontSize="xs" color="#475569" fontWeight="600">{row.propertyCategory}</Text></HStack>
-                      <HStack spacing="1" flexWrap="wrap"><Text fontSize="xs" color="#94a3b8" whiteSpace="nowrap">Name:</Text><Text fontSize="xs" color="#1e293b" fontWeight="700">{row.name}</Text></HStack>
-                      <HStack spacing="1" flexWrap="wrap"><Text fontSize="xs" color="#94a3b8" whiteSpace="nowrap">Phone:</Text><Text fontSize="xs" color="#475569">{row.contactPhone}</Text></HStack>
-                      <HStack spacing="1" flexWrap="wrap"><Text fontSize="xs" color="#94a3b8" whiteSpace="nowrap">Email:</Text><Text fontSize="xs" color="#475569">{row.email}</Text></HStack>
-                    </VStack>
-                  </Td>
-                  <Td py="3.5" minW="140px">
-                    <HStack spacing="1.5">
-                      <Badge
-                        px="2.5"
-                        py="0.5"
-                        borderRadius="full"
-                        fontSize="11px"
-                        fontWeight="700"
-                        bg={row.leadManager ? '#eff6ff' : '#f8fafc'}
-                        color={row.leadManager ? '#1d4ed8' : '#94a3b8'}
-                        border={`1px solid ${row.leadManager ? '#bfdbfe' : '#e2e8f0'}`}
-                        textTransform="none"
-                      >
-                        {getLeadManagerName(row)}
-                      </Badge>
-                      {!isLeadManager && (
-                        <IconButton
-                          size="xs"
-                          variant="ghost"
-                          colorScheme="blue"
-                          icon={<UserCheck size={13} />}
-                          aria-label="Assign Lead Manager"
-                          title="Assign Lead Manager"
-                          onClick={() => openAssignModal(row)}
-                        />
-                      )}
-                    </HStack>
-                  </Td>
-                  <Td py="3.5" minW="135px">
-                    {row.activePackage ? (
-                      <VStack align="start" spacing="1">
-                        <HStack spacing="1">
+                    return (
+                      <Tr key={row._id} {...trHover}>
+                        <Td py="4" color="#1e293b" fontSize="sm" fontWeight="700" minW="55px">
+                          {startIndex + index + 1}
+                        </Td>
+                        <Td py="4" minW="70px">
+                          <Avatar size="md" src={getProfileImg(row.profilePic)} bg="#e0e7ff" icon={<Avatar size="md" bg="#e0e7ff" color="#94a3b8" />} border="2px solid #f1f5f9" />
+                        </Td>
+                        <Td py="4" minW="210px">
+                          <VStack align="start" spacing="1">
+                            <HStack spacing="1">
+                              <Text fontSize="xs" color="#64748b" fontWeight="600">Name:</Text>
+                              <Text fontSize="xs" color="#0f172a" fontWeight="800">{row.name}</Text>
+                            </HStack>
+                            <HStack spacing="1">
+                              <Text fontSize="xs" color="#64748b" fontWeight="600">Phone:</Text>
+                              <Text fontSize="xs" color="#334155" fontWeight="600">{row.contactPhone || 'N/A'}</Text>
+                            </HStack>
+                            <HStack spacing="1">
+                              <Text fontSize="xs" color="#64748b" fontWeight="600">Email:</Text>
+                              <Text fontSize="xs" color="#334155">{row.email || 'N/A'}</Text>
+                            </HStack>
+                          </VStack>
+                        </Td>
+                        <Td py="4" minW="110px">
                           <Badge
                             px="2.5"
-                            py="0.5"
+                            py="1"
                             borderRadius="full"
-                            fontSize="11px"
+                            fontSize="xs"
                             fontWeight="700"
-                            bg={row.activePackage.isCustom ? '#fdf4ff' : '#ecfdf5'}
-                            color={row.activePackage.isCustom ? '#9333ea' : '#16a34a'}
-                            border={`1px solid ${row.activePackage.isCustom ? '#f0abfc' : '#bbf7d0'}`}
-                            textTransform="none"
+                            bg={isPaid ? '#ecfdf5' : '#fef2f2'}
+                            color={isPaid ? '#059669' : '#dc2626'}
+                            border={`1px solid ${isPaid ? '#a7f3d0' : '#fecaca'}`}
+                            display="inline-flex"
+                            alignItems="center"
+                            gap="1.5"
                           >
-                            {row.activePackage.isCustom ? '⭐ ' : ''}{row.activePackage.name}
+                            <Box w="6px" h="6px" borderRadius="full" bg={isPaid ? '#10b981' : '#ef4444'} />
+                            {isPaid ? 'Paid' : 'Unpaid'}
                           </Badge>
-                          {row.activePackage.dueAmount > 0 && (
-                            <Badge colorScheme="red" variant="solid" fontSize="10px" px="1.5" py="0.5" borderRadius="full">
-                              ₹{row.activePackage.dueAmount?.toLocaleString('en-IN')} Due
-                            </Badge>
-                          )}
-                        </HStack>
-                        <Text fontSize="11px" color="#64748b" fontWeight="600">
-                          ₹{row.activePackage.price?.toLocaleString('en-IN')} • {row.activePackage.daysLeft != null ? `${row.activePackage.daysLeft}d left` : `${row.activePackage.durationDays || 30}d`}
-                        </Text>
-                      </VStack>
-                    ) : (
-                      <Badge
-                        px="2"
-                        py="0.5"
-                        borderRadius="full"
-                        fontSize="11px"
-                        fontWeight="600"
-                        bg="#f8fafc"
-                        color="#94a3b8"
-                        border="1px solid #e2e8f0"
-                        textTransform="none"
-                      >
-                        No Package
-                      </Badge>
-                    )}
-                  </Td>
-                  <Td py="3.5" minW="105px">
-                    <Text fontSize="xs" fontWeight="700" color={row.customerStatus === 'running' ? '#16a34a' : '#ef4444'}
-                      bg={row.customerStatus === 'running' ? '#ecfdf5' : '#fef2f2'}
-                      border={`1px solid ${row.customerStatus === 'running' ? '#bbf7d0' : '#fecaca'}`}
-                      px="2.5" py="0.5" borderRadius="full" display="inline-block" textTransform="capitalize" whiteSpace="nowrap">
-                      {row.customerStatus}
-                    </Text>
-                  </Td>
-                  <Td py="3.5" minW="65px">
-                    <Switch
-                      isChecked={row.accountStatus === 'active'}
-                      onChange={() => confirmStatusToggle(row._id, row.accountStatus)}
-                      sx={{ '.chakra-switch__track[data-checked]': { bg: BRAND } }}
-                    />
-                  </Td>
-                  <Td py="3.5" minW="80px" textAlign="center">
-                    <Menu placement="bottom-end">
-                      <MenuButton as={IconButton} icon={<MoreVertical size={16} />} size="sm" variant="ghost" color="#64748b" _hover={{ bg: '#f1f5f9', color: BRAND }} borderRadius="lg" aria-label="Options" />
-                      <MenuList minW="180px" boxShadow="lg" p="1.5" borderRadius="xl" border="1px solid #e8edf5">
-                        {!isLeadManager && (
-                          <MenuItem
+                        </Td>
+                        <Td py="4" minW="120px">
+                          {renderSubscriptionBadge(row.activePackage)}
+                        </Td>
+                        <Td py="4" minW="110px">
+                          {renderLeadStatusBadge(row.leadStatus)}
+                        </Td>
+                        <Td py="4" minW="110px">
+                          <Badge
+                            px="3"
+                            py="1"
                             borderRadius="md"
-                            py="2"
-                            fontSize="sm"
-                            fontWeight="600"
-                            color="#1e293b"
-                            _hover={{ bg: '#f8fafc', color: BRAND }}
-                            icon={<UserCheck size={16} />}
-                            onClick={() => openAssignModal(row)}
+                            fontSize="xs"
+                            fontWeight="700"
+                            bg={row.customerStatus === 'running' ? '#ecfdf5' : '#f1f5f9'}
+                            color={row.customerStatus === 'running' ? '#059669' : '#64748b'}
+                            border={`1px solid ${row.customerStatus === 'running' ? '#a7f3d0' : '#e2e8f0'}`}
+                            textTransform="capitalize"
                           >
-                            Assign Lead Manager
-                          </MenuItem>
-                        )}
-                        <MenuItem borderRadius="md" py="2" fontSize="sm" fontWeight="600" color="#1e293b" _hover={{ bg: '#f8fafc', color: BRAND }}
-                          icon={<LayoutDashboard size={16} />}
-                          onClick={() => {
-                            navigate(`/customers/dashboard/${row._id}`, { state: { activeTab: 0 } });
-                          }}>
-                          View Dashboard
-                        </MenuItem>
-                        <MenuItem borderRadius="md" py="2" fontSize="sm" fontWeight="600" color="#7c3aed" _hover={{ bg: '#f5f3ff', color: '#6d28d9' }}
-                          icon={<Sparkles size={16} />}
-                          onClick={() => {
-                            navigate(`/customers/dashboard/${row._id}`, { state: { activeTab: 1, openCustomPlanModal: true } });
-                          }}>
-                          Create Custom Package
-                        </MenuItem>
-                        <MenuItem borderRadius="md" py="2" fontSize="sm" fontWeight="600" color="#1e293b" _hover={{ bg: '#f8fafc', color: BRAND }}
-                          icon={<Package size={16} />}
-                          onClick={() => {
-                            navigate(`/customers/dashboard/${row._id}`, { state: { activeTab: 1 } });
-                          }}>
-                          View Packages
-                        </MenuItem>
-                        <MenuItem borderRadius="md" py="2" fontSize="sm" fontWeight="600" color="#1e293b" _hover={{ bg: '#f8fafc', color: BRAND }}
-                          icon={<CreditCard size={16} />}
-                          onClick={() => {
-                            navigate(`/customers/dashboard/${row._id}`, { state: { activeTab: 5 } }); // Transactions
-                          }}>
-                          Transactions
-                        </MenuItem>
-                        
-                        <MenuDivider my="1.5" borderColor="#f1f5f9" />
-                        
-                        <MenuItem borderRadius="md" py="2" fontSize="sm" fontWeight="600" color={row.accountStatus === 'active' ? '#ef4444' : '#10b981'} _hover={{ bg: row.accountStatus === 'active' ? '#fef2f2' : '#ecfdf5' }}
-                          icon={row.accountStatus === 'active' ? <Ban size={16} /> : <CheckCircle size={16} />}
-                          onClick={() => confirmStatusToggle(row._id, row.accountStatus)}>
-                          {row.accountStatus === 'active' ? 'Block Client' : 'Unblock Client'}
-                        </MenuItem>
-                        
-                        <MenuDivider my="1.5" borderColor="#f1f5f9" />
+                            {row.customerStatus || 'Running'}
+                          </Badge>
+                        </Td>
+                        <Td py="4" minW="180px">
+                          {formattedDate ? (
+                            <VStack align="start" spacing="0.5">
+                              <Text fontSize="xs" fontWeight="700" color="#1e293b">
+                                {formattedDate.day}, {formattedDate.time}
+                              </Text>
+                              <Text fontSize="2xs" color="#64748b" fontWeight="500">
+                                {activity?.desc || activity?.title || 'Activity recorded'}
+                              </Text>
+                            </VStack>
+                          ) : (
+                            <Text fontSize="xs" color="#94a3b8">No activity yet</Text>
+                          )}
+                        </Td>
+                        <Td py="4" minW="65px">
+                          <Switch
+                            isChecked={row.accountStatus === 'active'}
+                            onChange={() => confirmStatusToggle(row._id, row.accountStatus)}
+                            sx={{ '.chakra-switch__track[data-checked]': { bg: '#2D2B75' } }}
+                          />
+                        </Td>
+                        <Td py="4" minW="80px" textAlign="center">
+                          <Menu placement="bottom-end">
+                            <MenuButton as={IconButton} icon={<MoreVertical size={16} />} size="sm" variant="ghost" color="#64748b" _hover={{ bg: '#f1f5f9', color: BRAND }} borderRadius="lg" aria-label="Options" />
+                            <MenuList minW="180px" boxShadow="lg" p="1.5" borderRadius="xl" border="1px solid #e8edf5">
+                              {!isLeadManager && (
+                                <MenuItem
+                                  borderRadius="md"
+                                  py="2"
+                                  fontSize="sm"
+                                  fontWeight="600"
+                                  color="#1e293b"
+                                  _hover={{ bg: '#f8fafc', color: BRAND }}
+                                  icon={<UserCheck size={16} />}
+                                  onClick={() => openAssignModal(row)}
+                                >
+                                  Assign Lead Manager
+                                </MenuItem>
+                              )}
+                              <MenuItem borderRadius="md" py="2" fontSize="sm" fontWeight="600" color="#1e293b" _hover={{ bg: '#f8fafc', color: BRAND }}
+                                icon={<LayoutDashboard size={16} />}
+                                onClick={() => {
+                                  navigate(`/customers/dashboard/${row._id}`, { state: { activeTab: 0 } });
+                                }}>
+                                View Dashboard
+                              </MenuItem>
+                              <MenuItem borderRadius="md" py="2" fontSize="sm" fontWeight="600" color="#7c3aed" _hover={{ bg: '#f5f3ff', color: '#6d28d9' }}
+                                icon={<Sparkles size={16} />}
+                                onClick={() => {
+                                  navigate(`/customers/dashboard/${row._id}`, { state: { activeTab: 1, openCustomPlanModal: true } });
+                                }}>
+                                Create Custom Package
+                              </MenuItem>
+                              <MenuItem borderRadius="md" py="2" fontSize="sm" fontWeight="600" color="#1e293b" _hover={{ bg: '#f8fafc', color: BRAND }}
+                                icon={<Package size={16} />}
+                                onClick={() => {
+                                  navigate(`/customers/dashboard/${row._id}`, { state: { activeTab: 1 } });
+                                }}>
+                                View Packages
+                              </MenuItem>
+                              <MenuItem borderRadius="md" py="2" fontSize="sm" fontWeight="600" color="#1e293b" _hover={{ bg: '#f8fafc', color: BRAND }}
+                                icon={<CreditCard size={16} />}
+                                onClick={() => {
+                                  navigate(`/customers/dashboard/${row._id}`, { state: { activeTab: 5 } });
+                                }}>
+                                Transactions
+                              </MenuItem>
+                              
+                              <MenuDivider my="1.5" borderColor="#f1f5f9" />
+                              
+                              <MenuItem borderRadius="md" py="2" fontSize="sm" fontWeight="600" color={row.accountStatus === 'active' ? '#ef4444' : '#10b981'} _hover={{ bg: row.accountStatus === 'active' ? '#fef2f2' : '#ecfdf5' }}
+                                icon={row.accountStatus === 'active' ? <Ban size={16} /> : <CheckCircle size={16} />}
+                                onClick={() => confirmStatusToggle(row._id, row.accountStatus)}>
+                                {row.accountStatus === 'active' ? 'Block Client' : 'Unblock Client'}
+                              </MenuItem>
+                              
+                              <MenuDivider my="1.5" borderColor="#f1f5f9" />
 
-                        <MenuItem borderRadius="md" py="2" fontSize="sm" fontWeight="600" color="#1e293b" _hover={{ bg: '#f8fafc', color: BRAND }}
-                          icon={<Edit3 size={16} />}
-                          onClick={() => navigate(`/customers/edit/${row._id}`)}>
-                          Edit Customer
-                        </MenuItem>
-                        <MenuItem borderRadius="md" py="2" fontSize="sm" fontWeight="600" color="#ef4444" _hover={{ bg: '#fef2f2' }}
-                          icon={<Trash2 size={16} />}
-                          onClick={() => confirmDelete(row._id)}>
-                          Delete Customer
-                        </MenuItem>
-                      </MenuList>
-                    </Menu>
-                  </Td>
-                </Tr>
-              ))}
-            </Tbody>
-          </Table>
-        </Box>
-        <TableFooter
-          showing={`${filteredCustomers.length > 0 ? startIndex + 1 : 0} to ${Math.min(startIndex + parseInt(entries), filteredCustomers.length)}`}
-          total={filteredCustomers.length}
-          currentPage={currentPage}
-          totalPages={totalPages}
-          onPageChange={(p) => { if (p > 0 && p <= totalPages) setCurrentPage(p); }}
-        />
-      </TableCard>
+                              <MenuItem borderRadius="md" py="2" fontSize="sm" fontWeight="600" color="#1e293b" _hover={{ bg: '#f8fafc', color: BRAND }}
+                                icon={<Edit3 size={16} />}
+                                onClick={() => navigate(`/customers/edit/${row._id}`)}>
+                                Edit Customer
+                              </MenuItem>
+                              <MenuItem borderRadius="md" py="2" fontSize="sm" fontWeight="600" color="#ef4444" _hover={{ bg: '#fef2f2' }}
+                                icon={<Trash2 size={16} />}
+                                onClick={() => confirmDelete(row._id)}>
+                                Delete Customer
+                              </MenuItem>
+                            </MenuList>
+                          </Menu>
+                        </Td>
+                      </Tr>
+                    );
+                  })}
+                </Tbody>
+              </Table>
+            </Box>
+            <TableFooter
+              showing={`${filteredCustomers.length > 0 ? startIndex + 1 : 0} to ${Math.min(startIndex + parseInt(entries), filteredCustomers.length)}`}
+              total={filteredCustomers.length}
+              currentPage={currentPage}
+              totalPages={totalPages}
+              onPageChange={(p) => { if (p > 0 && p <= totalPages) setCurrentPage(p); }}
+            />
+          </TableCard>
 
       <ConfirmationModal
         isOpen={isOpen}
