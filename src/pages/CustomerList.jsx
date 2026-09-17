@@ -426,21 +426,28 @@ const CustomerList = () => {
                   <Td py="3.5" minW="135px">
                     {row.activePackage ? (
                       <VStack align="start" spacing="1">
-                        <Badge
-                          px="2.5"
-                          py="0.5"
-                          borderRadius="full"
-                          fontSize="11px"
-                          fontWeight="700"
-                          bg={row.activePackage.isCustom ? '#fdf4ff' : '#ecfdf5'}
-                          color={row.activePackage.isCustom ? '#9333ea' : '#16a34a'}
-                          border={`1px solid ${row.activePackage.isCustom ? '#f0abfc' : '#bbf7d0'}`}
-                          textTransform="none"
-                        >
-                          {row.activePackage.isCustom ? '⭐ ' : ''}{row.activePackage.name}
-                        </Badge>
+                        <HStack spacing="1">
+                          <Badge
+                            px="2.5"
+                            py="0.5"
+                            borderRadius="full"
+                            fontSize="11px"
+                            fontWeight="700"
+                            bg={row.activePackage.isCustom ? '#fdf4ff' : '#ecfdf5'}
+                            color={row.activePackage.isCustom ? '#9333ea' : '#16a34a'}
+                            border={`1px solid ${row.activePackage.isCustom ? '#f0abfc' : '#bbf7d0'}`}
+                            textTransform="none"
+                          >
+                            {row.activePackage.isCustom ? '⭐ ' : ''}{row.activePackage.name}
+                          </Badge>
+                          {row.activePackage.dueAmount > 0 && (
+                            <Badge colorScheme="red" variant="solid" fontSize="10px" px="1.5" py="0.5" borderRadius="full">
+                              ₹{row.activePackage.dueAmount?.toLocaleString('en-IN')} Due
+                            </Badge>
+                          )}
+                        </HStack>
                         <Text fontSize="11px" color="#64748b" fontWeight="600">
-                          ₹{row.activePackage.price} • {row.activePackage.daysLeft != null ? `${row.activePackage.daysLeft}d left` : `${row.activePackage.durationDays || 30}d`}
+                          ₹{row.activePackage.price?.toLocaleString('en-IN')} • {row.activePackage.daysLeft != null ? `${row.activePackage.daysLeft}d left` : `${row.activePackage.durationDays || 30}d`}
                         </Text>
                       </VStack>
                     ) : (

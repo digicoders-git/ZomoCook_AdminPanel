@@ -85,14 +85,39 @@ const CustomerDashboard = () => {
   const [isLoadingPlans, setIsLoadingPlans] = useState(false);
   const [activateForm, setActivateForm] = useState({
     planId: '',
+    totalAmount: '',
     amountPaid: '',
+    dueAmount: 0,
     paymentMethod: 'cash',
     paymentReference: '',
     paymentNote: '',
-    startDate: new Date().toISOString().split('T')[0]
+    startDate: new Date().toISOString().split('T')[0],
+    customJobPostLimit: '',
+    customHiringLimit: '',
+    customReplacementLimit: '',
+    overridePrevious: false
   });
   const [isActivating, setIsActivating] = useState(false);
   const [selectedPlanPreview, setSelectedPlanPreview] = useState(null);
+
+  // Edit/Collect Payment Modal state
+  const { isOpen: isEditSubOpen, onOpen: onEditSubOpen, onClose: onEditSubClose } = useDisclosure();
+  const [selectedSubForEdit, setSelectedSubForEdit] = useState(null);
+  const [editSubForm, setEditSubForm] = useState({
+    newPaymentAmount: '',
+    paymentMethod: 'cash',
+    paymentReference: '',
+    paymentNote: '',
+    totalAmount: '',
+    dueAmount: '',
+    endDate: '',
+    status: 'Active',
+    customJobPostLimit: '',
+    customHiringLimit: '',
+    customReplacementLimit: ''
+  });
+  const [isUpdatingSub, setIsUpdatingSub] = useState(false);
+
   const [planForm, setPlanForm] = useState({
     name: '',
     price: '',
@@ -301,11 +326,17 @@ const CustomerDashboard = () => {
     fetchAllPlans();
     setActivateForm({
       planId: '',
+      totalAmount: '',
       amountPaid: '',
+      dueAmount: 0,
       paymentMethod: 'cash',
       paymentReference: '',
       paymentNote: '',
-      startDate: new Date().toISOString().split('T')[0]
+      startDate: new Date().toISOString().split('T')[0],
+      customJobPostLimit: '',
+      customHiringLimit: '',
+      customReplacementLimit: '',
+      overridePrevious: false
     });
     setSelectedPlanPreview(null);
     onActivateModalOpen();
@@ -314,10 +345,16 @@ const CustomerDashboard = () => {
   const handlePlanSelect = (planId) => {
     const plan = allPlans.find(p => p._id === planId);
     setSelectedPlanPreview(plan || null);
+    const price = plan ? plan.price : 0;
     setActivateForm(prev => ({
       ...prev,
       planId,
-      amountPaid: plan ? String(plan.price) : ''
+      totalAmount: plan ? String(price) : '',
+      amountPaid: plan ? String(price) : '',
+      dueAmount: 0,
+      customJobPostLimit: plan ? String(plan.jobPostLimit || '') : '',
+      customHiringLimit: plan ? String(plan.hiringLimit || '') : '',
+      customReplacementLimit: plan ? String(plan.replacementLimit || '') : ''
     }));
   };
 
@@ -336,11 +373,16 @@ const CustomerDashboard = () => {
         {
           customerId: id,
           planId: activateForm.planId,
+          totalAmount: activateForm.totalAmount ? Number(activateForm.totalAmount) : undefined,
           amountPaid: Number(activateForm.amountPaid),
           paymentMethod: activateForm.paymentMethod,
           paymentReference: activateForm.paymentReference,
           paymentNote: activateForm.paymentNote,
-          startDate: activateForm.startDate
+          startDate: activateForm.startDate,
+          customJobPostLimit: activateForm.customJobPostLimit ? Number(activateForm.customJobPostLimit) : undefined,
+          customHiringLimit: activateForm.customHiringLimit ? Number(activateForm.customHiringLimit) : undefined,
+          customReplacementLimit: activateForm.customReplacementLimit ? Number(activateForm.customReplacementLimit) : undefined,
+          overridePrevious: activateForm.overridePrevious
         },
         { headers: { Authorization: `Bearer ${token}` } }
       );
@@ -367,6 +409,80 @@ const CustomerDashboard = () => {
       });
     } finally {
       setIsActivating(false);
+    }
+  };
+
+  const handleOpenEditModal = (sub) => {
+    setSelectedSubForEdit(sub);
+    const planTotal = sub.totalAmount ?? sub.plan?.price ?? sub.amountPaid ?? 0;
+    const paid = sub.amountPaid ?? 0;
+    const due = sub.dueAmount ?? Math.max(0, planTotal - paid);
+    
+    setEditSubForm({
+      newPaymentAmount: '',
+      paymentMethod: 'cash',
+      paymentReference: '',
+      paymentNote: '',
+      totalAmount: String(planTotal),
+      dueAmount: String(due),
+      endDate: sub.endDate ? new Date(sub.endDate).toISOString().split('T')[0] : '',
+      status: sub.status || 'Active',
+      customJobPostLimit: sub.customJobPostLimit !== undefined ? String(sub.customJobPostLimit) : String(sub.plan?.jobPostLimit || ''),
+      customHiringLimit: sub.customHiringLimit !== undefined ? String(sub.customHiringLimit) : String(sub.plan?.hiringLimit || ''),
+      customReplacementLimit: sub.customReplacementLimit !== undefined ? String(sub.customReplacementLimit) : String(sub.plan?.replacementLimit || '')
+    });
+    onEditSubOpen();
+  };
+
+  const handleUpdateSubscription = async () => {
+    if (!selectedSubForEdit) return;
+    setIsUpdatingSub(true);
+    try {
+      const token = localStorage.getItem('adminToken');
+      const payload = {
+        totalAmount: editSubForm.totalAmount ? Number(editSubForm.totalAmount) : undefined,
+        dueAmount: editSubForm.dueAmount !== '' ? Number(editSubForm.dueAmount) : undefined,
+        endDate: editSubForm.endDate || undefined,
+        status: editSubForm.status,
+        customJobPostLimit: editSubForm.customJobPostLimit ? Number(editSubForm.customJobPostLimit) : undefined,
+        customHiringLimit: editSubForm.customHiringLimit ? Number(editSubForm.customHiringLimit) : undefined,
+        customReplacementLimit: editSubForm.customReplacementLimit ? Number(editSubForm.customReplacementLimit) : undefined
+      };
+
+      if (editSubForm.newPaymentAmount && Number(editSubForm.newPaymentAmount) > 0) {
+        payload.newPaymentAmount = Number(editSubForm.newPaymentAmount);
+        payload.paymentMethod = editSubForm.paymentMethod;
+        payload.paymentReference = editSubForm.paymentReference;
+        payload.paymentNote = editSubForm.paymentNote;
+      }
+
+      const res = await axios.put(
+        `${API_BASE_URL}/admin/subscriptions/${selectedSubForEdit._id}/update`,
+        payload,
+        { headers: { Authorization: `Bearer ${token}` } }
+      );
+
+      if (res.data.success) {
+        toast({
+          title: '✅ Package Updated!',
+          description: res.data.message || 'Subscription details updated successfully',
+          status: 'success',
+          duration: 3500,
+          position: 'top-right'
+        });
+        onEditSubClose();
+        fetchDashboardData();
+      }
+    } catch (err) {
+      toast({
+        title: 'Update failed',
+        description: err.response?.data?.message || err.message,
+        status: 'error',
+        duration: 3500,
+        position: 'top-right'
+      });
+    } finally {
+      setIsUpdatingSub(false);
     }
   };
 
@@ -683,79 +799,160 @@ const CustomerDashboard = () => {
             <TabPanel p="0">
               <VStack align="stretch" spacing="6">
                 
-                {/* Active Subscription Banner / Card */}
+                {/* Active Subscriptions Section */}
                 <Box bg="white" p="6" borderRadius="xl" border="1px solid #e2e8f0" boxShadow="sm">
                   <Flex justify="space-between" align={{ base: 'start', md: 'center' }} direction={{ base: 'column', md: 'row' }} gap="4" mb="4">
                     <Box>
                       <HStack spacing="2">
-                        <Text fontSize="lg" fontWeight="800" color="#0f172a">Current Active Subscription</Text>
+                        <Text fontSize="lg" fontWeight="800" color="#0f172a">Active Packages & Subscriptions</Text>
                         {activeSubscriptions?.length > 0 ? (
-                          <Badge colorScheme="green" variant="solid" px="2.5" py="0.5" borderRadius="full">ACTIVE</Badge>
+                          <Badge colorScheme="green" variant="solid" px="2.5" py="0.5" borderRadius="full">
+                            {activeSubscriptions.filter(s => s.status === 'Active').length} ACTIVE
+                          </Badge>
                         ) : (
                           <Badge colorScheme="red" variant="subtle" px="2.5" py="0.5" borderRadius="full">NO ACTIVE PACKAGE</Badge>
                         )}
                       </HStack>
                       <Text fontSize="xs" color="#64748b" mt="1">
-                        Subscription package details, validity, and hiring limits currently active for this customer
+                        Subscription packages, partial/due payments, hiring limits & validity for this customer.
                       </Text>
                     </Box>
-                    <Button
-                      leftIcon={<Sparkles size={16} />}
-                      bg="#7c3aed"
-                      color="white"
-                      _hover={{ bg: '#6d28d9' }}
-                      size="sm"
-                      borderRadius="lg"
-                      onClick={onPlanModalOpen}
-                    >
-                      + Create Custom Package
-                    </Button>
+                    <HStack spacing="2">
+                      <Button
+                        leftIcon={<Zap size={15} />}
+                        bg="linear-gradient(135deg, #f59e0b, #ef4444)"
+                        color="white"
+                        _hover={{ opacity: 0.9 }}
+                        size="sm"
+                        borderRadius="lg"
+                        onClick={handleOpenActivateModal}
+                      >
+                        ⚡ Assign / Activate Plan
+                      </Button>
+                      <Button
+                        leftIcon={<Sparkles size={15} />}
+                        bg="#7c3aed"
+                        color="white"
+                        _hover={{ bg: '#6d28d9' }}
+                        size="sm"
+                        borderRadius="lg"
+                        onClick={onPlanModalOpen}
+                      >
+                        + Create Custom Package
+                      </Button>
+                    </HStack>
                   </Flex>
 
                   {activeSubscriptions?.length > 0 ? (
-                    <SimpleGrid columns={{ base: 1, md: 4 }} gap="4" p="4" bg="#f8fafc" borderRadius="xl" border="1px solid #e2e8f0">
-                      <Box>
-                        <Text fontSize="xs" color="#64748b" fontWeight="600">Plan Name</Text>
-                        <HStack mt="1">
-                          <Text fontSize="md" fontWeight="800" color="#0f172a">{activeSubscriptions[0].plan?.name || 'Active Plan'}</Text>
-                          {activeSubscriptions[0].plan?.isCustom && (
-                            <Badge colorScheme="purple" fontSize="2xs">CUSTOM</Badge>
-                          )}
-                        </HStack>
-                      </Box>
-                      <Box>
-                        <Text fontSize="xs" color="#64748b" fontWeight="600">Price Paid</Text>
-                        <HStack mt="1" spacing="2">
-                          <Text fontSize="md" fontWeight="800" color="#16a34a">
-                            ₹{(activeSubscriptions[0].amountPaid ?? activeSubscriptions[0].amount ?? activeSubscriptions[0].plan?.price ?? 0).toLocaleString('en-IN')}
-                          </Text>
-                          {activeSubscriptions[0].activationType === 'manual' && (
-                            <Badge colorScheme="orange" fontSize="2xs" borderRadius="full" px="2">
-                              {activeSubscriptions[0].paymentMethod?.toUpperCase() || 'MANUAL'}
-                            </Badge>
-                          )}
-                        </HStack>
-                      </Box>
-                      <Box>
-                        <Text fontSize="xs" color="#64748b" fontWeight="600">Validity Period</Text>
-                        <Text fontSize="sm" fontWeight="700" color="#0f172a" mt="1">
-                          {formatDate(activeSubscriptions[0].startDate)} → {formatDate(activeSubscriptions[0].endDate)}
-                        </Text>
-                      </Box>
-                      <Box>
-                        <Text fontSize="xs" color="#64748b" fontWeight="600">Limits</Text>
-                        <Text fontSize="sm" fontWeight="700" color="#0f172a" mt="1">
-                          Posts: {activeSubscriptions[0].plan?.jobPostLimit ?? 'N/A'} • Replacements: {activeSubscriptions[0].plan?.replacementLimit ?? 0}
-                        </Text>
-                      </Box>
-                    </SimpleGrid>
+                    <VStack align="stretch" spacing="4">
+                      {activeSubscriptions.map((sub, idx) => {
+                        const totalVal = sub.totalAmount ?? sub.plan?.price ?? sub.amountPaid ?? 0;
+                        const paidVal = sub.amountPaid ?? 0;
+                        const dueVal = sub.dueAmount ?? Math.max(0, totalVal - paidVal);
+                        const isPartiallyPaid = dueVal > 0;
+                        const isSubActive = sub.status === 'Active' && new Date(sub.endDate) > new Date();
+
+                        return (
+                          <Box 
+                            key={sub._id || idx} 
+                            p="5" 
+                            bg={isPartiallyPaid ? '#fffbeb' : '#f8fafc'} 
+                            borderRadius="xl" 
+                            border="1px solid" 
+                            borderColor={isPartiallyPaid ? '#fde68a' : '#e2e8f0'}
+                          >
+                            <Flex justify="space-between" align={{ base: 'start', sm: 'center' }} wrap="wrap" gap="3" mb="3">
+                              <HStack spacing="2.5">
+                                <Badge colorScheme={isSubActive ? 'green' : 'gray'} px="2.5" py="0.5" borderRadius="full">
+                                  {isSubActive ? '● ACTIVE' : sub.status?.toUpperCase() || 'EXPIRED'}
+                                </Badge>
+                                <Text fontSize="md" fontWeight="800" color="#0f172a">{sub.plan?.name || 'Package'}</Text>
+                                {sub.plan?.isCustom && <Badge colorScheme="purple" fontSize="2xs">CUSTOM</Badge>}
+                                {isPartiallyPaid ? (
+                                  <Badge colorScheme="orange" variant="solid" fontSize="2xs" px="2" py="0.5" borderRadius="full">
+                                    PARTIALLY PAID
+                                  </Badge>
+                                ) : (
+                                  <Badge colorScheme="green" variant="subtle" fontSize="2xs" px="2" py="0.5" borderRadius="full">
+                                    FULLY PAID
+                                  </Badge>
+                                )}
+                              </HStack>
+
+                              <Button
+                                size="xs"
+                                colorScheme="blue"
+                                variant="outline"
+                                bg="white"
+                                borderColor="#93c5fd"
+                                color="#2563eb"
+                                _hover={{ bg: '#eff6ff' }}
+                                leftIcon={<Edit3 size={13} />}
+                                onClick={() => handleOpenEditModal(sub)}
+                                borderRadius="lg"
+                                px="3"
+                                py="3"
+                                fontWeight="700"
+                              >
+                                Edit / Collect Remaining (₹{dueVal.toLocaleString('en-IN')})
+                              </Button>
+                            </Flex>
+
+                            <SimpleGrid columns={{ base: 1, sm: 2, md: 4 }} gap="4" pt="2" borderTop="1px dashed" borderColor={isPartiallyPaid ? '#fde68a' : '#e2e8f0'}>
+                              <Box>
+                                <Text fontSize="2xs" color="#64748b" fontWeight="700" textTransform="uppercase">Payment Summary</Text>
+                                <HStack mt="1" spacing="2">
+                                  <Text fontSize="sm" fontWeight="800" color="#0f172a">Total: ₹{totalVal.toLocaleString('en-IN')}</Text>
+                                </HStack>
+                                <HStack spacing="2" mt="0.5">
+                                  <Text fontSize="xs" fontWeight="700" color="#16a34a">Paid: ₹{paidVal.toLocaleString('en-IN')}</Text>
+                                  {dueVal > 0 && (
+                                    <Text fontSize="xs" fontWeight="800" color="#dc2626">Due: ₹{dueVal.toLocaleString('en-IN')}</Text>
+                                  )}
+                                </HStack>
+                              </Box>
+
+                              <Box>
+                                <Text fontSize="2xs" color="#64748b" fontWeight="700" textTransform="uppercase">Validity</Text>
+                                <Text fontSize="sm" fontWeight="700" color="#0f172a" mt="1">
+                                  {formatDate(sub.startDate)} → {formatDate(sub.endDate)}
+                                </Text>
+                                <Text fontSize="2xs" color="#64748b">
+                                  {new Date(sub.endDate) > new Date() ? `${Math.ceil((new Date(sub.endDate) - new Date()) / (1000 * 3600 * 24))} days left` : 'Expired'}
+                                </Text>
+                              </Box>
+
+                              <Box>
+                                <Text fontSize="2xs" color="#64748b" fontWeight="700" textTransform="uppercase">Hiring & Job Limits</Text>
+                                <Text fontSize="xs" fontWeight="700" color="#1e293b" mt="1">
+                                  Hires: <b>{sub.customHiringLimit !== undefined ? sub.customHiringLimit : (sub.plan?.hiringLimit ?? '∞')}</b> • Posts: <b>{sub.customJobPostLimit !== undefined ? sub.customJobPostLimit : (sub.plan?.jobPostLimit ?? '∞')}</b>
+                                </Text>
+                                <Text fontSize="2xs" color="#64748b">
+                                  Replacements: <b>{sub.customReplacementLimit !== undefined ? sub.customReplacementLimit : (sub.plan?.replacementLimit ?? 0)}</b>
+                                </Text>
+                              </Box>
+
+                              <Box>
+                                <Text fontSize="2xs" color="#64748b" fontWeight="700" textTransform="uppercase">Activated Details</Text>
+                                <Text fontSize="xs" fontWeight="600" color="#334155" mt="1">
+                                  By: {sub.activatedBy?.name || 'Admin / Manager'}
+                                </Text>
+                                <Text fontSize="2xs" color="#64748b">
+                                  Method: <Badge fontSize="9px" colorScheme="purple">{sub.paymentMethod?.toUpperCase() || 'CASH'}</Badge>
+                                </Text>
+                              </Box>
+                            </SimpleGrid>
+                          </Box>
+                        );
+                      })}
+                    </VStack>
                   ) : (
                     <Box p="6" textAlign="center" bg="#f8fafc" borderRadius="xl" border="1px dashed #cbd5e1">
                       <Text fontSize="sm" fontWeight="700" color="#475569" mb="1">This customer has not purchased any package yet.</Text>
-                      <Text fontSize="xs" color="#64748b" mb="3">Directly activate a plan (offline payment), or create a custom package for this customer.</Text>
+                      <Text fontSize="xs" color="#64748b" mb="3">Directly assign a plan (with partial or full payment), or create a custom package for this customer.</Text>
                       <HStack justify="center" spacing="3">
                         <Button size="sm" bg="linear-gradient(135deg, #f59e0b, #ef4444)" color="white" _hover={{ opacity: 0.9 }} onClick={handleOpenActivateModal} leftIcon={<Zap size={14} />}>
-                          Activate Plan Directly
+                          Activate / Assign Plan Directly
                         </Button>
                         <Button size="sm" bg={BRAND} color="white" _hover={{ bg: '#1e1c52' }} onClick={onPlanModalOpen} leftIcon={<Sparkles size={14} />}>
                           Create Custom Package
@@ -1503,28 +1700,76 @@ const CustomerDashboard = () => {
                 p="4"
               >
                 <Text fontSize="sm" fontWeight="800" color="#1e293b" mb="4">
-                  Step 2 — Payment Details
+                  Step 2 — Pricing & Partial Payment Breakdown
                 </Text>
 
                 <VStack spacing="3" align="stretch">
-                  {/* Amount + Method */}
+                  {/* Total Price + Amount Paid + Due Amount */}
                   <HStack spacing="3" align="start">
                     <FormControl isRequired flex="1">
-                      <FormLabel fontSize="xs" fontWeight="700" color="#374151" mb="1">Amount Paid (₹)</FormLabel>
+                      <FormLabel fontSize="xs" fontWeight="700" color="#374151" mb="1">Total Package Price (₹)</FormLabel>
                       <Input
                         type="number"
                         min="0"
-                        placeholder="e.g. 5000"
-                        value={activateForm.amountPaid}
-                        onChange={e => setActivateForm(prev => ({ ...prev, amountPaid: e.target.value }))}
+                        placeholder="e.g. 30000"
+                        value={activateForm.totalAmount}
+                        onChange={e => {
+                          const tot = e.target.value;
+                          const paid = activateForm.amountPaid || '0';
+                          const due = Math.max(0, Number(tot || 0) - Number(paid || 0));
+                          setActivateForm(prev => ({ ...prev, totalAmount: tot, dueAmount: due }));
+                        }}
                         borderRadius="lg"
                         bg="white"
                         borderColor="#d1d5db"
                         fontSize="sm"
+                        fontWeight="700"
                         _focus={{ borderColor: '#f59e0b', boxShadow: '0 0 0 2px rgba(245,158,11,0.2)' }}
                       />
                     </FormControl>
 
+                    <FormControl isRequired flex="1">
+                      <FormLabel fontSize="xs" fontWeight="700" color="#374151" mb="1">Initial Amount Paid (₹)</FormLabel>
+                      <Input
+                        type="number"
+                        min="0"
+                        placeholder="e.g. 15000"
+                        value={activateForm.amountPaid}
+                        onChange={e => {
+                          const paid = e.target.value;
+                          const tot = activateForm.totalAmount || (selectedPlanPreview?.price ? String(selectedPlanPreview.price) : '0');
+                          const due = Math.max(0, Number(tot || 0) - Number(paid || 0));
+                          setActivateForm(prev => ({ ...prev, amountPaid: paid, dueAmount: due }));
+                        }}
+                        borderRadius="lg"
+                        bg="white"
+                        borderColor="#d1d5db"
+                        fontSize="sm"
+                        fontWeight="700"
+                        color="#16a34a"
+                        _focus={{ borderColor: '#f59e0b', boxShadow: '0 0 0 2px rgba(245,158,11,0.2)' }}
+                      />
+                    </FormControl>
+
+                    <FormControl flex="1">
+                      <FormLabel fontSize="xs" fontWeight="700" color="#dc2626" mb="1">Remaining Balance (₹)</FormLabel>
+                      <Box
+                        bg="#fef2f2"
+                        border="1px solid #fecaca"
+                        borderRadius="lg"
+                        px="3"
+                        py="2"
+                        fontWeight="800"
+                        fontSize="sm"
+                        color="#b91c1c"
+                      >
+                        ₹{(Math.max(0, Number(activateForm.totalAmount || 0) - Number(activateForm.amountPaid || 0))).toLocaleString('en-IN')}
+                      </Box>
+                    </FormControl>
+                  </HStack>
+
+                  {/* Payment Method + Start Date */}
+                  <HStack spacing="3" align="start">
                     <FormControl flex="1">
                       <FormLabel fontSize="xs" fontWeight="700" color="#374151" mb="1">Payment Method</FormLabel>
                       <Select
@@ -1564,14 +1809,14 @@ const CustomerDashboard = () => {
                   <HStack spacing="3" align="start">
                     <FormControl flex="1">
                       <FormLabel fontSize="xs" fontWeight="700" color="#374151" mb="1">
-                        Payment Reference <Text as="span" fontWeight="400" color="#9ca3af">(optional)</Text>
+                        Payment Reference <Text as="span" fontWeight="400" color="#9ca3af">(UPI ID, Txn #, etc.)</Text>
                       </FormLabel>
                       <Input
                         placeholder={
                           activateForm.paymentMethod === 'upi' ? 'UPI Transaction ID' :
                           activateForm.paymentMethod === 'cheque' ? 'Cheque Number' :
                           activateForm.paymentMethod === 'bank_transfer' ? 'NEFT/IMPS Reference ID' :
-                          'Reference / Note'
+                          'Reference ID'
                         }
                         value={activateForm.paymentReference}
                         onChange={e => setActivateForm(prev => ({ ...prev, paymentReference: e.target.value }))}
@@ -1585,10 +1830,10 @@ const CustomerDashboard = () => {
 
                     <FormControl flex="1">
                       <FormLabel fontSize="xs" fontWeight="700" color="#374151" mb="1">
-                        Internal Note <Text as="span" fontWeight="400" color="#9ca3af">(optional)</Text>
+                        Internal Note <Text as="span" fontWeight="400" color="#9ca3af">(e.g. 50% advance received)</Text>
                       </FormLabel>
                       <Input
-                        placeholder='e.g. "Collected by Rahul at office"'
+                        placeholder='e.g. "₹15k received via UPI, remaining ₹15k due in 10 days"'
                         value={activateForm.paymentNote}
                         onChange={e => setActivateForm(prev => ({ ...prev, paymentNote: e.target.value }))}
                         borderRadius="lg"
@@ -1607,19 +1852,19 @@ const CustomerDashboard = () => {
                 <Box flex="1" p="3" bg="#f0fdf4" borderRadius="xl" border="1px solid #bbf7d0">
                   <HStack spacing="2">
                     <CheckCircle size={14} color="#16a34a" />
-                    <Text fontSize="xs" color="#15803d" fontWeight="700">App pe turant dikh jayega</Text>
+                    <Text fontSize="xs" color="#15803d" fontWeight="700">App pe live dikhega</Text>
                   </HStack>
                   <Text fontSize="2xs" color="#166534" mt="1">
-                    Customer ke Flutter app login pe plan active ho jayega immediately.
+                    Customer ke Flutter app me active package aur Remaining Due Amount turant dikhai dega.
                   </Text>
                 </Box>
-                <Box flex="1" p="3" bg="#fef2f2" borderRadius="xl" border="1px solid #fecaca">
+                <Box flex="1" p="3" bg="#eff6ff" borderRadius="xl" border="1px solid #bfdbfe">
                   <HStack spacing="2">
-                    <Zap size={14} color="#dc2626" />
-                    <Text fontSize="xs" color="#dc2626" fontWeight="700">Override mode active</Text>
+                    <Users size={14} color="#2563eb" />
+                    <Text fontSize="xs" color="#1d4ed8" fontWeight="700">Multiple Packages Active</Text>
                   </HStack>
-                  <Text fontSize="2xs" color="#991b1b" mt="1">
-                    Purana active plan expire ho jayega. Naya plan start hoga.
+                  <Text fontSize="2xs" color="#1e40af" mt="1">
+                    Purana active package retain rahega aur naye staff ke hiring limits add ho jayenge.
                   </Text>
                 </Box>
               </HStack>
@@ -1636,7 +1881,7 @@ const CustomerDashboard = () => {
           >
             <Text fontSize="xs" color="#94a3b8">
               {activateForm.planId && selectedPlanPreview
-                ? `📦 ${selectedPlanPreview.name} • ₹${Number(activateForm.amountPaid || 0).toLocaleString('en-IN')} • ${activateForm.paymentMethod}`
+                ? `📦 ${selectedPlanPreview.name} • Total: ₹${Number(activateForm.totalAmount || selectedPlanPreview.price || 0).toLocaleString('en-IN')} • Paid: ₹${Number(activateForm.amountPaid || 0).toLocaleString('en-IN')}`
                 : 'Koi plan select nahi hua'}
             </Text>
             <HStack spacing="3">
@@ -1659,7 +1904,278 @@ const CustomerDashboard = () => {
                 boxShadow="0 4px 14px rgba(245,158,11,0.4)"
                 px="6"
               >
-                ⚡ Activate Plan Now
+                ⚡ Assign / Activate Plan Now
+              </Button>
+            </HStack>
+          </ModalFooter>
+        </ModalContent>
+      </Modal>
+
+      {/* ── MODAL: Edit Subscription & Collect Remaining Payment ─────────── */}
+      <Modal isOpen={isEditSubOpen} onClose={onEditSubClose} size="xl" isCentered>
+        <ModalOverlay bg="blackAlpha.600" backdropFilter="blur(3px)" />
+        <ModalContent borderRadius="2xl" overflow="hidden" boxShadow="2xl">
+          <ModalHeader
+            bg="linear-gradient(135deg, #2563eb, #1d4ed8)"
+            color="white"
+            py="4"
+            px="6"
+          >
+            <Flex align="center" justify="space-between">
+              <HStack spacing="3">
+                <Box p="2" bg="whiteAlpha.200" borderRadius="lg">
+                  <Edit3 size={18} color="white" />
+                </Box>
+                <Box>
+                  <Text fontSize="md" fontWeight="800">Edit Package & Collect Remaining Payment</Text>
+                  <Text fontSize="xs" color="whiteAlpha.800" fontWeight="400">
+                    {customer?.name} • {selectedSubForEdit?.plan?.name || 'Package'}
+                  </Text>
+                </Box>
+              </HStack>
+            </Flex>
+          </ModalHeader>
+          <ModalCloseButton color="white" top="16px" right="16px" />
+
+          <ModalBody p="6" bg="white">
+            <VStack spacing="5" align="stretch">
+              
+              {/* Current Balance Overview Banner */}
+              {selectedSubForEdit && (
+                <Box p="4" bg="#eff6ff" borderRadius="xl" border="1px solid #bfdbfe">
+                  <SimpleGrid columns={3} gap="3" textAlign="center">
+                    <Box>
+                      <Text fontSize="2xs" color="#64748b" fontWeight="700">TOTAL PACKAGE VALUE</Text>
+                      <Text fontSize="lg" fontWeight="900" color="#0f172a">
+                        ₹{(selectedSubForEdit.totalAmount ?? selectedSubForEdit.plan?.price ?? selectedSubForEdit.amountPaid ?? 0).toLocaleString('en-IN')}
+                      </Text>
+                    </Box>
+                    <Box>
+                      <Text fontSize="2xs" color="#64748b" fontWeight="700">AMOUNT ALREADY PAID</Text>
+                      <Text fontSize="lg" fontWeight="900" color="#16a34a">
+                        ₹{(selectedSubForEdit.amountPaid ?? 0).toLocaleString('en-IN')}
+                      </Text>
+                    </Box>
+                    <Box>
+                      <Text fontSize="2xs" color="#64748b" fontWeight="700">CURRENT DUE / REMAINING</Text>
+                      <Text fontSize="lg" fontWeight="900" color="#dc2626">
+                        ₹{(selectedSubForEdit.dueAmount ?? Math.max(0, (selectedSubForEdit.totalAmount ?? selectedSubForEdit.plan?.price ?? 0) - (selectedSubForEdit.amountPaid ?? 0))).toLocaleString('en-IN')}
+                      </Text>
+                    </Box>
+                  </SimpleGrid>
+                </Box>
+              )}
+
+              {/* Section 1: Collect New Payment */}
+              <Box p="4" bg="#f8fafc" borderRadius="xl" border="1px solid #e2e8f0">
+                <Text fontSize="xs" fontWeight="800" color="#1e293b" mb="3" textTransform="uppercase">
+                  💰 Collect New / Remaining Payment
+                </Text>
+                <VStack spacing="3" align="stretch">
+                  <HStack spacing="3" align="start">
+                    <FormControl flex="1">
+                      <FormLabel fontSize="xs" fontWeight="700" color="#374151" mb="1">New Amount Received (₹)</FormLabel>
+                      <Input
+                        type="number"
+                        min="0"
+                        placeholder='e.g. 15000'
+                        value={editSubForm.newPaymentAmount}
+                        onChange={e => setEditSubForm(prev => ({ ...prev, newPaymentAmount: e.target.value }))}
+                        borderRadius="lg"
+                        bg="white"
+                        borderColor="#d1d5db"
+                        fontSize="sm"
+                        fontWeight="700"
+                        color="#16a34a"
+                      />
+                    </FormControl>
+
+                    <FormControl flex="1">
+                      <FormLabel fontSize="xs" fontWeight="700" color="#374151" mb="1">Payment Method</FormLabel>
+                      <Select
+                        value={editSubForm.paymentMethod}
+                        onChange={e => setEditSubForm(prev => ({ ...prev, paymentMethod: e.target.value }))}
+                        borderRadius="lg"
+                        bg="white"
+                        borderColor="#d1d5db"
+                        fontSize="sm"
+                      >
+                        <option value="cash">💵 Cash</option>
+                        <option value="upi">📱 UPI</option>
+                        <option value="bank_transfer">🏦 Bank Transfer</option>
+                        <option value="cheque">📄 Cheque</option>
+                        <option value="other">📝 Other</option>
+                      </Select>
+                    </FormControl>
+                  </HStack>
+
+                  <HStack spacing="3" align="start">
+                    <FormControl flex="1">
+                      <FormLabel fontSize="xs" fontWeight="700" color="#374151" mb="1">Payment Ref / Txn ID</FormLabel>
+                      <Input
+                        placeholder='e.g. UPI Ref / Receipt #'
+                        value={editSubForm.paymentReference}
+                        onChange={e => setEditSubForm(prev => ({ ...prev, paymentReference: e.target.value }))}
+                        borderRadius="lg"
+                        bg="white"
+                        borderColor="#d1d5db"
+                        fontSize="sm"
+                      />
+                    </FormControl>
+
+                    <FormControl flex="1">
+                      <FormLabel fontSize="xs" fontWeight="700" color="#374151" mb="1">Note / Description</FormLabel>
+                      <Input
+                        placeholder='e.g. Second installment paid'
+                        value={editSubForm.paymentNote}
+                        onChange={e => setEditSubForm(prev => ({ ...prev, paymentNote: e.target.value }))}
+                        borderRadius="lg"
+                        bg="white"
+                        borderColor="#d1d5db"
+                        fontSize="sm"
+                      />
+                    </FormControl>
+                  </HStack>
+                </VStack>
+              </Box>
+
+              {/* Section 2: Direct Adjustments (Price, Due, Validity, Limits) */}
+              <Box p="4" bg="#f8fafc" borderRadius="xl" border="1px solid #e2e8f0">
+                <Text fontSize="xs" fontWeight="800" color="#1e293b" mb="3" textTransform="uppercase">
+                  ⚙️ Package Limits & Validity Adjustments
+                </Text>
+                <VStack spacing="3" align="stretch">
+                  <HStack spacing="3" align="start">
+                    <FormControl flex="1">
+                      <FormLabel fontSize="xs" fontWeight="700" color="#374151" mb="1">Total Package Price (₹)</FormLabel>
+                      <Input
+                        type="number"
+                        value={editSubForm.totalAmount}
+                        onChange={e => setEditSubForm(prev => ({ ...prev, totalAmount: e.target.value }))}
+                        borderRadius="lg"
+                        bg="white"
+                        borderColor="#d1d5db"
+                        fontSize="sm"
+                      />
+                    </FormControl>
+
+                    <FormControl flex="1">
+                      <FormLabel fontSize="xs" fontWeight="700" color="#374151" mb="1">Manual Due Balance (₹)</FormLabel>
+                      <Input
+                        type="number"
+                        value={editSubForm.dueAmount}
+                        onChange={e => setEditSubForm(prev => ({ ...prev, dueAmount: e.target.value }))}
+                        borderRadius="lg"
+                        bg="white"
+                        borderColor="#d1d5db"
+                        fontSize="sm"
+                      />
+                    </FormControl>
+
+                    <FormControl flex="1">
+                      <FormLabel fontSize="xs" fontWeight="700" color="#374151" mb="1">Expiry Date</FormLabel>
+                      <Input
+                        type="date"
+                        value={editSubForm.endDate}
+                        onChange={e => setEditSubForm(prev => ({ ...prev, endDate: e.target.value }))}
+                        borderRadius="lg"
+                        bg="white"
+                        borderColor="#d1d5db"
+                        fontSize="sm"
+                      />
+                    </FormControl>
+                  </HStack>
+
+                  <HStack spacing="3" align="start">
+                    <FormControl flex="1">
+                      <FormLabel fontSize="xs" fontWeight="700" color="#374151" mb="1">Hiring Limit</FormLabel>
+                      <Input
+                        type="number"
+                        placeholder='Staff count'
+                        value={editSubForm.customHiringLimit}
+                        onChange={e => setEditSubForm(prev => ({ ...prev, customHiringLimit: e.target.value }))}
+                        borderRadius="lg"
+                        bg="white"
+                        borderColor="#d1d5db"
+                        fontSize="sm"
+                      />
+                    </FormControl>
+
+                    <FormControl flex="1">
+                      <FormLabel fontSize="xs" fontWeight="700" color="#374151" mb="1">Job Post Limit</FormLabel>
+                      <Input
+                        type="number"
+                        placeholder='Posts count'
+                        value={editSubForm.customJobPostLimit}
+                        onChange={e => setEditSubForm(prev => ({ ...prev, customJobPostLimit: e.target.value }))}
+                        borderRadius="lg"
+                        bg="white"
+                        borderColor="#d1d5db"
+                        fontSize="sm"
+                      />
+                    </FormControl>
+
+                    <FormControl flex="1">
+                      <FormLabel fontSize="xs" fontWeight="700" color="#374151" mb="1">Replacements</FormLabel>
+                      <Input
+                        type="number"
+                        placeholder='Replacement count'
+                        value={editSubForm.customReplacementLimit}
+                        onChange={e => setEditSubForm(prev => ({ ...prev, customReplacementLimit: e.target.value }))}
+                        borderRadius="lg"
+                        bg="white"
+                        borderColor="#d1d5db"
+                        fontSize="sm"
+                      />
+                    </FormControl>
+                  </HStack>
+                </VStack>
+              </Box>
+
+              {/* Payment History Log in Modal */}
+              {selectedSubForEdit?.paymentHistory && selectedSubForEdit.paymentHistory.length > 0 && (
+                <Box>
+                  <Text fontSize="xs" fontWeight="800" color="#64748b" mb="2" textTransform="uppercase">
+                    Payment Collection History
+                  </Text>
+                  <VStack align="stretch" spacing="1.5">
+                    {selectedSubForEdit.paymentHistory.map((p, pIdx) => (
+                      <Flex key={pIdx} justify="space-between" align="center" p="2.5" bg="#f1f5f9" borderRadius="lg" fontSize="xs">
+                        <HStack spacing="2">
+                          <Badge colorScheme="green">₹{p.amount?.toLocaleString('en-IN')}</Badge>
+                          <Text color="#334155" fontWeight="600">{p.paymentMethod?.toUpperCase()} {p.paymentReference ? `(${p.paymentReference})` : ''}</Text>
+                          {p.paymentNote && <Text color="#64748b" fontStyle="italic">- {p.paymentNote}</Text>}
+                        </HStack>
+                        <Text color="#94a3b8" fontSize="2xs">
+                          {p.collectedByName ? `By ${p.collectedByName} • ` : ''}{p.collectedAt ? formatDate(p.collectedAt) : ''}
+                        </Text>
+                      </Flex>
+                    ))}
+                  </VStack>
+                </Box>
+              )}
+
+            </VStack>
+          </ModalBody>
+
+          <ModalFooter bg="#f8fafc" borderTop="1px solid #e2e8f0" py="4" px="6">
+            <HStack spacing="3" w="100%" justify="space-between">
+              <Button variant="ghost" onClick={onEditSubClose} size="sm" isDisabled={isUpdatingSub}>
+                Cancel
+              </Button>
+              <Button
+                colorScheme="blue"
+                bg="#2563eb"
+                _hover={{ bg: '#1d4ed8' }}
+                size="sm"
+                borderRadius="lg"
+                fontWeight="800"
+                onClick={handleUpdateSubscription}
+                isLoading={isUpdatingSub}
+                loadingText="Updating..."
+                px="6"
+              >
+                Save Package & Payment Updates
               </Button>
             </HStack>
           </ModalFooter>
