@@ -14,6 +14,7 @@ import {
 } from '../components/ui';
 import PageContentLoader from '../components/PageContentLoader';
 import axios from 'axios';
+import API_BASE_URL from '../apiConfig';
 
 const CustomerList = () => {
   const navigate = useNavigate();
@@ -65,9 +66,8 @@ const CustomerList = () => {
 
   const fetchCustomers = async () => {
     try {
-      const apiUrl = import.meta.env.VITE_API_URL;
       const token = localStorage.getItem('adminToken');
-      const response = await axios.get(`${apiUrl}/customers`, {
+      const response = await axios.get(`${API_BASE_URL}/customers`, {
         headers: { 'Authorization': `Bearer ${token}` }
       });
       if (response.data.success) {
@@ -82,12 +82,18 @@ const CustomerList = () => {
 
   const fetchLeadManagers = async () => {
     try {
-      const apiUrl = import.meta.env.VITE_API_URL;
       const token = localStorage.getItem('adminToken');
-      const response = await axios.get(`${apiUrl}/users?limit=1000`, {
-        headers: { 'Authorization': `Bearer ${token}` }
-      });
-      if (response.data.success) {
+      let response;
+      try {
+        response = await axios.get(`${API_BASE_URL}/admin/users?limit=1000`, {
+          headers: { 'Authorization': `Bearer ${token}` }
+        });
+      } catch (err) {
+        response = await axios.get(`${API_BASE_URL}/users?limit=1000`, {
+          headers: { 'Authorization': `Bearer ${token}` }
+        });
+      }
+      if (response?.data?.success) {
         setLeadManagers(response.data.users || []);
       }
     } catch (error) {
@@ -115,9 +121,8 @@ const CustomerList = () => {
     if (!selectedCustomer) return;
     setIsAssigning(true);
     try {
-      const apiUrl = import.meta.env.VITE_API_URL;
       const token = localStorage.getItem('adminToken');
-      const response = await axios.put(`${apiUrl}/customers/${selectedCustomer._id}`, {
+      const response = await axios.put(`${API_BASE_URL}/customers/${selectedCustomer._id}`, {
         leadManager: selectedLeadManager
       }, {
         headers: { 'Authorization': `Bearer ${token}` }
@@ -132,6 +137,17 @@ const CustomerList = () => {
     } finally {
       setIsAssigning(false);
     }
+  };
+
+  const openAssignModal = (row) => {
+    setSelectedCustomer(row);
+    const val = row.leadManager || '';
+    const found = leadManagers.find(m =>
+      String(m._id) === String(val) ||
+      String(m.name || '').toLowerCase() === String(val).toLowerCase()
+    );
+    setSelectedLeadManager(found ? found._id : val);
+    setIsAssignModalOpen(true);
   };
 
   const handleFilterChange = (name, value) => {
@@ -402,11 +418,7 @@ const CustomerList = () => {
                           icon={<UserCheck size={13} />}
                           aria-label="Assign Lead Manager"
                           title="Assign Lead Manager"
-                          onClick={() => {
-                            setSelectedCustomer(row);
-                            setSelectedLeadManager(row.leadManager || '');
-                            setIsAssignModalOpen(true);
-                          }}
+                          onClick={() => openAssignModal(row)}
                         />
                       )}
                     </HStack>
@@ -439,11 +451,7 @@ const CustomerList = () => {
                             color="#1e293b"
                             _hover={{ bg: '#f8fafc', color: BRAND }}
                             icon={<UserCheck size={16} />}
-                            onClick={() => {
-                              setSelectedCustomer(row);
-                              setSelectedLeadManager(row.leadManager || '');
-                              setIsAssignModalOpen(true);
-                            }}
+                            onClick={() => openAssignModal(row)}
                           >
                             Assign Lead Manager
                           </MenuItem>

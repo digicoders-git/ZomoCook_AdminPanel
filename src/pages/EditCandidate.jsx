@@ -134,8 +134,13 @@ const EditCandidate = () => {
         }
 
         try {
-          const lmRes = await axios.get(`${apiUrl}/users?limit=1000`, { headers: { 'Authorization': `Bearer ${token}` } });
-          if (lmRes.data.success) setLeadManagers(lmRes.data.users || []);
+          let lmRes;
+          try {
+            lmRes = await axios.get(`${apiUrl}/admin/users?limit=1000`, { headers: { 'Authorization': `Bearer ${token}` } });
+          } catch (err) {
+            lmRes = await axios.get(`${apiUrl}/users?limit=1000`, { headers: { 'Authorization': `Bearer ${token}` } });
+          }
+          if (lmRes?.data?.success) setLeadManagers(lmRes.data.users || []);
         } catch (lmErr) { console.error('Error fetching lead managers:', lmErr); }
       } catch (error) {
         toast({ title: 'Error', description: 'Failed to load candidate details.', status: 'error' });

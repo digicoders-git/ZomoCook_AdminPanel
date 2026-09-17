@@ -77,12 +77,18 @@ const CandidateList = () => {
 
   const fetchLeadManagers = async () => {
     try {
-      const apiUrl = import.meta.env.VITE_API_URL;
       const token = localStorage.getItem('adminToken');
-      const response = await axios.get(`${apiUrl}/users?limit=1000`, {
-        headers: { 'Authorization': `Bearer ${token}` }
-      });
-      if (response.data.success) {
+      let response;
+      try {
+        response = await axios.get(`${API_BASE_URL}/admin/users?limit=1000`, {
+          headers: { 'Authorization': `Bearer ${token}` }
+        });
+      } catch (err) {
+        response = await axios.get(`${API_BASE_URL}/users?limit=1000`, {
+          headers: { 'Authorization': `Bearer ${token}` }
+        });
+      }
+      if (response?.data?.success) {
         setLeadManagers(response.data.users || []);
       }
     } catch (error) {
@@ -126,6 +132,17 @@ const CandidateList = () => {
     } finally {
       setIsAssigning(false);
     }
+  };
+
+  const openAssignModal = (cand) => {
+    setSelectedCandidate(cand);
+    const val = cand.leadManager || '';
+    const found = leadManagers.find(m =>
+      String(m._id) === String(val) ||
+      String(m.name || '').toLowerCase() === String(val).toLowerCase()
+    );
+    setSelectedLeadManager(found ? found._id : val);
+    setIsAssignModalOpen(true);
   };
 
   // Filter and Pagination Logic
@@ -312,11 +329,7 @@ const CandidateList = () => {
                             leftIcon={<UserCheck size={12} />}
                             fontSize="10px"
                             h="24px"
-                            onClick={() => {
-                              setSelectedCandidate(c);
-                              setSelectedLeadManager(c.leadManager || '');
-                              setIsAssignModalOpen(true);
-                            }}
+                            onClick={() => openAssignModal(c)}
                           >
                             Assign
                           </Button>
@@ -362,11 +375,7 @@ const CandidateList = () => {
                         </MenuButton>
                         <MenuList borderRadius="xl" border="1px solid #e8edf5" boxShadow="0 10px 25px rgba(0,0,0,0.08)" p="2" minW="220px">
                           {!isLeadManager && (
-                            <MenuItem icon={<UserCheck size={16} color="#0f62fe" />} borderRadius="lg" fontSize="sm" fontWeight="600" color="#475569" _hover={{ bg: '#f0f7ff', color: '#0f62fe' }} onClick={() => {
-                              setSelectedCandidate(c);
-                              setSelectedLeadManager(c.leadManager || '');
-                              setIsAssignModalOpen(true);
-                            }}>
+                            <MenuItem icon={<UserCheck size={16} color="#0f62fe" />} borderRadius="lg" fontSize="sm" fontWeight="600" color="#475569" _hover={{ bg: '#f0f7ff', color: '#0f62fe' }} onClick={() => openAssignModal(c)}>
                               Assign Lead Manager
                             </MenuItem>
                           )}

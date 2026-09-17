@@ -94,10 +94,17 @@ const AddCandidate = () => {
 
     const fetchLeadManagers = async () => {
       try {
-        const response = await axios.get(`${apiUrl}/users?limit=1000`, {
-          headers: { 'Authorization': `Bearer ${token}` }
-        });
-        if (response.data.success) {
+        let response;
+        try {
+          response = await axios.get(`${apiUrl}/admin/users?limit=1000`, {
+            headers: { 'Authorization': `Bearer ${token}` }
+          });
+        } catch (err) {
+          response = await axios.get(`${apiUrl}/users?limit=1000`, {
+            headers: { 'Authorization': `Bearer ${token}` }
+          });
+        }
+        if (response?.data?.success) {
           setLeadManagers(response.data.users || []);
         }
       } catch (error) {

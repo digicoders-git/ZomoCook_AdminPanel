@@ -5,6 +5,7 @@ import { useNavigate, useParams } from 'react-router-dom';
 import { useToast } from '@chakra-ui/react';
 import { PageHeader, FormCard, PageFooter, BRAND, ACCENT, inputStyle, selectStyle, labelStyle, Loading } from '../components/ui';
 import axios from 'axios';
+import API_BASE_URL from '../apiConfig';
 
 const EditCustomer = () => {
   const { id } = useParams();
@@ -31,12 +32,18 @@ const EditCustomer = () => {
   useEffect(() => {
     const fetchLeadManagers = async () => {
       try {
-        const apiUrl = import.meta.env.VITE_API_URL;
         const token = localStorage.getItem('adminToken');
-        const response = await axios.get(`${apiUrl}/users?limit=1000`, {
-          headers: { 'Authorization': `Bearer ${token}` }
-        });
-        if (response.data.success) {
+        let response;
+        try {
+          response = await axios.get(`${API_BASE_URL}/admin/users?limit=1000`, {
+            headers: { 'Authorization': `Bearer ${token}` }
+          });
+        } catch (err) {
+          response = await axios.get(`${API_BASE_URL}/users?limit=1000`, {
+            headers: { 'Authorization': `Bearer ${token}` }
+          });
+        }
+        if (response?.data?.success) {
           setLeadManagers(response.data.users || []);
         }
       } catch (error) {
@@ -49,9 +56,8 @@ const EditCustomer = () => {
   useEffect(() => {
     const fetchCustomer = async () => {
       try {
-        const apiUrl = import.meta.env.VITE_API_URL;
         const token = localStorage.getItem('adminToken');
-        const response = await axios.get(`${apiUrl}/customers/${id}`, {
+        const response = await axios.get(`${API_BASE_URL}/customers/${id}`, {
           headers: { 'Authorization': `Bearer ${token}` }
         });
         if (response.data.success) {
