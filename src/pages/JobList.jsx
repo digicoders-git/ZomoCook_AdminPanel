@@ -5,7 +5,7 @@ import {
   FormLabel, Select, Input, Table, Thead, Tbody, Tr, Th, Td,
   Menu, MenuButton, MenuList, MenuItem, Link as ChakraLink,
   Modal, ModalOverlay, ModalContent, ModalHeader, ModalFooter, ModalBody, ModalCloseButton,
-  Tooltip
+  Tooltip, SimpleGrid, FormControl, Icon
 } from '@chakra-ui/react';
 import { Plus, Filter, Edit3, RotateCcw, Search, Eye, ChevronDown, Users, Trash2, Calendar, UserPlus, Send } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
@@ -56,6 +56,7 @@ const JobList = () => {
   const [assignJob, setAssignJob] = useState(null);
   const [selectedLeadManager, setSelectedLeadManager] = useState('');
   const [applicantsModalTab, setApplicantsModalTab] = useState(0);
+  const [resendingJobId, setResendingJobId] = useState(null);
 
   const token = localStorage.getItem('adminToken');
   const adminData = JSON.parse(localStorage.getItem('adminData') || '{}');
@@ -411,16 +412,17 @@ const JobList = () => {
 
   // Resend notification API helper
   const resendNotification = async (jobId) => {
+    setResendingJobId(jobId);
     try {
       const response = await axios.post(`${API_BASE_URL}/jobs/${jobId}/resend-notification`, {}, {
         headers: { 'Authorization': `Bearer ${token}` }
       });
       if (response.data.success) {
         toast({
-          title: 'Notification Resent',
-          description: response.data.message || 'Notification resent successfully to all cooks.',
+          title: 'Notification Sent',
+          description: response.data.message || 'Notification resent successfully.',
           status: 'success',
-          duration: 3000,
+          duration: 4000,
           position: 'top-right'
         });
       }
@@ -429,9 +431,11 @@ const JobList = () => {
         title: 'Error',
         description: error.response?.data?.message || 'Failed to resend notification.',
         status: 'error',
-        duration: 3000,
+        duration: 4000,
         position: 'top-right'
       });
+    } finally {
+      setResendingJobId(null);
     }
   };
 
@@ -526,55 +530,101 @@ const JobList = () => {
       </Flex>
 
       {/* Filters Card - Always Visible */}
-      <Box bg="white" p="6" borderRadius="xl" border="1px solid #e8edf5" mb="6" boxShadow="0 2px 12px rgba(0,74,173,0.03)">
-        <Text fontSize="md" fontWeight="800" color="#0B1A30" mb="4">Filters</Text>
-        <Flex align="flex-end" gap="4" wrap="wrap" justify="space-between">
-          <Box flex="1" minW="180px">
-            <FormLabel fontSize="xs" fontWeight="700" color="#475569" mb="2">Category</FormLabel>
-            <Select size="sm" h="40px" borderRadius="lg" bg="#f8faff" border="1.5px solid #dde6f5" value={filters.category} onChange={(e) => handleFilterChange('category', e.target.value)}>
+      <Box bg="white" p="5" borderRadius="xl" border="1px solid #e8edf5" mb="6" boxShadow="0 2px 12px rgba(0,74,173,0.03)">
+        <Flex justify="space-between" align="center" mb="4" wrap="wrap" gap="3">
+          <HStack spacing="2">
+            <Icon as={Filter} color="#0f62fe" boxSize={4} />
+            <Text fontSize="md" fontWeight="800" color="#0B1A30">Filters</Text>
+          </HStack>
+          <HStack spacing="2">
+            <Button
+              size="sm"
+              h="36px"
+              px="4"
+              variant="outline"
+              borderColor="#dde6f5"
+              leftIcon={<RotateCcw size={13} />}
+              color="#64748b"
+              _hover={{ bg: '#f1f5f9', color: '#0B1A30' }}
+              borderRadius="lg"
+              fontSize="xs"
+              fontWeight="700"
+              onClick={resetFilters}
+            >
+              Reset
+            </Button>
+            <Button
+              size="sm"
+              h="36px"
+              px="5"
+              bg="#0f62fe"
+              color="white"
+              _hover={{ bg: '#0043ce' }}
+              borderRadius="lg"
+              fontSize="xs"
+              fontWeight="700"
+              onClick={handleApplyFilters}
+            >
+              Apply
+            </Button>
+          </HStack>
+        </Flex>
+
+        <SimpleGrid columns={{ base: 1, sm: 2, md: 3, lg: 5 }} spacing="4">
+          <FormControl>
+            <FormLabel fontSize="xs" fontWeight="700" color="#475569" mb="1.5">Category</FormLabel>
+            <Select size="sm" h="38px" borderRadius="lg" bg="#f8faff" border="1.5px solid #dde6f5" value={filters.category} onChange={(e) => handleFilterChange('category', e.target.value)}>
               <option value="">All Category</option>
               <option value="hotel">Hotel</option>
               <option value="home">Home Cook</option>
               <option value="daily">Daily Basis</option>
             </Select>
-          </Box>
-          <Box flex="1" minW="180px">
-            <FormLabel fontSize="xs" fontWeight="700" color="#475569" mb="2">City</FormLabel>
-            <Select size="sm" h="40px" borderRadius="lg" bg="#f8faff" border="1.5px solid #dde6f5" value={filters.city} onChange={(e) => handleFilterChange('city', e.target.value)}>
+          </FormControl>
+
+          <FormControl>
+            <FormLabel fontSize="xs" fontWeight="700" color="#475569" mb="1.5">City</FormLabel>
+            <Select size="sm" h="38px" borderRadius="lg" bg="#f8faff" border="1.5px solid #dde6f5" value={filters.city} onChange={(e) => handleFilterChange('city', e.target.value)}>
               <option value="">All City</option>
               {getUniqueCities().map(city => (
                 <option key={city} value={city}>{city}</option>
               ))}
             </Select>
-          </Box>
-          <Box flex="1" minW="180px">
-            <FormLabel fontSize="xs" fontWeight="700" color="#475569" mb="2">Status</FormLabel>
-            <Select size="sm" h="40px" borderRadius="lg" bg="#f8faff" border="1.5px solid #dde6f5" value={filters.status} onChange={(e) => handleFilterChange('status', e.target.value)}>
+          </FormControl>
+
+          <FormControl>
+            <FormLabel fontSize="xs" fontWeight="700" color="#475569" mb="1.5">Status</FormLabel>
+            <Select size="sm" h="38px" borderRadius="lg" bg="#f8faff" border="1.5px solid #dde6f5" value={filters.status} onChange={(e) => handleFilterChange('status', e.target.value)}>
               <option value="">All Status</option>
               {['Urgent', 'New', 'Assigned', 'Active', 'Inactive', 'Cancelled', 'Expired'].map(s => (
                 <option key={s} value={s}>{s}</option>
               ))}
             </Select>
-          </Box>
-          <Box flex="1" minW="180px">
-            <FormLabel fontSize="xs" fontWeight="700" color="#475569" mb="2">Lead Manager</FormLabel>
-            <Select size="sm" h="40px" borderRadius="lg" bg="#f8faff" border="1.5px solid #dde6f5" value={filters.leadManager} onChange={(e) => handleFilterChange('leadManager', e.target.value)}>
+          </FormControl>
+
+          <FormControl>
+            <FormLabel fontSize="xs" fontWeight="700" color="#475569" mb="1.5">Lead Manager</FormLabel>
+            <Select size="sm" h="38px" borderRadius="lg" bg="#f8faff" border="1.5px solid #dde6f5" value={filters.leadManager} onChange={(e) => handleFilterChange('leadManager', e.target.value)}>
               <option value="">All Lead Manager</option>
               {leadManagers.map(lm => (
                 <option key={lm._id} value={lm.name}>{lm.name}</option>
               ))}
             </Select>
-          </Box>
-          <Box flex="1.5" minW="240px">
-            <FormLabel fontSize="xs" fontWeight="700" color="#475569" mb="2">Date Range</FormLabel>
+          </FormControl>
+
+          <FormControl>
+            <Flex justify="space-between" align="center" mb="1.5">
+              <FormLabel fontSize="xs" fontWeight="700" color="#475569" m="0">Date Range</FormLabel>
+              <ChakraLink fontSize="10px" fontWeight="700" color="#0f62fe" onClick={() => setShowCustomDate(!showCustomDate)}>
+                {showCustomDate ? "Presets" : "Custom Date"}
+              </ChakraLink>
+            </Flex>
             {showCustomDate ? (
-              <HStack spacing="2" w="full">
-                <Input type="date" size="sm" h="40px" borderRadius="lg" bg="#f8faff" border="1.5px solid #dde6f5" value={filters.startDate} onChange={(e) => handleFilterChange('startDate', e.target.value)} />
-                <Text fontSize="xs" color="#94a3b8">to</Text>
-                <Input type="date" size="sm" h="40px" borderRadius="lg" bg="#f8faff" border="1.5px solid #dde6f5" value={filters.endDate} onChange={(e) => handleFilterChange('endDate', e.target.value)} />
+              <HStack spacing="1.5">
+                <Input type="date" size="sm" h="38px" p="1" borderRadius="lg" bg="#f8faff" border="1.5px solid #dde6f5" value={filters.startDate} onChange={(e) => handleFilterChange('startDate', e.target.value)} />
+                <Input type="date" size="sm" h="38px" p="1" borderRadius="lg" bg="#f8faff" border="1.5px solid #dde6f5" value={filters.endDate} onChange={(e) => handleFilterChange('endDate', e.target.value)} />
               </HStack>
             ) : (
-              <Select size="sm" h="40px" borderRadius="lg" bg="#f8faff" border="1.5px solid #dde6f5" value={filters.datePreset} onChange={(e) => handleFilterChange('datePreset', e.target.value)}>
+              <Select size="sm" h="38px" borderRadius="lg" bg="#f8faff" border="1.5px solid #dde6f5" value={filters.datePreset} onChange={(e) => handleFilterChange('datePreset', e.target.value)}>
                 <option value="">Select Range</option>
                 <option value="today">Today</option>
                 <option value="yesterday">Yesterday</option>
@@ -582,15 +632,8 @@ const JobList = () => {
                 <option value="monthly">Last 30 Days</option>
               </Select>
             )}
-            <ChakraLink fontSize="11px" fontWeight="700" color="#0f62fe" mt="1.5" display="inline-block" onClick={() => setShowCustomDate(!showCustomDate)}>
-              {showCustomDate ? "Use Preset Range" : "Custom Date"}
-            </ChakraLink>
-          </Box>
-          <HStack spacing="2" minW="180px" justify="flex-end" mb={showCustomDate ? "5" : "0"}>
-            <Button h="40px" px="6" variant="outline" borderColor="#dde6f5" color="#475569" _hover={{ bg: '#f1f5f9' }} borderRadius="lg" fontSize="xs" fontWeight="700" onClick={resetFilters}>Reset</Button>
-            <Button h="40px" px="6" bg="#0f62fe" color="white" _hover={{ bg: '#0043ce' }} borderRadius="lg" fontSize="xs" fontWeight="700" onClick={handleApplyFilters}>Apply</Button>
-          </HStack>
-        </Flex>
+          </FormControl>
+        </SimpleGrid>
       </Box>
 
       {/* Table Section */}
@@ -855,6 +898,7 @@ const JobList = () => {
                             color="#64748b"
                             _hover={{ color: '#10b981', bg: '#e6fcf5' }}
                             aria-label="Resend Notification"
+                            isLoading={resendingJobId === row._id}
                             onClick={() => resendNotification(row._id)}
                           />
                         </Tooltip>
