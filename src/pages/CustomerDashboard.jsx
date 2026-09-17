@@ -87,6 +87,8 @@ const CustomerDashboard = () => {
     replacementLimit: '2',
     features: 'Dedicated Relationship Manager\nFree Cook Replacements\nPriority Cook Matching',
     customNotes: '',
+    expiresInHours: '',
+    expiresAt: '',
     isPublished: true
   });
   const [isSubmittingPlan, setIsSubmittingPlan] = useState(false);
@@ -179,6 +181,8 @@ const CustomerDashboard = () => {
         replacementLimit: Number(planForm.replacementLimit || 0),
         features: featureList,
         customNotes: planForm.customNotes,
+        expiresInHours: planForm.expiresInHours || undefined,
+        expiresAt: planForm.expiresAt || undefined,
         isPublished: planForm.isPublished
       };
 
@@ -206,6 +210,8 @@ const CustomerDashboard = () => {
           replacementLimit: '2',
           features: 'Dedicated Relationship Manager\nFree Cook Replacements\nPriority Cook Matching',
           customNotes: '',
+          expiresInHours: '',
+          expiresAt: '',
           isPublished: true
         });
         fetchDashboardData();
@@ -701,15 +707,29 @@ const CustomerDashboard = () => {
                                 </VStack>
                               </Td>
                               <Td py="3.5">
-                                {plan.isPublished ? (
-                                  <Badge colorScheme="green" px="2.5" py="1" borderRadius="full" fontSize="xs">
-                                    ● Published on App
-                                  </Badge>
-                                ) : (
-                                  <Badge colorScheme="gray" px="2.5" py="1" borderRadius="full" fontSize="xs">
-                                    ○ Draft (Hidden)
-                                  </Badge>
-                                )}
+                                <VStack align="start" spacing="1">
+                                  {plan.isPublished ? (
+                                    <Badge colorScheme="green" px="2.5" py="0.5" borderRadius="full" fontSize="xs">
+                                      ● Live on App
+                                    </Badge>
+                                  ) : (
+                                    <Badge colorScheme="gray" px="2.5" py="0.5" borderRadius="full" fontSize="xs">
+                                      ○ Draft (Hidden)
+                                    </Badge>
+                                  )}
+                                  {plan.expiresAt ? (
+                                    <HStack spacing="1">
+                                      <Clock size={11} color={new Date(plan.expiresAt) > new Date() ? '#ea580c' : '#dc2626'} />
+                                      <Text fontSize="10px" fontWeight="700" color={new Date(plan.expiresAt) > new Date() ? '#ea580c' : '#dc2626'}>
+                                        {new Date(plan.expiresAt) > new Date()
+                                          ? `Expires: ${new Date(plan.expiresAt).toLocaleDateString('en-IN', { day: '2-digit', month: 'short', hour: '2-digit', minute: '2-digit' })}`
+                                          : 'Timer Expired (Auto-Hidden)'}
+                                      </Text>
+                                    </HStack>
+                                  ) : (
+                                    <Text fontSize="10px" color="#94a3b8" fontWeight="600">No Timer (Permanent)</Text>
+                                  )}
+                                </VStack>
                               </Td>
                               <Td py="3.5" textAlign="center">
                                 <Button
@@ -1067,6 +1087,87 @@ const CustomerDashboard = () => {
                   h="40px"
                 />
               </FormControl>
+
+              <Box p="3.5" bg="#fff7ed" borderRadius="xl" border="1px solid #fed7aa">
+                <FormControl>
+                  <Flex align="center" justify="space-between" mb="1.5">
+                    <HStack spacing="1.5">
+                      <Clock size={16} color="#c2410c" />
+                      <FormLabel fontSize="xs" fontWeight="700" color="#9a3412" mb="0">
+                        Offer Validity / Countdown Timer (Optional - Not Mandatory)
+                      </FormLabel>
+                    </HStack>
+                    {planForm.expiresInHours && (
+                      <Badge colorScheme="orange" fontSize="2xs">
+                        {planForm.expiresInHours}h Countdown
+                      </Badge>
+                    )}
+                  </Flex>
+                  <Text fontSize="2xs" color="#9a3412" mb="2.5">
+                    Agar time set karenge toh customer ke app par live countdown chalega aur time khatam hote hi offer automatic gayab ho jayega. Khali chhodne par permanent dikhega.
+                  </Text>
+                  
+                  <Flex gap="1.5" wrap="wrap" mb="2.5">
+                    {[
+                      { label: '6h', value: '6' },
+                      { label: '12h', value: '12' },
+                      { label: '24h (1 Day)', value: '24' },
+                      { label: '48h (2 Days)', value: '48' },
+                      { label: '72h (3 Days)', value: '72' },
+                    ].map(preset => (
+                      <Button
+                        key={preset.value}
+                        size="xs"
+                        variant={planForm.expiresInHours === preset.value ? 'solid' : 'outline'}
+                        colorScheme="orange"
+                        onClick={() => setPlanForm({ ...planForm, expiresInHours: preset.value, expiresAt: '' })}
+                        borderRadius="md"
+                        fontSize="xs"
+                      >
+                        {preset.label}
+                      </Button>
+                    ))}
+                    {(planForm.expiresInHours || planForm.expiresAt) && (
+                      <Button
+                        size="xs"
+                        variant="ghost"
+                        colorScheme="gray"
+                        onClick={() => setPlanForm({ ...planForm, expiresInHours: '', expiresAt: '' })}
+                      >
+                        Clear Timer
+                      </Button>
+                    )}
+                  </Flex>
+
+                  <SimpleGrid columns={{ base: 1, sm: 2 }} gap="2">
+                    <Box>
+                      <Text fontSize="2xs" fontWeight="700" color="#7c2d12" mb="1">Or Custom Hours:</Text>
+                      <Input
+                        type="number"
+                        placeholder="e.g. 36 (Hours)"
+                        value={planForm.expiresInHours}
+                        onChange={(e) => setPlanForm({ ...planForm, expiresInHours: e.target.value, expiresAt: '' })}
+                        borderRadius="md"
+                        size="xs"
+                        h="32px"
+                        bg="white"
+                      />
+                    </Box>
+                    <Box>
+                      <Text fontSize="2xs" fontWeight="700" color="#7c2d12" mb="1">Or Specific End Date & Time:</Text>
+                      <Input
+                        type="datetime-local"
+                        value={planForm.expiresAt}
+                        onChange={(e) => setPlanForm({ ...planForm, expiresAt: e.target.value, expiresInHours: '' })}
+                        borderRadius="md"
+                        size="xs"
+                        h="32px"
+                        bg="white"
+                      />
+                    </Box>
+                  </SimpleGrid>
+                </FormControl>
+              </Box>
 
               <Box p="3" bg="#f5f3ff" borderRadius="xl" border="1px solid #ddd6fe">
                 <Flex align="center" justify="space-between">
