@@ -1339,186 +1339,329 @@ const CustomerDashboard = () => {
       </Modal>
 
       {/* ── Activate Plan Directly Modal ────────────────────────────── */}
-      <Modal isOpen={isActivateModalOpen} onClose={onActivateModalClose} size="xl" isCentered scrollBehavior="inside">
-        <ModalOverlay backdropFilter="blur(3px)" />
-        <ModalContent borderRadius="2xl" overflow="hidden">
-          <ModalHeader
-            bg="linear-gradient(135deg, #fef3c7, #fee2e2)"
-            borderBottom="1px solid #fde68a"
-            py="4"
-          >
-            <HStack spacing="3">
-              <Flex bg="white" p="2" borderRadius="lg" boxShadow="sm">
-                <Icon as={Zap} size={20} color="#f59e0b" />
-              </Flex>
-              <Box>
-                <Text fontSize="lg" fontWeight="800" color="#92400e">Activate Plan for Customer</Text>
-                <Text fontSize="xs" color="#b45309" fontWeight="500">Offline payment record karega aur plan turant active ho jayega</Text>
-              </Box>
-            </HStack>
-          </ModalHeader>
-          <ModalCloseButton />
+      <Modal isOpen={isActivateModalOpen} onClose={onActivateModalClose} size="2xl" isCentered scrollBehavior="inside">
+        <ModalOverlay backdropFilter="blur(4px)" bg="blackAlpha.400" />
+        <ModalContent borderRadius="2xl" overflow="hidden" boxShadow="0 25px 60px rgba(0,0,0,0.18)">
 
-          <ModalBody py="5" px="6">
-            <VStack spacing="4" align="stretch">
-
-              {/* Plan Selector */}
-              <FormControl isRequired>
-                <FormLabel fontSize="sm" fontWeight="700" color="#374151">Plan Select Karo</FormLabel>
-                {isLoadingPlans ? (
-                  <HStack><Spinner size="sm" color="#f59e0b" /><Text fontSize="sm" color="#6b7280">Plans load ho rahe hain...</Text></HStack>
-                ) : (
-                  <Select
-                    placeholder="-- Plan choose karo --"
-                    value={activateForm.planId}
-                    onChange={e => handlePlanSelect(e.target.value)}
-                    borderRadius="lg"
-                    borderColor="#d1d5db"
-                    _focus={{ borderColor: '#f59e0b', boxShadow: '0 0 0 1px #f59e0b' }}
-                    size="md"
-                  >
-                    {allPlans.map(plan => (
-                      <option key={plan._id} value={plan._id}>
-                        {plan.isCustom ? '🎯 ' : '📦 '}{plan.name} — ₹{plan.price?.toLocaleString('en-IN')} / {plan.durationDays}d
-                      </option>
-                    ))}
-                  </Select>
-                )}
-              </FormControl>
-
-              {/* Plan Preview */}
-              {selectedPlanPreview && (
-                <Box p="3" bg="#fffbeb" borderRadius="xl" border="1px solid #fde68a">
-                  <HStack justify="space-between" wrap="wrap" gap="2">
-                    <HStack spacing="3">
-                      <Text fontSize="sm" fontWeight="800" color="#92400e">{selectedPlanPreview.name}</Text>
-                      {selectedPlanPreview.isCustom && <Badge colorScheme="purple" fontSize="2xs">CUSTOM</Badge>}
-                    </HStack>
-                    <HStack spacing="4">
-                      <Text fontSize="xs" color="#78716c">⏱ {selectedPlanPreview.durationDays} Days</Text>
-                      <Text fontSize="xs" color="#78716c">📋 {selectedPlanPreview.jobPostLimit} Posts</Text>
-                      <Text fontSize="xs" color="#78716c">👤 {selectedPlanPreview.hiringLimit} Hires</Text>
-                      <Text fontSize="xs" color="#78716c">🔄 {selectedPlanPreview.replacementLimit || 0} Replace</Text>
-                    </HStack>
+          {/* Header */}
+          <ModalHeader py="0" px="0">
+            <Box
+              bgGradient="linear(135deg, #fef3c7 0%, #fde68a 50%, #fca5a5 100%)"
+              px="6" py="5"
+              position="relative"
+            >
+              <HStack spacing="4">
+                <Flex
+                  bg="white"
+                  p="3"
+                  borderRadius="xl"
+                  boxShadow="0 4px 12px rgba(245,158,11,0.3)"
+                  align="center"
+                  justify="center"
+                >
+                  <Zap size={22} color="#f59e0b" />
+                </Flex>
+                <Box>
+                  <Text fontSize="xl" fontWeight="900" color="#78350f" letterSpacing="-0.3px">
+                    Activate Plan for Customer
+                  </Text>
+                  <HStack spacing="2" mt="0.5">
+                    <Badge colorScheme="green" fontSize="2xs" borderRadius="full" px="2">
+                      ✓ App pe turant reflect hoga
+                    </Badge>
+                    <Badge colorScheme="orange" fontSize="2xs" borderRadius="full" px="2">
+                      Offline Payment
+                    </Badge>
                   </HStack>
                 </Box>
-              )}
-
-              {/* Amount + Payment Method */}
-              <HStack spacing="3" align="start">
-                <FormControl isRequired flex="1">
-                  <FormLabel fontSize="sm" fontWeight="700" color="#374151">Amount Paid (₹)</FormLabel>
-                  <Input
-                    type="number"
-                    min="0"
-                    placeholder="e.g. 5000"
-                    value={activateForm.amountPaid}
-                    onChange={e => setActivateForm(prev => ({ ...prev, amountPaid: e.target.value }))}
-                    borderRadius="lg"
-                    borderColor="#d1d5db"
-                    _focus={{ borderColor: '#f59e0b', boxShadow: '0 0 0 1px #f59e0b' }}
-                  />
-                </FormControl>
-
-                <FormControl flex="1">
-                  <FormLabel fontSize="sm" fontWeight="700" color="#374151">Payment Method</FormLabel>
-                  <Select
-                    value={activateForm.paymentMethod}
-                    onChange={e => setActivateForm(prev => ({ ...prev, paymentMethod: e.target.value }))}
-                    borderRadius="lg"
-                    borderColor="#d1d5db"
-                    _focus={{ borderColor: '#f59e0b', boxShadow: '0 0 0 1px #f59e0b' }}
-                  >
-                    <option value="cash">💵 Cash</option>
-                    <option value="upi">📱 UPI</option>
-                    <option value="bank_transfer">🏦 Bank Transfer</option>
-                    <option value="cheque">📄 Cheque</option>
-                    <option value="complimentary">🎁 Complimentary (Free)</option>
-                    <option value="other">📝 Other</option>
-                  </Select>
-                </FormControl>
               </HStack>
+            </Box>
+          </ModalHeader>
+          <ModalCloseButton top="4" right="4" zIndex="10" />
 
-              {/* Payment Reference */}
-              <FormControl>
-                <FormLabel fontSize="sm" fontWeight="700" color="#374151">
-                  Payment Reference
-                  <Text as="span" fontWeight="400" color="#9ca3af" ml="1">(optional)</Text>
-                </FormLabel>
-                <Input
-                  placeholder={
-                    activateForm.paymentMethod === 'upi' ? 'UPI Transaction ID' :
-                    activateForm.paymentMethod === 'cheque' ? 'Cheque Number' :
-                    activateForm.paymentMethod === 'bank_transfer' ? 'Bank Reference/NEFT/IMPS ID' :
-                    'Reference Number / Note'
-                  }
-                  value={activateForm.paymentReference}
-                  onChange={e => setActivateForm(prev => ({ ...prev, paymentReference: e.target.value }))}
-                  borderRadius="lg"
-                  borderColor="#d1d5db"
-                  _focus={{ borderColor: '#f59e0b', boxShadow: '0 0 0 1px #f59e0b' }}
-                />
-              </FormControl>
+          <ModalBody py="5" px="6">
+            <VStack spacing="5" align="stretch">
 
-              {/* Start Date */}
-              <FormControl>
-                <FormLabel fontSize="sm" fontWeight="700" color="#374151">Plan Start Date</FormLabel>
-                <Input
-                  type="date"
-                  value={activateForm.startDate}
-                  onChange={e => setActivateForm(prev => ({ ...prev, startDate: e.target.value }))}
-                  borderRadius="lg"
-                  borderColor="#d1d5db"
-                  _focus={{ borderColor: '#f59e0b', boxShadow: '0 0 0 1px #f59e0b' }}
-                />
-              </FormControl>
+              {/* ── STEP 1: Plan Cards ─────────────────────────────────── */}
+              <Box>
+                <HStack mb="3" justify="space-between">
+                  <Text fontSize="sm" fontWeight="800" color="#1e293b">
+                    Step 1 — Plan Select Karo
+                  </Text>
+                  {activateForm.planId && (
+                    <Badge colorScheme="green" fontSize="xs" borderRadius="full" px="2.5" py="0.5">
+                      ✓ Selected
+                    </Badge>
+                  )}
+                </HStack>
 
-              {/* Payment Note */}
-              <FormControl>
-                <FormLabel fontSize="sm" fontWeight="700" color="#374151">
-                  Internal Note
-                  <Text as="span" fontWeight="400" color="#9ca3af" ml="1">(optional)</Text>
-                </FormLabel>
-                <Textarea
-                  placeholder='e.g. "Collected by Rahul at office on 17 Sep"'
-                  value={activateForm.paymentNote}
-                  onChange={e => setActivateForm(prev => ({ ...prev, paymentNote: e.target.value }))}
-                  borderRadius="lg"
-                  borderColor="#d1d5db"
-                  _focus={{ borderColor: '#f59e0b', boxShadow: '0 0 0 1px #f59e0b' }}
-                  rows={2}
-                  resize="none"
-                />
-              </FormControl>
+                {isLoadingPlans ? (
+                  <Flex align="center" justify="center" py="8" gap="3">
+                    <Spinner size="md" color="#f59e0b" thickness="3px" />
+                    <Text fontSize="sm" color="#6b7280" fontWeight="600">Plans load ho rahe hain...</Text>
+                  </Flex>
+                ) : allPlans.length === 0 ? (
+                  <Box p="6" textAlign="center" bg="#f8fafc" borderRadius="xl" border="1px dashed #cbd5e1">
+                    <Text fontSize="sm" color="#64748b">Koi plan nahi mila. Pehle plans create karo.</Text>
+                  </Box>
+                ) : (
+                  <SimpleGrid columns={{ base: 1, md: 2 }} gap="3">
+                    {allPlans.map(plan => {
+                      const isSelected = activateForm.planId === plan._id;
+                      return (
+                        <Box
+                          key={plan._id}
+                          onClick={() => handlePlanSelect(plan._id)}
+                          cursor="pointer"
+                          borderRadius="xl"
+                          border={isSelected ? '2px solid #f59e0b' : '1.5px solid #e2e8f0'}
+                          bg={isSelected ? 'linear-gradient(135deg, #fffbeb, #fef3c7)' : 'white'}
+                          p="4"
+                          position="relative"
+                          transition="all 0.15s ease"
+                          _hover={{
+                            border: '2px solid #f59e0b',
+                            boxShadow: '0 4px 16px rgba(245,158,11,0.15)',
+                            transform: 'translateY(-1px)'
+                          }}
+                          boxShadow={isSelected ? '0 4px 20px rgba(245,158,11,0.2)' : 'sm'}
+                        >
+                          {/* Selected check badge */}
+                          {isSelected && (
+                            <Flex
+                              position="absolute"
+                              top="-10px"
+                              right="-10px"
+                              bg="#f59e0b"
+                              borderRadius="full"
+                              w="22px"
+                              h="22px"
+                              align="center"
+                              justify="center"
+                              boxShadow="0 2px 6px rgba(245,158,11,0.4)"
+                            >
+                              <Check size={13} color="white" strokeWidth={3} />
+                            </Flex>
+                          )}
 
-              {/* Warning for override */}
-              <Box p="3" bg="#fef2f2" borderRadius="xl" border="1px solid #fecaca">
-                <Text fontSize="xs" color="#dc2626" fontWeight="600">
-                  ⚠️ Agar customer ka pehle se koi active plan hai, toh wo <b>turant expire</b> ho jayega aur naya plan activate ho jayega.
-                </Text>
+                          {/* Plan type badge */}
+                          <HStack justify="space-between" mb="2">
+                            <Badge
+                              colorScheme={plan.isCustom ? 'purple' : 'blue'}
+                              fontSize="2xs"
+                              borderRadius="full"
+                              px="2"
+                              textTransform="uppercase"
+                            >
+                              {plan.isCustom ? '🎯 Custom' : '📦 Standard'}
+                            </Badge>
+                            <Text fontSize="lg" fontWeight="900" color={isSelected ? '#92400e' : '#0f172a'}>
+                              ₹{plan.price?.toLocaleString('en-IN')}
+                            </Text>
+                          </HStack>
+
+                          {/* Plan name */}
+                          <Text fontSize="sm" fontWeight="800" color={isSelected ? '#78350f' : '#1e293b'} mb="3" noOfLines={1}>
+                            {plan.name}
+                          </Text>
+
+                          {/* Plan stats row */}
+                          <SimpleGrid columns={4} gap="1">
+                            {[
+                              { icon: '📅', label: 'Days', value: plan.durationDays },
+                              { icon: '📋', label: 'Posts', value: plan.jobPostLimit ?? '∞' },
+                              { icon: '👤', label: 'Hires', value: plan.hiringLimit ?? '∞' },
+                              { icon: '🔄', label: 'Replc.', value: plan.replacementLimit ?? 0 },
+                            ].map(stat => (
+                              <Box
+                                key={stat.label}
+                                bg={isSelected ? 'rgba(245,158,11,0.1)' : '#f8fafc'}
+                                borderRadius="lg"
+                                p="2"
+                                textAlign="center"
+                              >
+                                <Text fontSize="2xs" mb="0.5">{stat.icon}</Text>
+                                <Text fontSize="xs" fontWeight="800" color={isSelected ? '#92400e' : '#0f172a'} lineHeight="1">
+                                  {stat.value}
+                                </Text>
+                                <Text fontSize="2xs" color="#94a3b8" lineHeight="1.2">{stat.label}</Text>
+                              </Box>
+                            ))}
+                          </SimpleGrid>
+                        </Box>
+                      );
+                    })}
+                  </SimpleGrid>
+                )}
               </Box>
+
+              {/* ── STEP 2: Payment Details ─────────────────────────────── */}
+              <Box
+                bg="#f8fafc"
+                borderRadius="xl"
+                border="1px solid #e2e8f0"
+                p="4"
+              >
+                <Text fontSize="sm" fontWeight="800" color="#1e293b" mb="4">
+                  Step 2 — Payment Details
+                </Text>
+
+                <VStack spacing="3" align="stretch">
+                  {/* Amount + Method */}
+                  <HStack spacing="3" align="start">
+                    <FormControl isRequired flex="1">
+                      <FormLabel fontSize="xs" fontWeight="700" color="#374151" mb="1">Amount Paid (₹)</FormLabel>
+                      <Input
+                        type="number"
+                        min="0"
+                        placeholder="e.g. 5000"
+                        value={activateForm.amountPaid}
+                        onChange={e => setActivateForm(prev => ({ ...prev, amountPaid: e.target.value }))}
+                        borderRadius="lg"
+                        bg="white"
+                        borderColor="#d1d5db"
+                        fontSize="sm"
+                        _focus={{ borderColor: '#f59e0b', boxShadow: '0 0 0 2px rgba(245,158,11,0.2)' }}
+                      />
+                    </FormControl>
+
+                    <FormControl flex="1">
+                      <FormLabel fontSize="xs" fontWeight="700" color="#374151" mb="1">Payment Method</FormLabel>
+                      <Select
+                        value={activateForm.paymentMethod}
+                        onChange={e => setActivateForm(prev => ({ ...prev, paymentMethod: e.target.value }))}
+                        borderRadius="lg"
+                        bg="white"
+                        borderColor="#d1d5db"
+                        fontSize="sm"
+                        _focus={{ borderColor: '#f59e0b', boxShadow: '0 0 0 2px rgba(245,158,11,0.2)' }}
+                      >
+                        <option value="cash">💵 Cash</option>
+                        <option value="upi">📱 UPI</option>
+                        <option value="bank_transfer">🏦 Bank Transfer</option>
+                        <option value="cheque">📄 Cheque</option>
+                        <option value="complimentary">🎁 Complimentary (Free)</option>
+                        <option value="other">📝 Other</option>
+                      </Select>
+                    </FormControl>
+
+                    <FormControl flex="1">
+                      <FormLabel fontSize="xs" fontWeight="700" color="#374151" mb="1">Start Date</FormLabel>
+                      <Input
+                        type="date"
+                        value={activateForm.startDate}
+                        onChange={e => setActivateForm(prev => ({ ...prev, startDate: e.target.value }))}
+                        borderRadius="lg"
+                        bg="white"
+                        borderColor="#d1d5db"
+                        fontSize="sm"
+                        _focus={{ borderColor: '#f59e0b', boxShadow: '0 0 0 2px rgba(245,158,11,0.2)' }}
+                      />
+                    </FormControl>
+                  </HStack>
+
+                  {/* Reference + Note */}
+                  <HStack spacing="3" align="start">
+                    <FormControl flex="1">
+                      <FormLabel fontSize="xs" fontWeight="700" color="#374151" mb="1">
+                        Payment Reference <Text as="span" fontWeight="400" color="#9ca3af">(optional)</Text>
+                      </FormLabel>
+                      <Input
+                        placeholder={
+                          activateForm.paymentMethod === 'upi' ? 'UPI Transaction ID' :
+                          activateForm.paymentMethod === 'cheque' ? 'Cheque Number' :
+                          activateForm.paymentMethod === 'bank_transfer' ? 'NEFT/IMPS Reference ID' :
+                          'Reference / Note'
+                        }
+                        value={activateForm.paymentReference}
+                        onChange={e => setActivateForm(prev => ({ ...prev, paymentReference: e.target.value }))}
+                        borderRadius="lg"
+                        bg="white"
+                        borderColor="#d1d5db"
+                        fontSize="sm"
+                        _focus={{ borderColor: '#f59e0b', boxShadow: '0 0 0 2px rgba(245,158,11,0.2)' }}
+                      />
+                    </FormControl>
+
+                    <FormControl flex="1">
+                      <FormLabel fontSize="xs" fontWeight="700" color="#374151" mb="1">
+                        Internal Note <Text as="span" fontWeight="400" color="#9ca3af">(optional)</Text>
+                      </FormLabel>
+                      <Input
+                        placeholder='e.g. "Collected by Rahul at office"'
+                        value={activateForm.paymentNote}
+                        onChange={e => setActivateForm(prev => ({ ...prev, paymentNote: e.target.value }))}
+                        borderRadius="lg"
+                        bg="white"
+                        borderColor="#d1d5db"
+                        fontSize="sm"
+                        _focus={{ borderColor: '#f59e0b', boxShadow: '0 0 0 2px rgba(245,158,11,0.2)' }}
+                      />
+                    </FormControl>
+                  </HStack>
+                </VStack>
+              </Box>
+
+              {/* Info banners */}
+              <HStack spacing="3">
+                <Box flex="1" p="3" bg="#f0fdf4" borderRadius="xl" border="1px solid #bbf7d0">
+                  <HStack spacing="2">
+                    <CheckCircle size={14} color="#16a34a" />
+                    <Text fontSize="xs" color="#15803d" fontWeight="700">App pe turant dikh jayega</Text>
+                  </HStack>
+                  <Text fontSize="2xs" color="#166534" mt="1">
+                    Customer ke Flutter app login pe plan active ho jayega immediately.
+                  </Text>
+                </Box>
+                <Box flex="1" p="3" bg="#fef2f2" borderRadius="xl" border="1px solid #fecaca">
+                  <HStack spacing="2">
+                    <Zap size={14} color="#dc2626" />
+                    <Text fontSize="xs" color="#dc2626" fontWeight="700">Override mode active</Text>
+                  </HStack>
+                  <Text fontSize="2xs" color="#991b1b" mt="1">
+                    Purana active plan expire ho jayega. Naya plan start hoga.
+                  </Text>
+                </Box>
+              </HStack>
 
             </VStack>
           </ModalBody>
 
-          <ModalFooter bg="#f8fafc" borderTop="1px solid #e2e8f0" py="3">
-            <Button variant="ghost" mr={3} onClick={onActivateModalClose} size="sm" isDisabled={isActivating}>Cancel</Button>
-            <Button
-              bg="linear-gradient(135deg, #f59e0b, #ef4444)"
-              color="white"
-              _hover={{ opacity: 0.9 }}
-              size="sm"
-              borderRadius="lg"
-              fontWeight="700"
-              leftIcon={isActivating ? <Spinner size="xs" /> : <Zap size={14} />}
-              onClick={handleActivatePlan}
-              isLoading={isActivating}
-              loadingText="Activating..."
-              isDisabled={!activateForm.planId || activateForm.amountPaid === ''}
-              boxShadow="0 2px 8px rgba(245, 158, 11, 0.3)"
-            >
-              Activate Plan Now
-            </Button>
+          <ModalFooter
+            bg="white"
+            borderTop="1px solid #e2e8f0"
+            py="4"
+            px="6"
+            justifyContent="space-between"
+          >
+            <Text fontSize="xs" color="#94a3b8">
+              {activateForm.planId && selectedPlanPreview
+                ? `📦 ${selectedPlanPreview.name} • ₹${Number(activateForm.amountPaid || 0).toLocaleString('en-IN')} • ${activateForm.paymentMethod}`
+                : 'Koi plan select nahi hua'}
+            </Text>
+            <HStack spacing="3">
+              <Button variant="ghost" onClick={onActivateModalClose} size="sm" isDisabled={isActivating} borderRadius="lg">
+                Cancel
+              </Button>
+              <Button
+                bgGradient="linear(135deg, #f59e0b, #ef4444)"
+                color="white"
+                _hover={{ opacity: 0.88, transform: 'translateY(-1px)' }}
+                _active={{ transform: 'translateY(0)' }}
+                size="sm"
+                borderRadius="lg"
+                fontWeight="800"
+                leftIcon={<Zap size={14} />}
+                onClick={handleActivatePlan}
+                isLoading={isActivating}
+                loadingText="Activating..."
+                isDisabled={!activateForm.planId || activateForm.amountPaid === ''}
+                boxShadow="0 4px 14px rgba(245,158,11,0.4)"
+                px="6"
+              >
+                ⚡ Activate Plan Now
+              </Button>
+            </HStack>
           </ModalFooter>
         </ModalContent>
       </Modal>
