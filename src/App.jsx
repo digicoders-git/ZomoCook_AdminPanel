@@ -50,6 +50,7 @@ import OfferList from './pages/OfferList';
 import BannerList from './pages/BannerList';
 import PendingCookApprovals from './pages/PendingCookApprovals';
 import FinanceRevenue from './pages/FinanceRevenue';
+import MenuItemManagement from './pages/MenuItemManagement';
 
 // ─── Helper: Get current logged-in user's data ──────────────────────────────
 const getAdminData = () => {
@@ -417,6 +418,19 @@ function App() {
         <Route path="/banners" element={
           <PermissionRoute permission="banner_management:view">
             <Layout><BannerList /></Layout>
+          </PermissionRoute>
+        } />
+
+        {/* ── Party Menu Routes ────────────────────────────────────────── */}
+        <Route path="/menu-items" element={
+          <PermissionRoute>
+            <Layout><MenuItemManagement /></Layout>
+          </PermissionRoute>
+        } />
+        <Route path="/party-menu" element={<Navigate to="/menu-items" replace />} />
+        <Route path="/masters/job-menu" element={
+          <PermissionRoute>
+            <Layout><MenuItemManagement /></Layout>
           </PermissionRoute>
         } />
 

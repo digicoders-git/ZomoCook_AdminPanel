@@ -214,7 +214,7 @@ const Dashboard = () => {
   const [isLoading, setIsLoading] = useState(true);
   const [data, setData] = useState(null);
   const [showFilters, setShowFilters] = useState(false);
-  const [customers, setCustomers] = useState([]);
+  const [leadManagers, setLeadManagers] = useState([]);
   const [positions, setPositions] = useState([]);
 
   // Modal States for drilling down
@@ -229,7 +229,7 @@ const Dashboard = () => {
   // Filter States
   const [filters, setFilters] = useState({
     category: '',
-    customer: '',
+    leadManager: '',
     position: '',
     date: 'all'
   });
@@ -246,7 +246,7 @@ const Dashboard = () => {
     try {
       const params = new URLSearchParams();
       if (filters.category && filters.category !== 'all') params.append('category', filters.category);
-      if (filters.customer && filters.customer !== 'all') params.append('customer', filters.customer);
+      if (filters.leadManager && filters.leadManager !== 'all') params.append('leadManager', filters.leadManager);
       if (filters.position && filters.position !== 'all') params.append('position', filters.position);
       if (filters.date && filters.date !== 'all') params.append('date', filters.date);
 
@@ -266,12 +266,12 @@ const Dashboard = () => {
 
   const fetchMasters = async () => {
     try {
-      const [custRes, posRes] = await Promise.all([
-        axios.get(`${API_BASE_URL}/customers`, { headers: { Authorization: `Bearer ${token}` } }),
+      const [usersRes, posRes] = await Promise.all([
+        axios.get(`${API_BASE_URL}/admin/users`, { headers: { Authorization: `Bearer ${token}` } }),
         axios.get(`${API_BASE_URL}/masters/job-positions`, { headers: { Authorization: `Bearer ${token}` } })
       ]);
-      if (custRes.data.success) setCustomers(custRes.data.customers);
-      if (posRes.data.success) setPositions(posRes.data.masters);
+      if (usersRes.data.success) setLeadManagers(usersRes.data.users || []);
+      if (posRes.data.success) setPositions(posRes.data.masters || []);
     } catch (error) {
       console.error('Error fetching masters:', error);
     }
@@ -292,7 +292,7 @@ const Dashboard = () => {
   };
 
   const handleReset = () => {
-    setFilters({ category: 'all', customer: 'all', position: '', date: 'all' });
+    setFilters({ category: 'all', leadManager: 'all', position: '', date: 'all' });
     setIsLoading(true);
     axios.get(`${API_BASE_URL}/dashboard?date=all`, { headers: { Authorization: `Bearer ${token}` } })
       .then(res => { if (res.data.success) setData(res.data); })
@@ -465,12 +465,12 @@ const Dashboard = () => {
             {/* Lead Manager Dropdown with Icon */}
             <SearchableSelect 
               label="Lead Manager"
-              value={filters.customer}
+              value={filters.leadManager}
               options={[
                 { value: 'all', label: 'All Lead Managers' },
-                ...customers.map(c => ({ value: c._id, label: c.name }))
+                ...leadManagers.map(lm => ({ value: lm.name || lm._id, label: lm.name || lm.email }))
               ]}
-              onChange={(val) => setFilters(prev => ({ ...prev, customer: val }))}
+              onChange={(val) => setFilters(prev => ({ ...prev, leadManager: val }))}
               icon={Users}
               placeholder="All Lead Managers"
             />

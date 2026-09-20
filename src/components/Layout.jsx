@@ -57,6 +57,12 @@ const navCategories = [
     ]
   },
   {
+    category: 'PARTY & CATERING',
+    items: [
+      { name: 'Menu Items', icon: UtensilsCrossed, path: '/menu-items' },
+    ]
+  },
+  {
     category: 'RECRUITMENT & JOBS',
     items: [
       {
@@ -69,7 +75,7 @@ const navCategories = [
         ]
       },
       { name: 'Assignments', icon: ListMenu, path: '/replacements', permission: 'job_management:view' },
-      { name: 'Query History', icon: MessageSquare, path: '/queries', permission: 'query_management:view' },
+      { name: 'Enquiries & Leads', icon: MessageSquare, path: '/queries', permission: 'query_management:view' },
     ]
   },
   {

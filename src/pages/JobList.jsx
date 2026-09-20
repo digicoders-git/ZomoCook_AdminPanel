@@ -90,6 +90,7 @@ const JobList = () => {
     category: '',
     city: '',
     status: '',
+    source: '',
     startDate: '',
     endDate: '',
     leadManager: ''
@@ -267,6 +268,7 @@ const JobList = () => {
       category: '',
       city: '',
       status: '',
+      source: '',
       startDate: '',
       endDate: '',
       leadManager: ''
@@ -298,52 +300,72 @@ const JobList = () => {
       description: isLeadManager 
         ? 'Are you sure you want to remove this job from your panel? It will be returned to the Super Admin for reassignment.'
         : 'Are you sure you want to delete this job? This action cannot be undone and all associated data will be lost.',
-      confirmLabel: isLeadManager ? 'Remove Job' : 'Delete Job',
-      type: 'danger',
       onConfirm: async () => {
         try {
-          const response = await axios.delete(`${API_BASE_URL}/jobs/${id}`, {
-            headers: { 'Authorization': `Bearer ${token}` }
-          });
+          const endpoint = isLeadManager 
+            ? `${API_BASE_URL}/jobs/${id}/unassign`
+            : `${API_BASE_URL}/jobs/${id}`;
+          const response = isLeadManager 
+            ? await axios.put(endpoint, {}, { headers: { 'Authorization': `Bearer ${token}` } })
+            : await axios.delete(endpoint, { headers: { 'Authorization': `Bearer ${token}` } });
+          
           if (response.data.success) {
-            setJobs(prev => prev.filter(j => j._id !== id));
             toast({ 
-              title: isLeadManager ? 'Removed' : 'Deleted', 
-              description: isLeadManager ? 'Job removed from your panel.' : 'Job record removed.', 
+              title: isLeadManager ? 'Job Removed from Panel' : 'Job Deleted', 
+              description: isLeadManager ? 'Job returned to unassigned pool.' : 'Job removed from database.', 
               status: 'success', 
               duration: 3000, 
               position: 'top-right' 
             });
+            fetchJobs();
           }
         } catch (error) {
-          toast({ title: 'Error', description: error.response?.data?.message || 'Failed to delete job.', status: 'error', duration: 3000, position: 'top-right' });
+          toast({ 
+            title: 'Error', 
+            description: error.response?.data?.message || 'Failed to process request.', 
+            status: 'error', 
+            duration: 3000, 
+            position: 'top-right' 
+          });
         }
-        onClose();
-      }
+      },
+      type: 'danger',
+      confirmLabel: isLeadManager ? 'Remove' : 'Delete'
     });
     onOpen();
   };
 
   const confirmToggleStatus = (id, currentStatus) => {
     setConfirmConfig({
-      title: 'Update Job Status?',
-      description: `Are you sure you want to ${currentStatus ? 'deactivate' : 'activate'} this job? This will affect its visibility to candidates.`,
-      confirmLabel: currentStatus ? 'Deactivate' : 'Activate',
-      type: 'info',
+      title: currentStatus ? 'Deactivate Job?' : 'Activate Job?',
+      description: `Are you sure you want to ${currentStatus ? 'deactivate' : 'activate'} this job?`,
       onConfirm: async () => {
         try {
           const response = await axios.patch(`${API_BASE_URL}/jobs/${id}/status`, {}, {
             headers: { 'Authorization': `Bearer ${token}` }
           });
           if (response.data.success) {
-            toast({ title: 'Success', description: response.data.message, status: 'success', duration: 2000, position: 'top-right' });
+            toast({
+              title: 'Status Updated',
+              description: `Job ${currentStatus ? 'deactivated' : 'activated'} successfully.`,
+              status: 'success',
+              duration: 3000,
+              position: 'top-right'
+            });
             fetchJobs();
           }
         } catch (error) {
-          toast({ title: 'Error', description: 'Status update failed.', status: 'error', duration: 3000, position: 'top-right' });
+          toast({
+            title: 'Error',
+            description: error.response?.data?.message || 'Status update failed.',
+            status: 'error',
+            duration: 3000,
+            position: 'top-right'
+          });
         }
-        onClose();
-      }
+      },
+      type: currentStatus ? 'warning' : 'primary',
+      confirmLabel: currentStatus ? 'Deactivate' : 'Activate'
     });
     onOpen();
   };
@@ -459,6 +481,7 @@ const JobList = () => {
     const matchesCategory = !filters.category || job.jobCategory === filters.category;
     const matchesCity = !filters.city || job.city.toLowerCase() === filters.city.toLowerCase();
     const matchesStatus = !filters.status || (job.status || '').toLowerCase() === filters.status.toLowerCase();
+    const matchesSource = !filters.source || (job.source || 'app').toLowerCase() === filters.source.toLowerCase();
     const matchesLeadManager = !filters.leadManager || job.leadManager === filters.leadManager;
 
     // Date matching logic
@@ -496,7 +519,7 @@ const JobList = () => {
 
     const matchesPaymentStatus = (job.paymentStatus || '').toLowerCase() !== 'pending';
 
-    return matchesSearch && matchesCategory && matchesCity && matchesStatus && matchesDate && matchesLeadManager && matchesPaymentStatus;
+    return matchesSearch && matchesCategory && matchesCity && matchesStatus && matchesSource && matchesDate && matchesLeadManager && matchesPaymentStatus;
   });
 
   const totalPages = Math.ceil(filteredJobs.length / parseInt(entries));
@@ -570,7 +593,7 @@ const JobList = () => {
           </HStack>
         </Flex>
 
-        <SimpleGrid columns={{ base: 1, sm: 2, md: 3, lg: 5 }} spacing="4">
+        <SimpleGrid columns={{ base: 1, sm: 2, md: 3, lg: 6 }} spacing="4">
           <FormControl>
             <FormLabel fontSize="xs" fontWeight="700" color="#475569" mb="1.5">Category</FormLabel>
             <Select size="sm" h="38px" borderRadius="lg" bg="#f8faff" border="1.5px solid #dde6f5" value={filters.category} onChange={(e) => handleFilterChange('category', e.target.value)}>
@@ -578,6 +601,16 @@ const JobList = () => {
               <option value="hotel">Hotel</option>
               <option value="home">Home Cook</option>
               <option value="daily">Daily Basis</option>
+            </Select>
+          </FormControl>
+
+          <FormControl>
+            <FormLabel fontSize="xs" fontWeight="700" color="#475569" mb="1.5">Source</FormLabel>
+            <Select size="sm" h="38px" borderRadius="lg" bg="#f8faff" border="1.5px solid #dde6f5" value={filters.source} onChange={(e) => handleFilterChange('source', e.target.value)}>
+              <option value="">All Source</option>
+              <option value="web">Website (Web)</option>
+              <option value="app">Mobile App</option>
+              <option value="admin">Admin Panel</option>
             </Select>
           </FormControl>
 
@@ -668,6 +701,7 @@ const JobList = () => {
             <Thead>
               <Tr>
                 <Th {...darkThStyle} w="80px">Job ID</Th>
+                <Th {...darkThStyle} w="85px">Source</Th>
                 <Th {...darkThStyle} w="100px">Category</Th>
                 <Th {...darkThStyle} w="120px">Department</Th>
                 <Th {...darkThStyle} w="100px">Customer</Th>
@@ -686,12 +720,31 @@ const JobList = () => {
               {paginatedJobs.map((row) => {
                 const statusLabel = row.status || 'New';
                 const colors = getStatusColors(statusLabel);
+                const source = (row.source || 'app').toLowerCase();
 
                 return (
                   <Tr key={row._id} _hover={{ bg: '#f8fafc' }} transition="background 0.1s">
                     {/* Job ID */}
                     <Td {...customTdStyle} fontWeight="800" color="#0B1A30">
                       {row.jobCode || 'N/A'}
+                    </Td>
+
+                    {/* Source */}
+                    <Td {...customTdStyle}>
+                      <Badge
+                        px="2.5" py="1"
+                        borderRadius="full"
+                        fontSize="10px"
+                        fontWeight="800"
+                        textTransform="uppercase"
+                        letterSpacing="0.5px"
+                        bg={source === 'web' ? '#e0e7ff' : source === 'admin' ? '#fef3c7' : '#dcfce7'}
+                        color={source === 'web' ? '#3730a3' : source === 'admin' ? '#92400e' : '#166534'}
+                        border="1px solid"
+                        borderColor={source === 'web' ? '#c7d2fe' : source === 'admin' ? '#fde68a' : '#bbf7d0'}
+                      >
+                        {source === 'web' ? '🌐 Web' : source === 'admin' ? '⚙️ Admin' : '📱 App'}
+                      </Badge>
                     </Td>
 
                     {/* Category */}
