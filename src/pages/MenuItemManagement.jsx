@@ -503,7 +503,7 @@ export default function MenuItemManagement() {
         <div className="overflow-x-auto">
           <table className="w-full text-left border-collapse text-sm">
             <thead>
-              <tr className="bg-slate-50/80 text-slate-500 font-bold text-xs uppercase tracking-wider border-b border-slate-200">
+              <tr className="bg-slate-50/80 text-slate-500 font-bold text-xs uppercase tracking-wider border-b border-slate-200 whitespace-nowrap">
                 <th className="px-5 py-3.5">#</th>
                 <th className="px-5 py-3.5">Image</th>
                 <th className="px-5 py-3.5">Item Name</th>
@@ -518,38 +518,39 @@ export default function MenuItemManagement() {
             <tbody className="divide-y divide-slate-100">
               {loading ? (
                 <tr>
-                  <td colSpan={9} className="px-5 py-12 text-center text-slate-500 font-bold">
+                  <td colSpan={9} className="px-5 py-12 text-center text-slate-500 font-bold whitespace-nowrap">
                     Loading menu items...
                   </td>
                 </tr>
               ) : filteredItems.length === 0 ? (
                 <tr>
-                  <td colSpan={9} className="px-5 py-12 text-center text-slate-400 font-medium">
+                  <td colSpan={9} className="px-5 py-12 text-center text-slate-400 font-medium whitespace-nowrap">
                     No dishes found matching criteria.
                   </td>
                 </tr>
               ) : (
                 filteredItems.map((item, index) => (
                   <tr key={item._id || index} className="hover:bg-slate-50/80 transition-colors">
-                    <td className="px-5 py-3.5 font-bold text-slate-400">{index + 1}</td>
+                    <td className="px-5 py-3.5 font-bold text-slate-400 whitespace-nowrap">{index + 1}</td>
                     
-                    <td className="px-5 py-3.5">
+                    <td className="px-5 py-3.5 whitespace-nowrap">
                       <img
                         src={item.image}
                         alt={item.name}
-                        className="w-11 h-11 rounded-xl object-cover border border-slate-200 shadow-2xs"
+                        style={{ width: '48px', height: '48px', minWidth: '48px', minHeight: '48px', maxWidth: '48px', maxHeight: '48px', objectFit: 'cover' }}
+                        className="rounded-xl border border-slate-200 shadow-2xs shrink-0 block"
                       />
                     </td>
 
-                    <td className="px-5 py-3.5 font-bold text-slate-900">
+                    <td className="px-5 py-3.5 font-bold text-slate-900 whitespace-nowrap">
                       {item.name}
                     </td>
 
-                    <td className="px-5 py-3.5 text-slate-600 font-medium">
+                    <td className="px-5 py-3.5 text-slate-600 font-medium whitespace-nowrap">
                       {item.cuisine}
                     </td>
 
-                    <td className="px-5 py-3.5">
+                    <td className="px-5 py-3.5 whitespace-nowrap">
                       {item.foodType === 'non-veg' ? (
                         <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-lg text-xs font-bold bg-rose-50 text-rose-700 border border-rose-200">
                           <span>🍗</span>
@@ -563,7 +564,7 @@ export default function MenuItemManagement() {
                       )}
                     </td>
 
-                    <td className="px-5 py-3.5">
+                    <td className="px-5 py-3.5 whitespace-nowrap">
                       <span className={`inline-block px-2.5 py-1 rounded-lg text-xs font-bold border ${
                         item.category === 'Starter' 
                           ? 'bg-amber-50 text-amber-700 border-amber-200'
@@ -581,11 +582,11 @@ export default function MenuItemManagement() {
                       </span>
                     </td>
 
-                    <td className="px-5 py-3.5 font-bold text-slate-800">
+                    <td className="px-5 py-3.5 font-bold text-slate-800 whitespace-nowrap">
                       ₹{item.cookingCharge || 0}
                     </td>
 
-                    <td className="px-5 py-3.5">
+                    <td className="px-5 py-3.5 whitespace-nowrap">
                       <button
                         type="button"
                         onClick={() => handleToggleStatus(item)}
@@ -600,7 +601,7 @@ export default function MenuItemManagement() {
                       </button>
                     </td>
 
-                    <td className="px-5 py-3.5 text-center">
+                    <td className="px-5 py-3.5 text-center whitespace-nowrap">
                       <div className="flex items-center justify-center gap-1.5">
                         <button
                           type="button"

@@ -35,8 +35,8 @@ const OfferList = () => {
   
   const initialFormState = { 
     code: '', title: '', subtitle: '', 
-    offerType: 'FLAT', discountValue: 0, 
-    applicableOn: 'All', minOrderValue: 0, 
+    offerType: 'PERCENTAGE', discountValue: 0, 
+    targetPlatform: 'All', applicableOn: 'All', minOrderValue: 0, 
     usageLimitTotal: 0, usageLimitPerUser: 1, 
     validFrom: '', validTo: '', status: 'ACTIVE' 
   };
@@ -87,18 +87,17 @@ const OfferList = () => {
     }
     if (filterDateFrom && filterDateTo) {
         result = result.filter(o => {
-            if (!o.validFrom || !o.validTo) return true; // If no validity set, don't filter it out maybe? Or filter out if strict. Let's be inclusive if dates not set, or strict if they are. Assuming strict here based on UI having date pickers.
+            if (!o.validFrom || !o.validTo) return true;
             const offerStart = moment(o.validFrom);
             const offerEnd = moment(o.validTo);
             const filterStart = moment(filterDateFrom);
             const filterEnd = moment(filterDateTo);
-            // Check if offer date range overlaps with filter date range
             return (offerStart.isSameOrBefore(filterEnd) && offerEnd.isSameOrAfter(filterStart));
         });
     }
 
     setFilteredOffers(result);
-    setCurrentPage(1); // Reset to first page on filter change
+    setCurrentPage(1);
   }, [offers, searchQuery, filterType, filterApplicableOn, filterStatus, filterDateFrom, filterDateTo]);
 
   // Pagination Logic
@@ -114,8 +113,9 @@ const OfferList = () => {
         code: offer.code || '',
         title: offer.title || '',
         subtitle: offer.subtitle || '',
-        offerType: offer.offerType || 'FLAT',
+        offerType: offer.offerType || 'PERCENTAGE',
         discountValue: offer.discountValue || 0,
+        targetPlatform: offer.targetPlatform || 'All',
         applicableOn: offer.applicableOn || 'All',
         minOrderValue: offer.minOrderValue || 0,
         usageLimitTotal: offer.usageLimitTotal || 0,
