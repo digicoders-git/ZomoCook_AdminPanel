@@ -1,6 +1,6 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import axios from 'axios';
-import API_BASE_URL from '../apiConfig';
+import API_BASE_URL, { UPLOAD_BASE_URL } from '../apiConfig';
 import Swal from 'sweetalert2';
 import {
   Box,
@@ -48,7 +48,9 @@ import {
   UtensilsCrossed, 
   Check, 
   X,
-  Image as ImageIcon 
+  Image as ImageIcon,
+  Upload,
+  Link as LinkIcon
 } from 'lucide-react';
 
 const CUISINE_OPTIONS = [
@@ -91,9 +93,35 @@ export default function MenuItemManagement() {
   const [cuisine, setCuisine] = useState('North Indian');
   const [category, setCategory] = useState('Main Course');
   const [cookingCharge, setCookingCharge] = useState(250);
-  const [itemImage, setItemImage] = useState('https://images.unsplash.com/photo-1546833999-b9f581a1996d?w=200');
+  const [itemImage, setItemImage] = useState('');
+  const [imageFile, setImageFile] = useState(null);
+  const [imagePreview, setImagePreview] = useState('');
+  const [imageInputMode, setImageInputMode] = useState('upload'); // 'upload' | 'url'
   const [status, setStatus] = useState(true);
   const [submitting, setSubmitting] = useState(false);
+  const fileInputRef = useRef(null);
+
+  // Helper to resolve image URL (whether external URL or uploaded on server)
+  const getImageUrl = (imgPath) => {
+    if (!imgPath || typeof imgPath !== 'string') return '';
+    let normalized = imgPath.replace(/\\/g, '/').trim();
+    const serverHost = 'https://api.zomocook.in';
+
+    if (normalized.startsWith('http://') || normalized.startsWith('https://')) {
+      if (normalized.includes('onrender.com') || normalized.includes('localhost') || normalized.includes('admin.zomocook.in')) {
+        normalized = normalized.replace(/^https?:\/\/[^\/]+/, serverHost);
+      }
+      return normalized;
+    }
+    const uploadsIdx = normalized.indexOf('uploads/');
+    if (uploadsIdx !== -1) {
+      normalized = normalized.substring(uploadsIdx);
+    } else {
+      normalized = `uploads/${normalized.replace(/^\/+/, '')}`;
+    }
+    const baseUrl = (UPLOAD_BASE_URL && UPLOAD_BASE_URL !== '/' && !UPLOAD_BASE_URL.includes('admin.zomocook.in') ? UPLOAD_BASE_URL : serverHost).replace(/\/+$/, '');
+    return `${baseUrl}/${normalized}`;
+  };
 
   // Table Filters State
   const [searchTerm, setSearchTerm] = useState('');
@@ -133,7 +161,13 @@ export default function MenuItemManagement() {
     setCuisine('North Indian');
     setCategory('Main Course');
     setCookingCharge(250);
-    setItemImage('https://images.unsplash.com/photo-1546833999-b9f581a1996d?w=200');
+    setItemImage('');
+    setImageFile(null);
+    setImagePreview('');
+    setImageInputMode('upload');
+    if (fileInputRef.current) {
+      fileInputRef.current.value = '';
+    }
     setStatus(true);
     setEditingItemId(null);
     setShowAddModal(false);
@@ -146,9 +180,51 @@ export default function MenuItemManagement() {
     setCuisine(item.cuisine || 'North Indian');
     setCategory(item.category || 'Main Course');
     setCookingCharge(item.cookingCharge || 0);
-    setItemImage(item.image || 'https://images.unsplash.com/photo-1546833999-b9f581a1996d?w=200');
+    setItemImage(item.image || '');
+    setImageFile(null);
+    setImagePreview(item.image ? getImageUrl(item.image) : '');
+    setImageInputMode(item.image && item.image.startsWith('http') && !item.image.includes('uploads') ? 'url' : 'upload');
     setStatus(item.isActive !== false);
     setShowAddModal(true);
+  };
+
+  const handleFileSelect = (e) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    if (!file.type.startsWith('image/')) {
+      toast({
+        title: 'Invalid File',
+        description: 'Please select an image file (JPG, PNG, WebP)',
+        status: 'warning',
+        duration: 3000,
+        isClosable: true
+      });
+      return;
+    }
+
+    if (file.size > 10 * 1024 * 1024) {
+      toast({
+        title: 'File Too Large',
+        description: 'Image size should be under 10MB',
+        status: 'warning',
+        duration: 3000,
+        isClosable: true
+      });
+      return;
+    }
+
+    setImageFile(file);
+    setImagePreview(URL.createObjectURL(file));
+  };
+
+  const handleRemoveImage = () => {
+    setImageFile(null);
+    setImagePreview('');
+    setItemImage('');
+    if (fileInputRef.current) {
+      fileInputRef.current.value = '';
+    }
   };
 
   const handleSaveMenuItem = async (e) => {
@@ -166,18 +242,32 @@ export default function MenuItemManagement() {
 
     setSubmitting(true);
     try {
-      const payload = {
-        name: itemName.trim(),
-        foodType,
-        cuisine,
-        category,
-        cookingCharge: Number(cookingCharge) || 0,
-        image: itemImage.trim() || 'https://images.unsplash.com/photo-1546833999-b9f581a1996d?w=200',
-        isActive: status
+      const formData = new FormData();
+      formData.append('name', itemName.trim());
+      formData.append('foodType', foodType);
+      formData.append('cuisine', cuisine);
+      formData.append('category', category);
+      formData.append('cookingCharge', Number(cookingCharge) || 0);
+      formData.append('isActive', status);
+
+      if (imageFile) {
+        formData.append('image', imageFile);
+      } else if (itemImage.trim()) {
+        formData.append('image', itemImage.trim());
+      } else {
+        formData.append('image', 'https://images.unsplash.com/photo-1546833999-b9f581a1996d?w=200');
+      }
+
+      const token = localStorage.getItem('adminToken');
+      const config = {
+        headers: {
+          'Content-Type': 'multipart/form-data',
+          ...(token ? { Authorization: `Bearer ${token}` } : {})
+        }
       };
 
       if (editingItemId) {
-        const res = await axios.put(`${API_BASE_URL}/menu-items/${editingItemId}`, payload);
+        const res = await axios.put(`${API_BASE_URL}/menu-items/${editingItemId}`, formData, config);
         if (res.data && res.data.success) {
           toast({
             title: 'Updated Successfully',
@@ -190,7 +280,7 @@ export default function MenuItemManagement() {
           resetForm();
         }
       } else {
-        const res = await axios.post(`${API_BASE_URL}/menu-items`, payload);
+        const res = await axios.post(`${API_BASE_URL}/menu-items`, formData, config);
         if (res.data && res.data.success) {
           toast({
             title: 'Created Successfully',
@@ -476,7 +566,7 @@ export default function MenuItemManagement() {
                       
                       <Td whiteSpace="nowrap">
                         <Image
-                          src={item.image}
+                          src={getImageUrl(item.image)}
                           alt={item.name}
                           boxSize="52px"
                           minW="52px"
@@ -676,32 +766,165 @@ export default function MenuItemManagement() {
                 </FormControl>
 
                 <FormControl>
-                  <FormLabel fontSize="xs" fontWeight="bold" color="gray.700">Item Image URL</FormLabel>
-                  <HStack spacing={3} align="flex-start">
-                    <Image
-                      src={itemImage || 'https://images.unsplash.com/photo-1546833999-b9f581a1996d?w=200'}
-                      alt="Preview"
-                      boxSize="64px"
-                      minW="64px"
-                      objectFit="cover"
-                      borderRadius="xl"
-                      border="1px solid"
-                      borderColor="gray.200"
-                    />
-                    <VStack flex={1} align="stretch" spacing={1}>
-                      <Input
-                        size="sm"
-                        placeholder="Paste image URL..."
-                        value={itemImage}
-                        onChange={(e) => setItemImage(e.target.value)}
+                  <Flex justify="space-between" align="center" mb={1.5}>
+                    <FormLabel fontSize="xs" fontWeight="bold" color="gray.700" mb={0}>
+                      Dish Image
+                    </FormLabel>
+                    <HStack spacing={1}>
+                      <Button
+                        size="xs"
+                        variant={imageInputMode === 'upload' ? 'solid' : 'ghost'}
+                        colorScheme={imageInputMode === 'upload' ? 'blue' : 'gray'}
                         borderRadius="lg"
-                        bg="gray.50"
+                        leftIcon={<Icon as={Upload} boxSize={3} />}
+                        onClick={() => setImageInputMode('upload')}
+                      >
+                        Upload Image
+                      </Button>
+                      <Button
+                        size="xs"
+                        variant={imageInputMode === 'url' ? 'solid' : 'ghost'}
+                        colorScheme={imageInputMode === 'url' ? 'blue' : 'gray'}
+                        borderRadius="lg"
+                        leftIcon={<Icon as={LinkIcon} boxSize={3} />}
+                        onClick={() => setImageInputMode('url')}
+                      >
+                        Image URL
+                      </Button>
+                    </HStack>
+                  </Flex>
+
+                  <input
+                    type="file"
+                    ref={fileInputRef}
+                    accept="image/*"
+                    onChange={handleFileSelect}
+                    style={{ display: 'none' }}
+                  />
+
+                  {imageInputMode === 'upload' ? (
+                    <Box>
+                      {imagePreview ? (
+                        <Flex
+                          align="center"
+                          p={3}
+                          bg="blue.50/40"
+                          border="1px solid"
+                          borderColor="blue.200"
+                          borderRadius="xl"
+                          gap={3.5}
+                        >
+                          <Image
+                            src={imagePreview}
+                            alt="Selected dish"
+                            boxSize="68px"
+                            minW="68px"
+                            maxW="68px"
+                            maxH="68px"
+                            objectFit="cover"
+                            borderRadius="xl"
+                            border="2px solid white"
+                            shadow="sm"
+                            fallback={
+                              <Box boxSize="68px" bg="gray.100" borderRadius="xl" display="flex" alignItems="center" justifyContent="center">
+                                <Icon as={ImageIcon} color="gray.400" boxSize={6} />
+                              </Box>
+                            }
+                          />
+                          <Box flex={1}>
+                            <Text fontSize="xs" fontWeight="bold" color="blue.900" noOfLines={1}>
+                              {imageFile ? imageFile.name : (itemName ? `${itemName} Image` : 'Dish Image')}
+                            </Text>
+                            <Text fontSize="11px" color="blue.600" mt={0.5}>
+                              {imageFile 
+                                ? `${(imageFile.size / 1024).toFixed(1)} KB — Ready to upload to server` 
+                                : 'Stored on backend server'}
+                            </Text>
+                            <HStack spacing={2} mt={2}>
+                              <Button
+                                size="xs"
+                                colorScheme="blue"
+                                variant="outline"
+                                borderRadius="md"
+                                onClick={() => fileInputRef.current?.click()}
+                                leftIcon={<Icon as={Upload} boxSize={3} />}
+                              >
+                                Change Image
+                              </Button>
+                              <Button
+                                size="xs"
+                                colorScheme="red"
+                                variant="ghost"
+                                borderRadius="md"
+                                onClick={handleRemoveImage}
+                              >
+                                Remove
+                              </Button>
+                            </HStack>
+                          </Box>
+                        </Flex>
+                      ) : (
+                        <Box
+                          onClick={() => fileInputRef.current?.click()}
+                          cursor="pointer"
+                          p={5}
+                          border="2px dashed"
+                          borderColor="blue.300"
+                          borderRadius="xl"
+                          bg="blue.50/30"
+                          _hover={{ bg: 'blue.50/80', borderColor: 'blue.500' }}
+                          textAlign="center"
+                          transition="all 0.2s"
+                        >
+                          <VStack spacing={1.5}>
+                            <Box p={2.5} bg="blue.100" borderRadius="full" color="blue.600">
+                              <Icon as={Upload} boxSize={5} />
+                            </Box>
+                            <Text fontSize="xs" fontWeight="bold" color="gray.700">
+                              Click to choose image from device / mobile
+                            </Text>
+                            <Text fontSize="11px" color="gray.500">
+                              Supports JPG, PNG, WebP (auto-uploaded to backend server)
+                            </Text>
+                          </VStack>
+                        </Box>
+                      )}
+                    </Box>
+                  ) : (
+                    <HStack spacing={3} align="flex-start">
+                      <Image
+                        src={getImageUrl(itemImage) || 'https://images.unsplash.com/photo-1546833999-b9f581a1996d?w=200'}
+                        alt="Preview"
+                        boxSize="64px"
+                        minW="64px"
+                        objectFit="cover"
+                        borderRadius="xl"
+                        border="1px solid"
+                        borderColor="gray.200"
+                        fallback={
+                          <Box boxSize="64px" bg="gray.100" borderRadius="xl" display="flex" alignItems="center" justifyContent="center">
+                            <Icon as={ImageIcon} color="gray.400" boxSize={6} />
+                          </Box>
+                        }
                       />
-                      <Text fontSize="xs" color="gray.400">
-                        Recommended size: 500 × 500 px (JPG, PNG, WebP)
-                      </Text>
-                    </VStack>
-                  </HStack>
+                      <VStack flex={1} align="stretch" spacing={1}>
+                        <Input
+                          size="sm"
+                          placeholder="Paste image URL (e.g. Unsplash)..."
+                          value={itemImage}
+                          onChange={(e) => {
+                            setItemImage(e.target.value);
+                            setImagePreview(e.target.value);
+                          }}
+                          borderRadius="lg"
+                          bg="gray.50"
+                        />
+                        <Text fontSize="xs" color="gray.400">
+                          Recommended: 500 × 500 px direct image link
+                        </Text>
+                      </VStack>
+                    </HStack>
+                  )}
                 </FormControl>
 
                 <FormControl>
