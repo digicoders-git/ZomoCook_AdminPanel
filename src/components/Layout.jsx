@@ -66,6 +66,7 @@ const navCategories = [
           { name: 'Bookings', path: '/quick-bookings/bookings', permission: 'job_management:view' },
           { name: 'Daily Basis Jobs', path: '/daily-basis-jobs', permission: 'job_management:view' },
           { name: 'Chef for Party', path: '/party-chef-bookings', permission: 'job_management:view' },
+          { name: 'Party Menu Catalog', path: '/menu-items', permission: 'job_management:view' },
           { name: 'Candidate Applications', path: '/candidates/applied', permission: 'candidates:view' },
           { name: 'Staff Assignments', path: '/replacements', permission: 'job_management:view' },
           { name: 'Live / Ongoing', path: '/quick-bookings/live', permission: 'job_management:view' },
@@ -75,7 +76,8 @@ const navCategories = [
           { name: 'Reviews', path: '/quick-bookings/reviews', permission: 'job_management:view' },
           { name: 'Reports', path: '/quick-bookings/reports', permission: 'job_management:view' },
         ]
-      }
+      },
+      { name: 'Party Menu Items', icon: UtensilsCrossed, path: '/menu-items', permission: 'job_management:view' }
     ]
   },
   {
