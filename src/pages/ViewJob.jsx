@@ -234,16 +234,19 @@ const ViewJob = () => {
                       <HStack justify="space-between" mb="2">
                         <Text fontWeight="800" fontSize="xs" color="#c2410c">Day {idx + 1}: {d.date} ({d.eventType || 'Event'})</Text>
                       </HStack>
-                      {d.meals && Array.isArray(d.meals) && d.meals.map((m, mi) => (
-                        <Box key={mi} bg="#fff7ed" p="2" borderRadius="md" mb="1">
-                          <Text fontWeight="700" fontSize="xs" color="#9a3412">• {m.name} - {m.guests} Guests (Mode: {m.menuMode || 'Standard'})</Text>
-                          {m.menu && Array.isArray(m.menu) && m.menu.length > 0 && (
-                            <Text fontSize="xs" color="#475569" pl="4" mt="0.5">
-                              Dishes: {m.menu.join(', ')}
-                            </Text>
-                          )}
-                        </Box>
-                      ))}
+                      {d.meals && Array.isArray(d.meals) && d.meals.map((m, mi) => {
+                        const dishList = (m.dishes || m.menu || []).map(item => typeof item === 'object' ? item.name : item).filter(Boolean);
+                        return (
+                          <Box key={mi} bg="#fff7ed" p="2" borderRadius="md" mb="1">
+                            <Text fontWeight="700" fontSize="xs" color="#9a3412">• {m.mealType || m.name} - {m.guests || 'N/A'} Guests (Mode: {m.menuMode || 'Standard'})</Text>
+                            {dishList.length > 0 && (
+                              <Text fontSize="xs" color="#475569" pl="4" mt="0.5">
+                                Dishes: {dishList.join(', ')}
+                              </Text>
+                            )}
+                          </Box>
+                        );
+                      })}
                     </Box>
                   ))}
                 </VStack>
