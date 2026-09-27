@@ -473,6 +473,10 @@ const JobList = () => {
       }
     }
 
+    // Exclude daily staff and party chef bookings from main Job List (they have separate menus now)
+    const isDailyOrParty = job.jobCategory === 'daily' || job.jobCategory === 'party' || job.bookingType === 'party' || (job.title || '').toLowerCase().includes('party');
+    if (isDailyOrParty) return false;
+
     const matchesSearch =
       job.title.toLowerCase().includes(search.toLowerCase()) ||
       job.city.toLowerCase().includes(search.toLowerCase()) ||

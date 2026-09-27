@@ -145,6 +145,19 @@ const CandidateList = () => {
     setIsAssignModalOpen(true);
   };
 
+  // Filters State
+  const [kycFilter, setKycFilter] = useState('');
+  const [categoryFilter, setCategoryFilter] = useState('');
+  const [positionFilter, setPositionFilter] = useState('');
+  const [stateFilter, setStateFilter] = useState('');
+  const [cityFilter, setCityFilter] = useState('');
+
+  // Extract unique options dynamically from candidates data
+  const uniqueJobCategories = Array.from(new Set(candidates.flatMap(c => c.jobPreference?.jobCategory || []))).filter(Boolean);
+  const uniqueJobPositions = Array.from(new Set(candidates.flatMap(c => c.jobPreference?.jobPositions || []))).filter(Boolean);
+  const uniqueStates = Array.from(new Set(candidates.map(c => c.state))).filter(Boolean);
+  const uniqueCities = Array.from(new Set(candidates.map(c => c.city))).filter(Boolean);
+
   // Filter and Pagination Logic
   const filteredCandidates = candidates.filter(c => {
     if (isLeadManager) {
@@ -158,6 +171,11 @@ const CandidateList = () => {
       if (!isAssigned) return false;
     }
     if (leadManagerFilter && c.leadManager !== leadManagerFilter) return false;
+    if (kycFilter && (c.kycStatus || 'pending').toLowerCase() !== kycFilter.toLowerCase()) return false;
+    if (categoryFilter && !(c.jobPreference?.jobCategory || []).includes(categoryFilter)) return false;
+    if (positionFilter && !(c.jobPreference?.jobPositions || []).includes(positionFilter)) return false;
+    if (stateFilter && (c.state || '').toLowerCase() !== stateFilter.toLowerCase()) return false;
+    if (cityFilter && (c.city || '').toLowerCase() !== cityFilter.toLowerCase()) return false;
     return true;
   });
 
@@ -212,6 +230,14 @@ const CandidateList = () => {
     }
   };
 
+  const formatActivityDate = (dateStr) => {
+    if (!dateStr) return 'N/A';
+    const date = new Date(dateStr);
+    if (isNaN(date.getTime())) return 'N/A';
+    return date.toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' }) + ', ' +
+           date.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit', hour12: true });
+  };
+
   const apiUrl = import.meta.env.VITE_API_URL;
 
   return (
@@ -222,6 +248,79 @@ const CandidateList = () => {
           <Button key="add" as={Link} to="/candidates/add" leftIcon={<Plus size={14} />} size="sm" bg={BRAND} color="white" borderRadius="lg" fontSize="xs" px="4">Add Candidate</Button>
         ]}
       />
+
+      <TableCard mb="4" p="4">
+        <Flex gap="3" flexWrap="wrap" align="center">
+          <Box flex="1" minW="130px">
+            <Text fontSize="11px" fontWeight="700" color="#475569" mb="1">KYC Status</Text>
+            <Select size="sm" borderRadius="md" value={kycFilter} onChange={(e) => setKycFilter(e.target.value)} fontSize="xs">
+              <option value="">All KYC Status</option>
+              <option value="pending">Pending</option>
+              <option value="approved">Approved</option>
+              <option value="rejected">Rejected</option>
+            </Select>
+          </Box>
+
+          <Box flex="1" minW="140px">
+            <Text fontSize="11px" fontWeight="700" color="#475569" mb="1">Job Category</Text>
+            <Select size="sm" borderRadius="md" value={categoryFilter} onChange={(e) => setCategoryFilter(e.target.value)} fontSize="xs">
+              <option value="">All Job Categories</option>
+              {uniqueJobCategories.map(cat => (
+                <option key={cat} value={cat}>{cat}</option>
+              ))}
+            </Select>
+          </Box>
+
+          <Box flex="1" minW="140px">
+            <Text fontSize="11px" fontWeight="700" color="#475569" mb="1">Job Position</Text>
+            <Select size="sm" borderRadius="md" value={positionFilter} onChange={(e) => setPositionFilter(e.target.value)} fontSize="xs">
+              <option value="">All Job Positions</option>
+              {uniqueJobPositions.map(pos => (
+                <option key={pos} value={pos}>{pos}</option>
+              ))}
+            </Select>
+          </Box>
+
+          <Box flex="1" minW="130px">
+            <Text fontSize="11px" fontWeight="700" color="#475569" mb="1">State Name</Text>
+            <Select size="sm" borderRadius="md" value={stateFilter} onChange={(e) => setStateFilter(e.target.value)} fontSize="xs">
+              <option value="">All States</option>
+              {uniqueStates.map(st => (
+                <option key={st} value={st}>{st}</option>
+              ))}
+            </Select>
+          </Box>
+
+          <Box flex="1" minW="130px">
+            <Text fontSize="11px" fontWeight="700" color="#475569" mb="1">City Name</Text>
+            <Select size="sm" borderRadius="md" value={cityFilter} onChange={(e) => setCityFilter(e.target.value)} fontSize="xs">
+              <option value="">All Cities</option>
+              {uniqueCities.map(ct => (
+                <option key={ct} value={ct}>{ct}</option>
+              ))}
+            </Select>
+          </Box>
+
+          {(kycFilter || categoryFilter || positionFilter || stateFilter || cityFilter) && (
+            <Button
+              size="sm"
+              mt="4"
+              variant="ghost"
+              colorScheme="red"
+              fontSize="xs"
+              onClick={() => {
+                setKycFilter('');
+                setCategoryFilter('');
+                setPositionFilter('');
+                setStateFilter('');
+                setCityFilter('');
+              }}
+            >
+              Clear Filters
+            </Button>
+          )}
+        </Flex>
+      </TableCard>
 
       <TableCard>
         <Flex px="5" py="4" borderBottom="1px solid #f1f5f9" align="center" justify="space-between" flexWrap="wrap" gap="4">
@@ -236,7 +335,7 @@ const CandidateList = () => {
               </Select>
             )}
             <Select size="sm" w="130px" borderRadius="lg" value={statusFilter} onChange={(e) => setStatusFilter(e.target.value)} fontSize="xs">
-              <option value="">All Status</option>
+              <option value="">All Profile Status</option>
               <option value="active">Active</option>
               <option value="inactive">Inactive</option>
             </Select>
@@ -245,7 +344,7 @@ const CandidateList = () => {
               onSearch={setSearchTerm}
               entries={entriesPerPage}
               onEntriesChange={setEntriesPerPage}
-              searchPlaceholder="Search candidates..."
+              searchPlaceholder="Search by name, mobile, city..."
             />
           </HStack>
         </Flex>
@@ -264,6 +363,7 @@ const CandidateList = () => {
                   <Th {...thStyle} border="1px solid #edf2f7">Lead Manager</Th>
                   <Th {...thStyle} border="1px solid #edf2f7">Job History</Th>
                   <Th {...thStyle} border="1px solid #edf2f7">Status</Th>
+                  <Th {...thStyle} border="1px solid #edf2f7">Latest Activity</Th>
                   <Th {...thStyle} border="1px solid #edf2f7" textAlign="center">Action</Th>
                 </Tr>
               </Thead>
@@ -366,6 +466,17 @@ const CandidateList = () => {
                         </Select>
                         <Text fontSize="11px" fontWeight="600" color="#64748b" mb="-1" mt="2">Profile Status:</Text>
                         <Badge bg={c.profileStatus === 'active' ? '#10b981' : '#ef4444'} color="white" borderRadius="4px" px="2" py="1" fontSize="11px">{c.profileStatus}</Badge>
+                      </VStack>
+                    </Td>
+                    <Td py="4" border="1px solid #edf2f7" verticalAlign="top">
+                      <VStack align="start" spacing="1">
+                        <HStack spacing="1.5">
+                          <Box w="8px" h="8px" borderRadius="full" bg="#10b981" />
+                          <Text fontSize="xs" fontWeight="700" color="#1e293b">Account Created</Text>
+                        </HStack>
+                        <Text fontSize="11px" color="#64748b" pl="3.5">
+                          {formatActivityDate(c.createdAt || c.updatedAt)}
+                        </Text>
                       </VStack>
                     </Td>
                     <Td py="4" border="1px solid #edf2f7" textAlign="center" verticalAlign="middle">

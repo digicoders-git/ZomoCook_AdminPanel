@@ -51,6 +51,8 @@ import BannerList from './pages/BannerList';
 import PendingCookApprovals from './pages/PendingCookApprovals';
 import FinanceRevenue from './pages/FinanceRevenue';
 import MenuItemManagement from './pages/MenuItemManagement';
+import DailyBasisJobsList from './pages/DailyBasisJobsList';
+import PartyChefBookingsList from './pages/PartyChefBookingsList';
 
 // ─── Helper: Get current logged-in user's data ──────────────────────────────
 const getAdminData = () => {
@@ -288,6 +290,22 @@ function App() {
             <Layout><JobList /></Layout>
           </PermissionRoute>
         } />
+        <Route path="/daily-basis-jobs" element={
+          <PermissionRoute permission="job_management:view">
+            <Layout><DailyBasisJobsList /></Layout>
+          </PermissionRoute>
+        } />
+        <Route path="/party-chef-bookings" element={
+          <PermissionRoute permission="job_management:view">
+            <Layout><PartyChefBookingsList /></Layout>
+          </PermissionRoute>
+        } />
+        <Route path="/quick-bookings/dashboard" element={<PermissionRoute permission="job_management:view"><Layout><DailyBasisJobsList /></Layout></PermissionRoute>} />
+        <Route path="/quick-bookings/live" element={<PermissionRoute permission="job_management:view"><Layout><DailyBasisJobsList /></Layout></PermissionRoute>} />
+        <Route path="/quick-bookings/completed" element={<PermissionRoute permission="job_management:view"><Layout><DailyBasisJobsList /></Layout></PermissionRoute>} />
+        <Route path="/quick-bookings/cancelled" element={<PermissionRoute permission="job_management:view"><Layout><DailyBasisJobsList /></Layout></PermissionRoute>} />
+        <Route path="/quick-bookings/reviews" element={<PermissionRoute permission="job_management:view"><Layout><PartyChefBookingsList /></Layout></PermissionRoute>} />
+        <Route path="/quick-bookings/reports" element={<PermissionRoute permission="job_management:view"><Layout><DailyBasisJobsList /></Layout></PermissionRoute>} />
         
         <Route path="/pending-jobs" element={
           <PermissionRoute permission="job_management:view">

@@ -9,7 +9,7 @@ import {
 import {
   LayoutDashboard, Users, Briefcase, UserSquare2, Bell, MessageSquare,
   ShieldCheck, Database, Settings, LogOut, Menu as MenuIcon, X, ChevronDown, ChevronRight,
-  Menu as ListMenu, Layers, Wrench, Star, Banknote, Clock, UtensilsCrossed,
+  Menu as ListMenu, Layers, Wrench, Star, Banknote, Clock, UtensilsCrossed, Zap,
   Calendar, Heart, Building2, Gift, Image as ImageIcon, Film, Globe, MapPin,
   Plus, List as ListIcon
 } from 'lucide-react';
@@ -59,7 +59,23 @@ const navCategories = [
   {
     category: 'PARTY & CATERING',
     items: [
-      { name: 'Menu Items', icon: UtensilsCrossed, path: '/menu-items' },
+      {
+        name: 'Quick Bookings & Events', icon: Zap, path: '/quick-bookings', permission: 'job_management:view',
+        children: [
+          { name: 'Booking Dashboard', path: '/quick-bookings/dashboard', permission: 'job_management:view' },
+          { name: 'Bookings', path: '/daily-basis-jobs', permission: 'job_management:view' },
+          { name: 'Daily Basis Jobs', path: '/daily-basis-jobs', permission: 'job_management:view' },
+          { name: 'Chef for Party', path: '/party-chef-bookings', permission: 'job_management:view' },
+          { name: 'Candidate Applications', path: '/candidates/applied', permission: 'candidates:view' },
+          { name: 'Staff Assignments', path: '/replacements', permission: 'job_management:view' },
+          { name: 'Live / Ongoing', path: '/quick-bookings/live', permission: 'job_management:view' },
+          { name: 'Completed Bookings', path: '/quick-bookings/completed', permission: 'job_management:view' },
+          { name: 'Cancelled & Refunds', path: '/quick-bookings/cancelled', permission: 'job_management:view' },
+          { name: 'Payments', path: '/finance', permission: 'finance_revenue:view' },
+          { name: 'Reviews', path: '/quick-bookings/reviews', permission: 'job_management:view' },
+          { name: 'Reports', path: '/quick-bookings/reports', permission: 'job_management:view' },
+        ]
+      }
     ]
   },
   {
