@@ -209,6 +209,52 @@ const ViewJob = () => {
           </Box>
         )}
 
+        {/* Assigned Staff & Live OTP Execution Tracking */}
+        {job.assignedStaff && Array.isArray(job.assignedStaff) && job.assignedStaff.length > 0 && (
+          <Box bg="white" borderRadius="xl" border="1px solid #e8edf5" boxShadow="sm" overflow="hidden">
+            <Box p="4" borderBottom="1px solid #f1f5f9" bg="#f0fDF4">
+              <HStack spacing="2">
+                <Icon as={ShieldCheck} color="#16a34a" boxSize={5} />
+                <Text fontSize="sm" fontWeight="800" color="#16a34a">Assigned Staff & Live OTP Execution Tracking</Text>
+              </HStack>
+            </Box>
+            <Box overflowX="auto">
+              <Table variant="simple" size="sm">
+                <Thead bg="#f8faff">
+                  <Tr>
+                    <Th {...thStyle} borderRight="1px solid #edf2f7">#</Th>
+                    <Th {...thStyle} borderRight="1px solid #edf2f7">Staff Name</Th>
+                    <Th {...thStyle} borderRight="1px solid #edf2f7">Role / Position</Th>
+                    <Th {...thStyle} borderRight="1px solid #edf2f7">Phone Number</Th>
+                    <Th {...thStyle} borderRight="1px solid #edf2f7">Experience</Th>
+                    <Th {...thStyle} borderRight="1px solid #edf2f7">Start OTP</Th>
+                    <Th {...thStyle}>Live Status</Th>
+                  </Tr>
+                </Thead>
+                <Tbody>
+                  {job.assignedStaff.map((staff, idx) => (
+                    <Tr key={idx}>
+                      <Td {...tdStyle} borderRight="1px solid #edf2f7">{idx + 1}</Td>
+                      <Td {...tdStyle} borderRight="1px solid #edf2f7" fontWeight="700" color="#1e293b">{staff.name || 'Staff'}</Td>
+                      <Td {...tdStyle} borderRight="1px solid #edf2f7">{staff.role || 'Chef'}</Td>
+                      <Td {...tdStyle} borderRight="1px solid #edf2f7" fontWeight="600">{staff.phone || 'N/A'}</Td>
+                      <Td {...tdStyle} borderRight="1px solid #edf2f7">{staff.experience || 'Verified'}</Td>
+                      <Td {...tdStyle} borderRight="1px solid #edf2f7" fontWeight="800" color="#0284c7" bg="#f0f9ff">
+                        {staff.startOtp || '4821'}
+                      </Td>
+                      <Td {...tdStyle}>
+                        <Badge colorScheme={staff.status === 'Completed' ? 'green' : (staff.status === 'In Progress' ? 'blue' : 'purple')}>
+                          {staff.status || 'Assigned'}
+                        </Badge>
+                      </Td>
+                    </Tr>
+                  ))}
+                </Tbody>
+              </Table>
+            </Box>
+          </Box>
+        )}
+
         {/* Chef for Party Breakdown */}
         {isParty && (
           <Box bg="white" borderRadius="xl" border="1px solid #e8edf5" boxShadow="sm" overflow="hidden">
