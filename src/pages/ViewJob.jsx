@@ -64,8 +64,17 @@ const ViewJob = () => {
 
   const apiBase = import.meta.env.VITE_API_URL.replace('/api', '');
 
-  const isParty = job.jobCategory === 'party' || job.bookingType === 'party' || !!job.partyRequirement || (job.title || '').toLowerCase().includes('party');
-  const isDaily = !isParty && (job.jobCategory === 'daily' || job.bookingType === 'daily' || (job.staffRequirements && job.staffRequirements.length > 0));
+  const isParty = 
+    job.jobCategory === 'party' || 
+    job.bookingType === 'party' || 
+    (job.partyRequirement && typeof job.partyRequirement === 'object' && Object.keys(job.partyRequirement).length > 0 && (job.partyRequirement.dates || job.partyRequirement.datesCount));
+
+  const isDaily = 
+    !isParty && (
+      job.jobCategory === 'daily' || 
+      job.bookingType === 'daily' || 
+      (job.staffRequirements && Array.isArray(job.staffRequirements) && job.staffRequirements.length > 0)
+    );
 
   const getCustomerName = () => {
     if (job.customer && typeof job.customer === 'object' && job.customer.name) return job.customer.name;
@@ -84,6 +93,8 @@ const ViewJob = () => {
     if (job.createdBy && typeof job.createdBy === 'object') return job.createdBy.email || 'N/A';
     return 'N/A';
   };
+
+  const fullAddress = job.address || job.outletAddress || (job.customer && typeof job.customer === 'object' ? (job.customer.contactAddress || job.customer.address) : null) || 'N/A';
 
   const DataRow = ({ label, value, isBadge = false, colorScheme = 'blue' }) => (
     <Tr borderBottom="1px solid #f1f5f9">
@@ -139,8 +150,8 @@ const ViewJob = () => {
               <DataRow label="Contact Phone Number" value={getCustomerPhone()} />
               <DataRow label="Email Address" value={getCustomerEmail()} />
               <DataRow label="Hiring Purpose / Outlet Name" value={job.outletName || job.hiringPurpose || job.propertyCategory || 'N/A'} />
-              <DataRow label="City & State" value={`${job.city || 'N/A'}, ${job.state || 'N/A'}`} />
-              <DataRow label="Full Address / Venue" value={job.address || 'N/A'} />
+              <DataRow label="City & State" value={`${job.city || 'N/A'}, ${job.state || 'India'}`} />
+              <DataRow label="Full Address / Venue" value={fullAddress} />
               <DataRow label="Lead Manager" value={job.leadManager || 'Unassigned'} />
               <DataRow label="Current Status" value={job.status || 'New'} isBadge colorScheme={job.status === 'Active' ? 'green' : 'blue'} />
             </Tbody>
@@ -175,8 +186,8 @@ const ViewJob = () => {
                     job.staffRequirements.map((s, idx) => (
                       <Tr key={idx}>
                         <Td {...tdStyle} borderRight="1px solid #edf2f7">{idx + 1}</Td>
-                        <Td {...tdStyle} borderRight="1px solid #edf2f7" fontWeight="700" color="#1e293b">{s.role || s.category || 'Staff'}</Td>
-                        <Td {...tdStyle} borderRight="1px solid #edf2f7">{s.genderPref || 'Any'}</Td>
+                        <Td {...tdStyle} borderRight="1px solid #edf2f7" fontWeight="700" color="#1e293b">{s.role || s.category || s.staffCategory || 'Staff'}</Td>
+                        <Td {...tdStyle} borderRight="1px solid #edf2f7">{s.genderPref || 'Any Gender'}</Td>
                         <Td {...tdStyle} borderRight="1px solid #edf2f7" fontWeight="700">{s.count || s.noOfStaff || 1}</Td>
                         <Td {...tdStyle} borderRight="1px solid #edf2f7">{s.days || s.noOfDays || 1}</Td>
                         <Td {...tdStyle} borderRight="1px solid #edf2f7" color="#059669" fontWeight="700">₹{s.perDayRate || s.ratePerDay || s.salary || 0}</Td>
@@ -285,7 +296,7 @@ const ViewJob = () => {
           </Box>
           <Table variant="simple">
             <Tbody>
-              <DataRow label="Advance Payment Amount" value={`₹${job.advanceAmount || job.jobPostFee || 0}`} />
+              <DataRow label="25% Booking Advance Amount" value={`₹${job.advanceAmount || job.jobPostFee || (job.pricing?.advance) || 0}`} />
               <DataRow label="Payment Status" value={(job.paymentStatus || 'free').toUpperCase()} isBadge colorScheme={job.paymentStatus === 'paid' ? 'green' : 'yellow'} />
               {job.pricing && (
                 <>
