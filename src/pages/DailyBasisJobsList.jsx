@@ -331,46 +331,63 @@ const DailyBasisJobsList = () => {
       </TableCard>
 
       {/* Details Modal */}
-      <Modal isOpen={isViewOpen} onClose={onViewClose} size="xl" isCentered>
-        <ModalOverlay />
-        <ModalContent borderRadius="xl">
-          <ModalHeader fontSize="md" fontWeight="bold">Daily Basis Booking Details</ModalHeader>
+      <Modal isOpen={isViewOpen} onClose={onViewClose} size="2xl" isCentered scrollBehavior="inside">
+        <ModalOverlay backdropFilter="blur(4px)" />
+        <ModalContent borderRadius="xl" maxH="85vh">
+          <ModalHeader fontSize="md" fontWeight="bold">⏱️ Daily Basis Staff Booking Details</ModalHeader>
           <ModalCloseButton />
           <ModalBody py="4">
             {selectedJobView && (
-              <VStack align="stretch" spacing="3" fontSize="xs">
-                <HStack justify="space-between" bg="#f8fafc" p="3" borderRadius="lg">
-                  <Text fontWeight="bold">Job Code: {selectedJobView.jobCode}</Text>
-                  <Text color="#64748b">Date: {formatDate(selectedJobView.createdAt)}</Text>
+              <VStack align="stretch" spacing="4" fontSize="xs">
+                <HStack justify="space-between" bg="#eff6ff" p="3" borderRadius="lg" border="1px solid #dbeafe">
+                  <Text fontWeight="bold" fontSize="sm" color="#1d4ed8">Job Code: {selectedJobView.jobCode || 'N/A'}</Text>
+                  <Badge bg={selectedJobView.status === 'Active' ? '#dcfce7' : '#fef3c7'} color={selectedJobView.status === 'Active' ? '#15803d' : '#b45309'} px="2.5" py="1" borderRadius="md" fontSize="11px">
+                    Status: {selectedJobView.status || 'New'}
+                  </Badge>
                 </HStack>
-                <Box>
-                  <Text fontWeight="bold" color="#1e293b" mb="1">Customer Information</Text>
-                  <Text>Name: {getCustomerName(selectedJobView)}</Text>
-                  <Text>Phone: {getCustomerPhone(selectedJobView)}</Text>
-                  <Text>City: {selectedJobView.city}, {selectedJobView.state}</Text>
-                  <Text>Address: {selectedJobView.address || 'N/A'}</Text>
-                  <Text>Outlet / Purpose: {selectedJobView.outletName || 'N/A'}</Text>
+                <Box bg="#f8fafc" p="3.5" borderRadius="lg" border="1px solid #e2e8f0">
+                  <Text fontWeight="800" color="#1e293b" mb="2" fontSize="xs">CUSTOMER & LOCATION DETAILS</Text>
+                  <SimpleGrid columns={2} spacing="2">
+                    <Text><Box as="span" fontWeight="700" color="#475569">Customer Name:</Box> {getCustomerName(selectedJobView)}</Text>
+                    <Text><Box as="span" fontWeight="700" color="#475569">Phone Number:</Box> {getCustomerPhone(selectedJobView)}</Text>
+                    <Text><Box as="span" fontWeight="700" color="#475569">Hiring Purpose / Outlet:</Box> {selectedJobView.outletName || selectedJobView.hiringPurpose || 'N/A'}</Text>
+                    <Text><Box as="span" fontWeight="700" color="#475569">City & State:</Box> {selectedJobView.city}, {selectedJobView.state}</Text>
+                    <Text gridColumn="span 2"><Box as="span" fontWeight="700" color="#475569">Address / Venue:</Box> {selectedJobView.address || 'N/A'}</Text>
+                    <Text><Box as="span" fontWeight="700" color="#475569">Lead Manager:</Box> {selectedJobView.leadManager || 'Unassigned'}</Text>
+                  </SimpleGrid>
                 </Box>
-                <Box borderTop="1px solid #e2e8f0" pt="2">
-                  <Text fontWeight="bold" color="#1e293b" mb="1">Staff Requirements & Timings</Text>
+                <Box bg="#f0fdf4" p="3.5" borderRadius="lg" border="1px solid #bbf7d0">
+                  <Text fontWeight="800" color="#166534" mb="2" fontSize="xs">STAFF REQUIREMENTS & TIMINGS</Text>
                   {selectedJobView.staffRequirements && selectedJobView.staffRequirements.length > 0 ? (
                     selectedJobView.staffRequirements.map((s, idx) => (
-                      <Box key={idx} bg="#f1f5f9" p="2" borderRadius="md" mb="2">
-                        <Text fontWeight="700">{s.role} - Count: {s.count} | Days: {s.days}</Text>
-                        <Text>Rate/Day: ₹{s.perDayRate || s.ratePerDay || 0}</Text>
-                        <Text>Gender Preference: {s.genderPref || 'Any'}</Text>
-                        <Text>Start Date & Time: {s.startDate || 'N/A'} ({s.startTime || ''} - {s.endTime || ''})</Text>
+                      <Box key={idx} bg="white" p="2.5" borderRadius="md" mb="2" border="1px solid #dcfce7">
+                        <Flex justify="space-between" mb="1">
+                          <Text fontWeight="700" color="#166534">{s.role || s.category || 'Staff'} x {s.count || 1}</Text>
+                          <Text fontWeight="700" color="#059669">Rate: ₹{s.perDayRate || s.ratePerDay || 0}/Day</Text>
+                        </Flex>
+                        <Text>Days: {s.days || 1} | Gender: {s.genderPref || 'Any'}</Text>
+                        <Text>Start Date: {s.startDate || 'N/A'} | Timings: {s.startTime && s.endTime ? `${s.startTime} – ${s.endTime}` : (s.timing || 'N/A')}</Text>
                       </Box>
                     ))
                   ) : (
-                    <Text>{selectedJobView.overview || selectedJobView.title}</Text>
+                    <Text color="#475569">{selectedJobView.overview || selectedJobView.title}</Text>
                   )}
+                </Box>
+                <Box bg="#f8fafc" p="3.5" borderRadius="lg" border="1px solid #e2e8f0">
+                  <Text fontWeight="800" color="#1e293b" mb="2" fontSize="xs">PRICING & ADVANCE PAYMENT</Text>
+                  <SimpleGrid columns={2} spacing="2">
+                    <Text><Box as="span" fontWeight="700" color="#475569">25% Advance Amount:</Box> <Box as="span" color="#059669" fontWeight="700">₹{selectedJobView.advanceAmount || selectedJobView.jobPostFee || 0}</Box></Text>
+                    <Text><Box as="span" fontWeight="700" color="#475569">Payment Status:</Box> {selectedJobView.paymentStatus ? selectedJobView.paymentStatus.toUpperCase() : 'FREE'}</Text>
+                  </SimpleGrid>
                 </Box>
               </VStack>
             )}
           </ModalBody>
-          <ModalFooter>
-            <Button size="sm" onClick={onViewClose}>Close</Button>
+          <ModalFooter gap="3">
+            <Button size="sm" colorScheme="blue" onClick={() => { onViewClose(); navigate(`/jobs/view/${selectedJobView._id}`); }}>
+              Open Full Details Page
+            </Button>
+            <Button size="sm" variant="ghost" onClick={onViewClose}>Close</Button>
           </ModalFooter>
         </ModalContent>
       </Modal>

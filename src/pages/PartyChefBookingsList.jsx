@@ -12,6 +12,7 @@ import {
 import PageContentLoader from '../components/PageContentLoader';
 import axios from 'axios';
 import API_BASE_URL from '../apiConfig';
+import { useNavigate } from 'react-router-dom';
 
 const darkThStyle = {
   color: 'white',
@@ -38,6 +39,7 @@ const customTdStyle = {
 };
 
 const PartyChefBookingsList = () => {
+  const navigate = useNavigate();
   const toast = useToast();
   const [jobs, setJobs] = useState([]);
   const [leadManagers, setLeadManagers] = useState([]);
@@ -296,57 +298,77 @@ const PartyChefBookingsList = () => {
       </TableCard>
 
       {/* Details Modal */}
-      <Modal isOpen={isViewOpen} onClose={onViewClose} size="xl" isCentered>
-        <ModalOverlay />
-        <ModalContent borderRadius="xl">
-          <ModalHeader fontSize="md" fontWeight="bold">Chef for Party Booking Details</ModalHeader>
+      <Modal isOpen={isViewOpen} onClose={onViewClose} size="2xl" isCentered scrollBehavior="inside">
+        <ModalOverlay backdropFilter="blur(4px)" />
+        <ModalContent borderRadius="xl" maxH="85vh">
+          <ModalHeader fontSize="md" fontWeight="bold">🎉 Chef for Party Booking Details</ModalHeader>
           <ModalCloseButton />
           <ModalBody py="4">
             {selectedJobView && (
-              <VStack align="stretch" spacing="3" fontSize="xs">
-                <HStack justify="space-between" bg="#fff7ed" p="3" borderRadius="lg">
-                  <Text fontWeight="bold" color="#c2410c">Booking Code: {selectedJobView.jobCode}</Text>
-                  <Text color="#64748b">Date: {formatDate(selectedJobView.createdAt)}</Text>
+              <VStack align="stretch" spacing="4" fontSize="xs">
+                <HStack justify="space-between" bg="#fff7ed" p="3" borderRadius="lg" border="1px solid #ffedd5">
+                  <Text fontWeight="bold" fontSize="sm" color="#c2410c">Booking Code: {selectedJobView.jobCode || 'N/A'}</Text>
+                  <Badge bg={selectedJobView.status === 'Active' ? '#dcfce7' : '#fef3c7'} color={selectedJobView.status === 'Active' ? '#15803d' : '#b45309'} px="2.5" py="1" borderRadius="md" fontSize="11px">
+                    Status: {selectedJobView.status || 'New'}
+                  </Badge>
                 </HStack>
-                <Box>
-                  <Text fontWeight="bold" color="#1e293b" mb="1">Customer & Event Details</Text>
-                  <Text>Customer Name: {getCustomerName(selectedJobView)}</Text>
-                  <Text>Contact Phone: {getCustomerPhone(selectedJobView)}</Text>
-                  <Text>City: {selectedJobView.city}, {selectedJobView.state}</Text>
-                  <Text>Venue Address: {selectedJobView.address || 'N/A'}</Text>
-                  <Text>Event Name: {selectedJobView.event || selectedJobView.jobPosition || 'N/A'}</Text>
-                  <Text>Number of Guests: {selectedJobView.noOfGuests || 'N/A'}</Text>
+
+                <Box bg="#f8fafc" p="3.5" borderRadius="lg" border="1px solid #e2e8f0">
+                  <Text fontWeight="800" color="#1e293b" mb="2" fontSize="xs">CUSTOMER & VENUE DETAILS</Text>
+                  <SimpleGrid columns={2} spacing="2">
+                    <Text><Box as="span" fontWeight="700" color="#475569">Customer Name:</Box> {getCustomerName(selectedJobView)}</Text>
+                    <Text><Box as="span" fontWeight="700" color="#475569">Phone Number:</Box> {getCustomerPhone(selectedJobView)}</Text>
+                    <Text><Box as="span" fontWeight="700" color="#475569">City & State:</Box> {selectedJobView.city}, {selectedJobView.state}</Text>
+                    <Text><Box as="span" fontWeight="700" color="#475569">Lead Manager:</Box> {selectedJobView.leadManager || 'Unassigned'}</Text>
+                    <Text gridColumn="span 2"><Box as="span" fontWeight="700" color="#475569">Venue Address:</Box> {selectedJobView.address || 'N/A'}</Text>
+                  </SimpleGrid>
                 </Box>
-                <Box borderTop="1px solid #e2e8f0" pt="2">
-                  <Text fontWeight="bold" color="#1e293b" mb="1">Party Event & Dates Breakdown</Text>
+
+                <Box bg="#fff7ed" p="3.5" borderRadius="lg" border="1px solid #fed7aa">
+                  <Text fontWeight="800" color="#c2410c" mb="2" fontSize="xs">PARTY EVENT & GUESTS BREAKDOWN</Text>
+                  <Text mb="1"><Box as="span" fontWeight="700">Event Name:</Box> {selectedJobView.event || selectedJobView.jobPosition || 'Party Event'}</Text>
+                  <Text mb="2"><Box as="span" fontWeight="700">Number of Guests:</Box> {selectedJobView.noOfGuests || 'N/A'}</Text>
                   {selectedJobView.partyRequirement?.dates && Array.isArray(selectedJobView.partyRequirement.dates) ? (
                     selectedJobView.partyRequirement.dates.map((d, i) => (
-                      <Box key={i} bg="#fff7ed" p="2" borderRadius="md" mb="2">
+                      <Box key={i} bg="white" p="2.5" borderRadius="md" mb="2" border="1px solid #ffedd5">
                         <Text fontWeight="700" color="#c2410c">Day {i + 1}: {d.date} ({d.eventType || 'Event'})</Text>
                         {d.meals && d.meals.map((m, mi) => (
-                          <Text key={mi} pl="2" fontSize="11px" color="#475569">
-                            • {m.name}: {m.guests} Guests | Mode: {m.menuMode || 'N/A'} {m.menu && m.menu.length > 0 ? `(${m.menu.join(', ')})` : ''}
-                          </Text>
+                          <Box key={mi} pl="2" mt="1">
+                            <Text fontWeight="600" color="#475569">• {m.name}: {m.guests} Guests | Mode: {m.menuMode || 'Standard'}</Text>
+                            {m.menu && m.menu.length > 0 && (
+                              <Text fontSize="10px" color="#64748b" pl="3">Dishes: {m.menu.join(', ')}</Text>
+                            )}
+                          </Box>
                         ))}
                       </Box>
                     ))
                   ) : (
-                    <Text color="#475569">{selectedJobView.menuDetails || selectedJobView.overview || selectedJobView.responsibilities || 'N/A'}</Text>
+                    <Text color="#475569">{selectedJobView.menuDetails || selectedJobView.overview || 'N/A'}</Text>
                   )}
                 </Box>
-                {selectedJobView.pricing && (
-                  <Box borderTop="1px solid #e2e8f0" pt="2">
-                    <Text fontWeight="bold" color="#1e293b" mb="1">Pricing & Payment Breakdown</Text>
-                    <HStack justify="space-between"><Text>Menu Charges:</Text><Text fontStyle="normal">₹{selectedJobView.pricing.menuCharges || 0}</Text></HStack>
-                    <HStack justify="space-between"><Text>Guest Charges:</Text><Text fontStyle="normal">₹{selectedJobView.pricing.guestCharges || 0}</Text></HStack>
-                    <HStack justify="space-between"><Text>Total Amount:</Text><Text fontWeight="bold" color="#059669">₹{selectedJobView.pricing.totalAmount || selectedJobView.advanceAmount || 0}</Text></HStack>
-                  </Box>
-                )}
+
+                <Box bg="#f8fafc" p="3.5" borderRadius="lg" border="1px solid #e2e8f0">
+                  <Text fontWeight="800" color="#1e293b" mb="2" fontSize="xs">PRICING & PAYMENTS</Text>
+                  <SimpleGrid columns={2} spacing="2">
+                    <Text><Box as="span" fontWeight="700" color="#475569">25% Advance Amount:</Box> <Box as="span" color="#059669" fontWeight="700">₹{selectedJobView.advanceAmount || selectedJobView.jobPostFee || 0}</Box></Text>
+                    <Text><Box as="span" fontWeight="700" color="#475569">Payment Status:</Box> {selectedJobView.paymentStatus ? selectedJobView.paymentStatus.toUpperCase() : 'FREE'}</Text>
+                    {selectedJobView.pricing && (
+                      <>
+                        <Text><Box as="span" fontWeight="700" color="#475569">Menu Charges:</Box> ₹{selectedJobView.pricing.menuCharges || 0}</Text>
+                        <Text><Box as="span" fontWeight="700" color="#475569">Guest Charges:</Box> ₹{selectedJobView.pricing.guestCharges || 0}</Text>
+                        <Text gridColumn="span 2"><Box as="span" fontWeight="700" color="#475569">Total Amount:</Box> <Box as="span" color="#059669" fontWeight="700">₹{selectedJobView.pricing.totalAmount || selectedJobView.advanceAmount || 0}</Box></Text>
+                      </>
+                    )}
+                  </SimpleGrid>
+                </Box>
               </VStack>
             )}
           </ModalBody>
-          <ModalFooter>
-            <Button size="sm" onClick={onViewClose}>Close</Button>
+          <ModalFooter gap="3">
+            <Button size="sm" colorScheme="orange" onClick={() => { onViewClose(); navigate(`/jobs/view/${selectedJobView._id}`); }}>
+              Open Full Details Page
+            </Button>
+            <Button size="sm" variant="ghost" onClick={onViewClose}>Close</Button>
           </ModalFooter>
         </ModalContent>
       </Modal>
