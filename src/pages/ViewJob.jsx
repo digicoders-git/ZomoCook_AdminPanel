@@ -235,13 +235,49 @@ const ViewJob = () => {
                         <Text fontWeight="800" fontSize="xs" color="#c2410c">Day {idx + 1}: {d.date} ({d.eventType || 'Event'})</Text>
                       </HStack>
                       {d.meals && Array.isArray(d.meals) && d.meals.map((m, mi) => {
+                        const mealName = m.mealType || m.name || `Meal ${mi + 1}`;
                         const dishList = (m.dishes || m.menu || []).map(item => typeof item === 'object' ? item.name : item).filter(Boolean);
+                        const categoryList = m.categories && typeof m.categories === 'object' 
+                          ? Object.entries(m.categories).filter(([_, count]) => Number(count) > 0).map(([cat, count]) => `${cat}: ${count}`).join(', ')
+                          : '';
+
                         return (
-                          <Box key={mi} bg="#fff7ed" p="2" borderRadius="md" mb="1">
-                            <Text fontWeight="700" fontSize="xs" color="#9a3412">• {m.mealType || m.name} - {m.guests || 'N/A'} Guests (Mode: {m.menuMode || 'Standard'})</Text>
+                          <Box key={mi} bg="#fff7ed" border="1px solid #fed7aa" p="3" borderRadius="md" mb="2">
+                            <HStack justify="space-between" align="center" mb="1">
+                              <HStack spacing="2">
+                                <Badge colorScheme={mealName.toLowerCase().includes('dinner') ? 'purple' : (mealName.toLowerCase().includes('lunch') ? 'orange' : 'teal')} px="2" py="0.5" borderRadius="md" fontSize="xs" fontWeight="700">
+                                  {mealName}
+                                </Badge>
+                                <Text fontWeight="700" fontSize="xs" color="#1e293b">
+                                  👥 {m.guests || 'N/A'} Guests
+                                </Text>
+                              </HStack>
+                              <Badge variant="subtle" colorScheme={m.menuMode === 'now' ? 'green' : 'blue'} fontSize="10px">
+                                {m.menuMode === 'now' ? 'Menu Selected Now' : (m.menuMode === 'later' ? 'Menu Select Later' : (m.menuMode || 'Standard'))}
+                              </Badge>
+                            </HStack>
+                            
                             {dishList.length > 0 && (
-                              <Text fontSize="xs" color="#475569" pl="4" mt="0.5">
-                                Dishes: {dishList.join(', ')}
+                              <Box mt="2" bg="white" p="2" borderRadius="sm" border="1px solid #ffedd5">
+                                <Text fontSize="xs" fontWeight="700" color="#c2410c" mb="0.5">Dishes Selected ({dishList.length}):</Text>
+                                <Text fontSize="xs" color="#334155" lineHeight="1.4">
+                                  {dishList.join(' • ')}
+                                </Text>
+                              </Box>
+                            )}
+
+                            {dishList.length === 0 && categoryList && (
+                              <Box mt="2" bg="white" p="2" borderRadius="sm" border="1px solid #ffedd5">
+                                <Text fontSize="xs" fontWeight="700" color="#c2410c" mb="0.5">Category Counts (Selection Later):</Text>
+                                <Text fontSize="xs" color="#334155">
+                                  {categoryList}
+                                </Text>
+                              </Box>
+                            )}
+
+                            {dishList.length === 0 && !categoryList && (
+                              <Text fontSize="xs" color="#94a3b8" italic mt="1" pl="1">
+                                No specific dishes listed for this meal.
                               </Text>
                             )}
                           </Box>
