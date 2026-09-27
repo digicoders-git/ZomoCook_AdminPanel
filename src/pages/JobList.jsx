@@ -473,8 +473,18 @@ const JobList = () => {
       }
     }
 
-    // Exclude daily staff and party chef bookings from main Job List (they have separate menus now)
-    const isDailyOrParty = job.jobCategory === 'daily' || job.jobCategory === 'party' || job.bookingType === 'party' || (job.title || '').toLowerCase().includes('party');
+    // Exclude daily staff and party chef bookings from main Job List (they have separate Quick Bookings & Events menu)
+    const isDailyOrParty =
+      job.jobCategory === 'daily' ||
+      job.jobCategory === 'party' ||
+      job.bookingType === 'daily' ||
+      job.bookingType === 'party' ||
+      !!job.partyRequirement ||
+      (job.staffRequirements && job.staffRequirements.length > 0) ||
+      (job.title || '').toLowerCase().includes('party') ||
+      (job.title || '').toLowerCase().includes('daily') ||
+      (job.overview || '').toLowerCase().includes('party');
+
     if (isDailyOrParty) return false;
 
     const matchesSearch =
@@ -604,7 +614,6 @@ const JobList = () => {
               <option value="">All Category</option>
               <option value="hotel">Hotel</option>
               <option value="home">Home Cook</option>
-              <option value="daily">Daily Basis</option>
             </Select>
           </FormControl>
 
