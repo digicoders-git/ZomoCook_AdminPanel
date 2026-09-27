@@ -63,7 +63,7 @@ const navCategories = [
         name: 'Quick Bookings & Events', icon: Zap, path: '/quick-bookings', permission: 'job_management:view',
         children: [
           { name: 'Booking Dashboard', path: '/quick-bookings/dashboard', permission: 'job_management:view' },
-          { name: 'Bookings', path: '/daily-basis-jobs', permission: 'job_management:view' },
+          { name: 'Bookings', path: '/quick-bookings/bookings', permission: 'job_management:view' },
           { name: 'Daily Basis Jobs', path: '/daily-basis-jobs', permission: 'job_management:view' },
           { name: 'Chef for Party', path: '/party-chef-bookings', permission: 'job_management:view' },
           { name: 'Candidate Applications', path: '/candidates/applied', permission: 'candidates:view' },
