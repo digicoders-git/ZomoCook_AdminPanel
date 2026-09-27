@@ -89,7 +89,8 @@ const ViewJob = () => {
   };
 
   const getCustomerEmail = () => {
-    if (job.customer && typeof job.customer === 'object') return job.customer.email || 'N/A';
+    if (job.email) return job.email;
+    if (job.customer && typeof job.customer === 'object') return job.customer.email || job.customer.contactEmail || 'N/A';
     if (job.createdBy && typeof job.createdBy === 'object') return job.createdBy.email || 'N/A';
     return 'N/A';
   };
