@@ -2,9 +2,9 @@ import { useState, useEffect } from 'react';
 import { 
   Box, SimpleGrid, FormControl, FormLabel, Input, Select, Textarea, HStack, 
   Button, Tabs, TabList, Tab, TabPanels, TabPanel, Icon, Text, VStack, 
-  Spinner, Flex, IconButton, Divider, Grid, GridItem, Image
+  Spinner, Flex, IconButton, Divider, Grid, GridItem, Image, Tag, TagLabel, TagCloseButton, Wrap, WrapItem, Badge
 } from '@chakra-ui/react';
-import { Send, UserPlus, Upload, Save, Plus, Trash2, X, Briefcase, GraduationCap, Building2, UserCircle, Award, CheckCircle, FileUp, Share2, ImageIcon, RotateCcw } from 'lucide-react';
+import { Send, UserPlus, Upload, Save, Plus, Trash2, X, Briefcase, GraduationCap, Building2, UserCircle, Award, CheckCircle, FileUp, Share2, ImageIcon, RotateCcw, MapPin } from 'lucide-react';
 import { useNavigate, Link, useParams } from 'react-router-dom';
 import { useToast } from '@chakra-ui/react';
 import { PageHeader, FormCard, PageFooter, BRAND, ACCENT, inputStyle, selectStyle, labelStyle, Loading } from '../components/ui';
@@ -49,6 +49,7 @@ const EditCandidate = () => {
   const [masters, setMasters] = useState({
     states: [],
     cities: [],
+    allCities: [],
     jobCategories: [],
     jobTypes: [],
     jobPositions: [],
@@ -66,6 +67,8 @@ const EditCandidate = () => {
   const [tempHighlight, setTempHighlight] = useState('');
   const [tempReason, setTempReason] = useState('');
   const [tempSocial, setTempSocial] = useState({ platform: '', url: '' });
+  const [customCityInput, setCustomCityInput] = useState('');
+  const [customPositionInput, setCustomPositionInput] = useState('');
 
   // File states
   const [files, setFiles] = useState({
@@ -97,6 +100,7 @@ const EditCandidate = () => {
         // Fetch Masters
         await Promise.all([
           fetchMasterData('states', 'states'),
+          fetchMasterData('cities', 'allCities'),
           fetchMasterData('job-positions', 'jobPositions'),
           fetchMasterData('job-types', 'jobTypes'),
           fetchMasterData('skill-categories', 'skillCategories'),
@@ -107,6 +111,30 @@ const EditCandidate = () => {
 
         if (response.data.success) {
           const c = response.data.candidate;
+          let preferredCitiesArr = [];
+          if (Array.isArray(c.jobPreference?.preferredCities)) {
+            preferredCitiesArr = c.jobPreference.preferredCities.filter(Boolean);
+          } else if (typeof c.jobPreference?.preferredCities === 'string' && c.jobPreference.preferredCities.trim()) {
+            try {
+              const parsed = JSON.parse(c.jobPreference.preferredCities);
+              preferredCitiesArr = (Array.isArray(parsed) ? parsed : [c.jobPreference.preferredCities]).filter(Boolean);
+            } catch {
+              preferredCitiesArr = c.jobPreference.preferredCities.split(',').map(s => s.trim()).filter(Boolean);
+            }
+          }
+
+          let jobPositionsArr = [];
+          if (Array.isArray(c.jobPreference?.jobPositions)) {
+            jobPositionsArr = c.jobPreference.jobPositions.filter(Boolean);
+          } else if (typeof c.jobPreference?.jobPositions === 'string' && c.jobPreference.jobPositions.trim()) {
+            try {
+              const parsed = JSON.parse(c.jobPreference.jobPositions);
+              jobPositionsArr = (Array.isArray(parsed) ? parsed : [c.jobPreference.jobPositions]).filter(Boolean);
+            } catch {
+              jobPositionsArr = c.jobPreference.jobPositions.split(',').map(s => s.trim()).filter(Boolean);
+            }
+          }
+
           setFormData({
             ...c,
             leadManager: c.leadManager || '',
@@ -118,8 +146,8 @@ const EditCandidate = () => {
             experienceUnit: c.jobPreference?.experience?.unit || 'years',
             currentSalary: c.jobPreference?.currentSalary || '',
             expectedSalary: c.jobPreference?.expectedSalary || '',
-            preferredCities: c.jobPreference?.preferredCities || [],
-            jobPositions: c.jobPreference?.jobPositions || [],
+            preferredCities: preferredCitiesArr,
+            jobPositions: jobPositionsArr,
             cookingPreference: c.cookingSkills?.preference || '',
             cookingSkills: c.cookingSkills?.skills || [],
             lastCompany: c.workExperience?.lastCompany || { name: '', workplaceType: '', role: '', duration: '', experienceType: '', reasonForLeaving: '' },
@@ -221,6 +249,80 @@ const EditCandidate = () => {
     setFormData(prev => ({
       ...prev,
       [name]: Array.isArray(value) ? value : [value]
+    }));
+  };
+
+  const addPreferredCity = (cityName) => {
+    const city = (cityName || '').trim();
+    if (!city) return;
+    const current = formData.preferredCities || [];
+    if (current.some(c => c.toLowerCase() === city.toLowerCase())) {
+      toast({
+        title: 'Already added',
+        description: `"${city}" is already in preferred cities.`,
+        status: 'info',
+        duration: 2000,
+        position: 'top-right'
+      });
+      return;
+    }
+    if (current.length >= 5) {
+      toast({
+        title: 'Limit reached',
+        description: 'Maximum 5 preferred cities can be selected.',
+        status: 'warning',
+        duration: 2500,
+        position: 'top-right'
+      });
+      return;
+    }
+    setFormData(prev => ({
+      ...prev,
+      preferredCities: [...(prev.preferredCities || []), city]
+    }));
+  };
+
+  const removePreferredCity = (cityToRemove) => {
+    setFormData(prev => ({
+      ...prev,
+      preferredCities: (prev.preferredCities || []).filter(c => c !== cityToRemove)
+    }));
+  };
+
+  const addJobPosition = (posName) => {
+    const pos = (posName || '').trim();
+    if (!pos) return;
+    const current = formData.jobPositions || [];
+    if (current.some(p => p.toLowerCase() === pos.toLowerCase())) {
+      toast({
+        title: 'Already added',
+        description: `"${pos}" is already selected.`,
+        status: 'info',
+        duration: 2000,
+        position: 'top-right'
+      });
+      return;
+    }
+    if (current.length >= 5) {
+      toast({
+        title: 'Limit reached',
+        description: 'Maximum 5 job positions can be selected.',
+        status: 'warning',
+        duration: 2500,
+        position: 'top-right'
+      });
+      return;
+    }
+    setFormData(prev => ({
+      ...prev,
+      jobPositions: [...(prev.jobPositions || []), pos]
+    }));
+  };
+
+  const removeJobPosition = (posToRemove) => {
+    setFormData(prev => ({
+      ...prev,
+      jobPositions: (prev.jobPositions || []).filter(p => p !== posToRemove)
     }));
   };
 
@@ -357,21 +459,261 @@ const EditCandidate = () => {
                 <FormControl><FormLabel {...labelStyle}>Expected Salary</FormLabel><Select name="expectedSalary" value={formData.expectedSalary || ''} onChange={handleChange} {...selectStyle} placeholder="Select Salary">
                   {masters.salaryRanges.map(m => <option key={m._id} value={m.name}>{m.name}</option>)}
                 </Select></FormControl>
-                <FormControl><FormLabel {...labelStyle}>Preferred Cities</FormLabel><Select placeholder="Select City" value={formData.preferredCities?.[0] || ''} onChange={(e) => handleMultiSelect('preferredCities', e.target.value)} {...selectStyle}>
-                  {masters.cities.map(m => <option key={m._id} value={m.name}>{m.name}</option>)}
-                </Select></FormControl>
-                <FormControl><FormLabel {...labelStyle}>Job Positions</FormLabel><Select placeholder="Select Position" value={formData.jobPositions?.[0] || ''} onChange={(e) => handleMultiSelect('jobPositions', e.target.value)} {...selectStyle}>
-                  {masters.jobPositions.map(m => <option key={m._id} value={m.name}>{m.name}</option>)}
-                </Select></FormControl>
               </SimpleGrid>
+
+              {/* Job Positions Multi-Select (Max 5) */}
+              <Box mb="6" p="5" bg="#f8faff" borderRadius="xl" border="1.5px solid #dde6f5">
+                <Flex justify="space-between" align="center" mb="3">
+                  <HStack spacing="2">
+                    <Icon as={Briefcase} size={16} color={BRAND} />
+                    <Text fontSize="xs" fontWeight="700" color="#1e293b" textTransform="uppercase" letterSpacing="0.5px">
+                      Job Positions (Max 5 Positions)
+                    </Text>
+                  </HStack>
+                  <Badge
+                    bg={(formData.jobPositions?.length || 0) >= 5 ? '#ff6b00' : BRAND}
+                    color="white"
+                    px="2.5"
+                    py="0.5"
+                    borderRadius="full"
+                    fontSize="11px"
+                    fontWeight="700"
+                  >
+                    {formData.jobPositions?.length || 0} / 5 Selected
+                  </Badge>
+                </Flex>
+
+                <SimpleGrid columns={{ base: 1, md: 2 }} spacing="3" mb="3">
+                  <Select
+                    placeholder={(formData.jobPositions?.length || 0) >= 5 ? 'Maximum 5 positions selected' : 'Select from Master Positions...'}
+                    value=""
+                    onChange={(e) => {
+                      if (e.target.value) {
+                        addJobPosition(e.target.value);
+                      }
+                    }}
+                    isDisabled={(formData.jobPositions?.length || 0) >= 5}
+                    {...selectStyle}
+                    bg="white"
+                  >
+                    {masters.jobPositions.map(m => (
+                      <option
+                        key={m._id || m.name}
+                        value={m.name}
+                        disabled={formData.jobPositions?.some(p => p.toLowerCase() === m.name.toLowerCase())}
+                      >
+                        {m.name} {formData.jobPositions?.some(p => p.toLowerCase() === m.name.toLowerCase()) ? '✓ (Selected)' : ''}
+                      </option>
+                    ))}
+                  </Select>
+
+                  <HStack spacing="2">
+                    <Input
+                      placeholder="Or type other position & press Enter..."
+                      value={customPositionInput}
+                      onChange={(e) => setCustomPositionInput(e.target.value)}
+                      onKeyDown={(e) => {
+                        if (e.key === 'Enter') {
+                          e.preventDefault();
+                          if (customPositionInput.trim()) {
+                            addJobPosition(customPositionInput.trim());
+                            setCustomPositionInput('');
+                          }
+                        }
+                      }}
+                      isDisabled={(formData.jobPositions?.length || 0) >= 5}
+                      {...inputStyle}
+                      bg="white"
+                    />
+                    <Button
+                      size="sm"
+                      bg={BRAND}
+                      color="white"
+                      px="4"
+                      h="42px"
+                      borderRadius="lg"
+                      leftIcon={<Plus size={14} />}
+                      onClick={() => {
+                        if (customPositionInput.trim()) {
+                          addJobPosition(customPositionInput.trim());
+                          setCustomPositionInput('');
+                        }
+                      }}
+                      isDisabled={!customPositionInput.trim() || (formData.jobPositions?.length || 0) >= 5}
+                      _hover={{ bg: '#003d91' }}
+                    >
+                      Add
+                    </Button>
+                  </HStack>
+                </SimpleGrid>
+
+                {/* Selected Positions Badges */}
+                {formData.jobPositions && formData.jobPositions.length > 0 ? (
+                  <Wrap spacing="2" mt="3" pt="2" borderTop="1px dashed #cbd5e1">
+                    {formData.jobPositions.map((pos, idx) => (
+                      <WrapItem key={`${pos}-${idx}`}>
+                        <Tag
+                          size="md"
+                          borderRadius="full"
+                          bg="#1e293b"
+                          color="white"
+                          px="3.5"
+                          py="1.5"
+                          boxShadow="sm"
+                        >
+                          <TagLabel fontSize="xs" fontWeight="700">{pos}</TagLabel>
+                          <TagCloseButton
+                            onClick={() => removeJobPosition(pos)}
+                            _hover={{ bg: 'whiteAlpha.300' }}
+                          />
+                        </Tag>
+                      </WrapItem>
+                    ))}
+                  </Wrap>
+                ) : (
+                  <Text fontSize="xs" color="#94a3b8" fontStyle="italic" mt="1">
+                    No job positions selected yet. You can add up to 5 positions.
+                  </Text>
+                )}
+              </Box>
+
+              {/* Preferred Cities Multi-Select (Max 5) */}
+              <Box mb="6" p="5" bg="#f8faff" borderRadius="xl" border="1.5px solid #dde6f5">
+                <Flex justify="space-between" align="center" mb="3">
+                  <HStack spacing="2">
+                    <Icon as={MapPin} size={16} color={BRAND} />
+                    <Text fontSize="xs" fontWeight="700" color="#1e293b" textTransform="uppercase" letterSpacing="0.5px">
+                      Preferred Cities (Max 5 Cities)
+                    </Text>
+                  </HStack>
+                  <Badge
+                    bg={(formData.preferredCities?.length || 0) >= 5 ? '#ff6b00' : BRAND}
+                    color="white"
+                    px="2.5"
+                    py="0.5"
+                    borderRadius="full"
+                    fontSize="11px"
+                    fontWeight="700"
+                  >
+                    {formData.preferredCities?.length || 0} / 5 Selected
+                  </Badge>
+                </Flex>
+
+                <SimpleGrid columns={{ base: 1, md: 2 }} spacing="3" mb="3">
+                  <Select
+                    placeholder={(formData.preferredCities?.length || 0) >= 5 ? 'Maximum 5 cities selected' : 'Select from Master Cities...'}
+                    value=""
+                    onChange={(e) => {
+                      if (e.target.value) {
+                        addPreferredCity(e.target.value);
+                      }
+                    }}
+                    isDisabled={(formData.preferredCities?.length || 0) >= 5}
+                    {...selectStyle}
+                    bg="white"
+                  >
+                    {((masters.allCities && masters.allCities.length > 0) ? masters.allCities : masters.cities).map(m => (
+                      <option
+                        key={m._id || m.name}
+                        value={m.name}
+                        disabled={formData.preferredCities?.some(c => c.toLowerCase() === m.name.toLowerCase())}
+                      >
+                        {m.name} {formData.preferredCities?.some(c => c.toLowerCase() === m.name.toLowerCase()) ? '✓ (Selected)' : ''}
+                      </option>
+                    ))}
+                  </Select>
+
+                  <HStack spacing="2">
+                    <Input
+                      placeholder="Or type other city & press Enter..."
+                      value={customCityInput}
+                      onChange={(e) => setCustomCityInput(e.target.value)}
+                      onKeyDown={(e) => {
+                        if (e.key === 'Enter') {
+                          e.preventDefault();
+                          if (customCityInput.trim()) {
+                            addPreferredCity(customCityInput.trim());
+                            setCustomCityInput('');
+                          }
+                        }
+                      }}
+                      isDisabled={(formData.preferredCities?.length || 0) >= 5}
+                      {...inputStyle}
+                      bg="white"
+                    />
+                    <Button
+                      size="sm"
+                      bg={BRAND}
+                      color="white"
+                      px="4"
+                      h="42px"
+                      borderRadius="lg"
+                      leftIcon={<Plus size={14} />}
+                      onClick={() => {
+                        if (customCityInput.trim()) {
+                          addPreferredCity(customCityInput.trim());
+                          setCustomCityInput('');
+                        }
+                      }}
+                      isDisabled={!customCityInput.trim() || (formData.preferredCities?.length || 0) >= 5}
+                      _hover={{ bg: '#003d91' }}
+                    >
+                      Add
+                    </Button>
+                  </HStack>
+                </SimpleGrid>
+
+                {/* Selected Cities Badges */}
+                {formData.preferredCities && formData.preferredCities.length > 0 ? (
+                  <Wrap spacing="2" mt="3" pt="2" borderTop="1px dashed #cbd5e1">
+                    {formData.preferredCities.map((city, idx) => (
+                      <WrapItem key={`${city}-${idx}`}>
+                        <Tag
+                          size="md"
+                          borderRadius="full"
+                          bg={BRAND}
+                          color="white"
+                          px="3.5"
+                          py="1.5"
+                          boxShadow="sm"
+                        >
+                          <TagLabel fontSize="xs" fontWeight="700">{city}</TagLabel>
+                          <TagCloseButton
+                            onClick={() => removePreferredCity(city)}
+                            _hover={{ bg: 'whiteAlpha.300' }}
+                          />
+                        </Tag>
+                      </WrapItem>
+                    ))}
+                  </Wrap>
+                ) : (
+                  <Text fontSize="xs" color="#94a3b8" fontStyle="italic" mt="1">
+                    No preferred cities selected yet. You can add up to 5 cities.
+                  </Text>
+                )}
+              </Box>
+
               <HStack justify="space-between"><Button onClick={() => setActiveTab(0)} variant="outline" size="sm" px="6">Previous</Button><Button onClick={() => setActiveTab(2)} bg={BRAND} color="white" size="sm" px="6">Next</Button></HStack>
             </TabPanel>
 
             {/* 2. Cooking Skills */}
             <TabPanel p="0">
-              <FormControl mb="5"><FormLabel {...labelStyle}>Cooking Preference</FormLabel><Select name="cookingPreference" value={formData.cookingPreference || ''} onChange={handleChange} {...selectStyle} placeholder="Select Preference">
-                {masters.cookingPreferences.map(m => <option key={m._id} value={m.name}>{m.name}</option>)}
-              </Select></FormControl>
+              <FormControl mb="5">
+                <FormLabel {...labelStyle}>Cooking Preference</FormLabel>
+                <Select name="cookingPreference" value={formData.cookingPreference || ''} onChange={handleChange} {...selectStyle} placeholder="Select Preference">
+                  {((masters.cookingPreferences && masters.cookingPreferences.length > 0)
+                    ? masters.cookingPreferences
+                    : [
+                        { _id: '1', name: 'Vegetarian (Veg Only)' },
+                        { _id: '2', name: 'Non-Vegetarian' },
+                        { _id: '3', name: 'Both (Veg & Non-Veg)' },
+                        { _id: '4', name: 'Jain Food' },
+                        { _id: '5', name: 'Eggetarian' },
+                        { _id: '6', name: 'Vegan' }
+                      ]
+                  ).map(m => <option key={m._id || m.name} value={m.name}>{m.name}</option>)}
+                </Select>
+              </FormControl>
               <Box border="1px solid #e8edf5" borderRadius="xl" p="5" mb="6" bg="#f8faff">
                 <Text fontSize="sm" fontWeight="700" mb="4">Add Skills</Text>
                 <SimpleGrid columns={{ base: 1, md: 2 }} spacing="4" mb="4">

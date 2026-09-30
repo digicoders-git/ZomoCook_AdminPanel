@@ -278,12 +278,32 @@ const AddJob = () => {
             )}
 
             {jobCategory === 'home' && <FormControl isRequired><FormLabel {...labelStyle}>Food Preference</FormLabel><Select name="foodPreference" value={formData.foodPreference} onChange={handleChange} {...selectStyle} placeholder="Select Food Preference">
-                {masters.foodPreferences.map(m => <option key={m._id} value={m.name}>{m.name}</option>)}
+                {((masters.foodPreferences && masters.foodPreferences.length > 0)
+                  ? masters.foodPreferences
+                  : [
+                      { _id: '1', name: 'Vegetarian (Veg Only)' },
+                      { _id: '2', name: 'Non-Vegetarian' },
+                      { _id: '3', name: 'Both (Veg & Non-Veg)' },
+                      { _id: '4', name: 'Jain Food' },
+                      { _id: '5', name: 'Eggetarian' },
+                      { _id: '6', name: 'Vegan' }
+                    ]
+                ).map(m => <option key={m._id || m.name} value={m.name}>{m.name}</option>)}
             </Select></FormControl>}
             
             {jobCategory === 'daily' && <FormControl><FormLabel {...labelStyle}>Meal Preference</FormLabel><Input name="mealPreference" value={formData.mealPreference} onChange={handleChange} placeholder="Enter Meal Preference" {...inputStyle} /></FormControl>}
             {jobCategory === 'daily' && <FormControl isRequired><FormLabel {...labelStyle}>Food Preference</FormLabel><Select name="foodPreference" value={formData.foodPreference} onChange={handleChange} {...selectStyle} placeholder="Select Food Preference">
-                {masters.foodPreferences.map(m => <option key={m._id} value={m.name}>{m.name}</option>)}
+                {((masters.foodPreferences && masters.foodPreferences.length > 0)
+                  ? masters.foodPreferences
+                  : [
+                      { _id: '1', name: 'Vegetarian (Veg Only)' },
+                      { _id: '2', name: 'Non-Vegetarian' },
+                      { _id: '3', name: 'Both (Veg & Non-Veg)' },
+                      { _id: '4', name: 'Jain Food' },
+                      { _id: '5', name: 'Eggetarian' },
+                      { _id: '6', name: 'Vegan' }
+                    ]
+                ).map(m => <option key={m._id || m.name} value={m.name}>{m.name}</option>)}
             </Select></FormControl>}
             
             {jobCategory === 'daily' && <FormControl isRequired><FormLabel {...labelStyle}>Serving Time</FormLabel><Select name="servingTime" value={formData.servingTime} onChange={handleChange} {...selectStyle} placeholder="Select Serving Time"><option value="Morning">Morning</option><option value="Evening">Evening</option><option value="Night">Night</option></Select></FormControl>}

@@ -403,7 +403,7 @@ const CandidateList = () => {
                           <Text fontSize="xs" color="#475569"><b>Job Position :</b> {c.jobPreference?.jobPositions?.[0] || 'N/A'}</Text>
                           {c.jobPreference?.jobPositions?.length > 1 && <Badge bg="#ff6b00" color="white" fontSize="9px" px="1">+{c.jobPreference.jobPositions.length - 1}</Badge>}
                         </HStack>
-                        <Text fontSize="xs" color="#475569"><b>Preferred Cities :</b> {c.jobPreference?.preferredCities?.join(', ')}</Text>
+                        <Text fontSize="xs" color="#475569"><b>Preferred Cities :</b> {c.jobPreference?.preferredCities?.length > 0 ? c.jobPreference.preferredCities.join(', ') : (typeof c.jobPreference?.preferredCities === 'string' && c.jobPreference?.preferredCities ? c.jobPreference.preferredCities : 'N/A')}</Text>
                       </VStack>
                     </Td>
                     <Td py="4" border="1px solid #edf2f7" verticalAlign="top">

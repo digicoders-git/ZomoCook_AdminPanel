@@ -1,11 +1,16 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import {
   Box, HStack, Text, VStack, Button, Badge, useToast, useDisclosure,
   Flex, FormLabel, Select, Table, Thead, Tbody, Tr, Th, Td,
+  Menu, MenuButton, MenuList, MenuItem,
   Modal, ModalOverlay, ModalContent, ModalHeader, ModalFooter, ModalBody, ModalCloseButton,
-  SimpleGrid, FormControl, Icon, Stat, StatLabel, StatNumber
+  SimpleGrid, FormControl, Icon, IconButton, AlertDialog, AlertDialogOverlay,
+  AlertDialogContent, AlertDialogHeader, AlertDialogBody, AlertDialogFooter
 } from '@chakra-ui/react';
-import { Zap, Clock, UtensilsCrossed, Filter, RotateCcw, Search, Eye, Calendar, UserPlus } from 'lucide-react';
+import {
+  Zap, Clock, UtensilsCrossed, Filter, RotateCcw, Search, Eye, Calendar,
+  UserPlus, MoreVertical, CheckCircle2, Edit3, Trash2
+} from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import {
   PageHeader, PageFooter, BRAND, ACCENT, TableCard, TableControls
@@ -44,8 +49,24 @@ const QuickBookingsDashboard = () => {
   const [jobs, setJobs] = useState([]);
   const [leadManagers, setLeadManagers] = useState([]);
   const [isLoading, setIsLoading] = useState(true);
-  const [selectedJobView, setSelectedJobView] = useState(null);
-  const { isOpen: isViewOpen, onOpen: onViewOpen, onClose: onViewClose } = useDisclosure();
+
+  // Change Status Modal State
+  const [selectedJobForStatus, setSelectedJobForStatus] = useState(null);
+  const [newStatusValue, setNewStatusValue] = useState('New');
+  const [isUpdatingStatus, setIsUpdatingStatus] = useState(false);
+  const { isOpen: isStatusOpen, onOpen: onStatusOpen, onClose: onStatusClose } = useDisclosure();
+
+  // Assign Lead Manager Modal State
+  const [selectedJobForAssign, setSelectedJobForAssign] = useState(null);
+  const [selectedLeadManager, setSelectedLeadManager] = useState('');
+  const [isAssigning, setIsAssigning] = useState(false);
+  const { isOpen: isAssignOpen, onOpen: onAssignOpen, onClose: onAssignClose } = useDisclosure();
+
+  // Delete Dialog State
+  const [jobToDelete, setJobToDelete] = useState(null);
+  const [isDeleting, setIsDeleting] = useState(false);
+  const { isOpen: isDeleteOpen, onOpen: onDeleteOpen, onClose: onDeleteClose } = useDisclosure();
+  const cancelDeleteRef = useRef();
 
   const token = localStorage.getItem('adminToken');
   const adminData = JSON.parse(localStorage.getItem('adminData') || '{}');
@@ -93,7 +114,6 @@ const QuickBookingsDashboard = () => {
 
       if (response.data.success) {
         let allJobs = response.data.jobs || [];
-        // Filter ONLY Quick Bookings & Events: Daily Basis Staff Bookings + Chef for Party Bookings
         let quickBookings = allJobs.filter(j => isDailyBooking(j) || isPartyBooking(j));
         quickBookings.sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
         setJobs(quickBookings);
@@ -135,6 +155,141 @@ const QuickBookingsDashboard = () => {
     if (job.customer && typeof job.customer === 'object') return job.customer.phone || job.customer.contactPhone || 'N/A';
     if (job.createdBy && typeof job.createdBy === 'object') return job.createdBy.phone || 'N/A';
     return 'N/A';
+  };
+
+  // Mark as Paid / Toggle Payment via Backend API
+  const handleTogglePaymentStatus = async (job) => {
+    try {
+      const newStatus = job.paymentStatus === 'paid' ? 'pending' : 'paid';
+      const response = await axios.put(`${API_BASE_URL}/jobs/${job._id}`, {
+        paymentStatus: newStatus
+      }, {
+        headers: { 'Authorization': `Bearer ${token}` }
+      });
+
+      if (response.data.success) {
+        toast({
+          title: 'Payment Status Updated',
+          description: `Booking ${job.jobCode || ''} marked as ${newStatus.toUpperCase()}.`,
+          status: 'success',
+          duration: 3000,
+          position: 'top-right'
+        });
+        fetchJobs();
+      }
+    } catch (error) {
+      toast({
+        title: 'Error',
+        description: error.response?.data?.message || 'Failed to update payment status.',
+        status: 'error',
+        duration: 3000,
+        position: 'top-right'
+      });
+    }
+  };
+
+  // Change Status via Backend API
+  const handleStatusSubmit = async () => {
+    if (!selectedJobForStatus) return;
+    setIsUpdatingStatus(true);
+    try {
+      const response = await axios.patch(`${API_BASE_URL}/jobs/${selectedJobForStatus._id}/status-string`, {
+        status: newStatusValue
+      }, {
+        headers: { 'Authorization': `Bearer ${token}` }
+      });
+
+      if (response.data.success) {
+        toast({
+          title: 'Status Updated',
+          description: `Status changed to ${newStatusValue} successfully.`,
+          status: 'success',
+          duration: 3000,
+          position: 'top-right'
+        });
+        onStatusClose();
+        fetchJobs();
+      }
+    } catch (error) {
+      toast({
+        title: 'Error',
+        description: error.response?.data?.message || 'Failed to update status.',
+        status: 'error',
+        duration: 3000,
+        position: 'top-right'
+      });
+    } finally {
+      setIsUpdatingStatus(false);
+    }
+  };
+
+  // Assign Lead Manager via Backend API
+  const handleAssignLeadManagerSubmit = async () => {
+    if (!selectedJobForAssign) return;
+    setIsAssigning(true);
+    try {
+      const response = await axios.put(`${API_BASE_URL}/jobs/${selectedJobForAssign._id}`, {
+        leadManager: selectedLeadManager,
+        ...(selectedLeadManager && { status: 'Assigned' })
+      }, {
+        headers: { 'Authorization': `Bearer ${token}` }
+      });
+
+      if (response.data.success) {
+        toast({
+          title: 'Lead Manager Assigned',
+          description: `Assigned to ${selectedLeadManager || 'Unassigned'} successfully.`,
+          status: 'success',
+          duration: 3000,
+          position: 'top-right'
+        });
+        onAssignClose();
+        fetchJobs();
+      }
+    } catch (error) {
+      toast({
+        title: 'Error',
+        description: error.response?.data?.message || 'Failed to assign Lead Manager.',
+        status: 'error',
+        duration: 3000,
+        position: 'top-right'
+      });
+    } finally {
+      setIsAssigning(false);
+    }
+  };
+
+  // Delete Job via Backend API
+  const handleDeleteJobSubmit = async () => {
+    if (!jobToDelete) return;
+    setIsDeleting(true);
+    try {
+      const response = await axios.delete(`${API_BASE_URL}/jobs/${jobToDelete._id}`, {
+        headers: { 'Authorization': `Bearer ${token}` }
+      });
+
+      if (response.data.success) {
+        toast({
+          title: 'Booking Deleted',
+          description: 'Quick Booking record deleted successfully.',
+          status: 'success',
+          duration: 3000,
+          position: 'top-right'
+        });
+        onDeleteClose();
+        fetchJobs();
+      }
+    } catch (error) {
+      toast({
+        title: 'Error',
+        description: error.response?.data?.message || 'Failed to delete record.',
+        status: 'error',
+        duration: 3000,
+        position: 'top-right'
+      });
+    } finally {
+      setIsDeleting(false);
+    }
   };
 
   const filteredJobs = jobs.filter(job => {
@@ -255,8 +410,10 @@ const QuickBookingsDashboard = () => {
               <option value="New">New</option>
               <option value="Assigned">Assigned</option>
               <option value="Active">Active</option>
-              <option value="Closed">Closed</option>
               <option value="Hold">Hold</option>
+              <option value="Closed">Closed</option>
+              <option value="Completed">Completed</option>
+              <option value="Cancelled">Cancelled</option>
             </Select>
           </FormControl>
           <FormControl>
@@ -314,8 +471,27 @@ const QuickBookingsDashboard = () => {
               <Tbody>
                 {paginatedJobs.map((job, idx) => {
                   const party = isPartyBooking(job);
+                  const isPaid = job.paymentStatus === 'paid';
+                  const currentStatus = (job.status || 'New').toUpperCase();
+
+                  let statusBg = '#e0f2fe';
+                  let statusColor = '#0369a1';
+                  if (currentStatus === 'ACTIVE' || currentStatus === 'COMPLETED') {
+                    statusBg = '#dcfce7';
+                    statusColor = '#15803d';
+                  } else if (currentStatus === 'HOLD') {
+                    statusBg = '#e0f2fe';
+                    statusColor = '#0284c7';
+                  } else if (currentStatus === 'CANCELLED') {
+                    statusBg = '#fee2e2';
+                    statusColor = '#b91c1c';
+                  } else if (currentStatus === 'ASSIGNED') {
+                    statusBg = '#fef3c7';
+                    statusColor = '#b45309';
+                  }
+
                   return (
-                    <Tr key={job._id}>
+                    <Tr key={job._id} _hover={{ bg: '#fbfcfd' }}>
                       <Td {...customTdStyle}>{startIndex + idx + 1}</Td>
                       <Td {...customTdStyle}>
                         <VStack align="center" spacing="0.5">
@@ -367,25 +543,141 @@ const QuickBookingsDashboard = () => {
                       <Td {...customTdStyle}>
                         <VStack align="center" spacing="0.5">
                           <Text fontWeight="700" color="#059669">₹{job.advanceAmount || job.jobPostFee || (job.pricing ? job.pricing.totalAmount : 0)}</Text>
-                          <Badge bg={job.paymentStatus === 'paid' ? '#dcfce7' : '#fef3c7'} color={job.paymentStatus === 'paid' ? '#15803d' : '#b45309'} fontSize="9px">
-                            {job.paymentStatus ? job.paymentStatus.toUpperCase() : 'FREE'}
+                          <Badge bg={isPaid ? '#dcfce7' : '#fef3c7'} color={isPaid ? '#15803d' : '#b45309'} fontSize="9px">
+                            {isPaid ? 'PAID' : 'PENDING'}
                           </Badge>
                         </VStack>
                       </Td>
                       <Td {...customTdStyle}>
                         <Badge px="2" py="1" borderRadius="full" fontSize="10px" bg={job.leadManager ? '#eff6ff' : '#f8fafc'} color={job.leadManager ? '#1d4ed8' : '#94a3b8'}>
-                          {job.leadManager || 'Unassigned'}
+                          {job.leadManager || 'UNASSIGNED'}
                         </Badge>
                       </Td>
                       <Td {...customTdStyle}>
-                        <Badge px="2" py="1" borderRadius="md" bg="#e0f2fe" color="#0369a1" fontSize="11px">
-                          {job.status || 'New'}
+                        <Badge px="2.5" py="1" borderRadius="md" bg={statusBg} color={statusColor} fontSize="11px" fontWeight="700">
+                          {job.status || 'NEW'}
                         </Badge>
                       </Td>
+
+                      {/* 3-Dots Action Menu Dropdown */}
                       <Td {...customTdStyle}>
-                        <Button size="xs" colorScheme={party ? "orange" : "blue"} variant="ghost" onClick={() => { setSelectedJobView(job); onViewOpen(); }}>
-                          View Details
-                        </Button>
+                        <Menu isLazy placement="bottom-end">
+                          <MenuButton
+                            as={IconButton}
+                            icon={<MoreVertical size={16} />}
+                            variant="ghost"
+                            size="sm"
+                            color="#0f62fe"
+                            bg="#f0f6ff"
+                            _hover={{ bg: '#dbeafe', color: '#1d4ed8' }}
+                            _active={{ bg: '#bfdbfe' }}
+                            borderRadius="lg"
+                            aria-label="Actions"
+                          />
+                          <MenuList
+                            borderRadius="xl"
+                            border="1px solid #e2e8f0"
+                            boxShadow="0 10px 25px -5px rgba(0, 0, 0, 0.1), 0 8px 10px -6px rgba(0, 0, 0, 0.1)"
+                            p="1.5"
+                            minW="190px"
+                            zIndex="10"
+                          >
+                            {/* 1. View Order -> Dedicated Full Page */}
+                            <MenuItem
+                              icon={<Eye size={15} color="#0f62fe" />}
+                              fontSize="xs"
+                              fontWeight="600"
+                              color="#1e293b"
+                              borderRadius="md"
+                              py="2"
+                              _hover={{ bg: '#eff6ff', color: '#0f62fe' }}
+                              onClick={() => navigate(`/jobs/view/${job._id}`)}
+                            >
+                              View Order
+                            </MenuItem>
+
+                            {/* 2. Mark as Paid -> Backend API update */}
+                            <MenuItem
+                              icon={<CheckCircle2 size={15} color="#16a34a" />}
+                              fontSize="xs"
+                              fontWeight="600"
+                              color="#1e293b"
+                              borderRadius="md"
+                              py="2"
+                              _hover={{ bg: '#f0fdf4', color: '#16a34a' }}
+                              onClick={() => handleTogglePaymentStatus(job)}
+                            >
+                              {isPaid ? 'Mark as Pending' : 'Mark as Paid'}
+                            </MenuItem>
+
+                            {/* 3. Change Status -> Backend API update */}
+                            <MenuItem
+                              icon={<RotateCcw size={15} color="#ea580c" />}
+                              fontSize="xs"
+                              fontWeight="600"
+                              color="#1e293b"
+                              borderRadius="md"
+                              py="2"
+                              _hover={{ bg: '#fff7ed', color: '#ea580c' }}
+                              onClick={() => {
+                                setSelectedJobForStatus(job);
+                                setNewStatusValue(job.status || 'New');
+                                onStatusOpen();
+                              }}
+                            >
+                              Change Status
+                            </MenuItem>
+
+                            {/* 4. Assign to Leads Manager -> Backend API update */}
+                            <MenuItem
+                              icon={<UserPlus size={15} color="#2563eb" />}
+                              fontSize="xs"
+                              fontWeight="600"
+                              color="#1e293b"
+                              borderRadius="md"
+                              py="2"
+                              _hover={{ bg: '#eff6ff', color: '#2563eb' }}
+                              onClick={() => {
+                                setSelectedJobForAssign(job);
+                                setSelectedLeadManager(job.leadManager || '');
+                                onAssignOpen();
+                              }}
+                            >
+                              Assign to Leads Manager
+                            </MenuItem>
+
+                            {/* 5. Edit Order -> Dedicated Full Page */}
+                            <MenuItem
+                              icon={<Edit3 size={15} color="#7c3aed" />}
+                              fontSize="xs"
+                              fontWeight="600"
+                              color="#1e293b"
+                              borderRadius="md"
+                              py="2"
+                              _hover={{ bg: '#f5f3ff', color: '#7c3aed' }}
+                              onClick={() => navigate(`/jobs/edit/${job._id}`)}
+                            >
+                              Edit Order
+                            </MenuItem>
+
+                            {/* 6. Delete -> Backend API update */}
+                            <MenuItem
+                              icon={<Trash2 size={15} color="#dc2626" />}
+                              fontSize="xs"
+                              fontWeight="600"
+                              color="#dc2626"
+                              borderRadius="md"
+                              py="2"
+                              _hover={{ bg: '#fef2f2', color: '#dc2626' }}
+                              onClick={() => {
+                                setJobToDelete(job);
+                                onDeleteOpen();
+                              }}
+                            >
+                              Delete
+                            </MenuItem>
+                          </MenuList>
+                        </Menu>
                       </Td>
                     </Tr>
                   );
@@ -399,110 +691,127 @@ const QuickBookingsDashboard = () => {
         </Box>
       </TableCard>
 
-      {/* Details Modal */}
-      <Modal isOpen={isViewOpen} onClose={onViewClose} size="2xl" isCentered scrollBehavior="inside">
+      {/* ── Change Status Modal ── */}
+      <Modal isOpen={isStatusOpen} onClose={onStatusClose} size="md" isCentered>
         <ModalOverlay backdropFilter="blur(4px)" />
-        <ModalContent borderRadius="xl" maxH="85vh">
+        <ModalContent borderRadius="xl">
           <ModalHeader fontSize="md" fontWeight="bold">
-            {selectedJobView && isPartyBooking(selectedJobView) ? '🎉 Chef for Party Booking Details' : '⏱️ Daily Basis Booking Details'}
+            <HStack spacing="2">
+              <Icon as={RotateCcw} color="#ea580c" />
+              <Text>Change Order Status</Text>
+            </HStack>
           </ModalHeader>
           <ModalCloseButton />
           <ModalBody py="4">
-            {selectedJobView && (
-              <VStack align="stretch" spacing="4" fontSize="xs">
-                <HStack justify="space-between" bg={isPartyBooking(selectedJobView) ? "#fff7ed" : "#eff6ff"} p="3" borderRadius="lg" border="1px solid" borderColor={isPartyBooking(selectedJobView) ? "#ffedd5" : "#dbeafe"}>
-                  <Text fontWeight="bold" fontSize="sm" color={isPartyBooking(selectedJobView) ? "#c2410c" : "#1d4ed8"}>
-                    Booking Code: {selectedJobView.jobCode || 'N/A'}
-                  </Text>
-                  <Badge bg={selectedJobView.status === 'Active' ? '#dcfce7' : '#fef3c7'} color={selectedJobView.status === 'Active' ? '#15803d' : '#b45309'} px="2.5" py="1" borderRadius="md" fontSize="11px">
-                    Status: {selectedJobView.status || 'New'}
-                  </Badge>
-                </HStack>
-
-                {/* Customer Info */}
-                <Box bg="#f8fafc" p="3.5" borderRadius="lg" border="1px solid #e2e8f0">
-                  <Text fontWeight="800" color="#1e293b" mb="2" fontSize="xs">CUSTOMER & LOCATION DETAILS</Text>
-                  <SimpleGrid columns={2} spacing="2">
-                    <Text><Box as="span" fontWeight="700" color="#475569">Customer Name:</Box> {getCustomerName(selectedJobView)}</Text>
-                    <Text><Box as="span" fontWeight="700" color="#475569">Phone Number:</Box> {getCustomerPhone(selectedJobView)}</Text>
-                    <Text><Box as="span" fontWeight="700" color="#475569">Hiring Purpose / Outlet:</Box> {selectedJobView.outletName || selectedJobView.hiringPurpose || 'N/A'}</Text>
-                    <Text><Box as="span" fontWeight="700" color="#475569">City & State:</Box> {selectedJobView.city}, {selectedJobView.state}</Text>
-                    <Text gridColumn="span 2"><Box as="span" fontWeight="700" color="#475569">Address / Venue:</Box> {selectedJobView.address || 'N/A'}</Text>
-                    <Text><Box as="span" fontWeight="700" color="#475569">Lead Manager:</Box> {selectedJobView.leadManager || 'Unassigned'}</Text>
-                  </SimpleGrid>
+            {selectedJobForStatus && (
+              <VStack spacing="4" align="stretch">
+                <Box bg="#f8fafc" p="3" borderRadius="lg" border="1px solid #e2e8f0">
+                  <Text fontSize="xs" color="#64748b">Booking Code: <b>{selectedJobForStatus.jobCode || 'N/A'}</b></Text>
+                  <Text fontSize="xs" color="#64748b">Customer: <b>{getCustomerName(selectedJobForStatus)}</b></Text>
+                  <Text fontSize="xs" color="#64748b">Current Status: <Badge colorScheme="blue">{selectedJobForStatus.status || 'New'}</Badge></Text>
                 </Box>
-
-                {/* Staff Requirements */}
-                {isPartyBooking(selectedJobView) ? (
-                  <Box bg="#fff7ed" p="3.5" borderRadius="lg" border="1px solid #fed7aa">
-                    <Text fontWeight="800" color="#c2410c" mb="2" fontSize="xs">PARTY EVENT & GUESTS BREAKDOWN</Text>
-                    <Text mb="1"><Box as="span" fontWeight="700">Event Name:</Box> {selectedJobView.event || selectedJobView.jobPosition || 'Party Event'}</Text>
-                    <Text mb="2"><Box as="span" fontWeight="700">Number of Guests:</Box> {selectedJobView.noOfGuests || 'N/A'}</Text>
-                    {selectedJobView.partyRequirement?.dates && Array.isArray(selectedJobView.partyRequirement.dates) ? (
-                      selectedJobView.partyRequirement.dates.map((d, i) => (
-                        <Box key={i} bg="white" p="2.5" borderRadius="md" mb="2" border="1px solid #ffedd5">
-                          <Text fontWeight="700" color="#c2410c">Day {i + 1}: {d.date} ({d.eventType || 'Event'})</Text>
-                          {d.meals && d.meals.map((m, mi) => (
-                            <Box key={mi} pl="2" mt="1">
-                              <Text fontWeight="600" color="#475569">• {m.name}: {m.guests} Guests | Mode: {m.menuMode || 'Standard'}</Text>
-                              {m.menu && m.menu.length > 0 && (
-                                <Text fontSize="10px" color="#64748b" pl="3">Dishes: {m.menu.join(', ')}</Text>
-                              )}
-                            </Box>
-                          ))}
-                        </Box>
-                      ))
-                    ) : (
-                      <Text color="#475569">{selectedJobView.menuDetails || selectedJobView.overview || 'N/A'}</Text>
-                    )}
-                  </Box>
-                ) : (
-                  <Box bg="#f0fdf4" p="3.5" borderRadius="lg" border="1px solid #bbf7d0">
-                    <Text fontWeight="800" color="#166534" mb="2" fontSize="xs">STAFF REQUIREMENTS & TIMINGS</Text>
-                    {selectedJobView.staffRequirements && selectedJobView.staffRequirements.length > 0 ? (
-                      selectedJobView.staffRequirements.map((s, idx) => (
-                        <Box key={idx} bg="white" p="2.5" borderRadius="md" mb="2" border="1px solid #dcfce7">
-                          <Flex justify="space-between" mb="1">
-                            <Text fontWeight="700" color="#166534">{s.role || s.category || 'Staff'} x {s.count || 1}</Text>
-                            <Text fontWeight="700" color="#059669">Rate: ₹{s.perDayRate || s.ratePerDay || 0}/Day</Text>
-                          </Flex>
-                          <Text>Days: {s.days || 1} | Gender: {s.genderPref || 'Any'}</Text>
-                          <Text>Start Date: {s.startDate || 'N/A'} | Timings: {s.startTime && s.endTime ? `${s.startTime} – ${s.endTime}` : (s.timing || 'N/A')}</Text>
-                        </Box>
-                      ))
-                    ) : (
-                      <Text color="#475569">{selectedJobView.overview || selectedJobView.title}</Text>
-                    )}
-                  </Box>
-                )}
-
-                {/* Pricing & Advance */}
-                <Box bg="#f8fafc" p="3.5" borderRadius="lg" border="1px solid #e2e8f0">
-                  <Text fontWeight="800" color="#1e293b" mb="2" fontSize="xs">PRICING & ADVANCE PAYMENT</Text>
-                  <SimpleGrid columns={2} spacing="2">
-                    <Text><Box as="span" fontWeight="700" color="#475569">25% Advance Amount:</Box> <Box as="span" color="#059669" fontWeight="700">₹{selectedJobView.advanceAmount || selectedJobView.jobPostFee || 0}</Box></Text>
-                    <Text><Box as="span" fontWeight="700" color="#475569">Payment Status:</Box> {selectedJobView.paymentStatus ? selectedJobView.paymentStatus.toUpperCase() : 'FREE'}</Text>
-                    {selectedJobView.pricing && (
-                      <>
-                        <Text><Box as="span" fontWeight="700" color="#475569">Base Charges:</Box> ₹{selectedJobView.pricing.staffCharges || selectedJobView.pricing.menuCharges || 0}</Text>
-                        <Text><Box as="span" fontWeight="700" color="#475569">GST (18%):</Box> ₹{selectedJobView.pricing.gst || 0}</Text>
-                        <Text><Box as="span" fontWeight="700" color="#475569">Platform Fee (10%):</Box> ₹{selectedJobView.pricing.platformFee || 0}</Text>
-                        <Text><Box as="span" fontWeight="700" color="#475569">Total Booking Amount:</Box> ₹{selectedJobView.pricing.total || selectedJobView.pricing.totalAmount || 0}</Text>
-                      </>
-                    )}
-                  </SimpleGrid>
-                </Box>
+                <FormControl>
+                  <FormLabel fontSize="xs" fontWeight="700" color="#475569">Select New Status</FormLabel>
+                  <Select
+                    value={newStatusValue}
+                    onChange={(e) => setNewStatusValue(e.target.value)}
+                    borderRadius="lg"
+                    bg="#f8faff"
+                    border="1.5px solid #dde6f5"
+                  >
+                    <option value="New">New</option>
+                    <option value="Assigned">Assigned</option>
+                    <option value="Active">Active</option>
+                    <option value="Hold">Hold</option>
+                    <option value="Completed">Completed</option>
+                    <option value="Closed">Closed</option>
+                    <option value="Cancelled">Cancelled</option>
+                  </Select>
+                </FormControl>
               </VStack>
             )}
           </ModalBody>
-          <ModalFooter gap="3">
-            <Button size="sm" colorScheme="blue" onClick={() => { onViewClose(); navigate(`/jobs/view/${selectedJobView._id}`); }}>
-              Open Full Details Page
+          <ModalFooter gap="2">
+            <Button variant="ghost" size="sm" onClick={onStatusClose}>Cancel</Button>
+            <Button colorScheme="orange" size="sm" isLoading={isUpdatingStatus} onClick={handleStatusSubmit}>
+              Update Status
             </Button>
-            <Button size="sm" variant="ghost" onClick={onViewClose}>Close</Button>
           </ModalFooter>
         </ModalContent>
       </Modal>
+
+      {/* ── Assign to Leads Manager Modal ── */}
+      <Modal isOpen={isAssignOpen} onClose={onAssignClose} size="md" isCentered>
+        <ModalOverlay backdropFilter="blur(4px)" />
+        <ModalContent borderRadius="xl">
+          <ModalHeader fontSize="md" fontWeight="bold">
+            <HStack spacing="2">
+              <Icon as={UserPlus} color="#2563eb" />
+              <Text>Assign to Leads Manager</Text>
+            </HStack>
+          </ModalHeader>
+          <ModalCloseButton />
+          <ModalBody py="4">
+            {selectedJobForAssign && (
+              <VStack spacing="4" align="stretch">
+                <Box bg="#eff6ff" p="3" borderRadius="lg" border="1px solid #dbeafe">
+                  <Text fontSize="xs" color="#1e293b">Booking Code: <b>{selectedJobForAssign.jobCode || 'N/A'}</b></Text>
+                  <Text fontSize="xs" color="#1e293b">Customer: <b>{getCustomerName(selectedJobForAssign)}</b></Text>
+                  <Text fontSize="xs" color="#1e293b">Current Manager: <b>{selectedJobForAssign.leadManager || 'Unassigned'}</b></Text>
+                </Box>
+                <FormControl isRequired>
+                  <FormLabel fontSize="xs" fontWeight="700" color="#475569">Choose Leads Manager</FormLabel>
+                  <Select
+                    placeholder="-- Select Lead Manager --"
+                    value={selectedLeadManager}
+                    onChange={(e) => setSelectedLeadManager(e.target.value)}
+                    borderRadius="lg"
+                    bg="#f8faff"
+                    border="1.5px solid #dde6f5"
+                  >
+                    {leadManagers.map(lm => (
+                      <option key={lm._id} value={lm.name}>{lm.name} ({lm.email || 'Manager'})</option>
+                    ))}
+                  </Select>
+                </FormControl>
+              </VStack>
+            )}
+          </ModalBody>
+          <ModalFooter gap="2">
+            <Button variant="ghost" size="sm" onClick={onAssignClose}>Cancel</Button>
+            <Button colorScheme="blue" size="sm" isLoading={isAssigning} onClick={handleAssignLeadManagerSubmit}>
+              Assign Manager
+            </Button>
+          </ModalFooter>
+        </ModalContent>
+      </Modal>
+
+      {/* ── Delete Confirmation Dialog ── */}
+      <AlertDialog
+        isOpen={isDeleteOpen}
+        leastDestructiveRef={cancelDeleteRef}
+        onClose={onDeleteClose}
+        isCentered
+      >
+        <AlertDialogOverlay backdropFilter="blur(4px)">
+          <AlertDialogContent borderRadius="xl">
+            <AlertDialogHeader fontSize="md" fontWeight="bold">
+              Delete Quick Booking Record?
+            </AlertDialogHeader>
+            <AlertDialogBody fontSize="sm" color="#64748b">
+              Are you sure you want to delete booking <b>{jobToDelete?.jobCode || ''}</b> ({getCustomerName(jobToDelete)})? This action cannot be undone.
+            </AlertDialogBody>
+            <AlertDialogFooter gap="2">
+              <Button ref={cancelDeleteRef} size="sm" onClick={onDeleteClose}>
+                Cancel
+              </Button>
+              <Button colorScheme="red" size="sm" isLoading={isDeleting} onClick={handleDeleteJobSubmit}>
+                Delete
+              </Button>
+            </AlertDialogFooter>
+          </AlertDialogContent>
+        </AlertDialogOverlay>
+      </AlertDialog>
 
       <PageFooter />
     </Box>

@@ -151,8 +151,20 @@ const ViewCandidate = () => {
                   <DetailRow label="Experience" value={candidate.jobPreference?.experience?.value ? (candidate.jobPreference.experience.value.toLowerCase().includes('year') || candidate.jobPreference.experience.value.toLowerCase().includes('month') || candidate.jobPreference.experience.value.toLowerCase() === 'fresher' ? candidate.jobPreference.experience.value : `${candidate.jobPreference.experience.value} ${candidate.jobPreference.experience.unit || 'years'}`) : '-'} />
                   <DetailRow label="Current Salary" value={candidate.jobPreference?.currentSalary ? `₹${candidate.jobPreference.currentSalary}` : 'N/A'} />
                   <DetailRow label="Expected Salary" value={candidate.jobPreference?.expectedSalary ? `₹${candidate.jobPreference.expectedSalary}` : 'N/A'} />
-                  <DetailRow label="Preferred Cities" value={candidate.jobPreference?.preferredCities?.join(', ')} />
-                  <DetailRow label="Job Positions" value={candidate.jobPreference?.jobPositions?.join(', ')} />
+                  <DetailRow
+                    label="Preferred Cities"
+                    value={Array.isArray(candidate.jobPreference?.preferredCities) && candidate.jobPreference.preferredCities.length > 0
+                      ? candidate.jobPreference.preferredCities
+                      : (candidate.jobPreference?.preferredCities || 'N/A')}
+                    isTag={Array.isArray(candidate.jobPreference?.preferredCities) && candidate.jobPreference.preferredCities.length > 0}
+                  />
+                  <DetailRow
+                    label="Job Positions"
+                    value={Array.isArray(candidate.jobPreference?.jobPositions) && candidate.jobPreference.jobPositions.length > 0
+                      ? candidate.jobPreference.jobPositions
+                      : (candidate.jobPreference?.jobPositions || 'N/A')}
+                    isTag={Array.isArray(candidate.jobPreference?.jobPositions) && candidate.jobPreference.jobPositions.length > 0}
+                  />
                 </Tbody>
               </Table>
             </TabPanel>
