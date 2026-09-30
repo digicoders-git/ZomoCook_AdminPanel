@@ -43,8 +43,8 @@ export const PageHeader = ({ title, breadcrumb, actions }) => (
 );
 
 // White card wrapper for tables
-export const TableCard = ({ children }) => (
-  <Box bg="white" borderRadius="xl" overflow="hidden" border="1px solid #e8edf5" boxShadow="0 2px 8px rgba(0,74,173,0.04)">
+export const TableCard = ({ children, ...props }) => (
+  <Box bg="white" borderRadius="xl" overflow="hidden" border="1px solid #e8edf5" boxShadow="0 2px 8px rgba(0,74,173,0.04)" {...props}>
     {children}
   </Box>
 );

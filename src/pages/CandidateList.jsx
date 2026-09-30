@@ -249,11 +249,11 @@ const CandidateList = () => {
         ]}
       />
 
-      <TableCard mb="4" p="4">
-        <Flex gap="3" flexWrap="wrap" align="center">
-          <Box flex="1" minW="130px">
-            <Text fontSize="11px" fontWeight="700" color="#475569" mb="1">KYC Status</Text>
-            <Select size="sm" borderRadius="md" value={kycFilter} onChange={(e) => setKycFilter(e.target.value)} fontSize="xs">
+      <TableCard mb="5" p="5">
+        <Flex gap="4" flexWrap="wrap" align="flex-end">
+          <Box flex="1" minW="140px">
+            <Text fontSize="11px" fontWeight="700" color="#475569" mb="1.5">KYC Status</Text>
+            <Select size="sm" h="38px" borderRadius="lg" bg="#f8faff" border="1.5px solid #dde6f5" value={kycFilter} onChange={(e) => setKycFilter(e.target.value)} fontSize="xs">
               <option value="">All KYC Status</option>
               <option value="pending">Pending</option>
               <option value="approved">Approved</option>
@@ -261,9 +261,9 @@ const CandidateList = () => {
             </Select>
           </Box>
 
-          <Box flex="1" minW="140px">
-            <Text fontSize="11px" fontWeight="700" color="#475569" mb="1">Job Category</Text>
-            <Select size="sm" borderRadius="md" value={categoryFilter} onChange={(e) => setCategoryFilter(e.target.value)} fontSize="xs">
+          <Box flex="1" minW="150px">
+            <Text fontSize="11px" fontWeight="700" color="#475569" mb="1.5">Job Category</Text>
+            <Select size="sm" h="38px" borderRadius="lg" bg="#f8faff" border="1.5px solid #dde6f5" value={categoryFilter} onChange={(e) => setCategoryFilter(e.target.value)} fontSize="xs">
               <option value="">All Job Categories</option>
               {uniqueJobCategories.map(cat => (
                 <option key={cat} value={cat}>{cat}</option>
@@ -271,9 +271,9 @@ const CandidateList = () => {
             </Select>
           </Box>
 
-          <Box flex="1" minW="140px">
-            <Text fontSize="11px" fontWeight="700" color="#475569" mb="1">Job Position</Text>
-            <Select size="sm" borderRadius="md" value={positionFilter} onChange={(e) => setPositionFilter(e.target.value)} fontSize="xs">
+          <Box flex="1" minW="150px">
+            <Text fontSize="11px" fontWeight="700" color="#475569" mb="1.5">Job Position</Text>
+            <Select size="sm" h="38px" borderRadius="lg" bg="#f8faff" border="1.5px solid #dde6f5" value={positionFilter} onChange={(e) => setPositionFilter(e.target.value)} fontSize="xs">
               <option value="">All Job Positions</option>
               {uniqueJobPositions.map(pos => (
                 <option key={pos} value={pos}>{pos}</option>
@@ -281,9 +281,9 @@ const CandidateList = () => {
             </Select>
           </Box>
 
-          <Box flex="1" minW="130px">
-            <Text fontSize="11px" fontWeight="700" color="#475569" mb="1">State Name</Text>
-            <Select size="sm" borderRadius="md" value={stateFilter} onChange={(e) => setStateFilter(e.target.value)} fontSize="xs">
+          <Box flex="1" minW="140px">
+            <Text fontSize="11px" fontWeight="700" color="#475569" mb="1.5">State Name</Text>
+            <Select size="sm" h="38px" borderRadius="lg" bg="#f8faff" border="1.5px solid #dde6f5" value={stateFilter} onChange={(e) => setStateFilter(e.target.value)} fontSize="xs">
               <option value="">All States</option>
               {uniqueStates.map(st => (
                 <option key={st} value={st}>{st}</option>
@@ -291,9 +291,9 @@ const CandidateList = () => {
             </Select>
           </Box>
 
-          <Box flex="1" minW="130px">
-            <Text fontSize="11px" fontWeight="700" color="#475569" mb="1">City Name</Text>
-            <Select size="sm" borderRadius="md" value={cityFilter} onChange={(e) => setCityFilter(e.target.value)} fontSize="xs">
+          <Box flex="1" minW="140px">
+            <Text fontSize="11px" fontWeight="700" color="#475569" mb="1.5">City Name</Text>
+            <Select size="sm" h="38px" borderRadius="lg" bg="#f8faff" border="1.5px solid #dde6f5" value={cityFilter} onChange={(e) => setCityFilter(e.target.value)} fontSize="xs">
               <option value="">All Cities</option>
               {uniqueCities.map(ct => (
                 <option key={ct} value={ct}>{ct}</option>
@@ -304,10 +304,13 @@ const CandidateList = () => {
           {(kycFilter || categoryFilter || positionFilter || stateFilter || cityFilter) && (
             <Button
               size="sm"
-              mt="4"
-              variant="ghost"
+              h="38px"
+              variant="outline"
               colorScheme="red"
+              borderColor="red.200"
+              borderRadius="lg"
               fontSize="xs"
+              fontWeight="600"
               onClick={() => {
                 setKycFilter('');
                 setCategoryFilter('');
