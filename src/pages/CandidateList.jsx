@@ -376,7 +376,12 @@ const CandidateList = () => {
                     <Td py="4" border="1px solid #edf2f7" verticalAlign="top" fontSize="xs" color="#475569">{indexOfFirstRecord + index + 1}</Td>
                     <Td py="4" border="1px solid #edf2f7" verticalAlign="middle" textAlign="center">
                       <VStack spacing="3">
-                        <Avatar size="md" src={`${UPLOAD_BASE_URL}/${c.profileImage}`} name={c.name} border="2px solid #f0f5ff" />
+                        <Avatar
+                          size="md"
+                          src={c.profileImage ? (c.profileImage.startsWith('http') ? c.profileImage : `${UPLOAD_BASE_URL}/${c.profileImage.startsWith('/') ? c.profileImage.substring(1) : c.profileImage}`) : ''}
+                          name={c.name}
+                          border="2px solid #f0f5ff"
+                        />
                         <Button
                           size="xs" bg="#ff6b00" color="white" leftIcon={<Icon as={FileType} size={12} />}
                           px="3" borderRadius="md" fontSize="10px"

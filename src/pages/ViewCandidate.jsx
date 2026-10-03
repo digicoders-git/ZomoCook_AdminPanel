@@ -130,6 +130,19 @@ const ViewCandidate = () => {
             <TabPanel p="0">
               <Table variant="simple" border="1px solid #f1f5f9">
                 <Tbody>
+                  <Tr borderBottom="1px solid #f1f5f9">
+                    <Td py="3" px="6" bg="#fcfdfe" w="300px" fontSize="sm" fontWeight="700" color="#475569" borderRight="1px solid #f1f5f9">Profile Photo</Td>
+                    <Td py="3" px="6">
+                      <Avatar
+                        size="xl"
+                        src={getMediaUrl(candidate.profileImage)}
+                        name={candidate.name}
+                        border="2px solid #e2e8f0"
+                        cursor="pointer"
+                        onClick={() => candidate.profileImage && window.open(getMediaUrl(candidate.profileImage), '_blank')}
+                      />
+                    </Td>
+                  </Tr>
                   <DetailRow label="Full Name" value={candidate.name} />
                   <DetailRow label="Email Address" value={candidate.email} />
                   <DetailRow label="Phone No." value={candidate.phone} />
