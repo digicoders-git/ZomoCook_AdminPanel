@@ -3,7 +3,9 @@ import {
   Box, Flex, Text, HStack, VStack, SimpleGrid, FormControl, FormLabel,
   Input, Select, Textarea, Button, Badge, Spinner, useToast,
   Divider, InputGroup, InputLeftElement, InputRightElement, IconButton,
-  Tag, Wrap, WrapItem
+  Tag, Wrap, WrapItem, Modal, ModalOverlay, ModalContent, ModalHeader,
+  ModalBody, ModalFooter, ModalCloseButton, Checkbox, useDisclosure,
+  Tooltip, Image
 } from '@chakra-ui/react';
 import {
   Building2, Home, Calendar, UtensilsCrossed, Plus, RotateCcw,
@@ -133,6 +135,78 @@ const cuisineOptions = [
   'Healthy & Diet'
 ];
 
+const DEFAULT_MENU_CATALOG = [
+  // North Indian
+  { name: 'Paneer Butter Masala', cuisine: 'North Indian', category: 'Main Course', isNonVeg: false },
+  { name: 'Dal Makhani', cuisine: 'North Indian', category: 'Main Course', isNonVeg: false },
+  { name: 'Shahi Paneer', cuisine: 'North Indian', category: 'Main Course', isNonVeg: false },
+  { name: 'Kadhai Paneer', cuisine: 'North Indian', category: 'Main Course', isNonVeg: false },
+  { name: 'Mix Veg Curry', cuisine: 'North Indian', category: 'Main Course', isNonVeg: false },
+  { name: 'Butter Naan', cuisine: 'North Indian', category: 'Breads', isNonVeg: false },
+  { name: 'Tandoori Roti', cuisine: 'North Indian', category: 'Breads', isNonVeg: false },
+  { name: 'Jeera Rice', cuisine: 'North Indian', category: 'Rice', isNonVeg: false },
+  { name: 'Veg Pulao', cuisine: 'North Indian', category: 'Rice', isNonVeg: false },
+  { name: 'Gulab Jamun', cuisine: 'North Indian', category: 'Desserts', isNonVeg: false },
+  { name: 'Chicken Tikka Masala', cuisine: 'North Indian', category: 'Main Course', isNonVeg: true },
+  { name: 'Butter Chicken', cuisine: 'North Indian', category: 'Main Course', isNonVeg: true },
+
+  // Chinese
+  { name: 'Veg Hakka Noodles', cuisine: 'Chinese', category: 'Main Course', isNonVeg: false },
+  { name: 'Veg Manchurian Gravy', cuisine: 'Chinese', category: 'Main Course', isNonVeg: false },
+  { name: 'Chilli Paneer Dry', cuisine: 'Chinese', category: 'Starters', isNonVeg: false },
+  { name: 'Veg Fried Rice', cuisine: 'Chinese', category: 'Rice', isNonVeg: false },
+  { name: 'Spring Rolls', cuisine: 'Chinese', category: 'Starters', isNonVeg: false },
+  { name: 'Honey Chilli Potato', cuisine: 'Chinese', category: 'Starters', isNonVeg: false },
+  { name: 'Chilli Chicken', cuisine: 'Chinese', category: 'Starters', isNonVeg: true },
+
+  // South Indian
+  { name: 'Masala Dosa', cuisine: 'South Indian', category: 'Main Course', isNonVeg: false },
+  { name: 'Idli Sambar', cuisine: 'South Indian', category: 'Main Course', isNonVeg: false },
+  { name: 'Medu Vada', cuisine: 'South Indian', category: 'Starters', isNonVeg: false },
+  { name: 'Uttapam', cuisine: 'South Indian', category: 'Main Course', isNonVeg: false },
+  { name: 'Curd Rice', cuisine: 'South Indian', category: 'Rice', isNonVeg: false },
+  { name: 'Lemon Rice', cuisine: 'South Indian', category: 'Rice', isNonVeg: false },
+
+  // Continental & Italian
+  { name: 'Penne Arrabbiata Pasta', cuisine: 'Italian', category: 'Main Course', isNonVeg: false },
+  { name: 'White Sauce Alfredo Pasta', cuisine: 'Italian', category: 'Main Course', isNonVeg: false },
+  { name: 'Garlic Bread with Cheese', cuisine: 'Continental', category: 'Starters', isNonVeg: false },
+  { name: 'Margherita Pizza', cuisine: 'Italian', category: 'Main Course', isNonVeg: false },
+  { name: 'French Fries & Dip', cuisine: 'Continental', category: 'Starters', isNonVeg: false },
+  { name: 'Caesar Salad', cuisine: 'Continental', category: 'Starters', isNonVeg: false },
+
+  // Mughlai
+  { name: 'Veg Biryani with Raita', cuisine: 'Mughlai', category: 'Rice', isNonVeg: false },
+  { name: 'Chicken Dum Biryani', cuisine: 'Mughlai', category: 'Rice', isNonVeg: true },
+  { name: 'Mutton Biryani', cuisine: 'Mughlai', category: 'Rice', isNonVeg: true },
+  { name: 'Mughlai Shahi Korma', cuisine: 'Mughlai', category: 'Main Course', isNonVeg: true },
+  { name: 'Shahi Tukda', cuisine: 'Mughlai', category: 'Desserts', isNonVeg: false },
+
+  // Starters & Tandoor
+  { name: 'Paneer Tikka', cuisine: 'Starters & Tandoor', category: 'Starters', isNonVeg: false },
+  { name: 'Malai Chaap', cuisine: 'Starters & Tandoor', category: 'Starters', isNonVeg: false },
+  { name: 'Veg Seekh Kabab', cuisine: 'Starters & Tandoor', category: 'Starters', isNonVeg: false },
+  { name: 'Dahi Ke Kabab', cuisine: 'Starters & Tandoor', category: 'Starters', isNonVeg: false },
+  { name: 'Tandoori Chicken', cuisine: 'Starters & Tandoor', category: 'Starters', isNonVeg: true },
+
+  // Desserts & Sweets
+  { name: 'Rasgulla', cuisine: 'Desserts & Sweets', category: 'Desserts', isNonVeg: false },
+  { name: 'Moong Dal Halwa', cuisine: 'Desserts & Sweets', category: 'Desserts', isNonVeg: false },
+  { name: 'Gajar Ka Halwa', cuisine: 'Desserts & Sweets', category: 'Desserts', isNonVeg: false },
+  { name: 'Vanilla / Chocolate Ice Cream', cuisine: 'Desserts & Sweets', category: 'Desserts', isNonVeg: false },
+
+  // Street Food & Chaat
+  { name: 'Pani Puri / Golgappa', cuisine: 'Street Food / Chaat', category: 'Starters', isNonVeg: false },
+  { name: 'Pav Bhaji', cuisine: 'Street Food / Chaat', category: 'Main Course', isNonVeg: false },
+  { name: 'Chole Bhature', cuisine: 'Street Food / Chaat', category: 'Main Course', isNonVeg: false },
+  { name: 'Dahi Papdi Chaat', cuisine: 'Street Food / Chaat', category: 'Starters', isNonVeg: false },
+
+  // Healthy & Diet
+  { name: 'Quinoa Veggie Salad', cuisine: 'Healthy & Diet', category: 'Starters', isNonVeg: false },
+  { name: 'Sprouts & Paneer Salad', cuisine: 'Healthy & Diet', category: 'Starters', isNonVeg: false },
+  { name: 'Steamed Broccoli & Corn', cuisine: 'Healthy & Diet', category: 'Starters', isNonVeg: false }
+];
+
 const AddJob = () => {
   const navigate = useNavigate();
   const toast = useToast();
@@ -197,6 +271,13 @@ const AddJob = () => {
   ]);
   const [partyEventDays, setPartyEventDays] = useState([]);
 
+  // Menu Catalog State & Modal
+  const [menuCatalogItems, setMenuCatalogItems] = useState(DEFAULT_MENU_CATALOG);
+  const { isOpen: isOpenMenuModal, onOpen: onOpenMenuModal, onClose: onCloseMenuModal } = useDisclosure();
+  const [menuModalTarget, setMenuModalTarget] = useState('general'); // 'general' or mealId
+  const [menuModalSearch, setMenuModalSearch] = useState('');
+  const [menuModalCategory, setMenuModalCategory] = useState('All');
+
   // Main Form Data
   const [formData, setFormData] = useState({
     title: '',
@@ -260,6 +341,21 @@ const AddJob = () => {
         }
 
         try {
+          const menuRes = await axios.get(`${apiUrl}/menu-items`);
+          if (menuRes.data.success && Array.isArray(menuRes.data.menuItems) && menuRes.data.menuItems.length > 0) {
+            const apiDishes = menuRes.data.menuItems.map(item => ({
+              name: item.name,
+              cuisine: item.cuisine || 'North Indian',
+              category: item.category || 'Main Course',
+              isNonVeg: item.foodType === 'non-veg'
+            }));
+            setMenuCatalogItems([...DEFAULT_MENU_CATALOG, ...apiDishes]);
+          }
+        } catch (menuErr) {
+          console.log('Using default menu catalog items');
+        }
+
+        try {
           const mgrRes = await axios.get(`${apiUrl}/admin/users`, {
             headers: { 'Authorization': `Bearer ${token}` }
           });
@@ -277,6 +373,45 @@ const AddJob = () => {
     };
     initFetch();
   }, []);
+
+  // Menu helper functions
+  const handleToggleDish = (dishName, target = 'general') => {
+    if (target === 'general') {
+      const existing = formData.menuDetails ? formData.menuDetails.split(',').map(s => s.trim()).filter(Boolean) : [];
+      let updated;
+      if (existing.includes(dishName)) {
+        updated = existing.filter(d => d !== dishName);
+      } else {
+        updated = [...existing, dishName];
+      }
+      const newStr = updated.join(', ');
+      setFormData(prev => ({ ...prev, menuDetails: newStr }));
+      if (partyMeals.length > 0 && !partyMeals[0].menu) {
+        setPartyMeals(prev => prev.map((m, idx) => idx === 0 ? { ...m, menu: newStr } : m));
+      }
+    } else {
+      setPartyMeals(prev => prev.map(m => {
+        if (m.id === target) {
+          const existing = m.menu ? m.menu.split(',').map(s => s.trim()).filter(Boolean) : [];
+          let updated;
+          if (existing.includes(dishName)) {
+            updated = existing.filter(d => d !== dishName);
+          } else {
+            updated = [...existing, dishName];
+          }
+          return { ...m, menu: updated.join(', ') };
+        }
+        return m;
+      }));
+    }
+  };
+
+  const handleOpenMenuSelector = (target = 'general') => {
+    setMenuModalTarget(target);
+    setMenuModalSearch('');
+    setMenuModalCategory('All');
+    onOpenMenuModal();
+  };
 
   const handleCustomerSelect = (customerId) => {
     if (!customerId) {
@@ -1773,8 +1908,71 @@ const AddJob = () => {
                   </Wrap>
                 </Box>
 
+                {/* Dynamic Menu Dishes Quick Selection Chips */}
+                <Box p="3.5" bg="#f8fafc" border="1px solid #e2e8f0" borderRadius="xl">
+                  <Flex justify="space-between" align="center" mb="2" flexWrap="wrap" gap="2">
+                    <HStack spacing="2">
+                      <UtensilsCrossed size={16} color="#ea580c" />
+                      <Text fontSize="xs" fontWeight="800" color="#334155" textTransform="uppercase">
+                        Popular Dishes for Selected Cuisines (Click to Add / Remove)
+                      </Text>
+                    </HStack>
+                    <Button
+                      size="xs"
+                      variant="solid"
+                      colorScheme="orange"
+                      leftIcon={<Sparkles size={12} />}
+                      onClick={() => handleOpenMenuSelector('general')}
+                      fontWeight="700"
+                    >
+                      Browse Full Menu Catalog
+                    </Button>
+                  </Flex>
+
+                  <Wrap spacing="2" mt="2">
+                    {menuCatalogItems
+                      .filter(dish => selectedCuisines.length === 0 || selectedCuisines.some(c => dish.cuisine.toLowerCase().includes(c.toLowerCase()) || c.toLowerCase().includes(dish.cuisine.toLowerCase())))
+                      .slice(0, 16)
+                      .map((dish) => {
+                        const currentDishes = (formData.menuDetails || '').split(',').map(s => s.trim().toLowerCase());
+                        const isDishSelected = currentDishes.includes(dish.name.trim().toLowerCase());
+                        return (
+                          <WrapItem key={dish.name}>
+                            <Tag
+                              size="sm"
+                              borderRadius="full"
+                              variant={isDishSelected ? 'solid' : 'subtle'}
+                              colorScheme={isDishSelected ? 'green' : (dish.isNonVeg ? 'red' : 'gray')}
+                              cursor="pointer"
+                              onClick={() => handleToggleDish(dish.name, 'general')}
+                              px="2.5"
+                              py="1"
+                              border={isDishSelected ? 'none' : '1px solid #cbd5e1'}
+                              _hover={{ transform: 'scale(1.03)', shadow: 'xs' }}
+                              transition="all 0.15s"
+                            >
+                              {isDishSelected ? <Check size={11} style={{ marginRight: 4 }} /> : <Plus size={11} style={{ marginRight: 4 }} />}
+                              {dish.name}
+                            </Tag>
+                          </WrapItem>
+                        );
+                      })}
+                  </Wrap>
+                </Box>
+
                 <FormControl>
-                  <FormLabel {...formLabelStyle}>SELECTED MENU / SPECIAL DISHES</FormLabel>
+                  <Flex justify="space-between" align="center" mb="1.5">
+                    <FormLabel {...formLabelStyle} mb="0">SELECTED MENU / SPECIAL DISHES</FormLabel>
+                    <Button
+                      size="xs"
+                      variant="ghost"
+                      colorScheme="blue"
+                      leftIcon={<UtensilsCrossed size={12} />}
+                      onClick={() => handleOpenMenuSelector('general')}
+                    >
+                      Open Menu Catalog & Selector
+                    </Button>
+                  </Flex>
                   <Textarea
                     name="menuDetails"
                     value={formData.menuDetails}
@@ -1865,7 +2063,20 @@ const AddJob = () => {
                         </Box>
 
                         <Box minW="220px" flex="2.5">
-                          <FormLabel fontSize="11px" fontWeight="700" color="#64748b" mb="1">MENU / SPECIAL DISHES</FormLabel>
+                          <Flex justify="space-between" align="center" mb="1">
+                            <FormLabel fontSize="11px" fontWeight="700" color="#64748b" mb="0">MENU / SPECIAL DISHES</FormLabel>
+                            <Button
+                              size="xs"
+                              h="20px"
+                              fontSize="10px"
+                              variant="link"
+                              colorScheme="orange"
+                              leftIcon={<Plus size={10} />}
+                              onClick={() => handleOpenMenuSelector(meal.id)}
+                            >
+                              Pick Dishes
+                            </Button>
+                          </Flex>
                           <Input
                             size="sm"
                             h="36px"
@@ -2179,6 +2390,166 @@ const AddJob = () => {
 
         </VStack>
       </form>
+
+      {/* Menu Catalog & Dish Selector Modal */}
+      <Modal isOpen={isOpenMenuModal} onClose={onCloseMenuModal} size="4xl" scrollBehavior="inside">
+        <ModalOverlay bg="blackAlpha.600" backdropFilter="blur(3px)" />
+        <ModalContent borderRadius="2xl" overflow="hidden">
+          <ModalHeader bg="#fff7ed" borderBottom="1px solid #fed7aa" py="4">
+            <Flex justify="space-between" align="center" pr="6">
+              <HStack spacing="3">
+                <Flex w="38px" h="38px" borderRadius="xl" bg="#ffedd5" color="#ea580c" align="center" justify="center">
+                  <UtensilsCrossed size={20} />
+                </Flex>
+                <Box>
+                  <Text fontSize="md" fontWeight="800" color="#1e293b">
+                    Party Menu Catalog & Dish Selector
+                  </Text>
+                  <Text fontSize="xs" color="#64748b">
+                    {menuModalTarget === 'general'
+                      ? 'Selecting dishes for General Party Menu'
+                      : `Selecting dishes for Meal: ${partyMeals.find(m => m.id === menuModalTarget)?.mealType || 'Selected Meal'}`}
+                  </Text>
+                </Box>
+              </HStack>
+            </Flex>
+          </ModalHeader>
+          <ModalCloseButton mt="2" />
+
+          <ModalBody p="6">
+            {/* Search and Category Filter Bar */}
+            <VStack spacing="4" align="stretch" mb="5">
+              <InputGroup size="md">
+                <InputLeftElement pointerEvents="none">
+                  <Search size={16} color="#94a3b8" />
+                </InputLeftElement>
+                <Input
+                  placeholder="Search dishes by name (e.g. Paneer Butter Masala, Biryani, Naan)..."
+                  value={menuModalSearch}
+                  onChange={(e) => setMenuModalSearch(e.target.value)}
+                  borderRadius="xl"
+                  bg="#f8fafc"
+                  border="1.5px solid #e2e8f0"
+                />
+              </InputGroup>
+
+              {/* Category Pills */}
+              <Wrap spacing="2">
+                {['All', 'Main Course', 'Starters', 'Breads', 'Rice', 'Desserts', 'Street Food / Chaat', 'Healthy & Diet'].map((cat) => {
+                  const isCatActive = menuModalCategory === cat;
+                  return (
+                    <WrapItem key={cat}>
+                      <Tag
+                        size="md"
+                        borderRadius="full"
+                        variant={isCatActive ? 'solid' : 'outline'}
+                        colorScheme="orange"
+                        cursor="pointer"
+                        onClick={() => setMenuModalCategory(cat)}
+                        px="3"
+                        py="1.5"
+                        fontWeight="700"
+                        fontSize="xs"
+                      >
+                        {cat}
+                      </Tag>
+                    </WrapItem>
+                  );
+                })}
+              </Wrap>
+            </VStack>
+
+            {/* Dishes Grid */}
+            <SimpleGrid columns={{ base: 1, sm: 2, md: 3 }} spacing="3">
+              {menuCatalogItems
+                .filter(dish => {
+                  const matchesSearch = !menuModalSearch || dish.name.toLowerCase().includes(menuModalSearch.toLowerCase()) || dish.cuisine.toLowerCase().includes(menuModalSearch.toLowerCase());
+                  const matchesCategory = menuModalCategory === 'All' || dish.category.toLowerCase().includes(menuModalCategory.toLowerCase()) || dish.cuisine.toLowerCase().includes(menuModalCategory.toLowerCase());
+                  return matchesSearch && matchesCategory;
+                })
+                .map((dish) => {
+                  let isSelected = false;
+                  if (menuModalTarget === 'general') {
+                    const currentList = (formData.menuDetails || '').split(',').map(s => s.trim().toLowerCase());
+                    isSelected = currentList.includes(dish.name.trim().toLowerCase());
+                  } else {
+                    const targetMeal = partyMeals.find(m => m.id === menuModalTarget);
+                    const currentList = (targetMeal?.menu || '').split(',').map(s => s.trim().toLowerCase());
+                    isSelected = currentList.includes(dish.name.trim().toLowerCase());
+                  }
+
+                  return (
+                    <Box
+                      key={dish.name}
+                      p="3"
+                      borderRadius="xl"
+                      border="1.5px solid"
+                      borderColor={isSelected ? '#ea580c' : '#e2e8f0'}
+                      bg={isSelected ? '#fff7ed' : 'white'}
+                      cursor="pointer"
+                      onClick={() => handleToggleDish(dish.name, menuModalTarget)}
+                      _hover={{ shadow: 'sm', borderColor: '#ea580c' }}
+                      transition="all 0.15s"
+                    >
+                      <Flex justify="space-between" align="start" mb="2">
+                        <HStack spacing="1.5">
+                          <Box
+                            w="10px"
+                            h="10px"
+                            borderRadius="full"
+                            bg={dish.isNonVeg ? '#ef4444' : '#22c55e'}
+                            boxShadow="0 0 0 2px white, 0 0 0 3px #cbd5e1"
+                          />
+                          <Badge fontSize="10px" colorScheme={dish.isNonVeg ? 'red' : 'green'} variant="subtle" borderRadius="md">
+                            {dish.isNonVeg ? 'Non-Veg' : 'Veg'}
+                          </Badge>
+                        </HStack>
+                        <Checkbox
+                          isChecked={isSelected}
+                          colorScheme="orange"
+                          pointerEvents="none"
+                        />
+                      </Flex>
+
+                      <Text fontWeight="700" fontSize="sm" color="#1e293b" mb="1" noOfLines={1}>
+                        {dish.name}
+                      </Text>
+
+                      <HStack spacing="1.5" mt="2">
+                        <Badge fontSize="9px" colorScheme="blue" variant="outline" borderRadius="sm">
+                          {dish.cuisine}
+                        </Badge>
+                        <Badge fontSize="9px" colorScheme="purple" variant="outline" borderRadius="sm">
+                          {dish.category}
+                        </Badge>
+                      </HStack>
+                    </Box>
+                  );
+                })}
+            </SimpleGrid>
+          </ModalBody>
+
+          <ModalFooter bg="#f8fafc" borderTop="1px solid #e2e8f0" py="3">
+            <Flex justify="space-between" align="center" w="100%">
+              <Text fontSize="xs" color="#64748b" fontWeight="600">
+                {menuModalTarget === 'general'
+                  ? `Selected: ${(formData.menuDetails || '').split(',').filter(Boolean).length} dishes`
+                  : `Selected: ${(partyMeals.find(m => m.id === menuModalTarget)?.menu || '').split(',').filter(Boolean).length} dishes`}
+              </Text>
+              <Button
+                colorScheme="orange"
+                size="sm"
+                borderRadius="lg"
+                px="6"
+                fontWeight="700"
+                onClick={onCloseMenuModal}
+              >
+                Done
+              </Button>
+            </Flex>
+          </ModalFooter>
+        </ModalContent>
+      </Modal>
     </Box>
   );
 };
