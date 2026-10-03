@@ -19,6 +19,7 @@ const ViewJob = () => {
   const [isLoading, setIsLoading] = useState(true);
   const [appliedCount, setAppliedCount] = useState(0);
   const [assignedCount, setAssignedCount] = useState(0);
+  const [applications, setApplications] = useState([]);
   const [transaction, setTransaction] = useState(null);
 
   const fetchJob = async () => {
@@ -40,6 +41,7 @@ const ViewJob = () => {
       }
       if (appsResponse.data.success && Array.isArray(appsResponse.data.applications)) {
         const apps = appsResponse.data.applications;
+        setApplications(apps);
         setAppliedCount(apps.length);
         setAssignedCount(apps.filter(app => app.status === 'Applied').length);
       }
@@ -95,7 +97,7 @@ const ViewJob = () => {
     return 'N/A';
   };
 
-  const fullAddress = job.address || job.outletAddress || (job.customer && typeof job.customer === 'object' ? (job.customer.contactAddress || job.customer.address) : null) || 'N/A';
+  const fullAddress = job.venueAddress || job.address || job.outletAddress || (job.customer && typeof job.customer === 'object' ? (job.customer.contactAddress || job.customer.address) : null) || 'N/A';
 
   const DataRow = ({ label, value, isBadge = false, colorScheme = 'blue' }) => (
     <Tr borderBottom="1px solid #f1f5f9">
@@ -173,32 +175,98 @@ const ViewJob = () => {
                 <Thead bg="#f8faff">
                   <Tr>
                     <Th {...thStyle} borderRight="1px solid #edf2f7">#</Th>
-                    <Th {...thStyle} borderRight="1px solid #edf2f7">Role / Position</Th>
-                    <Th {...thStyle} borderRight="1px solid #edf2f7">Gender Preference</Th>
-                    <Th {...thStyle} borderRight="1px solid #edf2f7">No. of Staff</Th>
-                    <Th {...thStyle} borderRight="1px solid #edf2f7">No. of Days</Th>
-                    <Th {...thStyle} borderRight="1px solid #edf2f7">Rate / Day</Th>
-                    <Th {...thStyle} borderRight="1px solid #edf2f7">Start Date</Th>
-                    <Th {...thStyle}>Shift Timings</Th>
+                    <Th {...thStyle} borderRight="1px solid #edf2f7">ROLE / POSITION</Th>
+                    <Th {...thStyle} borderRight="1px solid #edf2f7">GENDER PREFERENCE</Th>
+                    <Th {...thStyle} borderRight="1px solid #edf2f7">NO. OF STAFF</Th>
+                    <Th {...thStyle} borderRight="1px solid #edf2f7">NO. OF DAYS</Th>
+                    <Th {...thStyle} borderRight="1px solid #edf2f7" textAlign="center">APPLIED CANDIDATE</Th>
+                    <Th {...thStyle} borderRight="1px solid #edf2f7" textAlign="center">ASSIGNED CANDIDATE</Th>
+                    <Th {...thStyle} borderRight="1px solid #edf2f7">RATE / DAY</Th>
+                    <Th {...thStyle} borderRight="1px solid #edf2f7">START DATE</Th>
+                    <Th {...thStyle}>SHIFT TIMINGS</Th>
                   </Tr>
                 </Thead>
                 <Tbody>
                   {job.staffRequirements && job.staffRequirements.length > 0 ? (
-                    job.staffRequirements.map((s, idx) => (
-                      <Tr key={idx}>
-                        <Td {...tdStyle} borderRight="1px solid #edf2f7">{idx + 1}</Td>
-                        <Td {...tdStyle} borderRight="1px solid #edf2f7" fontWeight="700" color="#1e293b">{s.role || s.category || s.staffCategory || 'Staff'}</Td>
-                        <Td {...tdStyle} borderRight="1px solid #edf2f7">{s.genderPref || 'Any Gender'}</Td>
-                        <Td {...tdStyle} borderRight="1px solid #edf2f7" fontWeight="700">{s.count || s.noOfStaff || 1}</Td>
-                        <Td {...tdStyle} borderRight="1px solid #edf2f7">{s.days || s.noOfDays || 1}</Td>
-                        <Td {...tdStyle} borderRight="1px solid #edf2f7" color="#059669" fontWeight="700">₹{s.perDayRate || s.ratePerDay || s.salary || 0}</Td>
-                        <Td {...tdStyle} borderRight="1px solid #edf2f7">{s.startDate || 'N/A'}</Td>
-                        <Td {...tdStyle}>{s.startTime && s.endTime ? `${s.startTime} – ${s.endTime}` : (s.timing || 'N/A')}</Td>
-                      </Tr>
-                    ))
+                    job.staffRequirements.map((s, idx) => {
+                      const roleName = s.role || s.category || s.staffCategory || 'Staff';
+                      
+                      // Calculate role-specific applied count
+                      const roleApplied = applications.filter(app => {
+                        const appRole = app.appliedRole || app.applicationData?.role || app.applicationData?.appliedRole || (app.candidate?.jobPreference?.jobPositions?.[0]) || '';
+                        if (appRole) {
+                          return appRole.toLowerCase().trim() === roleName.toLowerCase().trim();
+                        }
+                        return idx === 0;
+                      }).length;
+
+                      // Calculate role-specific assigned count
+                      let roleAssigned = 0;
+                      if (job.assignedStaff && Array.isArray(job.assignedStaff)) {
+                        roleAssigned = job.assignedStaff.filter(st => (st.role || '').toLowerCase().trim() === roleName.toLowerCase().trim()).length;
+                      }
+                      if (roleAssigned === 0 && applications.length > 0) {
+                        roleAssigned = applications.filter(app => {
+                          const appRole = app.appliedRole || app.applicationData?.role || (app.candidate?.jobPreference?.jobPositions?.[0]) || '';
+                          const isMatch = appRole ? appRole.toLowerCase().trim() === roleName.toLowerCase().trim() : idx === 0;
+                          return isMatch && ['Shortlisted', 'Assigned', 'Hired', 'Offer Accepted', 'Joined'].includes(app.status);
+                        }).length;
+                      }
+
+                      return (
+                        <Tr key={idx}>
+                          <Td {...tdStyle} borderRight="1px solid #edf2f7">{idx + 1}</Td>
+                          <Td {...tdStyle} borderRight="1px solid #edf2f7" fontWeight="700" color="#1e293b">{roleName}</Td>
+                          <Td {...tdStyle} borderRight="1px solid #edf2f7">{s.genderPref || 'Any Gender'}</Td>
+                          <Td {...tdStyle} borderRight="1px solid #edf2f7" fontWeight="700">{s.count || s.noOfStaff || 1}</Td>
+                          <Td {...tdStyle} borderRight="1px solid #edf2f7">{s.days || s.noOfDays || 1}</Td>
+                          <Td {...tdStyle} borderRight="1px solid #edf2f7" textAlign="center">
+                            <Flex justify="center">
+                              <Flex
+                                w="24px"
+                                h="24px"
+                                borderRadius="full"
+                                bg="#2563eb"
+                                color="white"
+                                align="center"
+                                justify="center"
+                                fontSize="xs"
+                                fontWeight="800"
+                                cursor="pointer"
+                                onClick={onOpen}
+                                _hover={{ transform: 'scale(1.1)' }}
+                                transition="all 0.2s"
+                              >
+                                {roleApplied}
+                              </Flex>
+                            </Flex>
+                          </Td>
+                          <Td {...tdStyle} borderRight="1px solid #edf2f7" textAlign="center">
+                            <Flex justify="center">
+                              <Flex
+                                w="24px"
+                                h="24px"
+                                borderRadius="full"
+                                bg="#2563eb"
+                                color="white"
+                                align="center"
+                                justify="center"
+                                fontSize="xs"
+                                fontWeight="800"
+                              >
+                                {roleAssigned}
+                              </Flex>
+                            </Flex>
+                          </Td>
+                          <Td {...tdStyle} borderRight="1px solid #edf2f7" color="#059669" fontWeight="700">₹{s.perDayRate || s.ratePerDay || s.salary || 0}</Td>
+                          <Td {...tdStyle} borderRight="1px solid #edf2f7">{s.startDate || (job.dateOfEvent ? new Date(job.dateOfEvent).toISOString().split('T')[0] : 'N/A')}</Td>
+                          <Td {...tdStyle}>{s.startTime && s.endTime ? `${s.startTime} – ${s.endTime}` : (s.timing || job.servingTime || '16:00 - 23:00')}</Td>
+                        </Tr>
+                      );
+                    })
                   ) : (
                     <Tr>
-                      <Td colSpan={8} textAlign="center" py="4" color="#64748b">
+                      <Td colSpan={10} textAlign="center" py="4" color="#64748b">
                         {job.title} ({job.package || job.salaryRange || 'N/A'})
                       </Td>
                     </Tr>

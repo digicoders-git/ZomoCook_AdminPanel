@@ -8,7 +8,8 @@ import {
 import {
   Building2, Home, Calendar, UtensilsCrossed, Plus, RotateCcw,
   CheckCircle2, Search, Phone, Mail, MapPin, X, ArrowRight,
-  Briefcase, Send, Trash2, Minus, Users, Award, Check
+  Briefcase, Send, Trash2, Minus, Users, Award, Check, GripVertical,
+  Info, Sparkles, Clock
 } from 'lucide-react';
 import { useNavigate, Link } from 'react-router-dom';
 import axios from 'axios';
@@ -97,11 +98,11 @@ const cookLevels = [
 ];
 
 const dailyRolesPresets = [
-  { role: 'Waiter', rate: 999 },
+  { role: 'Waiter', rate: 899 },
   { role: 'Captain / Supervisor', rate: 1499 },
-  { role: 'Bartender', rate: 1799 },
+  { role: 'Bartender', rate: 1299 },
   { role: 'Kitchen Helper', rate: 899 },
-  { role: 'All-Rounder Cook', rate: 1999 },
+  { role: 'All-Rounder Cook', rate: 1199 },
   { role: 'Tandoor / Chinese Chef', rate: 2499 },
   { role: 'Head Chef', rate: 3499 }
 ];
@@ -183,6 +184,18 @@ const AddJob = () => {
       days: 1
     }
   ]);
+  const [dailyEventDays, setDailyEventDays] = useState([]);
+
+  // Party Specific Meals & Days
+  const [partyMeals, setPartyMeals] = useState([
+    {
+      id: '1',
+      mealType: 'Dinner',
+      guests: 15,
+      menu: ''
+    }
+  ]);
+  const [partyEventDays, setPartyEventDays] = useState([]);
 
   // Main Form Data
   const [formData, setFormData] = useState({
@@ -201,6 +214,7 @@ const AddJob = () => {
     state: 'Uttar Pradesh',
     city: 'Lucknow',
     address: '',
+    venueAddress: '',
     
     // Domestic specific
     foodPreference: 'Vegetarian (Veg Only)',
@@ -404,6 +418,75 @@ const AddJob = () => {
     );
   };
 
+  // Helper for Party Meals List
+  const handleAddPartyMeal = () => {
+    setPartyMeals(prev => [
+      ...prev,
+      {
+        id: Date.now().toString(),
+        mealType: 'Dinner',
+        guests: parseInt(formData.noOfGuests, 10) || 15,
+        menu: ''
+      }
+    ]);
+  };
+
+  const handleUpdatePartyMeal = (id, field, value) => {
+    setPartyMeals(prev => prev.map(item => item.id === id ? { ...item, [field]: value } : item));
+  };
+
+  const handleRemovePartyMeal = (id) => {
+    if (partyMeals.length === 1) {
+      toast({ title: 'At least one meal is required', status: 'info', duration: 2000 });
+      return;
+    }
+    setPartyMeals(prev => prev.filter(item => item.id !== id));
+  };
+
+  // Helper for Party Event Days List
+  const handleAddPartyEventDay = () => {
+    setPartyEventDays(prev => [
+      ...prev,
+      {
+        id: Date.now().toString(),
+        date: '',
+        occasionType: formData.event || 'House Party',
+        noOfGuests: parseInt(formData.noOfGuests, 10) || 15,
+        mealType: 'Dinner',
+        menu: ''
+      }
+    ]);
+  };
+
+  const handleUpdatePartyEventDay = (id, field, value) => {
+    setPartyEventDays(prev => prev.map(item => item.id === id ? { ...item, [field]: value } : item));
+  };
+
+  const handleRemovePartyEventDay = (id) => {
+    setPartyEventDays(prev => prev.filter(item => item.id !== id));
+  };
+
+  // Helper for Daily Event Days List
+  const handleAddDailyEventDay = () => {
+    setDailyEventDays(prev => [
+      ...prev,
+      {
+        id: Date.now().toString(),
+        date: '',
+        servingTime: formData.servingTime || 'Morning Shift (8 AM - 4 PM)',
+        notes: ''
+      }
+    ]);
+  };
+
+  const handleUpdateDailyEventDay = (id, field, value) => {
+    setDailyEventDays(prev => prev.map(item => item.id === id ? { ...item, [field]: value } : item));
+  };
+
+  const handleRemoveDailyEventDay = (id) => {
+    setDailyEventDays(prev => prev.filter(item => item.id !== id));
+  };
+
   // Helper to construct sensible titles
   const getAutoTitle = () => {
     if (serviceType === 'hotel') {
@@ -446,6 +529,7 @@ const AddJob = () => {
       payload.set('state', formData.state || 'Uttar Pradesh');
       payload.set('city', formData.city || 'Lucknow');
       payload.set('address', formData.address || selectedCustomer.address || '');
+      if (formData.venueAddress) payload.set('venueAddress', formData.venueAddress);
       payload.set('status', formData.status || 'New');
       if (formData.leadManager) payload.set('leadManager', formData.leadManager);
 
@@ -508,10 +592,15 @@ const AddJob = () => {
           endTime: s.endTime || '23:00'
         }));
         payload.set('staffRequirements', JSON.stringify(staffArr));
+
+        if (dailyEventDays.length > 0) {
+          payload.set('eventDays', JSON.stringify(dailyEventDays));
+        }
       } else if (serviceType === 'party') {
         payload.set('event', formData.event || 'House Party');
         payload.set('jobPosition', 'Party Chef');
         payload.set('noOfGuests', formData.noOfGuests || '15');
+        if (formData.venueAddress) payload.set('venueAddress', formData.venueAddress);
         payload.set('foodPreference', formData.foodPreference || 'Both');
         payload.set('servingTime', formData.servingTime || 'Dinner');
         payload.set('dateOfEvent', formData.dateOfEvent || new Date().toISOString());
@@ -520,13 +609,33 @@ const AddJob = () => {
 
         const partyReq = {
           city: formData.city,
-          datesCount: 1,
+          venueAddress: formData.venueAddress || formData.address || '',
+          datesCount: 1 + partyEventDays.length,
           vegGuests: parseInt(formData.vegGuests, 10) || 10,
           nonVegGuests: parseInt(formData.nonVegGuests, 10) || 5,
           selectedCuisines: selectedCuisines,
-          menuDetails: formData.menuDetails
+          menuDetails: formData.menuDetails,
+          meals: partyMeals,
+          dates: [
+            {
+              date: formData.dateOfEvent || new Date().toISOString().split('T')[0],
+              eventType: formData.event || 'House Party',
+              noOfGuests: parseInt(formData.noOfGuests, 10) || 15,
+              meals: partyMeals
+            },
+            ...partyEventDays.map(d => ({
+              date: d.date,
+              eventType: d.occasionType || formData.event || 'House Party',
+              noOfGuests: parseInt(d.noOfGuests, 10) || 15,
+              meals: [{ mealType: d.mealType || 'Dinner', menu: d.menu || '' }]
+            }))
+          ]
         };
         payload.set('partyRequirement', JSON.stringify(partyReq));
+
+        if (partyEventDays.length > 0) {
+          payload.set('eventDays', JSON.stringify(partyEventDays));
+        }
       }
 
       // Auto descriptions
@@ -1279,16 +1388,37 @@ const AddJob = () => {
                         Add staff with fixed day-rates or choose quick presets below.
                       </Text>
                     </Box>
-                    <Button
-                      size="xs"
-                      leftIcon={<Plus size={14} />}
-                      bg={BRAND}
-                      color="white"
-                      _hover={{ bg: '#003d91' }}
-                      onClick={() => handleAddDailyStaff('Waiter', 999)}
-                    >
-                      Add Custom Role
-                    </Button>
+                    <HStack spacing="2">
+                      <Button
+                        size="xs"
+                        leftIcon={<Plus size={14} />}
+                        bg="white"
+                        color={BRAND}
+                        border={`1.5px solid ${BRAND}`}
+                        _hover={{ bg: '#eff6ff' }}
+                        onClick={() => handleAddDailyStaff('Assistant Cook', 1500)}
+                        fontWeight="700"
+                        px="3"
+                        h="32px"
+                        borderRadius="md"
+                      >
+                        + Add More Staff
+                      </Button>
+                      <Button
+                        size="xs"
+                        leftIcon={<Plus size={14} />}
+                        bg={BRAND}
+                        color="white"
+                        _hover={{ bg: '#003d91' }}
+                        onClick={() => handleAddDailyStaff('Staff Role', 1000)}
+                        fontWeight="700"
+                        px="3"
+                        h="32px"
+                        borderRadius="md"
+                      >
+                        + Add Custom Role
+                      </Button>
+                    </HStack>
                   </Flex>
 
                   {/* Preset Badges */}
@@ -1401,7 +1531,7 @@ const AddJob = () => {
                   <Flex justify="flex-end" align="center" mt="3" pt="2" borderTop="1px dashed #cbd5e1" gap="3">
                     <Text fontSize="xs" color="#64748b">Estimated Daily Staff Cost:</Text>
                     <Badge colorScheme="green" fontSize="sm" px="3" py="1" borderRadius="md">
-                      ₹{dailyStaffList.reduce((acc, s) => acc + (s.ratePerDay * s.count), 0).toLocaleString()} / Day
+                      ₹{dailyStaffList.reduce((acc, s) => acc + (s.ratePerDay * s.count), 0).toLocaleString()} / DAY
                     </Badge>
                   </Flex>
                 </Box>
@@ -1417,13 +1547,119 @@ const AddJob = () => {
                     minH="70px"
                   />
                 </FormControl>
+
+                {/* Event Days / Multiple Days Booking (Optional) */}
+                <Box p="4" bg="#f8fbff" border="1.5px solid #bfdbfe" borderRadius="xl">
+                  <Flex justify="space-between" align="center" mb={dailyEventDays.length > 0 ? "3" : "0"} flexWrap="wrap" gap="2">
+                    <HStack spacing="3">
+                      <Flex w="36px" h="36px" borderRadius="lg" bg="#eff6ff" color="#2563eb" align="center" justify="center">
+                        <Calendar size={18} />
+                      </Flex>
+                      <Box>
+                        <HStack spacing="2">
+                          <Text fontWeight="800" fontSize="sm" color="#1e293b">
+                            Event Days / Multiple Days Booking
+                          </Text>
+                          <Badge colorScheme="blue" fontSize="10px" borderRadius="full" px="2">Optional</Badge>
+                        </HStack>
+                        <Text fontSize="xs" color="#64748b">
+                          Add more days if the customer wants to book for multiple days.
+                        </Text>
+                      </Box>
+                    </HStack>
+                    <Button
+                      size="sm"
+                      leftIcon={<Plus size={14} />}
+                      bg="white"
+                      color="#2563eb"
+                      border="1.5px solid #2563eb"
+                      _hover={{ bg: '#eff6ff' }}
+                      onClick={handleAddDailyEventDay}
+                      fontWeight="700"
+                      px="4"
+                      h="34px"
+                      borderRadius="md"
+                    >
+                      + Add More Days
+                    </Button>
+                  </Flex>
+
+                  {/* List of Extra Event Days */}
+                  {dailyEventDays.length > 0 && (
+                    <VStack spacing="3" align="stretch" mt="3" pt="3" borderTop="1px dashed #bfdbfe">
+                      {dailyEventDays.map((day, idx) => (
+                        <Flex
+                          key={day.id}
+                          p="3"
+                          bg="white"
+                          border="1px solid #dbeafe"
+                          borderRadius="lg"
+                          gap="3"
+                          align="center"
+                          flexWrap="wrap"
+                        >
+                          <Badge colorScheme="blue" px="2.5" py="1" borderRadius="md" fontSize="xs" fontWeight="800">
+                            Day {idx + 2}
+                          </Badge>
+
+                          <Box minW="160px" flex="1">
+                            <FormLabel fontSize="11px" fontWeight="700" color="#64748b" mb="1">Date of Shift *</FormLabel>
+                            <Input
+                              size="sm"
+                              type="date"
+                              h="36px"
+                              value={day.date}
+                              onChange={(e) => handleUpdateDailyEventDay(day.id, 'date', e.target.value)}
+                            />
+                          </Box>
+
+                          <Box minW="200px" flex="1.5">
+                            <FormLabel fontSize="11px" fontWeight="700" color="#64748b" mb="1">Shift / Serving Timing</FormLabel>
+                            <Select
+                              size="sm"
+                              h="36px"
+                              value={day.servingTime}
+                              onChange={(e) => handleUpdateDailyEventDay(day.id, 'servingTime', e.target.value)}
+                            >
+                              {['Morning Shift (8 AM - 4 PM)', 'Evening Shift (4 PM - 11 PM)', 'Full Day (10 AM - 10 PM)', 'Night Shift'].map(st => (
+                                <option key={st} value={st}>{st}</option>
+                              ))}
+                            </Select>
+                          </Box>
+
+                          <Box minW="200px" flex="2">
+                            <FormLabel fontSize="11px" fontWeight="700" color="#64748b" mb="1">Notes / Instructions</FormLabel>
+                            <Input
+                              size="sm"
+                              h="36px"
+                              value={day.notes}
+                              onChange={(e) => handleUpdateDailyEventDay(day.id, 'notes', e.target.value)}
+                              placeholder="e.g. Banquet hall dinner service"
+                            />
+                          </Box>
+
+                          <IconButton
+                            size="sm"
+                            mt="4"
+                            variant="ghost"
+                            colorScheme="red"
+                            icon={<Trash2 size={16} />}
+                            onClick={() => handleRemoveDailyEventDay(day.id)}
+                            aria-label="Remove day"
+                          />
+                        </Flex>
+                      ))}
+                    </VStack>
+                  )}
+                </Box>
               </VStack>
             )}
 
             {/* === 4. CHEF FOR PARTY FORM === */}
             {serviceType === 'party' && (
               <VStack spacing="5" align="stretch">
-                <SimpleGrid columns={{ base: 1, md: 3 }} spacing="4">
+                {/* Row 1 - 4 Columns Matching Screenshot 3 */}
+                <SimpleGrid columns={{ base: 1, md: 2, lg: 4 }} spacing="4">
                   <FormControl isRequired>
                     <FormLabel {...formLabelStyle}>EVENT / OCCASION TYPE *</FormLabel>
                     <Select
@@ -1440,7 +1676,7 @@ const AddJob = () => {
                   </FormControl>
 
                   <FormControl isRequired>
-                    <FormLabel {...formLabelStyle}>DATE OF PARTY *</FormLabel>
+                    <FormLabel {...formLabelStyle}>DATE OF PARTY **</FormLabel>
                     <Input
                       type="date"
                       name="dateOfEvent"
@@ -1449,6 +1685,49 @@ const AddJob = () => {
                       {...inputStyle}
                       h="42px"
                     />
+                  </FormControl>
+
+                  <FormControl isRequired>
+                    <FormLabel {...formLabelStyle}>TOTAL NUMBER OF GUESTS *</FormLabel>
+                    <Input
+                      name="noOfGuests"
+                      type="number"
+                      value={formData.noOfGuests}
+                      onChange={handleChange}
+                      placeholder="15"
+                      {...inputStyle}
+                      h="42px"
+                    />
+                  </FormControl>
+
+                  <FormControl>
+                    <FormLabel {...formLabelStyle}>VENUE ADDRESS (OPTIONAL)</FormLabel>
+                    <Input
+                      name="venueAddress"
+                      value={formData.venueAddress}
+                      onChange={handleChange}
+                      placeholder="Enter venue address"
+                      {...inputStyle}
+                      h="42px"
+                    />
+                  </FormControl>
+                </SimpleGrid>
+
+                {/* Row 2 */}
+                <SimpleGrid columns={{ base: 1, md: 2 }} spacing="4">
+                  <FormControl isRequired>
+                    <FormLabel {...formLabelStyle}>FOOD PREFERENCE *</FormLabel>
+                    <Select
+                      name="foodPreference"
+                      value={formData.foodPreference}
+                      onChange={handleChange}
+                      {...selectStyle}
+                      h="42px"
+                    >
+                      {['Vegetarian (Veg Only)', 'Non-Vegetarian', 'Both (Veg & Non-Veg)', 'Jain Food'].map(fp => (
+                        <option key={fp} value={fp}>{fp}</option>
+                      ))}
+                    </Select>
                   </FormControl>
 
                   <FormControl isRequired>
@@ -1464,58 +1743,6 @@ const AddJob = () => {
                         <option key={m} value={m}>{m}</option>
                       ))}
                     </Select>
-                  </FormControl>
-                </SimpleGrid>
-
-                <SimpleGrid columns={{ base: 1, md: 3 }} spacing="4">
-                  <FormControl isRequired>
-                    <FormLabel {...formLabelStyle}>TOTAL NUMBER OF GUESTS *</FormLabel>
-                    <Input
-                      name="noOfGuests"
-                      type="number"
-                      value={formData.noOfGuests}
-                      onChange={handleChange}
-                      placeholder="15"
-                      {...inputStyle}
-                      h="42px"
-                    />
-                  </FormControl>
-
-                  <FormControl isRequired>
-                    <FormLabel {...formLabelStyle}>FOOD PREFERENCE *</FormLabel>
-                    <Select
-                      name="foodPreference"
-                      value={formData.foodPreference}
-                      onChange={handleChange}
-                      {...selectStyle}
-                      h="42px"
-                    >
-                      {['Both (Veg & Non-Veg)', 'Vegetarian (Veg Only)', 'Non-Vegetarian', 'Jain Food'].map(fp => (
-                        <option key={fp} value={fp}>{fp}</option>
-                      ))}
-                    </Select>
-                  </FormControl>
-
-                  <FormControl>
-                    <FormLabel {...formLabelStyle}>VEG / NON-VEG BREAKDOWN</FormLabel>
-                    <HStack spacing="2">
-                      <Input
-                        placeholder="Veg: 10"
-                        name="vegGuests"
-                        value={formData.vegGuests}
-                        onChange={handleChange}
-                        {...inputStyle}
-                        h="42px"
-                      />
-                      <Input
-                        placeholder="Non-Veg: 5"
-                        name="nonVegGuests"
-                        value={formData.nonVegGuests}
-                        onChange={handleChange}
-                        {...inputStyle}
-                        h="42px"
-                      />
-                    </HStack>
                   </FormControl>
                 </SimpleGrid>
 
@@ -1557,6 +1784,241 @@ const AddJob = () => {
                     minH="80px"
                   />
                 </FormControl>
+
+                {/* Meals for the Day (Matching Screenshot 3) */}
+                <Box p="4" bg="#fffaf5" border="1.5px solid #fed7aa" borderRadius="xl">
+                  <Flex justify="space-between" align="center" mb="3" flexWrap="wrap" gap="2">
+                    <HStack spacing="3">
+                      <Flex w="36px" h="36px" borderRadius="lg" bg="#fff7ed" color="#ea580c" align="center" justify="center">
+                        <UtensilsCrossed size={18} />
+                      </Flex>
+                      <Box>
+                        <HStack spacing="2">
+                          <Text fontWeight="800" fontSize="sm" color="#1e293b">
+                            Meals for the Day
+                          </Text>
+                          <Info size={14} color="#94a3b8" />
+                        </HStack>
+                        <Text fontSize="xs" color="#64748b">
+                          Add multiple meals if required for the same day.
+                        </Text>
+                      </Box>
+                    </HStack>
+
+                    <Button
+                      size="sm"
+                      leftIcon={<Plus size={14} />}
+                      bg="white"
+                      color="#ea580c"
+                      border="1.5px solid #ea580c"
+                      _hover={{ bg: '#fff7ed' }}
+                      onClick={handleAddPartyMeal}
+                      fontWeight="700"
+                      px="4"
+                      h="34px"
+                      borderRadius="md"
+                    >
+                      + Add Meal
+                    </Button>
+                  </Flex>
+
+                  {/* Meal Rows */}
+                  <VStack spacing="3" align="stretch" mt="2">
+                    {partyMeals.map((meal) => (
+                      <Flex
+                        key={meal.id}
+                        p="3"
+                        bg="white"
+                        border="1px solid #fed7aa"
+                        borderRadius="lg"
+                        gap="3"
+                        align="center"
+                        flexWrap="wrap"
+                      >
+                        <Box color="#94a3b8" cursor="grab" pt="5">
+                          <GripVertical size={16} />
+                        </Box>
+
+                        <Box minW="140px" flex="1">
+                          <FormLabel fontSize="11px" fontWeight="700" color="#64748b" mb="1">MEAL TYPE *</FormLabel>
+                          <Select
+                            size="sm"
+                            h="36px"
+                            value={meal.mealType}
+                            onChange={(e) => handleUpdatePartyMeal(meal.id, 'mealType', e.target.value)}
+                          >
+                            {['Dinner', 'Lunch', 'Breakfast', 'High Tea / Snacks', 'Full Day Party'].map(m => (
+                              <option key={m} value={m}>{m}</option>
+                            ))}
+                          </Select>
+                        </Box>
+
+                        <Box minW="110px" w="120px">
+                          <FormLabel fontSize="11px" fontWeight="700" color="#64748b" mb="1">NO. OF GUESTS *</FormLabel>
+                          <Input
+                            size="sm"
+                            h="36px"
+                            type="number"
+                            value={meal.guests}
+                            onChange={(e) => handleUpdatePartyMeal(meal.id, 'guests', parseInt(e.target.value, 10) || 1)}
+                          />
+                        </Box>
+
+                        <Box minW="220px" flex="2.5">
+                          <FormLabel fontSize="11px" fontWeight="700" color="#64748b" mb="1">MENU / SPECIAL DISHES</FormLabel>
+                          <Input
+                            size="sm"
+                            h="36px"
+                            value={meal.menu}
+                            onChange={(e) => handleUpdatePartyMeal(meal.id, 'menu', e.target.value)}
+                            placeholder="e.g. Biryani, Paneer, Dal, Naan"
+                          />
+                        </Box>
+
+                        <IconButton
+                          size="sm"
+                          mt="4"
+                          variant="ghost"
+                          colorScheme="red"
+                          icon={<Trash2 size={16} />}
+                          onClick={() => handleRemovePartyMeal(meal.id)}
+                          aria-label="Remove meal"
+                        />
+                      </Flex>
+                    ))}
+                  </VStack>
+                </Box>
+
+                {/* Event Days / Multiple Days Booking (Optional) (Matching Screenshot 3) */}
+                <Box p="4" bg="#f8fbff" border="1.5px solid #bfdbfe" borderRadius="xl">
+                  <Flex justify="space-between" align="center" mb={partyEventDays.length > 0 ? "3" : "0"} flexWrap="wrap" gap="2">
+                    <HStack spacing="3">
+                      <Flex w="36px" h="36px" borderRadius="lg" bg="#eff6ff" color="#2563eb" align="center" justify="center">
+                        <Calendar size={18} />
+                      </Flex>
+                      <Box>
+                        <HStack spacing="2">
+                          <Text fontWeight="800" fontSize="sm" color="#1e293b">
+                            Event Days / Multiple Days Booking
+                          </Text>
+                          <Info size={14} color="#94a3b8" />
+                        </HStack>
+                        <Text fontSize="xs" color="#64748b">
+                          Add more days if the customer wants to book for multiple days.
+                        </Text>
+                      </Box>
+                    </HStack>
+
+                    <Button
+                      size="sm"
+                      leftIcon={<Plus size={14} />}
+                      bg="white"
+                      color="#2563eb"
+                      border="1.5px solid #2563eb"
+                      _hover={{ bg: '#eff6ff' }}
+                      onClick={handleAddPartyEventDay}
+                      fontWeight="700"
+                      px="4"
+                      h="34px"
+                      borderRadius="md"
+                    >
+                      + Add More Days
+                    </Button>
+                  </Flex>
+
+                  {/* List of Extra Event Days for Party */}
+                  {partyEventDays.length > 0 && (
+                    <VStack spacing="3" align="stretch" mt="3" pt="3" borderTop="1px dashed #bfdbfe">
+                      {partyEventDays.map((day, idx) => (
+                        <Flex
+                          key={day.id}
+                          p="3"
+                          bg="white"
+                          border="1px solid #dbeafe"
+                          borderRadius="lg"
+                          gap="3"
+                          align="center"
+                          flexWrap="wrap"
+                        >
+                          <Badge colorScheme="blue" px="2.5" py="1" borderRadius="md" fontSize="xs" fontWeight="800">
+                            Day {idx + 2}
+                          </Badge>
+
+                          <Box minW="140px" flex="1">
+                            <FormLabel fontSize="11px" fontWeight="700" color="#64748b" mb="1">Date of Party *</FormLabel>
+                            <Input
+                              size="sm"
+                              type="date"
+                              h="36px"
+                              value={day.date}
+                              onChange={(e) => handleUpdatePartyEventDay(day.id, 'date', e.target.value)}
+                            />
+                          </Box>
+
+                          <Box minW="140px" flex="1">
+                            <FormLabel fontSize="11px" fontWeight="700" color="#64748b" mb="1">Occasion / Event</FormLabel>
+                            <Select
+                              size="sm"
+                              h="36px"
+                              value={day.occasionType}
+                              onChange={(e) => handleUpdatePartyEventDay(day.id, 'occasionType', e.target.value)}
+                            >
+                              {occasionTypes.map(ev => (
+                                <option key={ev} value={ev}>{ev}</option>
+                              ))}
+                            </Select>
+                          </Box>
+
+                          <Box minW="90px" w="100px">
+                            <FormLabel fontSize="11px" fontWeight="700" color="#64748b" mb="1">Guests</FormLabel>
+                            <Input
+                              size="sm"
+                              type="number"
+                              h="36px"
+                              value={day.noOfGuests}
+                              onChange={(e) => handleUpdatePartyEventDay(day.id, 'noOfGuests', parseInt(e.target.value, 10) || 1)}
+                            />
+                          </Box>
+
+                          <Box minW="130px" flex="1">
+                            <FormLabel fontSize="11px" fontWeight="700" color="#64748b" mb="1">Serving Meal</FormLabel>
+                            <Select
+                              size="sm"
+                              h="36px"
+                              value={day.mealType}
+                              onChange={(e) => handleUpdatePartyEventDay(day.id, 'mealType', e.target.value)}
+                            >
+                              {['Dinner', 'Lunch', 'Breakfast', 'High Tea / Snacks', 'Full Day Party'].map(m => (
+                                <option key={m} value={m}>{m}</option>
+                              ))}
+                            </Select>
+                          </Box>
+
+                          <Box minW="180px" flex="1.5">
+                            <FormLabel fontSize="11px" fontWeight="700" color="#64748b" mb="1">Menu / Special Dishes</FormLabel>
+                            <Input
+                              size="sm"
+                              h="36px"
+                              value={day.menu}
+                              onChange={(e) => handleUpdatePartyEventDay(day.id, 'menu', e.target.value)}
+                              placeholder="Dishes for this day"
+                            />
+                          </Box>
+
+                          <IconButton
+                            size="sm"
+                            mt="4"
+                            variant="ghost"
+                            colorScheme="red"
+                            icon={<Trash2 size={16} />}
+                            onClick={() => handleRemovePartyEventDay(day.id)}
+                            aria-label="Remove day"
+                          />
+                        </Flex>
+                      ))}
+                    </VStack>
+                  )}
+                </Box>
               </VStack>
             )}
 
