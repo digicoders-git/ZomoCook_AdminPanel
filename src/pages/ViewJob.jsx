@@ -425,15 +425,38 @@ const ViewJob = () => {
                   </Tr>
                 </Thead>
                 <Tbody>
-                  <Tr>
-                    <Td {...tdStyle} borderRight="1px solid #edf2f7">1</Td>
-                    <Td {...tdStyle} borderRight="1px solid #edf2f7" fontWeight="700" color="#475569">{job.jobPosition}</Td>
-                    <Td {...tdStyle} borderRight="1px solid #edf2f7">{job.packageOrGuestOrVacancy || job.noOfGuests || '1'}</Td>
-                    <Td {...tdStyle} borderRight="1px solid #edf2f7">₹{job.salaryRange || job.package || 'N/A'}</Td>
-                    <Td {...tdStyle} borderRight="1px solid #edf2f7">{job.experienceRange || '-'}</Td>
-                    <Td {...tdStyle} borderRight="1px solid #edf2f7">{job.joiningType || '-'}</Td>
-                    <Td {...tdStyle}>{new Date(job.createdAt).toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' })}</Td>
-                  </Tr>
+                  {job.commercialStaffList && Array.isArray(job.commercialStaffList) && job.commercialStaffList.length > 0 ? (
+                    job.commercialStaffList.map((s, idx) => {
+                      const rawSal = s.salaryRange || s.salary || job.salaryRange || 'N/A';
+                      const formattedSalary = rawSal.startsWith('₹') ? rawSal : (rawSal === 'N/A' ? 'N/A' : `₹${rawSal}`);
+                      return (
+                        <Tr key={idx}>
+                          <Td {...tdStyle} borderRight="1px solid #edf2f7">{idx + 1}</Td>
+                          <Td {...tdStyle} borderRight="1px solid #edf2f7" fontWeight="700" color="#475569">{s.staffCategory || s.role || job.jobPosition}</Td>
+                          <Td {...tdStyle} borderRight="1px solid #edf2f7">{s.noOfStaff || s.count || '1'}</Td>
+                          <Td {...tdStyle} borderRight="1px solid #edf2f7" color="#059669" fontWeight="700">{formattedSalary}</Td>
+                          <Td {...tdStyle} borderRight="1px solid #edf2f7">{s.experienceRange || job.experienceRange || '-'}</Td>
+                          <Td {...tdStyle} borderRight="1px solid #edf2f7">{job.joiningType || '-'}</Td>
+                          <Td {...tdStyle}>{new Date(job.createdAt).toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' })}</Td>
+                        </Tr>
+                      );
+                    })
+                  ) : (
+                    <Tr>
+                      <Td {...tdStyle} borderRight="1px solid #edf2f7">1</Td>
+                      <Td {...tdStyle} borderRight="1px solid #edf2f7" fontWeight="700" color="#475569">{job.jobPosition}</Td>
+                      <Td {...tdStyle} borderRight="1px solid #edf2f7">{job.packageOrGuestOrVacancy || job.noOfGuests || '1'}</Td>
+                      <Td {...tdStyle} borderRight="1px solid #edf2f7" color="#059669" fontWeight="700">
+                        {(() => {
+                          const sal = job.salaryRange || job.package || 'N/A';
+                          return sal.startsWith('₹') ? sal : (sal === 'N/A' ? 'N/A' : `₹${sal}`);
+                        })()}
+                      </Td>
+                      <Td {...tdStyle} borderRight="1px solid #edf2f7">{job.experienceRange || '-'}</Td>
+                      <Td {...tdStyle} borderRight="1px solid #edf2f7">{job.joiningType || '-'}</Td>
+                      <Td {...tdStyle}>{new Date(job.createdAt).toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' })}</Td>
+                    </Tr>
+                  )}
                 </Tbody>
               </Table>
             </Box>

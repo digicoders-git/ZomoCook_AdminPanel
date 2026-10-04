@@ -393,7 +393,8 @@ const JobList = () => {
     if (row.jobCategory === 'daily') {
       return row.package ? `₹${row.package}/Day` : 'N/A';
     }
-    return row.salaryRange ? `₹${row.salaryRange}` : 'N/A';
+    if (!row.salaryRange) return 'N/A';
+    return row.salaryRange.startsWith('₹') ? row.salaryRange : `₹${row.salaryRange}`;
   };
 
   const getUniqueCities = () => {
