@@ -155,6 +155,7 @@ const navCategories = [
           { name: 'Leaves / Month', icon: Calendar, path: '/masters/leaves', permission: 'masters:view' },
           { name: 'Cooking Categories', icon: UtensilsCrossed, path: '/masters/cooking-categories', permission: 'masters:view' },
           { name: 'Events', icon: Calendar, path: '/masters/events', permission: 'masters:view' },
+          { name: 'Family Members', icon: Users, path: '/masters/family-members', permission: 'masters:view' },
           { name: 'Cooking Preferences', icon: Heart, path: '/masters/cooking-preferences', permission: 'masters:view' },
           { name: 'Cook Preferences', icon: Heart, path: '/masters/cook-preferences', permission: 'masters:view' },
           { name: 'Food Preferences', icon: Heart, path: '/masters/food-preferences', permission: 'masters:view' },

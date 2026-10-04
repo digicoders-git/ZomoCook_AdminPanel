@@ -287,6 +287,7 @@ const MasterPage = () => {
       case 'skill-categories': return ['SR.NO.', 'POSITION', 'CATEGORY NAME', 'STATUS', 'ACTION'];
       case 'skills': return ['SR.NO.', 'CATEGORY', 'SKILL NAME', 'STATUS', 'ACTION'];
       case 'job-positions': return ['SR.NO.', 'JOB CATEGORY', 'POSITION NAME', 'STATUS', 'ACTION'];
+      case 'family-members': return ['SR.NO.', 'MEMBERS COUNT / RANGE', 'STATUS', 'ACTION'];
       case 'experiences': return ['SR.NO.', 'EXPERIENCE REQUIRED', 'STATUS', 'ACTION'];
       case 'salaries': return ['SR.NO.', 'OFFERED SALARY', 'STATUS', 'ACTION'];
       case 'time-ranges': return ['SR.NO.', 'FROM TIME', 'TO TIME', 'STATUS', 'ACTION'];
@@ -340,7 +341,7 @@ const MasterPage = () => {
 
               {!isTimeRange && (
                 <FormControl isRequired>
-                  <FormLabel {...labelStyle}>{isCMS ? 'Pagename' : (isSlider || isVideo) ? 'Title' : category === 'experiences' ? 'Experience Required' : category === 'salaries' ? 'Offered Salary' : isSalaryRange ? 'Currency Type' : isExpRange ? 'Type' : isJobMenu ? 'Menu Name' : isPosition ? 'Position Name' : isCity ? 'City Name' : isFacility ? 'Facility Name' : isJobCategory ? 'Category Name' : 'Name'}</FormLabel>
+                  <FormLabel {...labelStyle}>{isCMS ? 'Pagename' : (isSlider || isVideo) ? 'Title' : category === 'family-members' ? 'Family Members Count / Range' : category === 'experiences' ? 'Experience Required' : category === 'salaries' ? 'Offered Salary' : isSalaryRange ? 'Currency Type' : isExpRange ? 'Type' : isJobMenu ? 'Menu Name' : isPosition ? 'Position Name' : isCity ? 'City Name' : isFacility ? 'Facility Name' : isJobCategory ? 'Category Name' : 'Name'}</FormLabel>
                   {isCMS ? (
                     <Select {...selectStyle} placeholder="Select Pagename" value={formData.name} onChange={(e) => setFormData({ ...formData, name: e.target.value })}>
                       <option value="About Us">About Us</option>
@@ -349,7 +350,7 @@ const MasterPage = () => {
                       <option value="Contact Us">Contact Us</option>
                     </Select>
                   ) : (
-                    <Input {...inputStyle} placeholder={(isSlider || isVideo) ? 'Enter Title' : category === 'experiences' ? 'Enter Experience Required (e.g., Fresher, 1 – 2 years)' : category === 'salaries' ? 'Enter Offered Salary (e.g., ₹35,000 – ₹50,000/month)' : isSalaryRange ? 'Enter Currency Type' : isExpRange ? 'Enter Type' : isFacility ? 'Enter Facility Name' : isJobCategory ? 'Enter Category Name' : 'Enter Name'} value={formData.name} onChange={(e) => setFormData({ ...formData, name: e.target.value })} />
+                    <Input {...inputStyle} placeholder={(isSlider || isVideo) ? 'Enter Title' : category === 'family-members' ? 'Enter Family Members (e.g., 1 – 2 Members, 3 – 4 Members)' : category === 'experiences' ? 'Enter Experience Required (e.g., Fresher, 1 – 2 years)' : category === 'salaries' ? 'Enter Offered Salary (e.g., ₹35,000 – ₹50,000/month)' : isSalaryRange ? 'Enter Currency Type' : isExpRange ? 'Enter Type' : isFacility ? 'Enter Facility Name' : isJobCategory ? 'Enter Category Name' : 'Enter Name'} value={formData.name} onChange={(e) => setFormData({ ...formData, name: e.target.value })} />
                   )}
                 </FormControl>
               )}
@@ -574,7 +575,7 @@ const MasterPage = () => {
 
                 {!isTimeRange && (
                   <FormControl isRequired>
-                    <FormLabel {...labelStyle}>{isCMS ? 'Pagename' : (isSlider || isVideo) ? 'Title' : category === 'experiences' ? 'Experience Required' : category === 'salaries' ? 'Offered Salary' : isSalaryRange ? 'Currency Type' : isExpRange ? 'Type' : isJobMenu ? 'Menu Name' : isPosition ? 'Position Name' : isCity ? 'City Name' : isFacility ? 'Facility Name' : isJobCategory ? 'Category Name' : 'Name'}</FormLabel>
+                    <FormLabel {...labelStyle}>{isCMS ? 'Pagename' : (isSlider || isVideo) ? 'Title' : category === 'family-members' ? 'Family Members Count / Range' : category === 'experiences' ? 'Experience Required' : category === 'salaries' ? 'Offered Salary' : isSalaryRange ? 'Currency Type' : isExpRange ? 'Type' : isJobMenu ? 'Menu Name' : isPosition ? 'Position Name' : isCity ? 'City Name' : isFacility ? 'Facility Name' : isJobCategory ? 'Category Name' : 'Name'}</FormLabel>
                     {isCMS ? (
                       <Select {...selectStyle} value={editFormData.name} onChange={(e) => setEditFormData({ ...editFormData, name: e.target.value })}>
                         <option value="About Us">About Us</option>
