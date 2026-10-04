@@ -150,6 +150,7 @@ const MasterPage = () => {
 
   const fetchParents = async () => {
     let parentCategory = '';
+    if (category === 'job-positions') parentCategory = 'job-categories';
     if (category === 'job-menu' || category === 'skill-categories') parentCategory = 'job-positions';
     if (category === 'skills') parentCategory = 'skill-categories';
     if (category === 'cities') parentCategory = 'states';
@@ -285,7 +286,7 @@ const MasterPage = () => {
       case 'job-categories': return ['SR.NO.', 'CATEGORY NAME', 'STATUS', 'ACTION'];
       case 'skill-categories': return ['SR.NO.', 'POSITION', 'CATEGORY NAME', 'STATUS', 'ACTION'];
       case 'skills': return ['SR.NO.', 'CATEGORY', 'SKILL NAME', 'STATUS', 'ACTION'];
-      case 'job-positions': return ['SR.NO.', 'POSITION NAME', 'COLOR', 'STATUS', 'ACTION'];
+      case 'job-positions': return ['SR.NO.', 'JOB CATEGORY', 'POSITION NAME', 'STATUS', 'ACTION'];
       case 'experiences': return ['SR.NO.', 'EXPERIENCE REQUIRED', 'STATUS', 'ACTION'];
       case 'salaries': return ['SR.NO.', 'OFFERED SALARY', 'STATUS', 'ACTION'];
       case 'time-ranges': return ['SR.NO.', 'FROM TIME', 'TO TIME', 'STATUS', 'ACTION'];
@@ -328,10 +329,10 @@ const MasterPage = () => {
         <Box p="8">
           <form onSubmit={handleSubmit}>
             <SimpleGrid columns={{ base: 1, md: isCMS ? 2 : 3 }} spacing="5" mb="6">
-              {(isJobMenu || isSkillCategory || isSkills || isCity || isCookingPref || isFacility) && (
+              {(isJobMenu || isSkillCategory || isSkills || isCity || isCookingPref || isFacility || isPosition) && (
                 <FormControl isRequired>
-                  <FormLabel {...labelStyle}>{isCity ? 'Select State' : isSkills ? 'Skill Category' : (isCookingPref || isFacility) ? 'Type' : 'Select Position'}</FormLabel>
-                  <Select {...selectStyle} placeholder={(isCookingPref || isFacility) ? 'Select Type' : 'Choose Parent'} value={formData.parentId} onChange={(e) => setFormData({ ...formData, parentId: e.target.value })}>
+                  <FormLabel {...labelStyle}>{isPosition ? 'Job Category' : isCity ? 'Select State' : isSkills ? 'Skill Category' : (isCookingPref || isFacility) ? 'Type' : 'Select Position'}</FormLabel>
+                  <Select {...selectStyle} placeholder={isPosition ? 'Select Category' : (isCookingPref || isFacility) ? 'Select Type' : 'Choose Parent'} value={formData.parentId} onChange={(e) => setFormData({ ...formData, parentId: e.target.value })}>
                     {parents.map(p => <option key={p._id} value={p._id}>{p.name}</option>)}
                   </Select>
                 </FormControl>
@@ -393,13 +394,6 @@ const MasterPage = () => {
                   <FormControl isRequired><FormLabel {...labelStyle}>Salary Range From</FormLabel><Input {...inputStyle} placeholder="Enter Range From" value={formData.salaryFrom} onChange={(e) => setFormData({ ...formData, salaryFrom: e.target.value })} /></FormControl>
                   <FormControl isRequired><FormLabel {...labelStyle}>Salary Range To</FormLabel><Input {...inputStyle} placeholder="Enter Range To" value={formData.salaryTo} onChange={(e) => setFormData({ ...formData, salaryTo: e.target.value })} /></FormControl>
                 </>
-              )}
-
-              {isPosition && (
-                <FormControl isRequired>
-                  <FormLabel {...labelStyle}>Color Code (Hex)</FormLabel>
-                  <Input {...inputStyle} placeholder="#000000" value={formData.value} onChange={(e) => setFormData({ ...formData, value: e.target.value })} />
-                </FormControl>
               )}
 
               <FormControl isRequired>
@@ -464,8 +458,8 @@ const MasterPage = () => {
                     <Tr key={item._id} {...trHover}>
                       <Td py="4" color="#64748b" fontSize="xs" fontWeight="600">{i + 1}</Td>
                       {isSlider && <Td py="4"><Image src={`${apiUrl}/${item.image}`} w="60px" h="40px" borderRadius="lg" objectFit="cover" fallbackSrc="https://via.placeholder.com/60x40" /></Td>}
-                      {(category === 'job-menu' || category === 'skill-categories' || category === 'skills' || category === 'cities' || isCookingPref || isFacility) && (
-                        <Td py="4" color="#475569" fontSize="xs" fontWeight="600">{item.parentId?.name || 'N/A'}</Td>
+                      {(category === 'job-menu' || category === 'skill-categories' || category === 'skills' || category === 'cities' || isCookingPref || isFacility || category === 'job-positions') && (
+                        <Td py="4" color="#475569" fontSize="xs" fontWeight="600">{item.parentId?.name || '—'}</Td>
                       )}
                       {!isTimeRange && <Td py="4" color="#1e293b" fontSize="xs" fontWeight="700">{item.name}</Td>}
                       {isCMS && <Td py="4" color="#475569" fontSize="xs">{item.heading}</Td>}
@@ -488,7 +482,6 @@ const MasterPage = () => {
                           <Td py="4" color="#475569" fontSize="xs">{item.timeTo}</Td>
                         </>
                       )}
-                      {category === 'job-positions' && <Td py="4"><Badge bg={item.value} color="white" px="2">{item.value}</Badge></Td>}
                       <Td py="4"><Switch size="sm" isChecked={item.status === 'active'} onChange={() => handleToggleStatus(item._id, item.status)} sx={{ '.chakra-switch__track[data-checked]': { bg: BRAND } }} /></Td>
                       <Td py="4">
                         <HStack spacing="2">
@@ -570,9 +563,9 @@ const MasterPage = () => {
           <form onSubmit={handleSaveEdit}>
             <ModalBody p="6">
               <VStack spacing="4" align="stretch">
-                {(isJobMenu || isSkillCategory || isSkills || isCity || isCookingPref || isFacility) && (
+                {(isJobMenu || isSkillCategory || isSkills || isCity || isCookingPref || isFacility || isPosition) && (
                   <FormControl isRequired>
-                    <FormLabel {...labelStyle}>Parent / Group</FormLabel>
+                    <FormLabel {...labelStyle}>{isPosition ? 'Job Category' : 'Parent / Group'}</FormLabel>
                     <Select {...selectStyle} value={editFormData.parentId} onChange={(e) => setEditFormData({ ...editFormData, parentId: e.target.value })}>
                       {parents.map(p => <option key={p._id} value={p._id}>{p.name}</option>)}
                     </Select>
@@ -592,13 +585,6 @@ const MasterPage = () => {
                     ) : (
                       <Input {...inputStyle} value={editFormData.name} onChange={(e) => setEditFormData({ ...editFormData, name: e.target.value })} />
                     )}
-                  </FormControl>
-                )}
-
-                {isPosition && (
-                  <FormControl>
-                    <FormLabel {...labelStyle}>Color / Code</FormLabel>
-                    <Input {...inputStyle} value={editFormData.value} onChange={(e) => setEditFormData({ ...editFormData, value: e.target.value })} />
                   </FormControl>
                 )}
 
