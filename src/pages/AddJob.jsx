@@ -5,20 +5,21 @@ import {
   Divider, InputGroup, InputLeftElement, InputRightElement, IconButton,
   Tag, Wrap, WrapItem, Modal, ModalOverlay, ModalContent, ModalHeader,
   ModalBody, ModalFooter, ModalCloseButton, Checkbox, useDisclosure,
-  Tooltip, Image
+  Tooltip, Image, Collapse, Switch
 } from '@chakra-ui/react';
 import {
   Building2, Home, Calendar, UtensilsCrossed, Plus, RotateCcw,
   CheckCircle2, Search, Phone, Mail, MapPin, X, ArrowRight,
   Briefcase, Send, Trash2, Minus, Users, Award, Check, GripVertical,
-  Info, Sparkles, Clock
+  Info, Sparkles, Clock, ChevronDown, ChevronUp, Tag as TagIcon,
+  Flame, Sparkle, ShieldCheck, HeartHandshake, DollarSign, Receipt,
+  AlertCircle
 } from 'lucide-react';
 import { useNavigate, Link } from 'react-router-dom';
 import axios from 'axios';
 import { PageHeader, TableCard, BRAND, ACCENT, inputStyle, selectStyle } from '../components/ui';
 import { INDIA_STATES_AND_DISTRICTS, ALL_INDIAN_STATES } from '../utils/indiaData';
 
-// Custom label style matching user screenshot
 const formLabelStyle = {
   fontSize: '11px',
   fontWeight: '800',
@@ -29,18 +30,13 @@ const formLabelStyle = {
 };
 
 const commercialServiceCategories = [
-  'Kitchen Staff',
-  'Service Staff',
-  'Housekeeping Staff',
-  'Management Staff',
-  'Utility / Other Staff'
+  'Chef / Kitchen Staff',
+  'Service & Managing Staff',
+  'Cleaning and Other Staff'
 ];
 
 const commercialStaffCategoriesMap = {
-  'Kitchen Staff': [
-    'Head Chef/ Master Chef',
-    'Executive Chef',
-    'Sous Chef',
+  'Chef / Kitchen Staff': [
     'North Indian Chef',
     'South Indian Chef',
     'Chinese Chef',
@@ -48,163 +44,192 @@ const commercialStaffCategoriesMap = {
     'Continental Chef',
     'Italian / Mexican Chef',
     'Mughlai Chef',
-    'Bakery & Pastry Chef',
-    'All-Rounder Cook',
-    'Fast Food Cook',
+    'Bakery Chef',
+    'Sweets & Deserts Chef',
+    'Chat Experts Chef',
+    'Multicuisine Chef',
+    'Head Chef/ Master Chef',
     'Commi 1 / Commi 2',
     'Kitchen Helper / Commis 3'
   ],
-  'Service Staff': [
-    'Captain / Supervisor',
-    'Waiter / Steward',
-    'Bartender / Barista',
-    'Food Runner / Busser',
+  'Service & Managing Staff': [
+    'Managers',
+    'Front Office Staff',
+    'Captain / Service Representatives',
+    'Bartender',
+    'Waiter/ Steward',
     'Host / Hostess'
   ],
-  'Housekeeping Staff': [
-    'Housekeeping Staff',
-    'Room Boy / Attendant',
-    'Cleaning Staff',
-    'Laundry Staff'
-  ],
-  'Management Staff': [
-    'Restaurant Manager',
-    'General Manager',
-    'Assistant Manager',
-    'Floor Supervisor',
-    'Cashier / Billing Staff'
-  ],
-  'Utility / Other Staff': [
+  'Cleaning and Other Staff': [
+    'Housekeeping Attendant',
+    'Cleaning Supervisor',
+    'Room Attendant',
+    'Public Area Cleaner',
     'Dishwasher / Utility Staff',
-    'Kitchen Cleaner',
-    'Store Helper / Loader',
-    'Security Guard'
+    'UT- Boy'
   ]
 };
 
 const salaryRanges = [
-  '₹10,000 - ₹15,000',
-  '₹12,000 - ₹15,000',
-  '₹15,000 - ₹20,000',
-  '₹20,000 - ₹25,000',
-  '₹25,000 - ₹35,000',
-  '₹35,000 - ₹50,000',
-  '₹50,000 - ₹75,000',
-  '₹75,000+'
+  '₹10,000 – ₹15,000/month',
+  '₹15,000 – ₹25,000/month',
+  '₹25,000 – ₹35,000/month',
+  '₹35,000 – ₹50,000/month',
+  '₹50,000 – ₹75,000/month',
+  '₹75,000+/month',
+  'Custom Range'
 ];
 
-const cookLevels = [
-  { id: 'basic', name: 'Basic Cook', desc: 'Simple home-made food with good experience.', salary: '₹15,000 – ₹18,000/month', badge: '₹15K – ₹18K/mo' },
-  { id: 'standard', name: 'Standard Cook', desc: 'Multi-cuisine cooking with highly experienced staff.', salary: '₹20,000 – ₹25,000/month', badge: '₹20K – ₹25K/mo' },
-  { id: 'premium', name: 'Premium Chef', desc: 'Expert multi-cuisine private chef with high experience.', salary: '₹30,000+/month', badge: '₹30K+/mo' }
+const domesticSalaries = [
+  '₹5,000 – ₹8,000/month',
+  '₹8,000 – ₹12,000/month',
+  '₹12,000 – ₹18,000/month',
+  '₹18,000 – ₹25,000/month',
+  '₹25,000 – ₹35,000/month',
+  'Custom Range'
 ];
 
-const dailyRolesPresets = [
-  { role: 'Waiter', rate: 899 },
-  { role: 'Captain / Supervisor', rate: 1499 },
-  { role: 'Bartender', rate: 1299 },
-  { role: 'Kitchen Helper', rate: 899 },
-  { role: 'All-Rounder Cook', rate: 1199 },
-  { role: 'Tandoor / Chinese Chef', rate: 2499 },
-  { role: 'Head Chef', rate: 3499 }
+const expOptionsList = [
+  'Fresher',
+  '6 months – 1 year',
+  '1 – 2 years',
+  '2 – 3 years',
+  '3 – 5 years',
+  '5+ years',
+  'Custom'
+];
+
+const joiningTypeOptions = [
+  'Immediate',
+  'Within 3 Days',
+  'Within 1 Week',
+  'Within 15 Days',
+  'Within 1 Month',
+  'Custom'
+];
+
+const leaveOptionsList = [
+  '1 day/month',
+  '2 days/month',
+  '3 days/month',
+  '4 days/month',
+  '5 days/month',
+  '6 days/month',
+  '7 days/month',
+  '8 days/month'
+];
+
+const cookPreferences = [
+  'Basic Cook ( Home style Food- Less Experience @14k-18k/Month)',
+  'Standard Cook (Multicuisine- Indian, Chinese, South @18k-25k/Month )',
+  'Premium Chef ( Multicuisine Professional >@25k/month)'
+];
+
+const familyMembersList = [
+  '1 – 2 Members',
+  '3 – 4 Members',
+  '5 – 6 Members',
+  '7 – 8 Members',
+  '8+ Members'
+];
+
+const dailyServiceCategories = [
+  'Kitchen Staff',
+  'Service Staff',
+  'Housekeeping Staff',
+  'Management Staff',
+  'Utility Staff'
+];
+
+const dailyRolesList = [
+  { role: 'Chef / Main Cook', rate: 1499, category: 'Kitchen Staff', desc: 'Experienced commercial/party chef' },
+  { role: 'Home Cook', rate: 1199, category: 'Kitchen Staff', desc: 'Domestic / daily meal cook' },
+  { role: 'Kitchen Helper', rate: 699, category: 'Kitchen Staff', desc: 'Vegetable cutting & kitchen support' },
+  { role: 'Waiter / Steward', rate: 899, category: 'Service Staff', desc: 'Food serving & guest hospitality' },
+  { role: 'Cleaner / Housekeeping', rate: 599, category: 'Housekeeping Staff', desc: 'Kitchen and dining cleaning' },
+  { role: 'Kitchen Manager / Supervisor', rate: 1699, category: 'Management Staff', desc: 'Kitchen & banquet event manager' },
+  { role: 'Bartender / Beverage Staff', rate: 1299, category: 'Service Staff', desc: 'Bar & mocktail/cocktail service' }
 ];
 
 const occasionTypes = [
-  'House Party',
   'Birthday Party',
-  'Anniversary Celebration',
-  'Wedding / Reception',
+  'Anniversary',
+  'Wedding',
   'Engagement',
-  'Cocktail Party',
-  'Corporate Gathering',
-  'Kitty Party',
-  'Festive Gathering',
+  'Corporate Event',
+  'House Party',
+  'Festival',
   'Other'
 ];
 
-const cuisineOptions = [
-  'North Indian',
-  'South Indian',
-  'Chinese',
-  'Continental',
-  'Italian',
-  'Mughlai',
-  'Starters & Tandoor',
-  'Desserts & Sweets',
-  'Street Food / Chaat',
-  'Healthy & Diet'
+const DEFAULT_PARTY_CATEGORIES = [
+  'Main Course',
+  'Starter',
+  'Snacks',
+  'Bread',
+  'Rice',
+  'Dessert',
+  'Drinks',
+  'Breakfast',
+  'Sides'
 ];
 
 const DEFAULT_MENU_CATALOG = [
-  // North Indian
+  // Starter
+  { name: 'Paneer Tikka', cuisine: 'North Indian', category: 'Starter', isNonVeg: false },
+  { name: 'Chicken Tikka', cuisine: 'North Indian', category: 'Starter', isNonVeg: true },
+  { name: 'Veg Spring Rolls', cuisine: 'Chinese', category: 'Starter', isNonVeg: false },
+  { name: 'Chilli Chicken', cuisine: 'Chinese', category: 'Starter', isNonVeg: true },
+  { name: 'Dahi Ke Kabab', cuisine: 'North Indian', category: 'Starter', isNonVeg: false },
+  { name: 'Veg Seekh Kabab', cuisine: 'North Indian', category: 'Starter', isNonVeg: false },
+
+  // Main Course
   { name: 'Paneer Butter Masala', cuisine: 'North Indian', category: 'Main Course', isNonVeg: false },
+  { name: 'Butter Chicken', cuisine: 'North Indian', category: 'Main Course', isNonVeg: true },
   { name: 'Dal Makhani', cuisine: 'North Indian', category: 'Main Course', isNonVeg: false },
   { name: 'Shahi Paneer', cuisine: 'North Indian', category: 'Main Course', isNonVeg: false },
-  { name: 'Kadhai Paneer', cuisine: 'North Indian', category: 'Main Course', isNonVeg: false },
-  { name: 'Mix Veg Curry', cuisine: 'North Indian', category: 'Main Course', isNonVeg: false },
-  { name: 'Butter Naan', cuisine: 'North Indian', category: 'Breads', isNonVeg: false },
-  { name: 'Tandoori Roti', cuisine: 'North Indian', category: 'Breads', isNonVeg: false },
-  { name: 'Jeera Rice', cuisine: 'North Indian', category: 'Rice', isNonVeg: false },
-  { name: 'Veg Pulao', cuisine: 'North Indian', category: 'Rice', isNonVeg: false },
-  { name: 'Gulab Jamun', cuisine: 'North Indian', category: 'Desserts', isNonVeg: false },
-  { name: 'Chicken Tikka Masala', cuisine: 'North Indian', category: 'Main Course', isNonVeg: true },
-  { name: 'Butter Chicken', cuisine: 'North Indian', category: 'Main Course', isNonVeg: true },
-
-  // Chinese
-  { name: 'Veg Hakka Noodles', cuisine: 'Chinese', category: 'Main Course', isNonVeg: false },
-  { name: 'Veg Manchurian Gravy', cuisine: 'Chinese', category: 'Main Course', isNonVeg: false },
-  { name: 'Chilli Paneer Dry', cuisine: 'Chinese', category: 'Starters', isNonVeg: false },
-  { name: 'Veg Fried Rice', cuisine: 'Chinese', category: 'Rice', isNonVeg: false },
-  { name: 'Spring Rolls', cuisine: 'Chinese', category: 'Starters', isNonVeg: false },
-  { name: 'Honey Chilli Potato', cuisine: 'Chinese', category: 'Starters', isNonVeg: false },
-  { name: 'Chilli Chicken', cuisine: 'Chinese', category: 'Starters', isNonVeg: true },
-
-  // South Indian
+  { name: 'Hakka Noodles', cuisine: 'Chinese', category: 'Main Course', isNonVeg: false },
+  { name: 'Chicken Fried Rice', cuisine: 'Chinese', category: 'Main Course', isNonVeg: true },
   { name: 'Masala Dosa', cuisine: 'South Indian', category: 'Main Course', isNonVeg: false },
-  { name: 'Idli Sambar', cuisine: 'South Indian', category: 'Main Course', isNonVeg: false },
-  { name: 'Medu Vada', cuisine: 'South Indian', category: 'Starters', isNonVeg: false },
-  { name: 'Uttapam', cuisine: 'South Indian', category: 'Main Course', isNonVeg: false },
-  { name: 'Curd Rice', cuisine: 'South Indian', category: 'Rice', isNonVeg: false },
-  { name: 'Lemon Rice', cuisine: 'South Indian', category: 'Rice', isNonVeg: false },
+  { name: 'Veg Manchurian Gravy', cuisine: 'Chinese', category: 'Main Course', isNonVeg: false },
 
-  // Continental & Italian
-  { name: 'Penne Arrabbiata Pasta', cuisine: 'Italian', category: 'Main Course', isNonVeg: false },
-  { name: 'White Sauce Alfredo Pasta', cuisine: 'Italian', category: 'Main Course', isNonVeg: false },
-  { name: 'Garlic Bread with Cheese', cuisine: 'Continental', category: 'Starters', isNonVeg: false },
-  { name: 'Margherita Pizza', cuisine: 'Italian', category: 'Main Course', isNonVeg: false },
-  { name: 'French Fries & Dip', cuisine: 'Continental', category: 'Starters', isNonVeg: false },
-  { name: 'Caesar Salad', cuisine: 'Continental', category: 'Starters', isNonVeg: false },
+  // Bread
+  { name: 'Butter Naan', cuisine: 'North Indian', category: 'Bread', isNonVeg: false },
+  { name: 'Garlic Naan', cuisine: 'North Indian', category: 'Bread', isNonVeg: false },
+  { name: 'Tandoori Roti', cuisine: 'North Indian', category: 'Bread', isNonVeg: false },
+  { name: 'Lachha Paratha', cuisine: 'North Indian', category: 'Bread', isNonVeg: false },
 
-  // Mughlai
-  { name: 'Veg Biryani with Raita', cuisine: 'Mughlai', category: 'Rice', isNonVeg: false },
-  { name: 'Chicken Dum Biryani', cuisine: 'Mughlai', category: 'Rice', isNonVeg: true },
-  { name: 'Mutton Biryani', cuisine: 'Mughlai', category: 'Rice', isNonVeg: true },
-  { name: 'Mughlai Shahi Korma', cuisine: 'Mughlai', category: 'Main Course', isNonVeg: true },
-  { name: 'Shahi Tukda', cuisine: 'Mughlai', category: 'Desserts', isNonVeg: false },
+  // Rice
+  { name: 'Jeera Rice', cuisine: 'North Indian', category: 'Rice', isNonVeg: false },
+  { name: 'Veg Biryani', cuisine: 'North Indian', category: 'Rice', isNonVeg: false },
+  { name: 'Chicken Dum Biryani', cuisine: 'North Indian', category: 'Rice', isNonVeg: true },
 
-  // Starters & Tandoor
-  { name: 'Paneer Tikka', cuisine: 'Starters & Tandoor', category: 'Starters', isNonVeg: false },
-  { name: 'Malai Chaap', cuisine: 'Starters & Tandoor', category: 'Starters', isNonVeg: false },
-  { name: 'Veg Seekh Kabab', cuisine: 'Starters & Tandoor', category: 'Starters', isNonVeg: false },
-  { name: 'Dahi Ke Kabab', cuisine: 'Starters & Tandoor', category: 'Starters', isNonVeg: false },
-  { name: 'Tandoori Chicken', cuisine: 'Starters & Tandoor', category: 'Starters', isNonVeg: true },
+  // Snacks
+  { name: 'Samosa', cuisine: 'North Indian', category: 'Snacks', isNonVeg: false },
+  { name: 'Veg Manchurian', cuisine: 'Chinese', category: 'Snacks', isNonVeg: false },
+  { name: 'French Fries', cuisine: 'Continental', category: 'Snacks', isNonVeg: false },
 
-  // Desserts & Sweets
-  { name: 'Rasgulla', cuisine: 'Desserts & Sweets', category: 'Desserts', isNonVeg: false },
-  { name: 'Moong Dal Halwa', cuisine: 'Desserts & Sweets', category: 'Desserts', isNonVeg: false },
-  { name: 'Gajar Ka Halwa', cuisine: 'Desserts & Sweets', category: 'Desserts', isNonVeg: false },
-  { name: 'Vanilla / Chocolate Ice Cream', cuisine: 'Desserts & Sweets', category: 'Desserts', isNonVeg: false },
+  // Dessert
+  { name: 'Gulab Jamun', cuisine: 'Desserts', category: 'Dessert', isNonVeg: false },
+  { name: 'Rasmalai', cuisine: 'Desserts', category: 'Dessert', isNonVeg: false },
 
-  // Street Food & Chaat
-  { name: 'Pani Puri / Golgappa', cuisine: 'Street Food / Chaat', category: 'Starters', isNonVeg: false },
-  { name: 'Pav Bhaji', cuisine: 'Street Food / Chaat', category: 'Main Course', isNonVeg: false },
-  { name: 'Chole Bhature', cuisine: 'Street Food / Chaat', category: 'Main Course', isNonVeg: false },
-  { name: 'Dahi Papdi Chaat', cuisine: 'Street Food / Chaat', category: 'Starters', isNonVeg: false },
+  // Drinks
+  { name: 'Fresh Lime Soda', cuisine: 'Beverages', category: 'Drinks', isNonVeg: false },
+  { name: 'Mango Lassi', cuisine: 'Beverages', category: 'Drinks', isNonVeg: false },
 
-  // Healthy & Diet
-  { name: 'Quinoa Veggie Salad', cuisine: 'Healthy & Diet', category: 'Starters', isNonVeg: false },
-  { name: 'Sprouts & Paneer Salad', cuisine: 'Healthy & Diet', category: 'Starters', isNonVeg: false },
-  { name: 'Steamed Broccoli & Corn', cuisine: 'Healthy & Diet', category: 'Starters', isNonVeg: false }
+  // Breakfast
+  { name: 'Idli Sambhar', cuisine: 'South Indian', category: 'Breakfast', isNonVeg: false },
+  { name: 'Poha', cuisine: 'North Indian', category: 'Breakfast', isNonVeg: false },
+
+  // Sides
+  { name: 'Boondi Raita', cuisine: 'North Indian', category: 'Sides', isNonVeg: false },
+  { name: 'Green Salad', cuisine: 'Continental', category: 'Sides', isNonVeg: false }
+];
+
+const availableOffers = [
+  { code: 'ZOMO40', discountValue: 40, offerType: 'PERCENTAGE', title: 'Flat 40% OFF' },
+  { code: 'NEW50', discountValue: 50, offerType: 'PERCENTAGE', title: '50% OFF on Hiring' },
+  { code: 'PARTY20', discountValue: 20, offerType: 'PERCENTAGE', title: '20% OFF on Party Chef' }
 ];
 
 const AddJob = () => {
@@ -226,107 +251,141 @@ const AddJob = () => {
   // Service Type: 'hotel' (Commercial), 'home' (Domestic), 'daily' (Daily Basis), 'party' (Chef for Party)
   const [serviceType, setServiceType] = useState('hotel');
 
-  // Commercial Specific
-  const [commercialServiceCategory, setCommercialServiceCategory] = useState('Kitchen Staff');
-  const [commercialStaffList, setCommercialStaffList] = useState([
-    {
-      id: '1',
-      serviceCategory: 'Kitchen Staff',
-      staffCategory: 'Head Chef/ Master Chef',
-      salaryRange: '₹20,000 - ₹25,000',
-      noOfStaff: 1
-    }
-  ]);
+  // ==========================================
+  // 1. COMMERCIAL STATE
+  // ==========================================
+  const [cCategory, setCCategory] = useState('Chef / Kitchen Staff');
+  const [cTitle, setCTitle] = useState('Head Chef/ Master Chef');
+  const [cOpenings, setCOpenings] = useState('1');
+  const [cSalary, setCSalary] = useState('₹15,000 – ₹25,000/month');
+  const [cSalaryCustom, setCSalaryCustom] = useState(false);
+  const [cSalaryCustomVal, setCSalaryCustomVal] = useState('');
+  const [cExp, setCExp] = useState('Fresher');
+  const [cExpCustom, setCExpCustom] = useState(false);
+  const [cExpCustomVal, setCExpCustomVal] = useState('');
+  const [cJoining, setCJoining] = useState('Immediate');
+  const [cJoiningCustomVal, setCJoiningCustomVal] = useState('');
+  const [cLeave, setCLeave] = useState('2 days/month');
+  const [cFare, setCFare] = useState('No Reimbursement');
+  const [cFareCustomVal, setCFareCustomVal] = useState('');
+  const [cFacility, setCFacility] = useState('Food & Accommodation');
+  const [cIsUrgent, setCIsUrgent] = useState(false);
 
-  // Domestic Home Cook Specific
-  const [homeCookLevel, setHomeCookLevel] = useState('standard');
-  const [genderPreference, setGenderPreference] = useState('Any');
-  const [selectedCuisines, setSelectedCuisines] = useState(['North Indian']);
+  // ==========================================
+  // 2. DOMESTIC STATE
+  // ==========================================
+  const [dStaffCategory, setDStaffCategory] = useState('Home Cook');
+  const [dCookPreference, setDCookPreference] = useState(cookPreferences[0]);
+  const [dFamilyMembers, setDFamilyMembers] = useState('1 – 2 Members');
+  const [dGenderPreference, setDGenderPreference] = useState('Anyone');
+  const [dFoodPreference, setDFoodPreference] = useState('Pure Veg');
+  const [dServiceDuration, setDServiceDuration] = useState('10 Hours – ( Morning to Evening)');
+  const [dSalary, setDSalary] = useState('₹5,000 – ₹8,000/month');
+  const [dSalaryCustom, setDSalaryCustom] = useState(false);
+  const [dSalaryCustomVal, setDSalaryCustomVal] = useState('');
+  const [dExp, setDExp] = useState('Fresher');
+  const [dExpCustomVal, setDExpCustomVal] = useState('');
+  const [dJoining, setDJoining] = useState('Immediate');
+  const [dJoiningCustomVal, setDJoiningCustomVal] = useState('');
+  const [dLeave, setDLeave] = useState('2 days/month');
+  const [dFare, setDFare] = useState('No Reimbursement');
+  const [dFareCustomVal, setDFareCustomVal] = useState('');
 
-  // Daily Basis Staff Specific
-  const [dailyHiringPurpose, setDailyHiringPurpose] = useState('commercial'); // 'commercial' | 'domestic'
+  // ==========================================
+  // 3. DAILY STAFF STATE
+  // ==========================================
+  const [dailyHiringPurpose, setDailyHiringPurpose] = useState('commercial');
   const [dailyStaffList, setDailyStaffList] = useState([
     {
       id: '1',
-      role: 'Head Chef',
+      serviceCategory: 'Kitchen Staff',
+      role: 'Chef / Main Cook',
+      ratePerDay: 1499,
+      genderPref: 'Any Gender',
       count: 1,
-      ratePerDay: 3499,
-      genderPref: 'Any',
+      days: 1,
       startDate: new Date().toISOString().split('T')[0],
-      startTime: '16:00',
-      endTime: '23:00',
-      days: 1
+      startTime: '10:00 AM',
+      endTime: '08:00 PM'
     }
   ]);
-  const [dailyEventDays, setDailyEventDays] = useState([]);
+  const [dailyCouponInput, setDailyCouponInput] = useState('');
+  const [dailyAppliedCoupon, setDailyAppliedCoupon] = useState(null);
+  const [dailyCouponDiscount, setDailyCouponDiscount] = useState(0);
 
-  // Party Specific Meals & Days
-  const [partyMeals, setPartyMeals] = useState([
+  // ==========================================
+  // 4. PARTY CHEF STATE (Multi-Day & Multi-Meal)
+  // ==========================================
+  const [partyDatesList, setPartyDatesList] = useState([
     {
       id: '1',
-      mealType: 'Dinner',
-      guests: 15,
-      menu: ''
+      occasion: 'Birthday Party',
+      date: new Date(Date.now() + 86400000).toISOString().split('T')[0],
+      meals: [
+        {
+          id: '1',
+          mealType: 'Dinner',
+          guests: 30,
+          servingTime: '08:00 PM',
+          foodPreference: 'Vegetarian',
+          foodPrefFilter: 'All',
+          menuChoice: 'now',
+          selectedCuisines: ['North Indian'],
+          selectedMenu: ['Paneer Butter Masala', 'Dal Makhani', 'Samosa'],
+          categoryDishCounts: {
+            'Starter': 2,
+            'Main Course': 3,
+            'Bread': 2,
+            'Rice': 1,
+            'Dessert': 1,
+            'Snacks': 0,
+            'Drinks': 0,
+            'Breakfast': 0,
+            'Sides': 0
+          },
+          notes: ''
+        }
+      ]
     }
   ]);
-  const [partyEventDays, setPartyEventDays] = useState([]);
 
-  // Menu Catalog State & Modal
+  // Party Add-ons
+  const [partyBurnerStove, setPartyBurnerStove] = useState(false);
+  const [partyCrockery, setPartyCrockery] = useState(false);
+  const [partyWaiterStaff, setPartyWaiterStaff] = useState(false);
+  const [partyWaiterCount, setPartyWaiterCount] = useState(1);
+  const [partyKitchenCleaner, setPartyKitchenCleaner] = useState(false);
+
+  // Party Promo Code / Coupon
+  const [partyCouponInput, setPartyCouponInput] = useState('');
+  const [partyAppliedCoupon, setPartyAppliedCoupon] = useState(null);
+  const [partyCouponDiscountValue, setPartyCouponDiscountValue] = useState(0);
+
+  // Category Accordion Expanded map for Party Dish list
+  const [expandedCategories, setExpandedCategories] = useState({ 'Main Course': true });
+  const [dishSearchQuery, setDishSearchQuery] = useState('');
+
+  // Event Summary Modal
+  const { isOpen: isOpenSummaryModal, onOpen: onOpenSummaryModal, onClose: onCloseSummaryModal } = useDisclosure();
+
+  // Menu Catalog State
   const [menuCatalogItems, setMenuCatalogItems] = useState(DEFAULT_MENU_CATALOG);
-  const { isOpen: isOpenMenuModal, onOpen: onOpenMenuModal, onClose: onCloseMenuModal } = useDisclosure();
-  const [menuModalTarget, setMenuModalTarget] = useState('general'); // 'general' or mealId
-  const [menuModalSearch, setMenuModalSearch] = useState('');
-  const [menuModalCategory, setMenuModalCategory] = useState('All');
 
-  // Main Form Data
+  // Common Form Data
   const [formData, setFormData] = useState({
     title: '',
     outletName: '',
     propertyCategory: 'Restaurant',
-    jobPosition: 'Head Chef/ Master Chef',
-    jobType: 'Full Time (10-12 hrs)',
-    packageOrGuestOrVacancy: '1',
-    salaryRange: '₹12,000 - ₹15,000',
-    experienceRange: '2-5 Years',
-    allowedLeave: '2 days/month',
-    joiningType: 'Immediate',
-    basicFacility: 'Food & Accommodation',
-    otherFacilities: '',
     state: 'Uttar Pradesh',
     city: 'Lucknow',
     address: '',
     venueAddress: '',
-    
-    // Domestic specific
-    foodPreference: 'Vegetarian (Veg Only)',
-    cookingCategory: 'North Indian',
-    serviceDuration: '10 Hours',
-    familyMembers: '3-4 Members',
-    startDate: '',
-    
-    // Daily & Party specific
-    event: 'House Party',
-    dateOfEvent: '',
-    servingTime: 'Dinner',
-    mealPreference: 'Dinner',
-    noOfGuests: '15',
-    vegGuests: '10',
-    nonVegGuests: '5',
-    ratePerDay: '1500',
-    menuDetails: '',
-    
-    // Admin & General
-    overview: '',
-    responsibilities: '',
-    requirements: '',
-    benefits: '',
     status: 'New',
-    leadManager: ''
+    leadManager: '',
+    notes: ''
   });
 
   const [jobImage, setJobImage] = useState(null);
-
-  // Available cities based on selected state
   const currentDistricts = INDIA_STATES_AND_DISTRICTS[formData.state] || [];
 
   useEffect(() => {
@@ -374,45 +433,77 @@ const AddJob = () => {
     initFetch();
   }, []);
 
-  // Menu helper functions
-  const handleToggleDish = (dishName, target = 'general') => {
-    if (target === 'general') {
-      const existing = formData.menuDetails ? formData.menuDetails.split(',').map(s => s.trim()).filter(Boolean) : [];
-      let updated;
-      if (existing.includes(dishName)) {
-        updated = existing.filter(d => d !== dishName);
-      } else {
-        updated = [...existing, dishName];
-      }
-      const newStr = updated.join(', ');
-      setFormData(prev => ({ ...prev, menuDetails: newStr }));
-      if (partyMeals.length > 0 && !partyMeals[0].menu) {
-        setPartyMeals(prev => prev.map((m, idx) => idx === 0 ? { ...m, menu: newStr } : m));
-      }
-    } else {
-      setPartyMeals(prev => prev.map(m => {
-        if (m.id === target) {
-          const existing = m.menu ? m.menu.split(',').map(s => s.trim()).filter(Boolean) : [];
-          let updated;
-          if (existing.includes(dishName)) {
-            updated = existing.filter(d => d !== dishName);
-          } else {
-            updated = [...existing, dishName];
-          }
-          return { ...m, menu: updated.join(', ') };
-        }
-        return m;
-      }));
+  // Live Calculations for Daily Staff
+  const calculateDailyTotals = () => {
+    const staffCost = dailyStaffList.reduce((sum, s) => sum + (s.ratePerDay * s.count * s.days), 0);
+    let discount = 0;
+    if (dailyAppliedCoupon && dailyCouponDiscount > 0) {
+      discount = Math.round(staffCost * (dailyCouponDiscount / 100));
     }
+    const taxable = Math.max(0, staffCost - discount);
+    const gst = Math.round(taxable * 0.18);
+    const total = taxable + gst;
+    const advance = Math.round(total * 0.25);
+    return { staffCost, discount, taxable, gst, total, advance };
   };
 
-  const handleOpenMenuSelector = (target = 'general') => {
-    setMenuModalTarget(target);
-    setMenuModalSearch('');
-    setMenuModalCategory('All');
-    onOpenMenuModal();
+  const dailyTotals = calculateDailyTotals();
+
+  // Live Calculations for Party Chef
+  const calculatePartyTotals = () => {
+    let totalGuests = 0;
+    let totalDishes = 0;
+    for (const d of partyDatesList) {
+      for (const m of d.meals) {
+        totalGuests += parseInt(m.guests, 10) || 0;
+        if (m.menuChoice === 'now') {
+          totalDishes += m.selectedMenu.length;
+        } else {
+          totalDishes += Object.values(m.categoryDishCounts || {}).reduce((a, b) => a + (parseInt(b, 10) || 0), 0);
+        }
+      }
+    }
+    if (totalGuests === 0) totalGuests = 30;
+
+    const baseChefRate = 1999.0 * (partyDatesList.length || 1);
+    const guestRateTotal = totalGuests * 55.0;
+    const menuItemsTotal = totalDishes * 150.0;
+
+    let addOnsTotal = 0;
+    if (partyBurnerStove) addOnsTotal += 350;
+    if (partyCrockery) addOnsTotal += 500;
+    if (partyKitchenCleaner) addOnsTotal += 400;
+    if (partyWaiterStaff) addOnsTotal += (partyWaiterCount * 600);
+
+    const grossSubtotal = baseChefRate + guestRateTotal + menuItemsTotal + addOnsTotal;
+    let discountAmount = 0;
+    if (partyAppliedCoupon && partyCouponDiscountValue > 0) {
+      discountAmount = Math.round(grossSubtotal * (partyCouponDiscountValue / 100));
+    }
+    const taxable = Math.max(0, grossSubtotal - discountAmount);
+    const gst = Math.round(taxable * 0.18);
+    const finalAmount = taxable + gst;
+    const advanceAmount = Math.round(finalAmount * 0.25);
+
+    return {
+      totalGuests,
+      totalDishes,
+      baseChefRate,
+      guestRateTotal,
+      menuItemsTotal,
+      addOnsTotal,
+      grossSubtotal,
+      discountAmount,
+      taxable,
+      gst,
+      finalAmount,
+      advanceAmount
+    };
   };
 
+  const partyTotals = calculatePartyTotals();
+
+  // Customer handler
   const handleCustomerSelect = (customerId) => {
     if (!customerId) {
       setSelectedCustomer(null);
@@ -481,163 +572,163 @@ const AddJob = () => {
     }
   };
 
-  // Helper for Commercial Staff List
-  const handleAddCommercialStaff = () => {
-    const newStaff = {
-      id: Date.now().toString(),
-      serviceCategory: commercialServiceCategory,
-      staffCategory: (commercialStaffCategoriesMap[commercialServiceCategory] || [])[0] || 'Staff Role',
-      salaryRange: '₹15,000 - ₹20,000',
-      noOfStaff: 1
-    };
-    setCommercialStaffList([...commercialStaffList, newStaff]);
+  // Party Date / Meal state mutators
+  const handleAddPartyDay = () => {
+    const nextDate = new Date(Date.now() + (partyDatesList.length + 1) * 86400000).toISOString().split('T')[0];
+    setPartyDatesList(prev => [
+      ...prev,
+      {
+        id: Date.now().toString(),
+        occasion: 'Birthday Party',
+        date: nextDate,
+        meals: [
+          {
+            id: Date.now().toString() + '_1',
+            mealType: 'Dinner',
+            guests: 30,
+            servingTime: '08:00 PM',
+            foodPreference: 'Vegetarian',
+            foodPrefFilter: 'All',
+            menuChoice: 'now',
+            selectedCuisines: ['North Indian'],
+            selectedMenu: ['Paneer Butter Masala', 'Dal Makhani', 'Samosa'],
+            categoryDishCounts: {
+              'Starter': 2,
+              'Main Course': 3,
+              'Bread': 2,
+              'Rice': 1,
+              'Dessert': 1,
+              'Snacks': 0,
+              'Drinks': 0,
+              'Breakfast': 0,
+              'Sides': 0
+            },
+            notes: ''
+          }
+        ]
+      }
+    ]);
   };
 
-  const handleUpdateCommercialStaff = (id, field, value) => {
-    setCommercialStaffList(prev => prev.map(item => {
-      if (item.id === id) {
-        const updated = { ...item, [field]: value };
-        if (field === 'serviceCategory') {
-          updated.staffCategory = (commercialStaffCategoriesMap[value] || [])[0] || 'Staff Role';
+  const handleRemovePartyDay = (dayId) => {
+    if (partyDatesList.length === 1) {
+      toast({ title: 'At least 1 Event Day is required', status: 'info', duration: 2000 });
+      return;
+    }
+    setPartyDatesList(prev => prev.filter(d => d.id !== dayId));
+  };
+
+  const handleAddMealToDay = (dayId) => {
+    setPartyDatesList(prev => prev.map(d => {
+      if (d.id === dayId) {
+        const newMeal = {
+          id: Date.now().toString(),
+          mealType: d.meals.length === 1 ? 'Lunch' : 'Dinner',
+          guests: d.meals[0]?.guests || 30,
+          servingTime: '01:30 PM',
+          foodPreference: 'Vegetarian',
+          foodPrefFilter: 'All',
+          menuChoice: 'now',
+          selectedCuisines: ['North Indian'],
+          selectedMenu: ['Paneer Tikka', 'Butter Naan'],
+          categoryDishCounts: {
+            'Starter': 1,
+            'Main Course': 2,
+            'Bread': 2,
+            'Rice': 1,
+            'Dessert': 1,
+            'Snacks': 0,
+            'Drinks': 0,
+            'Breakfast': 0,
+            'Sides': 0
+          },
+          notes: ''
+        };
+        return { ...d, meals: [...d.meals, newMeal] };
+      }
+      return d;
+    }));
+  };
+
+  const handleRemoveMealFromDay = (dayId, mealId) => {
+    setPartyDatesList(prev => prev.map(d => {
+      if (d.id === dayId) {
+        if (d.meals.length === 1) {
+          toast({ title: 'At least 1 meal is required per day', status: 'info', duration: 2000 });
+          return d;
         }
-        return updated;
+        return { ...d, meals: d.meals.filter(m => m.id !== mealId) };
       }
-      return item;
+      return d;
     }));
   };
 
-  const handleRemoveCommercialStaff = (id) => {
-    if (commercialStaffList.length === 1) {
-      toast({ title: 'At least one staff requirement is required', status: 'info', duration: 2000 });
-      return;
-    }
-    setCommercialStaffList(prev => prev.filter(item => item.id !== id));
-  };
-
-  // Helper for Daily Staff List
-  const handleAddDailyStaff = (presetRole = 'Waiter', presetRate = 999) => {
-    const newStaff = {
-      id: Date.now().toString(),
-      role: presetRole,
-      count: 1,
-      ratePerDay: presetRate,
-      genderPref: 'Any',
-      startDate: formData.dateOfEvent || new Date().toISOString().split('T')[0],
-      startTime: '16:00',
-      endTime: '23:00',
-      days: 1
-    };
-    setDailyStaffList([...dailyStaffList, newStaff]);
-  };
-
-  const handleUpdateDailyStaff = (id, field, value) => {
-    setDailyStaffList(prev => prev.map(item => {
-      if (item.id === id) {
-        return { ...item, [field]: value };
+  const handleToggleDishForMeal = (dayId, mealId, dishName) => {
+    setPartyDatesList(prev => prev.map(d => {
+      if (d.id === dayId) {
+        const updatedMeals = d.meals.map(m => {
+          if (m.id === mealId) {
+            const exists = m.selectedMenu.includes(dishName);
+            const nextList = exists
+              ? m.selectedMenu.filter(name => name !== dishName)
+              : [...m.selectedMenu, dishName];
+            return { ...m, selectedMenu: nextList };
+          }
+          return m;
+        });
+        return { ...d, meals: updatedMeals };
       }
-      return item;
+      return d;
     }));
   };
 
-  const handleRemoveDailyStaff = (id) => {
-    if (dailyStaffList.length === 1) {
-      toast({ title: 'At least one daily staff is required', status: 'info', duration: 2000 });
-      return;
-    }
-    setDailyStaffList(prev => prev.filter(item => item.id !== id));
-  };
-
-  const toggleCuisine = (cuisine) => {
-    setSelectedCuisines(prev => 
-      prev.includes(cuisine) ? prev.filter(c => c !== cuisine) : [...prev, cuisine]
-    );
-  };
-
-  // Helper for Party Meals List
-  const handleAddPartyMeal = () => {
-    setPartyMeals(prev => [
-      ...prev,
-      {
-        id: Date.now().toString(),
-        mealType: 'Dinner',
-        guests: parseInt(formData.noOfGuests, 10) || 15,
-        menu: ''
+  const handleUpdateDishCategoryCount = (dayId, mealId, category, delta) => {
+    setPartyDatesList(prev => prev.map(d => {
+      if (d.id === dayId) {
+        const updatedMeals = d.meals.map(m => {
+          if (m.id === mealId) {
+            const counts = { ...m.categoryDishCounts };
+            const current = counts[category] || 0;
+            counts[category] = Math.max(0, current + delta);
+            return { ...m, categoryDishCounts: counts };
+          }
+          return m;
+        });
+        return { ...d, meals: updatedMeals };
       }
-    ]);
+      return d;
+    }));
   };
 
-  const handleUpdatePartyMeal = (id, field, value) => {
-    setPartyMeals(prev => prev.map(item => item.id === id ? { ...item, [field]: value } : item));
-  };
-
-  const handleRemovePartyMeal = (id) => {
-    if (partyMeals.length === 1) {
-      toast({ title: 'At least one meal is required', status: 'info', duration: 2000 });
-      return;
+  const applyPartyCouponCode = (code) => {
+    const trimmed = (code || partyCouponInput).trim().toUpperCase();
+    if (!trimmed) return;
+    const match = availableOffers.find(o => o.code === trimmed);
+    if (match) {
+      setPartyAppliedCoupon(trimmed);
+      setPartyCouponDiscountValue(match.discountValue);
+      setPartyCouponInput(trimmed);
+      toast({ title: `Coupon ${trimmed} Applied!`, description: `${match.discountValue}% discount added.`, status: 'success', duration: 2500 });
+    } else {
+      toast({ title: 'Invalid Coupon Code', status: 'error', duration: 2500 });
     }
-    setPartyMeals(prev => prev.filter(item => item.id !== id));
   };
 
-  // Helper for Party Event Days List
-  const handleAddPartyEventDay = () => {
-    setPartyEventDays(prev => [
-      ...prev,
-      {
-        id: Date.now().toString(),
-        date: '',
-        occasionType: formData.event || 'House Party',
-        noOfGuests: parseInt(formData.noOfGuests, 10) || 15,
-        mealType: 'Dinner',
-        menu: ''
-      }
-    ]);
-  };
-
-  const handleUpdatePartyEventDay = (id, field, value) => {
-    setPartyEventDays(prev => prev.map(item => item.id === id ? { ...item, [field]: value } : item));
-  };
-
-  const handleRemovePartyEventDay = (id) => {
-    setPartyEventDays(prev => prev.filter(item => item.id !== id));
-  };
-
-  // Helper for Daily Event Days List
-  const handleAddDailyEventDay = () => {
-    setDailyEventDays(prev => [
-      ...prev,
-      {
-        id: Date.now().toString(),
-        date: '',
-        servingTime: formData.servingTime || 'Morning Shift (8 AM - 4 PM)',
-        notes: ''
-      }
-    ]);
-  };
-
-  const handleUpdateDailyEventDay = (id, field, value) => {
-    setDailyEventDays(prev => prev.map(item => item.id === id ? { ...item, [field]: value } : item));
-  };
-
-  const handleRemoveDailyEventDay = (id) => {
-    setDailyEventDays(prev => prev.filter(item => item.id !== id));
-  };
-
-  // Helper to construct sensible titles
-  const getAutoTitle = () => {
-    if (serviceType === 'hotel') {
-      return `${formData.jobPosition || 'Chef'} for ${formData.outletName || formData.propertyCategory || 'Commercial Outlet'} in ${formData.city}`;
-    } else if (serviceType === 'home') {
-      const levelObj = cookLevels.find(l => l.id === homeCookLevel);
-      return `${levelObj?.name || 'Domestic Cook'} (${formData.foodPreference}) in ${formData.city}`;
-    } else if (serviceType === 'daily') {
-      const primaryRole = dailyStaffList[0]?.role || formData.jobPosition || 'Staff';
-      return `Daily Basis ${primaryRole} for ${formData.event || 'Event'} in ${formData.city}`;
-    } else if (serviceType === 'party') {
-      return `Party Chef for ${formData.event || 'Party'} (${formData.noOfGuests || '15'} Guests) in ${formData.city}`;
+  const applyDailyCouponCode = (code) => {
+    const trimmed = (code || dailyCouponInput).trim().toUpperCase();
+    if (!trimmed) return;
+    const match = availableOffers.find(o => o.code === trimmed);
+    if (match) {
+      setDailyAppliedCoupon(trimmed);
+      setDailyCouponDiscount(match.discountValue);
+      setDailyCouponInput(trimmed);
+      toast({ title: `Coupon ${trimmed} Applied!`, description: `${match.discountValue}% discount added.`, status: 'success', duration: 2500 });
+    } else {
+      toast({ title: 'Invalid Coupon Code', status: 'error', duration: 2500 });
     }
-    return `Chef Requirement in ${formData.city}`;
   };
 
+  // Submit Handler
   const handleSubmit = async (e) => {
     e.preventDefault();
     if (!selectedCustomer) {
@@ -659,7 +750,14 @@ const AddJob = () => {
       payload.set('bookingType', serviceType === 'party' ? 'party' : serviceType === 'daily' ? 'daily' : 'regular');
       payload.set('customer', selectedCustomer._id);
       
-      const computedTitle = formData.title.trim() || getAutoTitle();
+      let computedTitle = formData.title.trim();
+      if (!computedTitle) {
+        if (serviceType === 'hotel') computedTitle = `${cTitle} for ${formData.outletName || 'Commercial Outlet'} in ${formData.city}`;
+        else if (serviceType === 'home') computedTitle = `Domestic ${dStaffCategory} (${dFoodPreference}) for ${dFamilyMembers}`;
+        else if (serviceType === 'daily') computedTitle = `Daily Basis (${dailyStaffList[0]?.role || 'Staff'}) for ${formData.city}`;
+        else if (serviceType === 'party') computedTitle = `Chef for Party (${partyTotals.totalGuests} Guests • ${partyDatesList.length} Days)`;
+      }
+
       payload.set('title', computedTitle);
       payload.set('state', formData.state || 'Uttar Pradesh');
       payload.set('city', formData.city || 'Lucknow');
@@ -673,110 +771,110 @@ const AddJob = () => {
         payload.set('hiringPurpose', 'commercial');
         payload.set('outletName', formData.outletName || '');
         payload.set('propertyCategory', formData.propertyCategory || 'Restaurant');
-        payload.set('jobPosition', formData.jobPosition || 'Head Chef/ Master Chef');
-        payload.set('jobType', formData.jobType || 'Full Time (10-12 hrs)');
-        payload.set('packageOrGuestOrVacancy', formData.packageOrGuestOrVacancy || '1');
-        payload.set('salaryRange', formData.salaryRange || '₹12,000 - ₹15,000');
-        payload.set('experienceRange', formData.experienceRange || '2-5 Years');
-        payload.set('allowedLeave', formData.allowedLeave || '2 days/month');
-        payload.set('joiningType', formData.joiningType || 'Immediate');
-        payload.set('basicFacility', formData.basicFacility || 'Food & Accommodation');
-        payload.set('otherFacilities', formData.otherFacilities || '');
-        payload.set('benefits', formData.benefits || '');
-        payload.set('commercialStaffList', JSON.stringify(commercialStaffList));
+        payload.set('category', cCategory);
+        payload.set('jobPosition', cTitle);
+        payload.set('openings', cOpenings);
+        payload.set('packageOrGuestOrVacancy', cOpenings);
+        payload.set('salaryRange', cSalaryCustom ? cSalaryCustomVal : cSalary);
+        payload.set('salary', cSalaryCustom ? cSalaryCustomVal : cSalary);
+        payload.set('experienceRange', cExpCustom ? cExpCustomVal : cExp);
+        payload.set('experience', cExpCustom ? cExpCustomVal : cExp);
+        payload.set('joiningType', cJoining === 'Custom' ? cJoiningCustomVal : cJoining);
+        payload.set('joiningDate', cJoining === 'Custom' ? cJoiningCustomVal : cJoining);
+        payload.set('allowedLeave', cLeave);
+        payload.set('leavePerMonth', cLeave);
+        payload.set('travelCharges', cFare === 'Custom' ? cFareCustomVal : cFare);
+        payload.set('basicFacility', cFacility);
+        payload.set('isUrgent', cIsUrgent.toString());
       } else if (serviceType === 'home') {
-        const levelObj = cookLevels.find(l => l.id === homeCookLevel);
         payload.set('hiringPurpose', 'domestic');
-        payload.set('homeCookLevel', homeCookLevel);
-        payload.set('genderPreference', genderPreference);
-        payload.set('jobPosition', levelObj?.name || 'Domestic Home Cook');
-        payload.set('jobType', formData.serviceDuration || '10 Hours');
-        payload.set('serviceDuration', formData.serviceDuration || '10 Hours');
-        payload.set('foodPreference', formData.foodPreference || 'Vegetarian');
-        payload.set('cookingCategory', selectedCuisines.join(', ') || formData.cookingCategory || 'North Indian');
-        payload.set('familyMembers', formData.familyMembers || '3-4 Members');
-        payload.set('packageOrGuestOrVacancy', formData.familyMembers || '3-4 Members');
-        payload.set('noOfGuests', formData.familyMembers || '3-4 Members');
-        payload.set('salaryRange', levelObj?.salary || formData.salaryRange || '₹20,000 – ₹25,000/month');
-        payload.set('allowedLeave', formData.allowedLeave || '2 days/month');
-        payload.set('joiningType', formData.joiningType || 'Immediate');
-        payload.set('basicFacility', formData.basicFacility || 'Food Provided');
-        payload.set('startDate', formData.startDate || '');
+        payload.set('category', 'domestic');
+        payload.set('jobPosition', dStaffCategory);
+        payload.set('homeCookLevel', dCookPreference);
+        payload.set('familyMembers', dFamilyMembers);
+        payload.set('genderPreference', dGenderPreference);
+        payload.set('foodPreference', dFoodPreference);
+        payload.set('serviceDuration', dServiceDuration);
+        payload.set('salaryRange', dSalaryCustom ? dSalaryCustomVal : dSalary);
+        payload.set('salary', dSalaryCustom ? dSalaryCustomVal : dSalary);
+        payload.set('experienceRange', dExp === 'Custom' ? dExpCustomVal : dExp);
+        payload.set('experience', dExp === 'Custom' ? dExpCustomVal : dExp);
+        payload.set('joiningType', dJoining === 'Custom' ? dJoiningCustomVal : dJoining);
+        payload.set('joiningDate', dJoining === 'Custom' ? dJoiningCustomVal : dJoining);
+        payload.set('allowedLeave', dLeave);
+        payload.set('leavePerMonth', dLeave);
+        payload.set('travelCharges', dFare === 'Custom' ? dFareCustomVal : dFare);
       } else if (serviceType === 'daily') {
         payload.set('dailyHiringPurpose', dailyHiringPurpose);
-        payload.set('event', formData.event || 'House Party');
-        payload.set('jobPosition', dailyStaffList[0]?.role || formData.jobPosition || 'Head Chef');
-        
+        payload.set('category', 'daily');
+        payload.set('jobPosition', dailyStaffList[0]?.role || 'Chef / Main Cook');
         const totalCount = dailyStaffList.reduce((acc, s) => acc + (parseInt(s.count, 10) || 1), 0);
         payload.set('packageOrGuestOrVacancy', totalCount.toString());
-        payload.set('package', `₹${dailyStaffList[0]?.ratePerDay || 1500}/day`);
-        payload.set('dateOfEvent', formData.dateOfEvent || new Date().toISOString());
-        payload.set('servingTime', formData.servingTime || 'Dinner');
-        payload.set('mealPreference', formData.mealPreference || 'Dinner');
-        payload.set('foodPreference', formData.foodPreference || 'Both');
-        payload.set('menuDetails', formData.menuDetails || '');
-
-        const staffArr = dailyStaffList.map(s => ({
-          role: s.role,
-          count: parseInt(s.count, 10) || 1,
-          ratePerDay: parseInt(s.ratePerDay, 10) || 1500,
-          genderPref: s.genderPref || 'Any',
-          days: parseInt(s.days, 10) || 1,
-          startDate: formData.dateOfEvent || s.startDate || new Date().toISOString().split('T')[0],
-          startTime: s.startTime || '16:00',
-          endTime: s.endTime || '23:00'
+        payload.set('staffRequirements', JSON.stringify(dailyStaffList));
+        payload.set('appliedCoupon', dailyAppliedCoupon || '');
+        payload.set('pricing', JSON.stringify({
+          staffCost: dailyTotals.staffCost,
+          discount: dailyTotals.discount,
+          taxable: dailyTotals.taxable,
+          gst: dailyTotals.gst,
+          totalAmount: dailyTotals.total,
+          advancePayable: dailyTotals.advance
         }));
-        payload.set('staffRequirements', JSON.stringify(staffArr));
-
-        if (dailyEventDays.length > 0) {
-          payload.set('eventDays', JSON.stringify(dailyEventDays));
-        }
       } else if (serviceType === 'party') {
-        payload.set('event', formData.event || 'House Party');
+        payload.set('category', 'party');
+        payload.set('event', partyDatesList[0]?.occasion || 'Birthday Party');
         payload.set('jobPosition', 'Party Chef');
-        payload.set('noOfGuests', formData.noOfGuests || '15');
-        if (formData.venueAddress) payload.set('venueAddress', formData.venueAddress);
-        payload.set('foodPreference', formData.foodPreference || 'Both');
-        payload.set('servingTime', formData.servingTime || 'Dinner');
-        payload.set('dateOfEvent', formData.dateOfEvent || new Date().toISOString());
-        payload.set('cookingCategory', selectedCuisines.join(', '));
-        payload.set('menuDetails', formData.menuDetails || '');
+        payload.set('noOfGuests', partyTotals.totalGuests.toString());
+        payload.set('dateOfEvent', partyDatesList[0]?.date || new Date().toISOString());
 
         const partyReq = {
           city: formData.city,
           venueAddress: formData.venueAddress || formData.address || '',
-          datesCount: 1 + partyEventDays.length,
-          vegGuests: parseInt(formData.vegGuests, 10) || 10,
-          nonVegGuests: parseInt(formData.nonVegGuests, 10) || 5,
-          selectedCuisines: selectedCuisines,
-          menuDetails: formData.menuDetails,
-          meals: partyMeals,
-          dates: [
-            {
-              date: formData.dateOfEvent || new Date().toISOString().split('T')[0],
-              eventType: formData.event || 'House Party',
-              noOfGuests: parseInt(formData.noOfGuests, 10) || 15,
-              meals: partyMeals
-            },
-            ...partyEventDays.map(d => ({
-              date: d.date,
-              eventType: d.occasionType || formData.event || 'House Party',
-              noOfGuests: parseInt(d.noOfGuests, 10) || 15,
-              meals: [{ mealType: d.mealType || 'Dinner', menu: d.menu || '' }]
+          datesCount: partyDatesList.length,
+          totalGuests: partyTotals.totalGuests,
+          totalDishes: partyTotals.totalDishes,
+          addOns: {
+            burnerStove: partyBurnerStove,
+            crockery: partyCrockery,
+            kitchenCleaner: partyKitchenCleaner,
+            waiterStaff: partyWaiterStaff,
+            waiterCount: partyWaiterCount
+          },
+          appliedCoupon: partyAppliedCoupon,
+          eventDates: partyDatesList.map(d => ({
+            occasion: d.occasion,
+            date: d.date,
+            meals: d.meals.map(m => ({
+              mealType: m.mealType,
+              guests: m.guests,
+              servingTime: m.servingTime,
+              foodPreference: m.foodPreference,
+              menuChoice: m.menuChoice,
+              selectedCuisines: m.selectedCuisines,
+              selectedMenu: m.menuChoice === 'now' ? m.selectedMenu : [],
+              categoryDishCounts: m.menuChoice === 'later' ? m.categoryDishCounts : {},
+              notes: m.notes
             }))
-          ]
+          })),
+          billingSummary: {
+            baseChefFee: partyTotals.baseChefRate,
+            guestCharges: partyTotals.guestRateTotal,
+            menuItemsCharges: partyTotals.menuItemsTotal,
+            addOnsTotal: partyTotals.addOnsTotal,
+            discount: partyTotals.discountAmount,
+            gst: partyTotals.gst,
+            totalAmount: partyTotals.finalAmount,
+            advancePayable: partyTotals.advanceAmount
+          }
         };
-        payload.set('partyRequirement', JSON.stringify(partyReq));
 
-        if (partyEventDays.length > 0) {
-          payload.set('eventDays', JSON.stringify(partyEventDays));
-        }
+        payload.set('partyRequirement', JSON.stringify(partyReq));
+        payload.set('pricing', JSON.stringify(partyReq.billingSummary));
       }
 
-      // Auto descriptions
-      payload.set('overview', formData.overview.trim() || `Requirement for ${computedTitle}. Client: ${selectedCustomer.name}.`);
-      payload.set('responsibilities', formData.responsibilities.trim() || `Handle cooking, meal preparation, hygiene and kitchen operations.`);
-      payload.set('requirements', formData.requirements.trim() || `Experienced cook, punctual, professional and hygienic.`);
+      payload.set('overview', `Requirement for ${computedTitle}. Customer: ${selectedCustomer.name}.`);
+      payload.set('responsibilities', `Handle kitchen preparation, hygiene, delicious food service and operations.`);
+      payload.set('requirements', `Experienced staff/chef with high hygiene standards and punctuality.`);
 
       if (jobImage) payload.append('image', jobImage);
 
@@ -789,7 +887,7 @@ const AddJob = () => {
 
       if (response.data.success) {
         toast({
-          title: 'Job Record Created!',
+          title: 'Job Record Created Successfully!',
           description: `Job Code: ${response.data.job?.jobCode || 'Success'} has been posted.`,
           status: 'success',
           duration: 3000,
@@ -811,38 +909,10 @@ const AddJob = () => {
   };
 
   const serviceOptions = [
-    {
-      id: 'hotel',
-      title: 'Commercial Hiring',
-      desc: 'Hotel, Restaurant, Cafe, etc.',
-      icon: Building2,
-      color: '#2563EB',
-      bg: '#EFF6FF'
-    },
-    {
-      id: 'home',
-      title: 'Domestic Home Cook',
-      desc: 'Full-time 10/24 hr, Part-time',
-      icon: Home,
-      color: '#E11D48',
-      bg: '#FFF1F2'
-    },
-    {
-      id: 'daily',
-      title: 'Daily Basis Staff',
-      desc: 'Daily / Short Term (ODC)',
-      icon: Calendar,
-      color: '#059669',
-      bg: '#ECFDF5'
-    },
-    {
-      id: 'party',
-      title: 'Chef for Party',
-      desc: 'Events & Special Occasion',
-      icon: UtensilsCrossed,
-      color: '#D97706',
-      bg: '#FFFBEB'
-    }
+    { id: 'hotel', title: 'Commercial Hiring', desc: 'Hotel, Restaurant, Cafe, etc.', icon: Building2, color: '#2563EB', bg: '#EFF6FF' },
+    { id: 'home', title: 'Domestic Home Cook', desc: 'Full-time 10/24 hr, Live-in Cook', icon: Home, color: '#E11D48', bg: '#FFF1F2' },
+    { id: 'daily', title: 'Daily Basis Staff', desc: 'Daily / Short Term (ODC)', icon: Calendar, color: '#059669', bg: '#ECFDF5' },
+    { id: 'party', title: 'Chef for Party', desc: 'Events & Special Occasion', icon: UtensilsCrossed, color: '#7C3AED', bg: '#F5F3FF' }
   ];
 
   return (
@@ -1027,19 +1097,19 @@ const AddJob = () => {
                     textAlign="left"
                     p="4"
                     borderRadius="xl"
-                    border={isSelected ? `2px solid #1e293b` : '1.5px solid #e2e8f0'}
-                    bg={isSelected ? '#f8faff' : 'white'}
-                    boxShadow={isSelected ? `0 4px 14px rgba(0,0,0,0.06)` : 'none'}
+                    border={isSelected ? `2.5px solid ${opt.color}` : '1.5px solid #e2e8f0'}
+                    bg={isSelected ? opt.bg : 'white'}
+                    boxShadow={isSelected ? `0 6px 18px ${opt.color}20` : 'none'}
                     transition="all 0.2s"
-                    _hover={{ borderColor: '#1e293b', transform: 'translateY(-2px)' }}
+                    _hover={{ transform: 'translateY(-2px)' }}
                     position="relative"
                   >
                     <Flex justify="space-between" align="flex-start" mb="3">
-                      <Flex w="38px" h="38px" borderRadius="lg" bg={opt.bg} align="center" justify="center" color={opt.color}>
+                      <Flex w="38px" h="38px" borderRadius="lg" bg={isSelected ? 'white' : opt.bg} align="center" justify="center" color={opt.color}>
                         <OptIcon size={20} />
                       </Flex>
                       {isSelected ? (
-                        <CheckCircle2 size={20} color="#1e293b" />
+                        <CheckCircle2 size={20} color={opt.color} />
                       ) : (
                         <Box w="18px" h="18px" borderRadius="full" border="2px solid #cbd5e1" />
                       )}
@@ -1072,11 +1142,9 @@ const AddJob = () => {
               </Box>
             </HStack>
 
-            {/* === 1. COMMERCIAL FORM (MATCHING USER SCREENSHOT EXACTLY) === */}
+            {/* === 1. COMMERCIAL FORM (MATCHING APP 100%) === */}
             {serviceType === 'hotel' && (
               <VStack spacing="5" align="stretch">
-                
-                {/* Row 1 */}
                 <SimpleGrid columns={{ base: 1, md: 3 }} spacing="4">
                   <FormControl isRequired>
                     <FormLabel {...formLabelStyle}>OUTLET / BUSINESS NAME *</FormLabel>
@@ -1084,75 +1152,52 @@ const AddJob = () => {
                       name="outletName"
                       value={formData.outletName}
                       onChange={handleChange}
-                      placeholder="e.g. Royal Cafe / Grand Hotel"
+                      placeholder="e.g. Royal Spice Restaurant"
                       {...inputStyle}
                       h="42px"
                     />
                   </FormControl>
 
                   <FormControl isRequired>
-                    <FormLabel {...formLabelStyle}>PROPERTY CATEGORY *</FormLabel>
+                    <FormLabel {...formLabelStyle}>STAFF CATEGORY *</FormLabel>
                     <Select
-                      name="propertyCategory"
-                      value={formData.propertyCategory}
-                      onChange={handleChange}
+                      value={cCategory}
+                      onChange={(e) => {
+                        setCCategory(e.target.value);
+                        const roles = commercialStaffCategoriesMap[e.target.value] || [];
+                        setCTitle(roles[0] || 'Head Chef/ Master Chef');
+                      }}
                       {...selectStyle}
                       h="42px"
                     >
-                      {['Restaurant', 'Hotel', 'Cafe', 'Resort', 'Cloud Kitchen', 'Bar / Pub', 'Banquet Hall', 'Food Truck', 'Catering Outlet', 'Canteen'].map(p => (
-                        <option key={p} value={p}>{p}</option>
+                      {commercialServiceCategories.map(cat => (
+                        <option key={cat} value={cat}>{cat}</option>
                       ))}
                     </Select>
                   </FormControl>
 
                   <FormControl isRequired>
-                    <FormLabel {...formLabelStyle}>JOB POSITION / ROLE *</FormLabel>
+                    <FormLabel {...formLabelStyle}>JOB TITLE / POSITION *</FormLabel>
                     <Select
-                      name="jobPosition"
-                      value={formData.jobPosition}
-                      onChange={handleChange}
+                      value={cTitle}
+                      onChange={(e) => setCTitle(e.target.value)}
                       {...selectStyle}
                       h="42px"
                     >
-                      {[
-                        'Head Chef/ Master Chef',
-                        'Sous Chef',
-                        'Executive Chef',
-                        'North Indian Chef',
-                        'South Indian Chef',
-                        'Chinese Chef',
-                        'Tandoor Chef',
-                        'Continental Chef',
-                        'Italian / Mexican Chef',
-                        'Mughlai Chef',
-                        'Bakery Chef',
-                        'Sweets & Deserts Chef',
-                        'Chat Experts Chef',
-                        'All-Rounder Cook',
-                        'Fast Food Cook',
-                        'Commi 1 / Commi 2',
-                        'Kitchen Helper / Commis 3',
-                        'Dishwasher / Utility Staff',
-                        'Captain / Service Supervisor',
-                        'Waiter / Steward',
-                        'Bartender',
-                        'Manager',
-                        'Housekeeping / Cleaning Staff'
-                      ].map(r => <option key={r} value={r}>{r}</option>)}
+                      {(commercialStaffCategoriesMap[cCategory] || []).map(pos => (
+                        <option key={pos} value={pos}>{pos}</option>
+                      ))}
                     </Select>
                   </FormControl>
                 </SimpleGrid>
 
-                {/* Row 2 */}
-                <SimpleGrid columns={{ base: 1, md: 3 }} spacing="4">
+                <SimpleGrid columns={{ base: 1, md: 4 }} spacing="4">
                   <FormControl isRequired>
-                    <FormLabel {...formLabelStyle}>NO. OF VACANCIES *</FormLabel>
+                    <FormLabel {...formLabelStyle}>OPENINGS / VACANCIES *</FormLabel>
                     <Input
-                      name="packageOrGuestOrVacancy"
                       type="number"
-                      min="1"
-                      value={formData.packageOrGuestOrVacancy}
-                      onChange={handleChange}
+                      value={cOpenings}
+                      onChange={(e) => setCOpenings(e.target.value)}
                       placeholder="1"
                       {...inputStyle}
                       h="42px"
@@ -1160,165 +1205,207 @@ const AddJob = () => {
                   </FormControl>
 
                   <FormControl isRequired>
-                    <FormLabel {...formLabelStyle}>SALARY BUDGET *</FormLabel>
+                    <FormLabel {...formLabelStyle}>SALARY RANGE *</FormLabel>
                     <Select
-                      name="salaryRange"
-                      value={formData.salaryRange}
-                      onChange={handleChange}
+                      value={cSalary}
+                      onChange={(e) => {
+                        setCSalary(e.target.value);
+                        setCSalaryCustom(e.target.value === 'Custom Range');
+                      }}
                       {...selectStyle}
                       h="42px"
                     >
-                      {salaryRanges.map(s => <option key={s} value={s}>{s}</option>)}
+                      {salaryRanges.map(sal => (
+                        <option key={sal} value={sal}>{sal}</option>
+                      ))}
                     </Select>
+                    {cSalaryCustom && (
+                      <Input
+                        mt="2"
+                        placeholder="Enter custom salary (e.g. ₹40,000/month)"
+                        value={cSalaryCustomVal}
+                        onChange={(e) => setCSalaryCustomVal(e.target.value)}
+                        {...inputStyle}
+                        h="38px"
+                      />
+                    )}
                   </FormControl>
 
                   <FormControl isRequired>
-                    <FormLabel {...formLabelStyle}>EXPERIENCE REQUIRED *</FormLabel>
+                    <FormLabel {...formLabelStyle}>EXPERIENCE *</FormLabel>
                     <Select
-                      name="experienceRange"
-                      value={formData.experienceRange}
-                      onChange={handleChange}
+                      value={cExp}
+                      onChange={(e) => {
+                        setCExp(e.target.value);
+                        setCExpCustom(e.target.value === 'Custom');
+                      }}
                       {...selectStyle}
                       h="42px"
                     >
-                      {['Fresher', '1-2 Years', '2-5 Years', '5-8 Years', '8+ Years'].map(exp => (
+                      {expOptionsList.map(exp => (
                         <option key={exp} value={exp}>{exp}</option>
                       ))}
                     </Select>
+                    {cExpCustom && (
+                      <Input
+                        mt="2"
+                        placeholder="Enter custom experience"
+                        value={cExpCustomVal}
+                        onChange={(e) => setCExpCustomVal(e.target.value)}
+                        {...inputStyle}
+                        h="38px"
+                      />
+                    )}
+                  </FormControl>
+
+                  <FormControl isRequired>
+                    <FormLabel {...formLabelStyle}>JOINING DATE *</FormLabel>
+                    <Select
+                      value={cJoining}
+                      onChange={(e) => setCJoining(e.target.value)}
+                      {...selectStyle}
+                      h="42px"
+                    >
+                      {joiningTypeOptions.map(j => (
+                        <option key={j} value={j}>{j}</option>
+                      ))}
+                    </Select>
+                    {cJoining === 'Custom' && (
+                      <Input
+                        mt="2"
+                        type="date"
+                        value={cJoiningCustomVal}
+                        onChange={(e) => setCJoiningCustomVal(e.target.value)}
+                        {...inputStyle}
+                        h="38px"
+                      />
+                    )}
                   </FormControl>
                 </SimpleGrid>
 
-                {/* Row 3 */}
                 <SimpleGrid columns={{ base: 1, md: 3 }} spacing="4">
-                  <FormControl isRequired>
-                    <FormLabel {...formLabelStyle}>SHIFT / JOB TYPE *</FormLabel>
+                  <FormControl>
+                    <FormLabel {...formLabelStyle}>ALLOWED LEAVES</FormLabel>
                     <Select
-                      name="jobType"
-                      value={formData.jobType}
-                      onChange={handleChange}
+                      value={cLeave}
+                      onChange={(e) => setCLeave(e.target.value)}
                       {...selectStyle}
                       h="42px"
                     >
-                      {['Full Time (10-12 hrs)', 'Part Time (4-6 hrs)', 'Night Shift', 'Rotational Shift'].map(t => (
-                        <option key={t} value={t}>{t}</option>
-                      ))}
-                    </Select>
-                  </FormControl>
-
-                  <FormControl isRequired>
-                    <FormLabel {...formLabelStyle}>ALLOWED LEAVE *</FormLabel>
-                    <Select
-                      name="allowedLeave"
-                      value={formData.allowedLeave}
-                      onChange={handleChange}
-                      {...selectStyle}
-                      h="42px"
-                    >
-                      {['No Leave', '1 day/month', '2 days/month', '3 days/month', '4 days/month', '1 day/week', 'Custom'].map(l => (
+                      {leaveOptionsList.map(l => (
                         <option key={l} value={l}>{l}</option>
                       ))}
                     </Select>
                   </FormControl>
 
-                  <FormControl isRequired>
-                    <FormLabel {...formLabelStyle}>JOINING TIMELINE *</FormLabel>
+                  <FormControl>
+                    <FormLabel {...formLabelStyle}>TRAIN / TRAVEL CHARGES</FormLabel>
                     <Select
-                      name="joiningType"
-                      value={formData.joiningType}
-                      onChange={handleChange}
+                      value={cFare}
+                      onChange={(e) => setCFare(e.target.value)}
                       {...selectStyle}
                       h="42px"
                     >
-                      {['Immediate', 'Within 3 Days', 'Within 1 Week', 'Within 15 Days', 'Within 1 Month'].map(j => (
-                        <option key={j} value={j}>{j}</option>
-                      ))}
-                    </Select>
-                  </FormControl>
-                </SimpleGrid>
-
-                {/* Row 4 */}
-                <SimpleGrid columns={{ base: 1, md: 2 }} spacing="4">
-                  <FormControl isRequired>
-                    <FormLabel {...formLabelStyle}>FACILITIES PROVIDED *</FormLabel>
-                    <Select
-                      name="basicFacility"
-                      value={formData.basicFacility}
-                      onChange={handleChange}
-                      {...selectStyle}
-                      h="42px"
-                    >
-                      {['Food & Accommodation', 'Food Only', 'Accommodation Only', 'No Food or Accommodation'].map(f => (
+                      {['No Reimbursement', 'Reimbursement', 'Custom'].map(f => (
                         <option key={f} value={f}>{f}</option>
                       ))}
                     </Select>
+                    {cFare === 'Custom' && (
+                      <Input
+                        mt="2"
+                        placeholder="Enter custom fare note"
+                        value={cFareCustomVal}
+                        onChange={(e) => setCFareCustomVal(e.target.value)}
+                        {...inputStyle}
+                        h="38px"
+                      />
+                    )}
                   </FormControl>
 
                   <FormControl>
-                    <FormLabel {...formLabelStyle}>OTHER PERKS / BENEFITS</FormLabel>
+                    <FormLabel {...formLabelStyle}>BASIC FACILITIES</FormLabel>
                     <Input
-                      name="benefits"
-                      value={formData.benefits}
-                      onChange={handleChange}
-                      placeholder="e.g. Travel Allowance, Tips, PF & ESI, Overtime Pay"
+                      value={cFacility}
+                      onChange={(e) => setCFacility(e.target.value)}
+                      placeholder="e.g. Food & Accommodation"
                       {...inputStyle}
                       h="42px"
                     />
                   </FormControl>
                 </SimpleGrid>
+
+                {/* Urgent Requirement Toggle */}
+                <Flex p="3.5" bg="#fff1f2" border="1px solid #fecdd3" borderRadius="xl" align="center" justify="space-between">
+                  <HStack spacing="2.5">
+                    <AlertCircle size={18} color="#e11d48" />
+                    <Box>
+                      <Text fontWeight="800" fontSize="xs" color="#9f1239">Urgent Hiring Requirement</Text>
+                      <Text fontSize="11px" color="#64748b">Highlights this position with an Urgent badge for faster candidate applications.</Text>
+                    </Box>
+                  </HStack>
+                  <Switch isChecked={cIsUrgent} onChange={(e) => setCIsUrgent(e.target.checked)} colorScheme="red" />
+                </Flex>
               </VStack>
             )}
 
-            {/* === 2. DOMESTIC HOME COOK FORM === */}
+            {/* === 2. DOMESTIC HOME COOK FORM (MATCHING APP 100%) === */}
             {serviceType === 'home' && (
               <VStack spacing="5" align="stretch">
-                
-                {/* Cook Tier Selection Cards */}
-                <Box>
-                  <FormLabel {...formLabelStyle} mb="2">SELECT COOK LEVEL / EXPERIENCE *</FormLabel>
-                  <SimpleGrid columns={{ base: 1, md: 3 }} spacing="4">
-                    {cookLevels.map(lvl => {
-                      const isLvlSelected = homeCookLevel === lvl.id;
-                      return (
-                        <Box
-                          key={lvl.id}
-                          as="button"
-                          type="button"
-                          onClick={() => setHomeCookLevel(lvl.id)}
-                          textAlign="left"
-                          p="4"
-                          borderRadius="xl"
-                          border={isLvlSelected ? `2px solid ${BRAND}` : '1.5px solid #e2e8f0'}
-                          bg={isLvlSelected ? '#f8faff' : 'white'}
-                          boxShadow={isLvlSelected ? `0 4px 12px ${BRAND}20` : 'none'}
-                          transition="all 0.2s"
-                        >
-                          <Flex justify="space-between" align="center" mb="2">
-                            <Text fontWeight="800" fontSize="sm" color="#0f172a">{lvl.name}</Text>
-                            <Badge colorScheme="blue" borderRadius="full" px="2" fontSize="10px">{lvl.badge}</Badge>
-                          </Flex>
-                          <Text fontSize="xs" color="#64748b" mb="3">{lvl.desc}</Text>
-                          <HStack spacing="1" fontSize="xs" fontWeight="700" color={BRAND}>
-                            <Award size={14} />
-                            <Text>{lvl.salary}</Text>
-                          </HStack>
-                        </Box>
-                      );
-                    })}
-                  </SimpleGrid>
-                </Box>
-
                 <SimpleGrid columns={{ base: 1, md: 3 }} spacing="4">
                   <FormControl isRequired>
-                    <FormLabel {...formLabelStyle}>SHIFT / SERVICE DURATION *</FormLabel>
+                    <FormLabel {...formLabelStyle}>STAFF CATEGORY *</FormLabel>
                     <Select
-                      name="serviceDuration"
-                      value={formData.serviceDuration}
-                      onChange={handleChange}
+                      value={dStaffCategory}
+                      onChange={(e) => setDStaffCategory(e.target.value)}
                       {...selectStyle}
                       h="42px"
                     >
-                      {['10 Hours', '24 Hours (Live-in)', 'Part-Time (Morning only)', 'Part-Time (Evening only)'].map(d => (
-                        <option key={d} value={d}>{d}</option>
+                      {['Home Cook', 'Baby Sitter', 'Maid', 'Driver', 'Caretaker'].map(c => (
+                        <option key={c} value={c}>{c}</option>
+                      ))}
+                    </Select>
+                  </FormControl>
+
+                  <FormControl isRequired>
+                    <FormLabel {...formLabelStyle}>COOK PREFERENCE / LEVEL *</FormLabel>
+                    <Select
+                      value={dCookPreference}
+                      onChange={(e) => setDCookPreference(e.target.value)}
+                      {...selectStyle}
+                      h="42px"
+                    >
+                      {cookPreferences.map(cp => (
+                        <option key={cp} value={cp}>{cp}</option>
+                      ))}
+                    </Select>
+                  </FormControl>
+
+                  <FormControl isRequired>
+                    <FormLabel {...formLabelStyle}>FAMILY MEMBERS *</FormLabel>
+                    <Select
+                      value={dFamilyMembers}
+                      onChange={(e) => setDFamilyMembers(e.target.value)}
+                      {...selectStyle}
+                      h="42px"
+                    >
+                      {familyMembersList.map(fm => (
+                        <option key={fm} value={fm}>{fm}</option>
+                      ))}
+                    </Select>
+                  </FormControl>
+                </SimpleGrid>
+
+                <SimpleGrid columns={{ base: 1, md: 3 }} spacing="4">
+                  <FormControl isRequired>
+                    <FormLabel {...formLabelStyle}>GENDER PREFERENCE *</FormLabel>
+                    <Select
+                      value={dGenderPreference}
+                      onChange={(e) => setDGenderPreference(e.target.value)}
+                      {...selectStyle}
+                      h="42px"
+                    >
+                      {['Anyone', 'Male', 'Female'].map(g => (
+                        <option key={g} value={g}>{g}</option>
                       ))}
                     </Select>
                   </FormControl>
@@ -1326,111 +1413,108 @@ const AddJob = () => {
                   <FormControl isRequired>
                     <FormLabel {...formLabelStyle}>FOOD PREFERENCE *</FormLabel>
                     <Select
-                      name="foodPreference"
-                      value={formData.foodPreference}
-                      onChange={handleChange}
+                      value={dFoodPreference}
+                      onChange={(e) => setDFoodPreference(e.target.value)}
                       {...selectStyle}
                       h="42px"
                     >
-                      {['Vegetarian (Veg Only)', 'Non-Vegetarian', 'Both (Veg & Non-Veg)', 'Jain Food', 'Vegan'].map(fp => (
+                      {['Pure Veg', 'Veg + Non Veg'].map(fp => (
                         <option key={fp} value={fp}>{fp}</option>
                       ))}
                     </Select>
                   </FormControl>
 
                   <FormControl isRequired>
-                    <FormLabel {...formLabelStyle}>COOK GENDER PREFERENCE *</FormLabel>
+                    <FormLabel {...formLabelStyle}>SERVICE DURATION *</FormLabel>
                     <Select
-                      value={genderPreference}
-                      onChange={(e) => setGenderPreference(e.target.value)}
+                      value={dServiceDuration}
+                      onChange={(e) => setDServiceDuration(e.target.value)}
                       {...selectStyle}
                       h="42px"
                     >
-                      {['Any', 'Male Cook Only', 'Female Cook Only'].map(g => (
-                        <option key={g} value={g}>{g}</option>
+                      {['10 Hours – ( Morning to Evening)', '24 Hours – Live-in Cook'].map(sd => (
+                        <option key={sd} value={sd}>{sd}</option>
                       ))}
                     </Select>
                   </FormControl>
                 </SimpleGrid>
 
-                <SimpleGrid columns={{ base: 1, md: 3 }} spacing="4">
+                <SimpleGrid columns={{ base: 1, md: 4 }} spacing="4">
                   <FormControl isRequired>
-                    <FormLabel {...formLabelStyle}>NO. OF FAMILY MEMBERS *</FormLabel>
+                    <FormLabel {...formLabelStyle}>SALARY RANGE *</FormLabel>
                     <Select
-                      name="familyMembers"
-                      value={formData.familyMembers}
-                      onChange={handleChange}
+                      value={dSalary}
+                      onChange={(e) => {
+                        setDSalary(e.target.value);
+                        setDSalaryCustom(e.target.value === 'Custom Range');
+                      }}
                       {...selectStyle}
                       h="42px"
                     >
-                      {['1-2 Members', '3-4 Members', '5-6 Members', '7+ Members'].map(m => (
-                        <option key={m} value={m}>{m}</option>
+                      {domesticSalaries.map(sal => (
+                        <option key={sal} value={sal}>{sal}</option>
+                      ))}
+                    </Select>
+                    {dSalaryCustom && (
+                      <Input
+                        mt="2"
+                        placeholder="Enter custom salary"
+                        value={dSalaryCustomVal}
+                        onChange={(e) => setDSalaryCustomVal(e.target.value)}
+                        {...inputStyle}
+                        h="38px"
+                      />
+                    )}
+                  </FormControl>
+
+                  <FormControl isRequired>
+                    <FormLabel {...formLabelStyle}>EXPERIENCE *</FormLabel>
+                    <Select
+                      value={dExp}
+                      onChange={(e) => setDExp(e.target.value)}
+                      {...selectStyle}
+                      h="42px"
+                    >
+                      {expOptionsList.map(exp => (
+                        <option key={exp} value={exp}>{exp}</option>
                       ))}
                     </Select>
                   </FormControl>
 
                   <FormControl isRequired>
-                    <FormLabel {...formLabelStyle}>ALLOWED LEAVES *</FormLabel>
+                    <FormLabel {...formLabelStyle}>JOINING DATE *</FormLabel>
                     <Select
-                      name="allowedLeave"
-                      value={formData.allowedLeave}
-                      onChange={handleChange}
+                      value={dJoining}
+                      onChange={(e) => setDJoining(e.target.value)}
                       {...selectStyle}
                       h="42px"
                     >
-                      {['2 days/month', '4 days/month', 'Every Sunday Off', 'No Leave', 'Custom'].map(l => (
+                      {joiningTypeOptions.map(j => (
+                        <option key={j} value={j}>{j}</option>
+                      ))}
+                    </Select>
+                  </FormControl>
+
+                  <FormControl>
+                    <FormLabel {...formLabelStyle}>ALLOWED LEAVES</FormLabel>
+                    <Select
+                      value={dLeave}
+                      onChange={(e) => setDLeave(e.target.value)}
+                      {...selectStyle}
+                      h="42px"
+                    >
+                      {leaveOptionsList.map(l => (
                         <option key={l} value={l}>{l}</option>
                       ))}
                     </Select>
                   </FormControl>
-
-                  <FormControl isRequired>
-                    <FormLabel {...formLabelStyle}>EXPECTED START DATE *</FormLabel>
-                    <Input
-                      type="date"
-                      name="startDate"
-                      value={formData.startDate}
-                      onChange={handleChange}
-                      {...inputStyle}
-                      h="42px"
-                    />
-                  </FormControl>
                 </SimpleGrid>
-
-                {/* Cuisine Tags */}
-                <Box>
-                  <FormLabel {...formLabelStyle} mb="2">CUISINES / SPECIALTIES DESIRED</FormLabel>
-                  <Wrap spacing="2">
-                    {cuisineOptions.map(cuisine => {
-                      const isCuisineSelected = selectedCuisines.includes(cuisine);
-                      return (
-                        <WrapItem key={cuisine}>
-                          <Tag
-                            size="md"
-                            borderRadius="full"
-                            variant={isCuisineSelected ? 'solid' : 'outline'}
-                            colorScheme="blue"
-                            cursor="pointer"
-                            onClick={() => toggleCuisine(cuisine)}
-                            px="3"
-                            py="1.5"
-                          >
-                            {isCuisineSelected && <Check size={12} style={{ marginRight: 4 }} />}
-                            {cuisine}
-                          </Tag>
-                        </WrapItem>
-                      );
-                    })}
-                  </Wrap>
-                </Box>
               </VStack>
             )}
 
-            {/* === 3. DAILY BASIS STAFF (ODC) FORM === */}
+            {/* === 3. DAILY BASIS STAFF (ODC) FORM (MATCHING APP 100%) === */}
             {serviceType === 'daily' && (
               <VStack spacing="5" align="stretch">
-                
-                {/* Purpose Selector */}
                 <Box>
                   <FormLabel {...formLabelStyle} mb="2">HIRING PURPOSE *</FormLabel>
                   <SimpleGrid columns={{ base: 1, md: 2 }} spacing="4">
@@ -1449,12 +1533,12 @@ const AddJob = () => {
                           textAlign="left"
                           p="4"
                           borderRadius="xl"
-                          border={isPurSelected ? `2px solid ${BRAND}` : '1.5px solid #e2e8f0'}
-                          bg={isPurSelected ? '#f8faff' : 'white'}
+                          border={isPurSelected ? `2px solid #059669` : '1.5px solid #e2e8f0'}
+                          bg={isPurSelected ? '#ecfdf5' : 'white'}
                           transition="all 0.2s"
                         >
                           <HStack spacing="3">
-                            <Flex w="36px" h="36px" borderRadius="lg" bg="#ecfdf5" color="#059669" align="center" justify="center">
+                            <Flex w="36px" h="36px" borderRadius="lg" bg="#d1fae5" color="#059669" align="center" justify="center">
                               <PurIcon size={18} />
                             </Flex>
                             <Box>
@@ -1468,97 +1552,52 @@ const AddJob = () => {
                   </SimpleGrid>
                 </Box>
 
-                <SimpleGrid columns={{ base: 1, md: 3 }} spacing="4">
-                  <FormControl isRequired>
-                    <FormLabel {...formLabelStyle}>EVENT / FUNCTION TYPE *</FormLabel>
-                    <Select
-                      name="event"
-                      value={formData.event}
-                      onChange={handleChange}
-                      {...selectStyle}
-                      h="42px"
-                    >
-                      {occasionTypes.map(ev => (
-                        <option key={ev} value={ev}>{ev}</option>
-                      ))}
-                    </Select>
-                  </FormControl>
-
-                  <FormControl isRequired>
-                    <FormLabel {...formLabelStyle}>DATE OF EVENT / SHIFT *</FormLabel>
-                    <Input
-                      type="date"
-                      name="dateOfEvent"
-                      value={formData.dateOfEvent}
-                      onChange={handleChange}
-                      {...inputStyle}
-                      h="42px"
-                    />
-                  </FormControl>
-
-                  <FormControl isRequired>
-                    <FormLabel {...formLabelStyle}>SHIFT / SERVING TIMING *</FormLabel>
-                    <Select
-                      name="servingTime"
-                      value={formData.servingTime}
-                      onChange={handleChange}
-                      {...selectStyle}
-                      h="42px"
-                    >
-                      {['Morning Shift (8 AM - 4 PM)', 'Evening Shift (4 PM - 11 PM)', 'Full Day (10 AM - 10 PM)', 'Night Shift'].map(st => (
-                        <option key={st} value={st}>{st}</option>
-                      ))}
-                    </Select>
-                  </FormControl>
-                </SimpleGrid>
-
-                {/* Daily Staff Roster & Presets */}
+                {/* Daily Staff List */}
                 <Box p="4" bg="#f8fafc" border="1.5px solid #e2e8f0" borderRadius="xl">
                   <Flex justify="space-between" align="center" mb="3" flexWrap="wrap" gap="2">
                     <Box>
                       <Text fontWeight="800" fontSize="sm" color="#1e293b">
-                        Staff Required (ODC Roster)
+                        Daily Staff Requirements Roster
                       </Text>
                       <Text fontSize="xs" color="#64748b">
-                        Add staff with fixed day-rates or choose quick presets below.
+                        Select role presets with standard day-rates or customize requirements.
                       </Text>
                     </Box>
-                    <HStack spacing="2">
-                      <Button
-                        size="xs"
-                        leftIcon={<Plus size={14} />}
-                        bg="white"
-                        color={BRAND}
-                        border={`1.5px solid ${BRAND}`}
-                        _hover={{ bg: '#eff6ff' }}
-                        onClick={() => handleAddDailyStaff('Assistant Cook', 1500)}
-                        fontWeight="700"
-                        px="3"
-                        h="32px"
-                        borderRadius="md"
-                      >
-                        + Add More Staff
-                      </Button>
-                      <Button
-                        size="xs"
-                        leftIcon={<Plus size={14} />}
-                        bg={BRAND}
-                        color="white"
-                        _hover={{ bg: '#003d91' }}
-                        onClick={() => handleAddDailyStaff('Staff Role', 1000)}
-                        fontWeight="700"
-                        px="3"
-                        h="32px"
-                        borderRadius="md"
-                      >
-                        + Add Custom Role
-                      </Button>
-                    </HStack>
+                    <Button
+                      size="xs"
+                      leftIcon={<Plus size={14} />}
+                      bg="#059669"
+                      color="white"
+                      _hover={{ bg: '#047857' }}
+                      onClick={() => {
+                        setDailyStaffList(prev => [
+                          ...prev,
+                          {
+                            id: Date.now().toString(),
+                            serviceCategory: 'Kitchen Staff',
+                            role: 'Chef / Main Cook',
+                            ratePerDay: 1499,
+                            genderPref: 'Any Gender',
+                            count: 1,
+                            days: 1,
+                            startDate: new Date().toISOString().split('T')[0],
+                            startTime: '10:00 AM',
+                            endTime: '08:00 PM'
+                          }
+                        ]);
+                      }}
+                      fontWeight="700"
+                      px="3"
+                      h="32px"
+                      borderRadius="md"
+                    >
+                      + Add Staff Role
+                    </Button>
                   </Flex>
 
-                  {/* Preset Badges */}
+                  {/* Preset Buttons */}
                   <Wrap spacing="2" mb="4">
-                    {dailyRolesPresets.map(preset => (
+                    {dailyRolesList.map(preset => (
                       <WrapItem key={preset.role}>
                         <Button
                           size="xs"
@@ -1566,8 +1605,24 @@ const AddJob = () => {
                           borderColor="#cbd5e1"
                           bg="white"
                           fontSize="xs"
-                          onClick={() => handleAddDailyStaff(preset.role, preset.rate)}
-                          _hover={{ bg: '#f1f5f9', borderColor: BRAND }}
+                          onClick={() => {
+                            setDailyStaffList(prev => [
+                              ...prev,
+                              {
+                                id: Date.now().toString(),
+                                serviceCategory: preset.category,
+                                role: preset.role,
+                                ratePerDay: preset.rate,
+                                genderPref: 'Any Gender',
+                                count: 1,
+                                days: 1,
+                                startDate: new Date().toISOString().split('T')[0],
+                                startTime: '10:00 AM',
+                                endTime: '08:00 PM'
+                              }
+                            ]);
+                          }}
+                          _hover={{ bg: '#ecfdf5', borderColor: '#059669' }}
                         >
                           + {preset.role} (₹{preset.rate}/day)
                         </Button>
@@ -1575,7 +1630,7 @@ const AddJob = () => {
                     ))}
                   </Wrap>
 
-                  {/* Daily Staff List Rows */}
+                  {/* Staff List Rows */}
                   <VStack spacing="3" align="stretch">
                     {dailyStaffList.map((item) => (
                       <Flex
@@ -1588,49 +1643,55 @@ const AddJob = () => {
                         align="center"
                         flexWrap="wrap"
                       >
-                        <Box minW="180px" flex="1.5">
+                        <Box minW="160px" flex="1.5">
                           <FormLabel fontSize="11px" fontWeight="700" color="#64748b" mb="1">Staff Role</FormLabel>
-                          <Input
+                          <Select
                             size="sm"
                             h="36px"
                             value={item.role}
-                            onChange={(e) => handleUpdateDailyStaff(item.id, 'role', e.target.value)}
-                            placeholder="e.g. Head Chef, Waiter"
-                          />
+                            onChange={(e) => {
+                              const match = dailyRolesList.find(r => r.role === e.target.value);
+                              setDailyStaffList(prev => prev.map(s => s.id === item.id ? { ...s, role: e.target.value, ratePerDay: match?.rate || s.ratePerDay } : s));
+                            }}
+                          >
+                            {dailyRolesList.map(r => (
+                              <option key={r.role} value={r.role}>{r.role}</option>
+                            ))}
+                          </Select>
                         </Box>
 
-                        <Box minW="130px" flex="1">
+                        <Box minW="110px" flex="1">
                           <FormLabel fontSize="11px" fontWeight="700" color="#64748b" mb="1">Rate/Day (₹)</FormLabel>
                           <Input
                             size="sm"
                             h="36px"
                             type="number"
                             value={item.ratePerDay}
-                            onChange={(e) => handleUpdateDailyStaff(item.id, 'ratePerDay', parseInt(e.target.value, 10) || 0)}
+                            onChange={(e) => setDailyStaffList(prev => prev.map(s => s.id === item.id ? { ...s, ratePerDay: parseInt(e.target.value, 10) || 0 } : s))}
                           />
                         </Box>
 
-                        <Box minW="120px" flex="1">
+                        <Box minW="110px" flex="1">
                           <FormLabel fontSize="11px" fontWeight="700" color="#64748b" mb="1">Gender</FormLabel>
                           <Select
                             size="sm"
                             h="36px"
-                            value={item.genderPref || 'Any'}
-                            onChange={(e) => handleUpdateDailyStaff(item.id, 'genderPref', e.target.value)}
+                            value={item.genderPref}
+                            onChange={(e) => setDailyStaffList(prev => prev.map(s => s.id === item.id ? { ...s, genderPref: e.target.value } : s))}
                           >
-                            {['Any', 'Male', 'Female'].map(g => (
+                            {['Any Gender', 'Male', 'Female'].map(g => (
                               <option key={g} value={g}>{g}</option>
                             ))}
                           </Select>
                         </Box>
 
-                        <Box w="120px">
+                        <Box w="100px">
                           <FormLabel fontSize="11px" fontWeight="700" color="#64748b" mb="1">Staff Count</FormLabel>
                           <HStack spacing="1">
                             <IconButton
                               size="xs"
                               icon={<Minus size={12} />}
-                              onClick={() => handleUpdateDailyStaff(item.id, 'count', Math.max(1, item.count - 1))}
+                              onClick={() => setDailyStaffList(prev => prev.map(s => s.id === item.id ? { ...s, count: Math.max(1, s.count - 1) } : s))}
                             />
                             <Input
                               size="sm"
@@ -1639,12 +1700,37 @@ const AddJob = () => {
                               type="number"
                               min="1"
                               value={item.count}
-                              onChange={(e) => handleUpdateDailyStaff(item.id, 'count', parseInt(e.target.value, 10) || 1)}
+                              onChange={(e) => setDailyStaffList(prev => prev.map(s => s.id === item.id ? { ...s, count: parseInt(e.target.value, 10) || 1 } : s))}
                             />
                             <IconButton
                               size="xs"
                               icon={<Plus size={12} />}
-                              onClick={() => handleUpdateDailyStaff(item.id, 'count', item.count + 1)}
+                              onClick={() => setDailyStaffList(prev => prev.map(s => s.id === item.id ? { ...s, count: s.count + 1 } : s))}
+                            />
+                          </HStack>
+                        </Box>
+
+                        <Box w="100px">
+                          <FormLabel fontSize="11px" fontWeight="700" color="#64748b" mb="1">Days</FormLabel>
+                          <HStack spacing="1">
+                            <IconButton
+                              size="xs"
+                              icon={<Minus size={12} />}
+                              onClick={() => setDailyStaffList(prev => prev.map(s => s.id === item.id ? { ...s, days: Math.max(1, s.days - 1) } : s))}
+                            />
+                            <Input
+                              size="sm"
+                              h="36px"
+                              textAlign="center"
+                              type="number"
+                              min="1"
+                              value={item.days}
+                              onChange={(e) => setDailyStaffList(prev => prev.map(s => s.id === item.id ? { ...s, days: parseInt(e.target.value, 10) || 1 } : s))}
+                            />
+                            <IconButton
+                              size="xs"
+                              icon={<Plus size={12} />}
+                              onClick={() => setDailyStaffList(prev => prev.map(s => s.id === item.id ? { ...s, days: s.days + 1 } : s))}
                             />
                           </HStack>
                         </Box>
@@ -1655,580 +1741,734 @@ const AddJob = () => {
                           variant="ghost"
                           colorScheme="red"
                           icon={<Trash2 size={16} />}
-                          onClick={() => handleRemoveDailyStaff(item.id)}
-                          aria-label="Remove daily staff"
+                          onClick={() => {
+                            if (dailyStaffList.length === 1) return;
+                            setDailyStaffList(prev => prev.filter(s => s.id !== item.id));
+                          }}
+                          aria-label="Remove staff"
                         />
                       </Flex>
                     ))}
                   </VStack>
-
-                  {/* Budget Counter */}
-                  <Flex justify="flex-end" align="center" mt="3" pt="2" borderTop="1px dashed #cbd5e1" gap="3">
-                    <Text fontSize="xs" color="#64748b">Estimated Daily Staff Cost:</Text>
-                    <Badge colorScheme="green" fontSize="sm" px="3" py="1" borderRadius="md">
-                      ₹{dailyStaffList.reduce((acc, s) => acc + (s.ratePerDay * s.count), 0).toLocaleString()} / DAY
-                    </Badge>
-                  </Flex>
                 </Box>
 
-                <FormControl>
-                  <FormLabel {...formLabelStyle}>MENU / WORK INSTRUCTIONS</FormLabel>
-                  <Textarea
-                    name="menuDetails"
-                    value={formData.menuDetails}
-                    onChange={handleChange}
-                    placeholder="Enter dishes to prepare or duties..."
-                    {...inputStyle}
-                    minH="70px"
-                  />
-                </FormControl>
-
-                {/* Event Days / Multiple Days Booking (Optional) */}
-                <Box p="4" bg="#f8fbff" border="1.5px solid #bfdbfe" borderRadius="xl">
-                  <Flex justify="space-between" align="center" mb={dailyEventDays.length > 0 ? "3" : "0"} flexWrap="wrap" gap="2">
-                    <HStack spacing="3">
-                      <Flex w="36px" h="36px" borderRadius="lg" bg="#eff6ff" color="#2563eb" align="center" justify="center">
-                        <Calendar size={18} />
-                      </Flex>
-                      <Box>
-                        <HStack spacing="2">
-                          <Text fontWeight="800" fontSize="sm" color="#1e293b">
-                            Event Days / Multiple Days Booking
-                          </Text>
-                          <Badge colorScheme="blue" fontSize="10px" borderRadius="full" px="2">Optional</Badge>
-                        </HStack>
-                        <Text fontSize="xs" color="#64748b">
-                          Add more days if the customer wants to book for multiple days.
-                        </Text>
-                      </Box>
+                {/* Daily Coupons & Pricing Breakdown */}
+                <SimpleGrid columns={{ base: 1, md: 2 }} spacing="4">
+                  <Box p="4" bg="white" border="1.5px solid #e2e8f0" borderRadius="xl">
+                    <Text fontWeight="800" fontSize="xs" color="#1e293b" mb="2" textTransform="uppercase">
+                      Apply Promo Code
+                    </Text>
+                    <HStack spacing="2" mb="2">
+                      <Input
+                        size="sm"
+                        placeholder="Enter Promo Code"
+                        value={dailyCouponInput}
+                        onChange={(e) => setDailyCouponInput(e.target.value.toUpperCase())}
+                        h="36px"
+                      />
+                      <Button size="sm" colorScheme="green" h="36px" onClick={() => applyDailyCouponCode()}>
+                        Apply
+                      </Button>
                     </HStack>
-                    <Button
-                      size="sm"
-                      leftIcon={<Plus size={14} />}
-                      bg="white"
-                      color="#2563eb"
-                      border="1.5px solid #2563eb"
-                      _hover={{ bg: '#eff6ff' }}
-                      onClick={handleAddDailyEventDay}
-                      fontWeight="700"
-                      px="4"
-                      h="34px"
-                      borderRadius="md"
-                    >
-                      + Add More Days
-                    </Button>
-                  </Flex>
-
-                  {/* List of Extra Event Days */}
-                  {dailyEventDays.length > 0 && (
-                    <VStack spacing="3" align="stretch" mt="3" pt="3" borderTop="1px dashed #bfdbfe">
-                      {dailyEventDays.map((day, idx) => (
-                        <Flex
-                          key={day.id}
-                          p="3"
-                          bg="white"
-                          border="1px solid #dbeafe"
-                          borderRadius="lg"
-                          gap="3"
-                          align="center"
-                          flexWrap="wrap"
-                        >
-                          <Badge colorScheme="blue" px="2.5" py="1" borderRadius="md" fontSize="xs" fontWeight="800">
-                            Day {idx + 2}
-                          </Badge>
-
-                          <Box minW="160px" flex="1">
-                            <FormLabel fontSize="11px" fontWeight="700" color="#64748b" mb="1">Date of Shift *</FormLabel>
-                            <Input
-                              size="sm"
-                              type="date"
-                              h="36px"
-                              value={day.date}
-                              onChange={(e) => handleUpdateDailyEventDay(day.id, 'date', e.target.value)}
-                            />
-                          </Box>
-
-                          <Box minW="200px" flex="1.5">
-                            <FormLabel fontSize="11px" fontWeight="700" color="#64748b" mb="1">Shift / Serving Timing</FormLabel>
-                            <Select
-                              size="sm"
-                              h="36px"
-                              value={day.servingTime}
-                              onChange={(e) => handleUpdateDailyEventDay(day.id, 'servingTime', e.target.value)}
-                            >
-                              {['Morning Shift (8 AM - 4 PM)', 'Evening Shift (4 PM - 11 PM)', 'Full Day (10 AM - 10 PM)', 'Night Shift'].map(st => (
-                                <option key={st} value={st}>{st}</option>
-                              ))}
-                            </Select>
-                          </Box>
-
-                          <Box minW="200px" flex="2">
-                            <FormLabel fontSize="11px" fontWeight="700" color="#64748b" mb="1">Notes / Instructions</FormLabel>
-                            <Input
-                              size="sm"
-                              h="36px"
-                              value={day.notes}
-                              onChange={(e) => handleUpdateDailyEventDay(day.id, 'notes', e.target.value)}
-                              placeholder="e.g. Banquet hall dinner service"
-                            />
-                          </Box>
-
-                          <IconButton
-                            size="sm"
-                            mt="4"
-                            variant="ghost"
-                            colorScheme="red"
-                            icon={<Trash2 size={16} />}
-                            onClick={() => handleRemoveDailyEventDay(day.id)}
-                            aria-label="Remove day"
-                          />
-                        </Flex>
+                    <Wrap spacing="1.5">
+                      {availableOffers.map(o => (
+                        <WrapItem key={o.code}>
+                          <Button
+                            size="xs"
+                            variant={dailyAppliedCoupon === o.code ? 'solid' : 'outline'}
+                            colorScheme="green"
+                            onClick={() => applyDailyCouponCode(o.code)}
+                          >
+                            {o.code} ({o.discountValue}% OFF)
+                          </Button>
+                        </WrapItem>
                       ))}
+                    </Wrap>
+                  </Box>
+
+                  <Box p="4" bg="#ecfdf5" border="1.5px solid #a7f3d0" borderRadius="xl">
+                    <Text fontWeight="800" fontSize="xs" color="#065f46" mb="2" textTransform="uppercase">
+                      Daily Staff Pricing Summary
+                    </Text>
+                    <VStack spacing="1.5" align="stretch" fontSize="xs">
+                      <Flex justify="space-between"><Text color="#64748b">Staff Roster Total</Text><Text fontWeight="bold">₹{dailyTotals.staffCost}</Text></Flex>
+                      {dailyTotals.discount > 0 && <Flex justify="space-between" color="green.700"><Text fontWeight="bold">Discount ({dailyAppliedCoupon})</Text><Text fontWeight="bold">-₹{dailyTotals.discount}</Text></Flex>}
+                      <Flex justify="space-between"><Text color="#64748b">GST (18%)</Text><Text fontWeight="bold">₹{dailyTotals.gst}</Text></Flex>
+                      <Divider borderColor="#a7f3d0" my="1" />
+                      <Flex justify="space-between" fontSize="sm"><Text fontWeight="800">Total Amount</Text><Text fontWeight="800" color="#065f46">₹{dailyTotals.total}</Text></Flex>
+                      <Flex justify="space-between" color="#047857" fontWeight="bold"><Text>Advance (25%)</Text><Text>₹{dailyTotals.advance}</Text></Flex>
                     </VStack>
-                  )}
-                </Box>
+                  </Box>
+                </SimpleGrid>
               </VStack>
             )}
 
-            {/* === 4. CHEF FOR PARTY FORM === */}
+            {/* === 4. CHEF FOR PARTY FORM (MATCHING APP 100%) === */}
             {serviceType === 'party' && (
-              <VStack spacing="5" align="stretch">
-                {/* Row 1 - 4 Columns Matching Screenshot 3 */}
-                <SimpleGrid columns={{ base: 1, md: 2, lg: 4 }} spacing="4">
-                  <FormControl isRequired>
-                    <FormLabel {...formLabelStyle}>EVENT / OCCASION TYPE *</FormLabel>
-                    <Select
-                      name="event"
-                      value={formData.event}
-                      onChange={handleChange}
-                      {...selectStyle}
-                      h="42px"
+              <VStack spacing="6" align="stretch">
+                
+                {/* Banner & Full Summary Link */}
+                <Box
+                  p="4"
+                  borderRadius="2xl"
+                  bgGradient="linear(to-r, purple.700, purple.900)"
+                  color="white"
+                  boxShadow="0 8px 20px rgba(124, 58, 237, 0.25)"
+                >
+                  <Flex justify="space-between" align="center" flexWrap="wrap" gap="4">
+                    <HStack spacing="3">
+                      <Flex w="44px" h="44px" borderRadius="full" bg="whiteAlpha.200" align="center" justify="center">
+                        <UtensilsCrossed size={22} color="white" />
+                      </Flex>
+                      <Box>
+                        <Text fontWeight="800" fontSize="md">Chef for Party Booking</Text>
+                        <Text fontSize="xs" color="whiteAlpha.800">
+                          {partyDatesList.length} Day(s) • {partyTotals.totalGuests} Guests • {partyTotals.totalDishes} Dishes
+                        </Text>
+                      </Box>
+                    </HStack>
+
+                    <Button
+                      size="sm"
+                      bg="white"
+                      color="purple.900"
+                      fontWeight="800"
+                      borderRadius="lg"
+                      _hover={{ bg: 'purple.50' }}
+                      rightIcon={<ArrowRight size={14} />}
+                      onClick={onOpenSummaryModal}
                     >
-                      {occasionTypes.map(ev => (
-                        <option key={ev} value={ev}>{ev}</option>
-                      ))}
-                    </Select>
-                  </FormControl>
+                      View Complete Summary
+                    </Button>
+                  </Flex>
+                </Box>
 
-                  <FormControl isRequired>
-                    <FormLabel {...formLabelStyle}>DATE OF PARTY **</FormLabel>
-                    <Input
-                      type="date"
-                      name="dateOfEvent"
-                      value={formData.dateOfEvent}
-                      onChange={handleChange}
-                      {...inputStyle}
-                      h="42px"
-                    />
-                  </FormControl>
-
-                  <FormControl isRequired>
-                    <FormLabel {...formLabelStyle}>TOTAL NUMBER OF GUESTS *</FormLabel>
-                    <Input
-                      name="noOfGuests"
-                      type="number"
-                      value={formData.noOfGuests}
-                      onChange={handleChange}
-                      placeholder="15"
-                      {...inputStyle}
-                      h="42px"
-                    />
-                  </FormControl>
-
-                  <FormControl>
-                    <FormLabel {...formLabelStyle}>VENUE ADDRESS (OPTIONAL)</FormLabel>
-                    <Input
-                      name="venueAddress"
-                      value={formData.venueAddress}
-                      onChange={handleChange}
-                      placeholder="Enter venue address"
-                      {...inputStyle}
-                      h="42px"
-                    />
-                  </FormControl>
-                </SimpleGrid>
-
-                {/* Row 2 */}
-                <SimpleGrid columns={{ base: 1, md: 2 }} spacing="4">
-                  <FormControl isRequired>
-                    <FormLabel {...formLabelStyle}>FOOD PREFERENCE *</FormLabel>
-                    <Select
-                      name="foodPreference"
-                      value={formData.foodPreference}
-                      onChange={handleChange}
-                      {...selectStyle}
-                      h="42px"
-                    >
-                      {['Vegetarian (Veg Only)', 'Non-Vegetarian', 'Both (Veg & Non-Veg)', 'Jain Food'].map(fp => (
-                        <option key={fp} value={fp}>{fp}</option>
-                      ))}
-                    </Select>
-                  </FormControl>
-
-                  <FormControl isRequired>
-                    <FormLabel {...formLabelStyle}>SERVING MEAL / TIME *</FormLabel>
-                    <Select
-                      name="servingTime"
-                      value={formData.servingTime}
-                      onChange={handleChange}
-                      {...selectStyle}
-                      h="42px"
-                    >
-                      {['Dinner', 'Lunch', 'High Tea / Snacks', 'Breakfast', 'Full Day Party'].map(m => (
-                        <option key={m} value={m}>{m}</option>
-                      ))}
-                    </Select>
-                  </FormControl>
-                </SimpleGrid>
-
-                {/* Cuisine Tags Selector */}
+                {/* 2. EVENT DAYS & MEAL SCHEDULE */}
                 <Box>
-                  <FormLabel {...formLabelStyle} mb="2">CUISINES FOR PARTY MENU</FormLabel>
+                  <Flex justify="space-between" align="center" mb="3">
+                    <Text fontWeight="800" fontSize="sm" color="#1e293b" textTransform="uppercase">
+                      2. Event Days &amp; Meal Schedule
+                    </Text>
+                    <Button
+                      size="xs"
+                      leftIcon={<Plus size={14} />}
+                      colorScheme="purple"
+                      variant="outline"
+                      onClick={handleAddPartyDay}
+                      fontWeight="700"
+                    >
+                      + Add Event Day
+                    </Button>
+                  </Flex>
+
+                  {/* Day by Day Container */}
+                  <VStack spacing="5" align="stretch">
+                    {partyDatesList.map((day, dIdx) => (
+                      <Box
+                        key={day.id}
+                        p="5"
+                        bg="white"
+                        border="1.5px solid #e2e8f0"
+                        borderRadius="2xl"
+                        boxShadow="sm"
+                      >
+                        {/* Day Header */}
+                        <Flex justify="space-between" align="center" mb="4" pb="3" borderBottom="1px solid #f1f5f9">
+                          <HStack spacing="2.5">
+                            <Flex w="28px" h="28px" borderRadius="full" bg="purple.700" color="white" align="center" justify="center" fontWeight="800" fontSize="xs">
+                              {dIdx + 1}
+                            </Flex>
+                            <Text fontWeight="800" fontSize="md" color="#0f172a">
+                              Event Day {dIdx + 1}
+                            </Text>
+                          </HStack>
+
+                          <HStack spacing="2">
+                            <Button
+                              size="xs"
+                              leftIcon={<Plus size={12} />}
+                              colorScheme="purple"
+                              variant="ghost"
+                              onClick={() => handleAddMealToDay(day.id)}
+                            >
+                              + Add Meal
+                            </Button>
+                            {partyDatesList.length > 1 && (
+                              <IconButton
+                                size="xs"
+                                variant="ghost"
+                                colorScheme="red"
+                                icon={<Trash2 size={14} />}
+                                onClick={() => handleRemovePartyDay(day.id)}
+                                aria-label="Delete Day"
+                              />
+                            )}
+                          </HStack>
+                        </Flex>
+
+                        {/* Occasion & Date */}
+                        <SimpleGrid columns={{ base: 1, md: 2 }} spacing="4" mb="4">
+                          <FormControl isRequired>
+                            <FormLabel {...formLabelStyle}>OCCASION *</FormLabel>
+                            <Select
+                              value={day.occasion}
+                              onChange={(e) => setPartyDatesList(prev => prev.map(d => d.id === day.id ? { ...d, occasion: e.target.value } : d))}
+                              {...selectStyle}
+                              h="40px"
+                            >
+                              {occasionTypes.map(occ => (
+                                <option key={occ} value={occ}>{occ}</option>
+                              ))}
+                            </Select>
+                          </FormControl>
+
+                          <FormControl isRequired>
+                            <FormLabel {...formLabelStyle}>EVENT DATE *</FormLabel>
+                            <Input
+                              type="date"
+                              value={day.date}
+                              onChange={(e) => setPartyDatesList(prev => prev.map(d => d.id === day.id ? { ...d, date: e.target.value } : d))}
+                              {...inputStyle}
+                              h="40px"
+                            />
+                          </FormControl>
+                        </SimpleGrid>
+
+                        {/* Meals Inside This Day */}
+                        <VStack spacing="4" align="stretch">
+                          {day.meals.map((meal, mIdx) => (
+                            <Box
+                              key={meal.id}
+                              p="4"
+                              bg="#faf5ff"
+                              border="1.5px solid #e9d5ff"
+                              borderRadius="xl"
+                            >
+                              {/* Meal Header */}
+                              <Flex justify="space-between" align="center" mb="3">
+                                <Box>
+                                  <Text fontWeight="800" fontSize="sm" color="purple.900">
+                                    Meal {mIdx + 1}: {meal.mealType}
+                                  </Text>
+                                  <Text fontSize="xs" color="#64748b">
+                                    Guest count, serving time and customized menu
+                                  </Text>
+                                </Box>
+
+                                {day.meals.length > 1 && (
+                                  <IconButton
+                                    size="xs"
+                                    variant="ghost"
+                                    colorScheme="red"
+                                    icon={<Trash2 size={13} />}
+                                    onClick={() => handleRemoveMealFromDay(day.id, meal.id)}
+                                    aria-label="Remove Meal"
+                                  />
+                                )}
+                              </Flex>
+
+                              <SimpleGrid columns={{ base: 1, md: 3 }} spacing="3" mb="4">
+                                <FormControl isRequired>
+                                  <FormLabel {...formLabelStyle}>MEAL TYPE *</FormLabel>
+                                  <Select
+                                    value={meal.mealType}
+                                    onChange={(e) => {
+                                      setPartyDatesList(prev => prev.map(d => d.id === day.id ? {
+                                        ...d,
+                                        meals: d.meals.map(m => m.id === meal.id ? { ...m, mealType: e.target.value } : m)
+                                      } : d));
+                                    }}
+                                    {...selectStyle}
+                                    bg="white"
+                                    h="38px"
+                                  >
+                                    {['Breakfast', 'Lunch', 'High Tea / Snacks', 'Dinner', 'Full Day Party'].map(m => (
+                                      <option key={m} value={m}>{m}</option>
+                                    ))}
+                                  </Select>
+                                </FormControl>
+
+                                <FormControl isRequired>
+                                  <FormLabel {...formLabelStyle}>NUMBER OF GUESTS *</FormLabel>
+                                  <Input
+                                    type="number"
+                                    value={meal.guests}
+                                    onChange={(e) => {
+                                      const g = parseInt(e.target.value, 10) || 1;
+                                      setPartyDatesList(prev => prev.map(d => d.id === day.id ? {
+                                        ...d,
+                                        meals: d.meals.map(m => m.id === meal.id ? { ...m, guests: g } : m)
+                                      } : d));
+                                    }}
+                                    {...inputStyle}
+                                    bg="white"
+                                    h="38px"
+                                  />
+                                </FormControl>
+
+                                <FormControl isRequired>
+                                  <FormLabel {...formLabelStyle}>SERVING TIME *</FormLabel>
+                                  <Input
+                                    value={meal.servingTime}
+                                    onChange={(e) => {
+                                      setPartyDatesList(prev => prev.map(d => d.id === day.id ? {
+                                        ...d,
+                                        meals: d.meals.map(m => m.id === meal.id ? { ...m, servingTime: e.target.value } : m)
+                                      } : d));
+                                    }}
+                                    placeholder="e.g. 08:00 PM"
+                                    {...inputStyle}
+                                    bg="white"
+                                    h="38px"
+                                  />
+                                </FormControl>
+                              </SimpleGrid>
+
+                              {/* Menu Choice Selector: Choose Now vs Later */}
+                              <Box mb="4">
+                                <FormLabel {...formLabelStyle}>MENU SELECTION PREFERENCE *</FormLabel>
+                                <SimpleGrid columns={{ base: 1, sm: 2 }} spacing="3">
+                                  <Box
+                                    as="button"
+                                    type="button"
+                                    p="3"
+                                    borderRadius="xl"
+                                    textAlign="left"
+                                    bg={meal.menuChoice === 'now' ? '#f3e8ff' : 'white'}
+                                    border={meal.menuChoice === 'now' ? '2px solid #7c3aed' : '1px solid #cbd5e1'}
+                                    onClick={() => {
+                                      setPartyDatesList(prev => prev.map(d => d.id === day.id ? {
+                                        ...d,
+                                        meals: d.meals.map(m => m.id === meal.id ? { ...m, menuChoice: 'now' } : m)
+                                      } : d));
+                                    }}
+                                  >
+                                    <HStack spacing="2.5">
+                                      <Box w="16px" h="16px" borderRadius="full" border="2px solid" borderColor={meal.menuChoice === 'now' ? '#7c3aed' : '#94a3b8'} p="2px">
+                                        {meal.menuChoice === 'now' && <Box w="100%" h="100%" borderRadius="full" bg="#7c3aed" />}
+                                      </Box>
+                                      <Box>
+                                        <Text fontWeight="800" fontSize="xs" color={meal.menuChoice === 'now' ? 'purple.900' : '#1e293b'}>
+                                          I choose menu now
+                                        </Text>
+                                        <Text fontSize="10px" color="#64748b">Customize cuisines &amp; specific dishes</Text>
+                                      </Box>
+                                    </HStack>
+                                  </Box>
+
+                                  <Box
+                                    as="button"
+                                    type="button"
+                                    p="3"
+                                    borderRadius="xl"
+                                    textAlign="left"
+                                    bg={meal.menuChoice === 'later' ? '#eff6ff' : 'white'}
+                                    border={meal.menuChoice === 'later' ? '2px solid #2563eb' : '1px solid #cbd5e1'}
+                                    onClick={() => {
+                                      setPartyDatesList(prev => prev.map(d => d.id === day.id ? {
+                                        ...d,
+                                        meals: d.meals.map(m => m.id === meal.id ? { ...m, menuChoice: 'later' } : m)
+                                      } : d));
+                                    }}
+                                  >
+                                    <HStack spacing="2.5">
+                                      <Box w="16px" h="16px" borderRadius="full" border="2px solid" borderColor={meal.menuChoice === 'later' ? '#2563eb' : '#94a3b8'} p="2px">
+                                        {meal.menuChoice === 'later' && <Box w="100%" h="100%" borderRadius="full" bg="#2563eb" />}
+                                      </Box>
+                                      <Box>
+                                        <Text fontWeight="800" fontSize="xs" color={meal.menuChoice === 'later' ? 'blue.900' : '#1e293b'}>
+                                          I choose menu later
+                                        </Text>
+                                        <Text fontSize="10px" color="#64748b">Decide dish counts now, items later</Text>
+                                      </Box>
+                                    </HStack>
+                                  </Box>
+                                </SimpleGrid>
+                              </Box>
+
+                              {/* IF MENU CHOICE IS "NOW": INTERACTIVE DISH SELECTOR */}
+                              {meal.menuChoice === 'now' && (
+                                <Box p="4" bg="white" border="1.5px solid #e9d5ff" borderRadius="xl">
+                                  {/* Filter Bar: All | Veg | Nonveg */}
+                                  <Flex justify="space-between" align="center" mb="3" flexWrap="wrap" gap="2">
+                                    <HStack spacing="1" bg="#f1f5f9" p="1" borderRadius="full">
+                                      {['All', 'Veg', 'Nonveg'].map((pref) => {
+                                        const isActive = meal.foodPrefFilter === pref;
+                                        return (
+                                          <Button
+                                            key={pref}
+                                            size="xs"
+                                            borderRadius="full"
+                                            px="3"
+                                            h="28px"
+                                            bg={isActive ? '#0052cc' : 'transparent'}
+                                            color={isActive ? 'white' : '#475569'}
+                                            fontWeight="700"
+                                            _hover={{ bg: isActive ? '#0052cc' : '#e2e8f0' }}
+                                            onClick={() => {
+                                              setPartyDatesList(prev => prev.map(d => d.id === day.id ? {
+                                                ...d,
+                                                meals: d.meals.map(m => m.id === meal.id ? { ...m, foodPrefFilter: pref } : m)
+                                              } : d));
+                                            }}
+                                          >
+                                            {pref}
+                                          </Button>
+                                        );
+                                      })}
+                                    </HStack>
+
+                                    {/* Dish Search */}
+                                    <InputGroup size="xs" w="200px">
+                                      <InputLeftElement pointerEvents="none">
+                                        <Search size={12} color="#94a3b8" />
+                                      </InputLeftElement>
+                                      <Input
+                                        placeholder="Search dishes..."
+                                        value={dishSearchQuery}
+                                        onChange={(e) => setDishSearchQuery(e.target.value)}
+                                        borderRadius="md"
+                                        bg="#f8fafc"
+                                      />
+                                    </InputGroup>
+                                  </Flex>
+
+                                  {/* Subtitle Checkmark line, Selected count and Close All */}
+                                  <Flex justify="space-between" align="center" mb="3" py="1.5" px="2" bg="#f8fafc" borderRadius="md">
+                                    <HStack spacing="1.5" flex="1">
+                                      <CheckCircle2 size={13} color="#16a34a" />
+                                      <Text fontSize="11px" color="#64748b" noOfLines={1}>
+                                        Can be made without onion, garlic
+                                      </Text>
+                                    </HStack>
+                                    <HStack spacing="2">
+                                      <Badge colorScheme="blue" fontSize="10.5px" px="2" py="0.5" borderRadius="md">
+                                        Selected: {meal.selectedMenu.length}
+                                      </Badge>
+                                      <Button
+                                        size="xs"
+                                        h="22px"
+                                        fontSize="10px"
+                                        variant="outline"
+                                        borderColor="#cbd5e1"
+                                        onClick={() => {
+                                          const allExpanded = Object.keys(expandedCategories).length > 0;
+                                          if (allExpanded) setExpandedCategories({});
+                                          else {
+                                            const map = {};
+                                            DEFAULT_PARTY_CATEGORIES.forEach(c => map[c] = true);
+                                            setExpandedCategories(map);
+                                          }
+                                        }}
+                                      >
+                                        {Object.keys(expandedCategories).length > 0 ? 'Close All ▴' : 'Expand All ▾'}
+                                      </Button>
+                                    </HStack>
+                                  </Flex>
+
+                                  {/* Category Accordion Dropdowns */}
+                                  <VStack spacing="3" align="stretch">
+                                    {DEFAULT_PARTY_CATEGORIES.map((cat) => {
+                                      const isExp = !!expandedCategories[cat];
+                                      const catDishes = menuCatalogItems.filter(dish => {
+                                        const matchesCat = dish.category.toLowerCase().includes(cat.toLowerCase()) || cat.toLowerCase().includes(dish.category.toLowerCase());
+                                        if (!matchesCat) return false;
+                                        if (meal.foodPrefFilter === 'Veg' && dish.isNonVeg) return false;
+                                        if (meal.foodPrefFilter === 'Nonveg' && !dish.isNonVeg) return false;
+                                        if (dishSearchQuery && !dish.name.toLowerCase().includes(dishSearchQuery.toLowerCase())) return false;
+                                        return true;
+                                      });
+
+                                      const selectedInCat = catDishes.filter(d => meal.selectedMenu.includes(d.name));
+
+                                      return (
+                                        <Box key={cat} border="1px solid #e2e8f0" borderRadius="xl" overflow="hidden">
+                                          {/* Accordion Header */}
+                                          <Flex
+                                            p="3"
+                                            bg={isExp ? '#f8fafc' : 'white'}
+                                            justify="space-between"
+                                            align="center"
+                                            cursor="pointer"
+                                            onClick={() => setExpandedCategories(prev => ({ ...prev, [cat]: !prev[cat] }))}
+                                            _hover={{ bg: '#f8fafc' }}
+                                          >
+                                            <HStack spacing="2">
+                                              <Text fontWeight="800" fontSize="xs" color="#1e293b">
+                                                {cat} <Text as="span" fontSize="10px" color="#94a3b8" fontWeight="normal">(optional)</Text>
+                                              </Text>
+                                              {selectedInCat.length > 0 && (
+                                                <Badge colorScheme="blue" fontSize="10px" borderRadius="full" px="2">
+                                                  {selectedInCat.length} selected
+                                                </Badge>
+                                              )}
+                                            </HStack>
+                                            <HStack spacing="2">
+                                              <Text fontSize="xs" color="#64748b" fontWeight="600">
+                                                {selectedInCat.length > 0 ? selectedInCat.map(d => d.name).slice(0, 2).join(', ') + (selectedInCat.length > 2 ? '...' : '') : 'Select from here'}
+                                              </Text>
+                                              {isExp ? <ChevronUp size={16} color="#64748b" /> : <ChevronDown size={16} color="#64748b" />}
+                                            </HStack>
+                                          </Flex>
+
+                                          {/* Accordion Body */}
+                                          <Collapse in={isExp} animateOpacity>
+                                            <Box p="3" bg="white" borderTop="1px solid #f1f5f9">
+                                              {catDishes.length === 0 ? (
+                                                <Text fontSize="xs" color="#94a3b8" textAlign="center" py="2">
+                                                  No dishes matching current filter.
+                                                </Text>
+                                              ) : (
+                                                <SimpleGrid columns={{ base: 1, sm: 2, md: 3 }} spacing="2.5">
+                                                  {catDishes.map((dish) => {
+                                                    const isChecked = meal.selectedMenu.includes(dish.name);
+                                                    return (
+                                                      <Flex
+                                                        key={dish.name}
+                                                        p="2.5"
+                                                        borderRadius="lg"
+                                                        border={isChecked ? '1.5px solid #2563eb' : '1px solid #e2e8f0'}
+                                                        bg={isChecked ? '#eff6ff' : 'white'}
+                                                        align="center"
+                                                        justify="space-between"
+                                                        cursor="pointer"
+                                                        onClick={() => handleToggleDishForMeal(day.id, meal.id, dish.name)}
+                                                        _hover={{ shadow: 'xs' }}
+                                                      >
+                                                        <HStack spacing="2">
+                                                          <Box
+                                                            w="8px"
+                                                            h="8px"
+                                                            borderRadius="full"
+                                                            bg={dish.isNonVeg ? '#ef4444' : '#22c55e'}
+                                                          />
+                                                          <Box>
+                                                            <Text fontSize="xs" fontWeight="700" color="#1e293b" noOfLines={1}>
+                                                              {dish.name}
+                                                            </Text>
+                                                            <Text fontSize="9.5px" color="#64748b">{dish.cuisine}</Text>
+                                                          </Box>
+                                                        </HStack>
+                                                        <Checkbox isChecked={isChecked} colorScheme="blue" pointerEvents="none" size="sm" />
+                                                      </Flex>
+                                                    );
+                                                  })}
+                                                </SimpleGrid>
+                                              )}
+                                            </Box>
+                                          </Collapse>
+                                        </Box>
+                                      );
+                                    })}
+                                  </VStack>
+                                </Box>
+                              )}
+
+                              {/* IF MENU CHOICE IS "LATER": CATEGORY COUNTERS */}
+                              {meal.menuChoice === 'later' && (
+                                <Box p="4" bg="white" border="1.5px solid #bfdbfe" borderRadius="xl">
+                                  <Text fontSize="xs" fontWeight="800" color="#1e293b" mb="3">
+                                    Select number of dishes for each category:
+                                  </Text>
+                                  <SimpleGrid columns={{ base: 2, sm: 3, md: 4 }} spacing="3">
+                                    {DEFAULT_PARTY_CATEGORIES.map(cat => {
+                                      const count = meal.categoryDishCounts[cat] || 0;
+                                      return (
+                                        <Box key={cat} p="2.5" border="1px solid #e2e8f0" borderRadius="lg" bg="#f8fafc">
+                                          <Text fontSize="xs" fontWeight="700" color="#334155" mb="1.5">{cat}</Text>
+                                          <HStack spacing="2" justify="space-between">
+                                            <IconButton
+                                              size="xs"
+                                              icon={<Minus size={12} />}
+                                              onClick={() => handleUpdateDishCategoryCount(day.id, meal.id, cat, -1)}
+                                            />
+                                            <Text fontWeight="800" fontSize="sm" color="purple.900">{count}</Text>
+                                            <IconButton
+                                              size="xs"
+                                              icon={<Plus size={12} />}
+                                              onClick={() => handleUpdateDishCategoryCount(day.id, meal.id, cat, 1)}
+                                            />
+                                          </HStack>
+                                        </Box>
+                                      );
+                                    })}
+                                  </SimpleGrid>
+                                </Box>
+                              )}
+                            </Box>
+                          ))}
+                        </VStack>
+                      </Box>
+                    ))}
+                  </VStack>
+                </Box>
+
+                {/* 3. ADD-ON SERVICES */}
+                <Box p="5" bg="white" border="1.5px solid #e2e8f0" borderRadius="2xl">
+                  <Text fontWeight="800" fontSize="sm" color="#1e293b" mb="3" textTransform="uppercase">
+                    3. Optional Party Add-ons
+                  </Text>
+                  <SimpleGrid columns={{ base: 1, md: 2 }} spacing="3">
+                    <Flex p="3" border="1px solid #e2e8f0" borderRadius="xl" align="center" justify="space-between">
+                      <HStack spacing="2.5">
+                        <Flame size={18} color="#ea580c" />
+                        <Box>
+                          <Text fontWeight="700" fontSize="xs" color="#1e293b">Commercial Burner &amp; Stove</Text>
+                          <Text fontSize="10px" color="#64748b">+₹350 flat</Text>
+                        </Box>
+                      </HStack>
+                      <Checkbox isChecked={partyBurnerStove} onChange={(e) => setPartyBurnerStove(e.target.checked)} colorScheme="purple" />
+                    </Flex>
+
+                    <Flex p="3" border="1px solid #e2e8f0" borderRadius="xl" align="center" justify="space-between">
+                      <HStack spacing="2.5">
+                        <UtensilsCrossed size={18} color="#0284c7" />
+                        <Box>
+                          <Text fontWeight="700" fontSize="xs" color="#1e293b">Crockery &amp; Premium Cutlery</Text>
+                          <Text fontSize="10px" color="#64748b">+₹500 flat</Text>
+                        </Box>
+                      </HStack>
+                      <Checkbox isChecked={partyCrockery} onChange={(e) => setPartyCrockery(e.target.checked)} colorScheme="purple" />
+                    </Flex>
+
+                    <Flex p="3" border="1px solid #e2e8f0" borderRadius="xl" align="center" justify="space-between">
+                      <HStack spacing="2.5">
+                        <Sparkle size={18} color="#16a34a" />
+                        <Box>
+                          <Text fontWeight="700" fontSize="xs" color="#1e293b">Kitchen Cleaner &amp; Helper</Text>
+                          <Text fontSize="10px" color="#64748b">+₹400 flat</Text>
+                        </Box>
+                      </HStack>
+                      <Checkbox isChecked={partyKitchenCleaner} onChange={(e) => setPartyKitchenCleaner(e.target.checked)} colorScheme="purple" />
+                    </Flex>
+
+                    <Flex p="3" border="1px solid #e2e8f0" borderRadius="xl" align="center" justify="space-between">
+                      <HStack spacing="2.5">
+                        <Users size={18} color="#9333ea" />
+                        <Box>
+                          <Text fontWeight="700" fontSize="xs" color="#1e293b">Professional Waiter Staff</Text>
+                          <Text fontSize="10px" color="#64748b">₹600 / waiter</Text>
+                        </Box>
+                      </HStack>
+                      <HStack spacing="2">
+                        {partyWaiterStaff && (
+                          <HStack spacing="1">
+                            <IconButton size="xs" icon={<Minus size={10} />} onClick={() => setPartyWaiterCount(Math.max(1, partyWaiterCount - 1))} />
+                            <Text fontSize="xs" fontWeight="bold">{partyWaiterCount}</Text>
+                            <IconButton size="xs" icon={<Plus size={10} />} onClick={() => setPartyWaiterCount(partyWaiterCount + 1)} />
+                          </HStack>
+                        )}
+                        <Checkbox isChecked={partyWaiterStaff} onChange={(e) => setPartyWaiterStaff(e.target.checked)} colorScheme="purple" />
+                      </HStack>
+                    </Flex>
+                  </SimpleGrid>
+                </Box>
+
+                {/* 4. COUPONS / PROMO CODES */}
+                <Box p="5" bg="white" border="1.5px solid #e2e8f0" borderRadius="2xl">
+                  <Text fontWeight="800" fontSize="sm" color="#1e293b" mb="3" textTransform="uppercase">
+                    4. Apply Coupon / Promo Code
+                  </Text>
+                  <HStack spacing="3" mb="3">
+                    <InputGroup size="sm">
+                      <InputLeftElement pointerEvents="none">
+                        <TagIcon size={14} color="#94a3b8" />
+                      </InputLeftElement>
+                      <Input
+                        placeholder="Enter Promo Code (e.g. PARTY20, ZOMO40)"
+                        value={partyCouponInput}
+                        onChange={(e) => setPartyCouponInput(e.target.value.toUpperCase())}
+                        borderRadius="lg"
+                        bg="#f8fafc"
+                        h="40px"
+                      />
+                    </InputGroup>
+                    <Button
+                      size="sm"
+                      h="40px"
+                      px="5"
+                      colorScheme="purple"
+                      onClick={() => applyPartyCouponCode()}
+                    >
+                      Apply
+                    </Button>
+                  </HStack>
+
                   <Wrap spacing="2">
-                    {cuisineOptions.map(cuisine => {
-                      const isCuisineSelected = selectedCuisines.includes(cuisine);
+                    {availableOffers.map(offer => {
+                      const isApplied = partyAppliedCoupon === offer.code;
                       return (
-                        <WrapItem key={cuisine}>
-                          <Tag
-                            size="md"
+                        <WrapItem key={offer.code}>
+                          <Button
+                            size="xs"
+                            variant={isApplied ? 'solid' : 'outline'}
+                            colorScheme="purple"
+                            onClick={() => applyPartyCouponCode(offer.code)}
                             borderRadius="full"
-                            variant={isCuisineSelected ? 'solid' : 'outline'}
-                            colorScheme="orange"
-                            cursor="pointer"
-                            onClick={() => toggleCuisine(cuisine)}
+                            fontSize="xs"
                             px="3"
-                            py="1.5"
                           >
-                            {isCuisineSelected && <Check size={12} style={{ marginRight: 4 }} />}
-                            {cuisine}
-                          </Tag>
+                            {offer.code} ({offer.discountValue}% OFF)
+                          </Button>
                         </WrapItem>
                       );
                     })}
                   </Wrap>
                 </Box>
 
-                {/* Dynamic Menu Dishes Quick Selection Chips */}
-                <Box p="3.5" bg="#f8fafc" border="1px solid #e2e8f0" borderRadius="xl">
-                  <Flex justify="space-between" align="center" mb="2" flexWrap="wrap" gap="2">
-                    <HStack spacing="2">
-                      <UtensilsCrossed size={16} color="#ea580c" />
-                      <Text fontSize="xs" fontWeight="800" color="#334155" textTransform="uppercase">
-                        Popular Dishes for Selected Cuisines (Click to Add / Remove)
-                      </Text>
-                    </HStack>
-                    <Button
-                      size="xs"
-                      variant="solid"
-                      colorScheme="orange"
-                      leftIcon={<Sparkles size={12} />}
-                      onClick={() => handleOpenMenuSelector('general')}
-                      fontWeight="700"
-                    >
-                      Browse Full Menu Catalog
-                    </Button>
-                  </Flex>
+                {/* 5. PRICING SUMMARY CARD (EXACT REPLICA) */}
+                <Box
+                  p="5"
+                  bg="#faf5ff"
+                  border="1.5px solid #d8b4fe"
+                  borderRadius="2xl"
+                  boxShadow="sm"
+                >
+                  <Text fontWeight="800" fontSize="sm" color="purple.900" mb="3">
+                    Pricing Summary
+                  </Text>
+                  <VStack spacing="2" align="stretch" fontSize="xs">
+                    <Flex justify="space-between">
+                      <Text color="#475569">Base Chef Fee ({partyDatesList.length} {partyDatesList.length === 1 ? 'Day' : 'Days'})</Text>
+                      <Text fontWeight="bold">₹{partyTotals.baseChefRate.toFixed(0)}</Text>
+                    </Flex>
 
-                  <Wrap spacing="2" mt="2">
-                    {menuCatalogItems
-                      .filter(dish => selectedCuisines.length === 0 || selectedCuisines.some(c => dish.cuisine.toLowerCase().includes(c.toLowerCase()) || c.toLowerCase().includes(dish.cuisine.toLowerCase())))
-                      .slice(0, 16)
-                      .map((dish) => {
-                        const currentDishes = (formData.menuDetails || '').split(',').map(s => s.trim().toLowerCase());
-                        const isDishSelected = currentDishes.includes(dish.name.trim().toLowerCase());
-                        return (
-                          <WrapItem key={dish.name}>
-                            <Tag
-                              size="sm"
-                              borderRadius="full"
-                              variant={isDishSelected ? 'solid' : 'subtle'}
-                              colorScheme={isDishSelected ? 'green' : (dish.isNonVeg ? 'red' : 'gray')}
-                              cursor="pointer"
-                              onClick={() => handleToggleDish(dish.name, 'general')}
-                              px="2.5"
-                              py="1"
-                              border={isDishSelected ? 'none' : '1px solid #cbd5e1'}
-                              _hover={{ transform: 'scale(1.03)', shadow: 'xs' }}
-                              transition="all 0.15s"
-                            >
-                              {isDishSelected ? <Check size={11} style={{ marginRight: 4 }} /> : <Plus size={11} style={{ marginRight: 4 }} />}
-                              {dish.name}
-                            </Tag>
-                          </WrapItem>
-                        );
-                      })}
-                  </Wrap>
-                </Box>
+                    <Flex justify="space-between">
+                      <Text color="#475569">Guest &amp; Menu Rate ({partyTotals.totalGuests} Guests • {partyTotals.totalDishes} Dishes)</Text>
+                      <Text fontWeight="bold">₹{(partyTotals.guestRateTotal + partyTotals.menuItemsTotal).toFixed(0)}</Text>
+                    </Flex>
 
-                <FormControl>
-                  <Flex justify="space-between" align="center" mb="1.5">
-                    <FormLabel {...formLabelStyle} mb="0">SELECTED MENU / SPECIAL DISHES</FormLabel>
-                    <Button
-                      size="xs"
-                      variant="ghost"
-                      colorScheme="blue"
-                      leftIcon={<UtensilsCrossed size={12} />}
-                      onClick={() => handleOpenMenuSelector('general')}
-                    >
-                      Open Menu Catalog & Selector
-                    </Button>
-                  </Flex>
-                  <Textarea
-                    name="menuDetails"
-                    value={formData.menuDetails}
-                    onChange={handleChange}
-                    placeholder="e.g. Paneer Butter Masala, Dal Makhani, Chicken Biryani, Butter Naan, Gulab Jamun"
-                    {...inputStyle}
-                    minH="80px"
-                  />
-                </FormControl>
-
-                {/* Meals for the Day (Matching Screenshot 3) */}
-                <Box p="4" bg="#fffaf5" border="1.5px solid #fed7aa" borderRadius="xl">
-                  <Flex justify="space-between" align="center" mb="3" flexWrap="wrap" gap="2">
-                    <HStack spacing="3">
-                      <Flex w="36px" h="36px" borderRadius="lg" bg="#fff7ed" color="#ea580c" align="center" justify="center">
-                        <UtensilsCrossed size={18} />
+                    {partyTotals.addOnsTotal > 0 && (
+                      <Flex justify="space-between">
+                        <Text color="#475569">Extra Add-ons Charges</Text>
+                        <Text fontWeight="bold">₹{partyTotals.addOnsTotal.toFixed(0)}</Text>
                       </Flex>
-                      <Box>
-                        <HStack spacing="2">
-                          <Text fontWeight="800" fontSize="sm" color="#1e293b">
-                            Meals for the Day
-                          </Text>
-                          <Info size={14} color="#94a3b8" />
-                        </HStack>
-                        <Text fontSize="xs" color="#64748b">
-                          Add multiple meals if required for the same day.
-                        </Text>
-                      </Box>
-                    </HStack>
+                    )}
 
-                    <Button
-                      size="sm"
-                      leftIcon={<Plus size={14} />}
-                      bg="white"
-                      color="#ea580c"
-                      border="1.5px solid #ea580c"
-                      _hover={{ bg: '#fff7ed' }}
-                      onClick={handleAddPartyMeal}
-                      fontWeight="700"
-                      px="4"
-                      h="34px"
-                      borderRadius="md"
-                    >
-                      + Add Meal
-                    </Button>
-                  </Flex>
-
-                  {/* Meal Rows */}
-                  <VStack spacing="3" align="stretch" mt="2">
-                    {partyMeals.map((meal) => (
-                      <Flex
-                        key={meal.id}
-                        p="3"
-                        bg="white"
-                        border="1px solid #fed7aa"
-                        borderRadius="lg"
-                        gap="3"
-                        align="center"
-                        flexWrap="wrap"
-                      >
-                        <Box color="#94a3b8" cursor="grab" pt="5">
-                          <GripVertical size={16} />
-                        </Box>
-
-                        <Box minW="140px" flex="1">
-                          <FormLabel fontSize="11px" fontWeight="700" color="#64748b" mb="1">MEAL TYPE *</FormLabel>
-                          <Select
-                            size="sm"
-                            h="36px"
-                            value={meal.mealType}
-                            onChange={(e) => handleUpdatePartyMeal(meal.id, 'mealType', e.target.value)}
-                          >
-                            {['Dinner', 'Lunch', 'Breakfast', 'High Tea / Snacks', 'Full Day Party'].map(m => (
-                              <option key={m} value={m}>{m}</option>
-                            ))}
-                          </Select>
-                        </Box>
-
-                        <Box minW="110px" w="120px">
-                          <FormLabel fontSize="11px" fontWeight="700" color="#64748b" mb="1">NO. OF GUESTS *</FormLabel>
-                          <Input
-                            size="sm"
-                            h="36px"
-                            type="number"
-                            value={meal.guests}
-                            onChange={(e) => handleUpdatePartyMeal(meal.id, 'guests', parseInt(e.target.value, 10) || 1)}
-                          />
-                        </Box>
-
-                        <Box minW="220px" flex="2.5">
-                          <Flex justify="space-between" align="center" mb="1">
-                            <FormLabel fontSize="11px" fontWeight="700" color="#64748b" mb="0">MENU / SPECIAL DISHES</FormLabel>
-                            <Button
-                              size="xs"
-                              h="20px"
-                              fontSize="10px"
-                              variant="link"
-                              colorScheme="orange"
-                              leftIcon={<Plus size={10} />}
-                              onClick={() => handleOpenMenuSelector(meal.id)}
-                            >
-                              Pick Dishes
-                            </Button>
-                          </Flex>
-                          <Input
-                            size="sm"
-                            h="36px"
-                            value={meal.menu}
-                            onChange={(e) => handleUpdatePartyMeal(meal.id, 'menu', e.target.value)}
-                            placeholder="e.g. Biryani, Paneer, Dal, Naan"
-                          />
-                        </Box>
-
-                        <IconButton
-                          size="sm"
-                          mt="4"
-                          variant="ghost"
-                          colorScheme="red"
-                          icon={<Trash2 size={16} />}
-                          onClick={() => handleRemovePartyMeal(meal.id)}
-                          aria-label="Remove meal"
-                        />
+                    {partyTotals.discountAmount > 0 && (
+                      <Flex justify="space-between" color="green.700">
+                        <Text fontWeight="bold">Coupon Discount ({partyAppliedCoupon})</Text>
+                        <Text fontWeight="bold">-₹{partyTotals.discountAmount.toFixed(0)}</Text>
                       </Flex>
-                    ))}
+                    )}
+
+                    <Flex justify="space-between">
+                      <Text color="#475569">GST (18%)</Text>
+                      <Text fontWeight="bold">₹{partyTotals.gst.toFixed(0)}</Text>
+                    </Flex>
+
+                    <Divider borderColor="#d8b4fe" my="2" />
+
+                    <Flex justify="space-between" align="center">
+                      <Text fontWeight="800" fontSize="sm" color="#0f172a">Total Estimated Amount</Text>
+                      <Text fontWeight="800" fontSize="lg" color="purple.900">₹{partyTotals.finalAmount.toFixed(0)}</Text>
+                    </Flex>
+
+                    <Flex p="2.5" bg="purple.100" borderRadius="lg" justify="space-between" align="center" mt="2">
+                      <Text fontWeight="800" fontSize="xs" color="purple.900">Advance Payable (25%)</Text>
+                      <Text fontWeight="800" fontSize="sm" color="purple.900">₹{partyTotals.advanceAmount.toFixed(0)}</Text>
+                    </Flex>
                   </VStack>
-                </Box>
-
-                {/* Event Days / Multiple Days Booking (Optional) (Matching Screenshot 3) */}
-                <Box p="4" bg="#f8fbff" border="1.5px solid #bfdbfe" borderRadius="xl">
-                  <Flex justify="space-between" align="center" mb={partyEventDays.length > 0 ? "3" : "0"} flexWrap="wrap" gap="2">
-                    <HStack spacing="3">
-                      <Flex w="36px" h="36px" borderRadius="lg" bg="#eff6ff" color="#2563eb" align="center" justify="center">
-                        <Calendar size={18} />
-                      </Flex>
-                      <Box>
-                        <HStack spacing="2">
-                          <Text fontWeight="800" fontSize="sm" color="#1e293b">
-                            Event Days / Multiple Days Booking
-                          </Text>
-                          <Info size={14} color="#94a3b8" />
-                        </HStack>
-                        <Text fontSize="xs" color="#64748b">
-                          Add more days if the customer wants to book for multiple days.
-                        </Text>
-                      </Box>
-                    </HStack>
-
-                    <Button
-                      size="sm"
-                      leftIcon={<Plus size={14} />}
-                      bg="white"
-                      color="#2563eb"
-                      border="1.5px solid #2563eb"
-                      _hover={{ bg: '#eff6ff' }}
-                      onClick={handleAddPartyEventDay}
-                      fontWeight="700"
-                      px="4"
-                      h="34px"
-                      borderRadius="md"
-                    >
-                      + Add More Days
-                    </Button>
-                  </Flex>
-
-                  {/* List of Extra Event Days for Party */}
-                  {partyEventDays.length > 0 && (
-                    <VStack spacing="3" align="stretch" mt="3" pt="3" borderTop="1px dashed #bfdbfe">
-                      {partyEventDays.map((day, idx) => (
-                        <Flex
-                          key={day.id}
-                          p="3"
-                          bg="white"
-                          border="1px solid #dbeafe"
-                          borderRadius="lg"
-                          gap="3"
-                          align="center"
-                          flexWrap="wrap"
-                        >
-                          <Badge colorScheme="blue" px="2.5" py="1" borderRadius="md" fontSize="xs" fontWeight="800">
-                            Day {idx + 2}
-                          </Badge>
-
-                          <Box minW="140px" flex="1">
-                            <FormLabel fontSize="11px" fontWeight="700" color="#64748b" mb="1">Date of Party *</FormLabel>
-                            <Input
-                              size="sm"
-                              type="date"
-                              h="36px"
-                              value={day.date}
-                              onChange={(e) => handleUpdatePartyEventDay(day.id, 'date', e.target.value)}
-                            />
-                          </Box>
-
-                          <Box minW="140px" flex="1">
-                            <FormLabel fontSize="11px" fontWeight="700" color="#64748b" mb="1">Occasion / Event</FormLabel>
-                            <Select
-                              size="sm"
-                              h="36px"
-                              value={day.occasionType}
-                              onChange={(e) => handleUpdatePartyEventDay(day.id, 'occasionType', e.target.value)}
-                            >
-                              {occasionTypes.map(ev => (
-                                <option key={ev} value={ev}>{ev}</option>
-                              ))}
-                            </Select>
-                          </Box>
-
-                          <Box minW="90px" w="100px">
-                            <FormLabel fontSize="11px" fontWeight="700" color="#64748b" mb="1">Guests</FormLabel>
-                            <Input
-                              size="sm"
-                              type="number"
-                              h="36px"
-                              value={day.noOfGuests}
-                              onChange={(e) => handleUpdatePartyEventDay(day.id, 'noOfGuests', parseInt(e.target.value, 10) || 1)}
-                            />
-                          </Box>
-
-                          <Box minW="130px" flex="1">
-                            <FormLabel fontSize="11px" fontWeight="700" color="#64748b" mb="1">Serving Meal</FormLabel>
-                            <Select
-                              size="sm"
-                              h="36px"
-                              value={day.mealType}
-                              onChange={(e) => handleUpdatePartyEventDay(day.id, 'mealType', e.target.value)}
-                            >
-                              {['Dinner', 'Lunch', 'Breakfast', 'High Tea / Snacks', 'Full Day Party'].map(m => (
-                                <option key={m} value={m}>{m}</option>
-                              ))}
-                            </Select>
-                          </Box>
-
-                          <Box minW="180px" flex="1.5">
-                            <FormLabel fontSize="11px" fontWeight="700" color="#64748b" mb="1">Menu / Special Dishes</FormLabel>
-                            <Input
-                              size="sm"
-                              h="36px"
-                              value={day.menu}
-                              onChange={(e) => handleUpdatePartyEventDay(day.id, 'menu', e.target.value)}
-                              placeholder="Dishes for this day"
-                            />
-                          </Box>
-
-                          <IconButton
-                            size="sm"
-                            mt="4"
-                            variant="ghost"
-                            colorScheme="red"
-                            icon={<Trash2 size={16} />}
-                            onClick={() => handleRemovePartyEventDay(day.id)}
-                            aria-label="Remove day"
-                          />
-                        </Flex>
-                      ))}
-                    </VStack>
-                  )}
                 </Box>
               </VStack>
             )}
@@ -2282,7 +2522,7 @@ const AddJob = () => {
               </FormControl>
 
               <FormControl>
-                <FormLabel {...formLabelStyle}>FULL ADDRESS / LANDMARK</FormLabel>
+                <FormLabel {...formLabelStyle}>FULL ADDRESS / VENUE</FormLabel>
                 <Input
                   name="address"
                   value={formData.address}
@@ -2391,162 +2631,65 @@ const AddJob = () => {
         </VStack>
       </form>
 
-      {/* Menu Catalog & Dish Selector Modal */}
-      <Modal isOpen={isOpenMenuModal} onClose={onCloseMenuModal} size="4xl" scrollBehavior="inside">
+      {/* FULL EVENT SUMMARY MODAL */}
+      <Modal isOpen={isOpenSummaryModal} onClose={onCloseSummaryModal} size="2xl" scrollBehavior="inside">
         <ModalOverlay bg="blackAlpha.600" backdropFilter="blur(3px)" />
         <ModalContent borderRadius="2xl" overflow="hidden">
-          <ModalHeader bg="#fff7ed" borderBottom="1px solid #fed7aa" py="4">
-            <Flex justify="space-between" align="center" pr="6">
+          <ModalHeader bgGradient="linear(to-r, purple.700, purple.900)" color="white" py="4">
+            <Flex justify="space-between" align="center">
               <HStack spacing="3">
-                <Flex w="38px" h="38px" borderRadius="xl" bg="#ffedd5" color="#ea580c" align="center" justify="center">
-                  <UtensilsCrossed size={20} />
-                </Flex>
+                <Receipt size={22} color="white" />
                 <Box>
-                  <Text fontSize="md" fontWeight="800" color="#1e293b">
-                    Party Menu Catalog & Dish Selector
-                  </Text>
-                  <Text fontSize="xs" color="#64748b">
-                    {menuModalTarget === 'general'
-                      ? 'Selecting dishes for General Party Menu'
-                      : `Selecting dishes for Meal: ${partyMeals.find(m => m.id === menuModalTarget)?.mealType || 'Selected Meal'}`}
-                  </Text>
+                  <Text fontSize="md" fontWeight="800">Complete Party Booking Summary</Text>
+                  <Text fontSize="xs" color="whiteAlpha.800">Review all days, meals, dish selections and billing breakdown</Text>
                 </Box>
               </HStack>
             </Flex>
           </ModalHeader>
-          <ModalCloseButton mt="2" />
+          <ModalCloseButton color="white" mt="2" />
 
           <ModalBody p="6">
-            {/* Search and Category Filter Bar */}
-            <VStack spacing="4" align="stretch" mb="5">
-              <InputGroup size="md">
-                <InputLeftElement pointerEvents="none">
-                  <Search size={16} color="#94a3b8" />
-                </InputLeftElement>
-                <Input
-                  placeholder="Search dishes by name (e.g. Paneer Butter Masala, Biryani, Naan)..."
-                  value={menuModalSearch}
-                  onChange={(e) => setMenuModalSearch(e.target.value)}
-                  borderRadius="xl"
-                  bg="#f8fafc"
-                  border="1.5px solid #e2e8f0"
-                />
-              </InputGroup>
-
-              {/* Category Pills */}
-              <Wrap spacing="2">
-                {['All', 'Main Course', 'Starters', 'Breads', 'Rice', 'Desserts', 'Street Food / Chaat', 'Healthy & Diet'].map((cat) => {
-                  const isCatActive = menuModalCategory === cat;
-                  return (
-                    <WrapItem key={cat}>
-                      <Tag
-                        size="md"
-                        borderRadius="full"
-                        variant={isCatActive ? 'solid' : 'outline'}
-                        colorScheme="orange"
-                        cursor="pointer"
-                        onClick={() => setMenuModalCategory(cat)}
-                        px="3"
-                        py="1.5"
-                        fontWeight="700"
-                        fontSize="xs"
-                      >
-                        {cat}
-                      </Tag>
-                    </WrapItem>
-                  );
-                })}
-              </Wrap>
-            </VStack>
-
-            {/* Dishes Grid */}
-            <SimpleGrid columns={{ base: 1, sm: 2, md: 3 }} spacing="3">
-              {menuCatalogItems
-                .filter(dish => {
-                  const matchesSearch = !menuModalSearch || dish.name.toLowerCase().includes(menuModalSearch.toLowerCase()) || dish.cuisine.toLowerCase().includes(menuModalSearch.toLowerCase());
-                  const matchesCategory = menuModalCategory === 'All' || dish.category.toLowerCase().includes(menuModalCategory.toLowerCase()) || dish.cuisine.toLowerCase().includes(menuModalCategory.toLowerCase());
-                  return matchesSearch && matchesCategory;
-                })
-                .map((dish) => {
-                  let isSelected = false;
-                  if (menuModalTarget === 'general') {
-                    const currentList = (formData.menuDetails || '').split(',').map(s => s.trim().toLowerCase());
-                    isSelected = currentList.includes(dish.name.trim().toLowerCase());
-                  } else {
-                    const targetMeal = partyMeals.find(m => m.id === menuModalTarget);
-                    const currentList = (targetMeal?.menu || '').split(',').map(s => s.trim().toLowerCase());
-                    isSelected = currentList.includes(dish.name.trim().toLowerCase());
-                  }
-
-                  return (
-                    <Box
-                      key={dish.name}
-                      p="3"
-                      borderRadius="xl"
-                      border="1.5px solid"
-                      borderColor={isSelected ? '#ea580c' : '#e2e8f0'}
-                      bg={isSelected ? '#fff7ed' : 'white'}
-                      cursor="pointer"
-                      onClick={() => handleToggleDish(dish.name, menuModalTarget)}
-                      _hover={{ shadow: 'sm', borderColor: '#ea580c' }}
-                      transition="all 0.15s"
-                    >
-                      <Flex justify="space-between" align="start" mb="2">
-                        <HStack spacing="1.5">
-                          <Box
-                            w="10px"
-                            h="10px"
-                            borderRadius="full"
-                            bg={dish.isNonVeg ? '#ef4444' : '#22c55e'}
-                            boxShadow="0 0 0 2px white, 0 0 0 3px #cbd5e1"
-                          />
-                          <Badge fontSize="10px" colorScheme={dish.isNonVeg ? 'red' : 'green'} variant="subtle" borderRadius="md">
-                            {dish.isNonVeg ? 'Non-Veg' : 'Veg'}
-                          </Badge>
-                        </HStack>
-                        <Checkbox
-                          isChecked={isSelected}
-                          colorScheme="orange"
-                          pointerEvents="none"
-                        />
-                      </Flex>
-
-                      <Text fontWeight="700" fontSize="sm" color="#1e293b" mb="1" noOfLines={1}>
-                        {dish.name}
+            <VStack spacing="5" align="stretch">
+              {partyDatesList.map((day, idx) => (
+                <Box key={day.id} p="4" bg="#faf5ff" border="1px solid #e9d5ff" borderRadius="xl">
+                  <Flex justify="space-between" mb="2">
+                    <Text fontWeight="800" fontSize="sm" color="purple.900">Day {idx + 1}: {day.occasion}</Text>
+                    <Badge colorScheme="purple">{day.date}</Badge>
+                  </Flex>
+                  {day.meals.map((m, mIdx) => (
+                    <Box key={m.id} pl="3" mt="2" borderLeft="2px solid #c084fc">
+                      <Text fontWeight="700" fontSize="xs" color="#1e293b">
+                        Meal {mIdx + 1}: {m.mealType} ({m.guests} Guests) • {m.servingTime}
                       </Text>
-
-                      <HStack spacing="1.5" mt="2">
-                        <Badge fontSize="9px" colorScheme="blue" variant="outline" borderRadius="sm">
-                          {dish.cuisine}
-                        </Badge>
-                        <Badge fontSize="9px" colorScheme="purple" variant="outline" borderRadius="sm">
-                          {dish.category}
-                        </Badge>
-                      </HStack>
+                      <Text fontSize="xs" color="#64748b" mt="0.5">
+                        Dishes: {m.menuChoice === 'now' ? (m.selectedMenu.join(', ') || 'None selected') : Object.entries(m.categoryDishCounts).filter(([_, c]) => c > 0).map(([k, c]) => `${k} (${c})`).join(', ')}
+                      </Text>
                     </Box>
-                  );
-                })}
-            </SimpleGrid>
+                  ))}
+                </Box>
+              ))}
+
+              {/* Billing Table */}
+              <Box p="4" bg="#f8fafc" border="1px solid #e2e8f0" borderRadius="xl">
+                <Text fontWeight="800" fontSize="xs" color="#1e293b" mb="2" textTransform="uppercase">Billing Estimate</Text>
+                <VStack spacing="1.5" align="stretch" fontSize="xs">
+                  <Flex justify="space-between"><Text color="#64748b">Base Chef Fee ({partyDatesList.length} Days)</Text><Text fontWeight="bold">₹{partyTotals.baseChefRate}</Text></Flex>
+                  <Flex justify="space-between"><Text color="#64748b">Guest &amp; Menu Charges</Text><Text fontWeight="bold">₹{partyTotals.guestRateTotal + partyTotals.menuItemsTotal}</Text></Flex>
+                  {partyTotals.addOnsTotal > 0 && <Flex justify="space-between"><Text color="#64748b">Add-ons Total</Text><Text fontWeight="bold">₹{partyTotals.addOnsTotal}</Text></Flex>}
+                  {partyTotals.discountAmount > 0 && <Flex justify="space-between" color="green.700"><Text fontWeight="bold">Discount ({partyAppliedCoupon})</Text><Text fontWeight="bold">-₹{partyTotals.discountAmount}</Text></Flex>}
+                  <Flex justify="space-between"><Text color="#64748b">GST (18%)</Text><Text fontWeight="bold">₹{partyTotals.gst}</Text></Flex>
+                  <Divider my="1" />
+                  <Flex justify="space-between" fontSize="sm"><Text fontWeight="800">Total Booking Amount</Text><Text fontWeight="800" color="purple.900">₹{partyTotals.finalAmount}</Text></Flex>
+                  <Flex justify="space-between" color="purple.800" fontWeight="bold"><Text>Advance Required (25%)</Text><Text>₹{partyTotals.advanceAmount}</Text></Flex>
+                </VStack>
+              </Box>
+            </VStack>
           </ModalBody>
 
           <ModalFooter bg="#f8fafc" borderTop="1px solid #e2e8f0" py="3">
-            <Flex justify="space-between" align="center" w="100%">
-              <Text fontSize="xs" color="#64748b" fontWeight="600">
-                {menuModalTarget === 'general'
-                  ? `Selected: ${(formData.menuDetails || '').split(',').filter(Boolean).length} dishes`
-                  : `Selected: ${(partyMeals.find(m => m.id === menuModalTarget)?.menu || '').split(',').filter(Boolean).length} dishes`}
-              </Text>
-              <Button
-                colorScheme="orange"
-                size="sm"
-                borderRadius="lg"
-                px="6"
-                fontWeight="700"
-                onClick={onCloseMenuModal}
-              >
-                Done
-              </Button>
-            </Flex>
+            <Button colorScheme="purple" size="sm" onClick={onCloseSummaryModal} borderRadius="lg">
+              Close Summary
+            </Button>
           </ModalFooter>
         </ModalContent>
       </Modal>
