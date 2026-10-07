@@ -70,6 +70,83 @@ const commercialStaffCategoriesMap = {
   ]
 };
 
+const commercialPropertyCategories = [
+  'Restaurant',
+  'Hotel',
+  'Cafe / Coffee Shop',
+  'Resort',
+  'Cloud Kitchen',
+  'Bar & Pub / Lounge',
+  'Bakery & Confectionery',
+  'Catering / Banquet',
+  'Fast Food / QSR',
+  'Dhaba',
+  'Food Truck / Stall',
+  'Office / Corporate Canteen',
+  'Club',
+  'Other'
+];
+
+const commercialSalaryRanges = [
+  '₹8,000 – ₹12,000',
+  '₹12,000 – ₹15,000',
+  '₹15,000 – ₹20,000',
+  '₹20,000 – ₹25,000',
+  '₹25,000 – ₹35,000',
+  '₹35,000 – ₹50,000',
+  '₹50,000 – ₹75,000',
+  '₹75,000+',
+  'Custom Range'
+];
+
+const commercialExpOptions = [
+  'Fresher / Entry Level',
+  '0 – 1 Year',
+  '1 – 2 Years',
+  '2 – 5 Years',
+  '5 – 8 Years',
+  '8+ Years',
+  'Custom'
+];
+
+const commercialShiftOptions = [
+  'Full Time (10-12 hrs)',
+  'Full Time (8-9 hrs)',
+  'Part Time (4-6 hrs)',
+  'Night Shift',
+  'Rotational Shift',
+  'Split Shift',
+  'Custom'
+];
+
+const commercialLeaveOptions = [
+  '1 day/month',
+  '2 days/month',
+  '3 days/month',
+  '4 days/month',
+  '5 days/month',
+  '6 days/month',
+  'Custom'
+];
+
+const commercialJoiningOptions = [
+  'Immediate',
+  'Within 3 Days',
+  'Within 1 Week',
+  'Within 15 Days',
+  'Within 1 Month',
+  'Custom'
+];
+
+const commercialFacilitiesOptions = [
+  'Food & Accommodation',
+  'Only Food Provided',
+  'Only Accommodation Provided',
+  'No Food / No Accommodation',
+  'Food + Travel Allowance',
+  'Custom'
+];
+
 const salaryRanges = [
   '₹10,000 – ₹15,000/month',
   '₹15,000 – ₹25,000/month',
@@ -252,24 +329,88 @@ const AddJob = () => {
   const [serviceType, setServiceType] = useState('hotel');
 
   // ==========================================
-  // 1. COMMERCIAL STATE
+  // 1. COMMERCIAL STATE (Multi-Staff Support)
   // ==========================================
-  const [cCategory, setCCategory] = useState('Chef / Kitchen Staff');
-  const [cTitle, setCTitle] = useState('Head Chef/ Master Chef');
-  const [cOpenings, setCOpenings] = useState('1');
-  const [cSalary, setCSalary] = useState('₹15,000 – ₹25,000/month');
-  const [cSalaryCustom, setCSalaryCustom] = useState(false);
-  const [cSalaryCustomVal, setCSalaryCustomVal] = useState('');
-  const [cExp, setCExp] = useState('Fresher');
-  const [cExpCustom, setCExpCustom] = useState(false);
-  const [cExpCustomVal, setCExpCustomVal] = useState('');
-  const [cJoining, setCJoining] = useState('Immediate');
-  const [cJoiningCustomVal, setCJoiningCustomVal] = useState('');
-  const [cLeave, setCLeave] = useState('2 days/month');
-  const [cFare, setCFare] = useState('No Reimbursement');
-  const [cFareCustomVal, setCFareCustomVal] = useState('');
-  const [cFacility, setCFacility] = useState('Food & Accommodation');
-  const [cIsUrgent, setCIsUrgent] = useState(false);
+  const [commercialStaffList, setCommercialStaffList] = useState([
+    {
+      id: '1',
+      category: 'Chef / Kitchen Staff',
+      role: 'Head Chef/ Master Chef',
+      vacancies: '1',
+      salary: '₹12,000 – ₹15,000',
+      salaryCustom: false,
+      salaryCustomVal: '',
+      experience: '2 – 5 Years',
+      expCustom: false,
+      expCustomVal: '',
+      shiftType: 'Full Time (10-12 hrs)',
+      shiftCustomVal: '',
+      allowedLeave: '2 days/month',
+      leaveCustomVal: '',
+      joiningTimeline: 'Immediate',
+      joiningCustomVal: '',
+      facilities: 'Food & Accommodation',
+      facilitiesCustomVal: '',
+      otherPerks: '',
+      isUrgent: false
+    }
+  ]);
+
+  const handleAddCommercialStaff = () => {
+    setCommercialStaffList(prev => [
+      ...prev,
+      {
+        id: Date.now().toString(),
+        category: 'Chef / Kitchen Staff',
+        role: 'Commi 1 / Commi 2',
+        vacancies: '1',
+        salary: '₹12,000 – ₹15,000',
+        salaryCustom: false,
+        salaryCustomVal: '',
+        experience: '1 – 2 Years',
+        expCustom: false,
+        expCustomVal: '',
+        shiftType: 'Full Time (10-12 hrs)',
+        shiftCustomVal: '',
+        allowedLeave: '2 days/month',
+        leaveCustomVal: '',
+        joiningTimeline: 'Immediate',
+        joiningCustomVal: '',
+        facilities: 'Food & Accommodation',
+        facilitiesCustomVal: '',
+        otherPerks: '',
+        isUrgent: false
+      }
+    ]);
+  };
+
+  const handleRemoveCommercialStaff = (id) => {
+    if (commercialStaffList.length === 1) {
+      toast({ title: 'At least 1 staff requirement is required', status: 'info', duration: 2000 });
+      return;
+    }
+    setCommercialStaffList(prev => prev.filter(s => s.id !== id));
+  };
+
+  const handleUpdateCommercialStaff = (id, field, value) => {
+    setCommercialStaffList(prev => prev.map(s => {
+      if (s.id === id) {
+        const updated = { ...s, [field]: value };
+        if (field === 'category') {
+          const roles = commercialStaffCategoriesMap[value] || [];
+          updated.role = roles[0] || 'Head Chef/ Master Chef';
+        }
+        if (field === 'salary') {
+          updated.salaryCustom = value === 'Custom Range';
+        }
+        if (field === 'experience') {
+          updated.expCustom = value === 'Custom';
+        }
+        return updated;
+      }
+      return s;
+    }));
+  };
 
   // ==========================================
   // 2. DOMESTIC STATE
@@ -386,7 +527,40 @@ const AddJob = () => {
   });
 
   const [jobImage, setJobImage] = useState(null);
-  const currentDistricts = INDIA_STATES_AND_DISTRICTS[formData.state] || [];
+
+  // Dynamic Master Data State (with built-in smart defaults as fallback)
+  const [masterStates, setMasterStates] = useState({
+    jobPositions: [],
+    commercialCategories: commercialServiceCategories,
+    staffMap: commercialStaffCategoriesMap,
+    propertyCategories: commercialPropertyCategories,
+    commercialSalaries: commercialSalaryRanges,
+    commercialExperiences: commercialExpOptions,
+    commercialShifts: commercialShiftOptions,
+    commercialLeaves: commercialLeaveOptions,
+    commercialJoining: commercialJoiningOptions,
+    commercialFacilities: commercialFacilitiesOptions,
+    domesticSalaries: domesticSalaries,
+    cookPreferences: cookPreferences,
+    cookingPreferences: [
+      'Vegetarian (Veg Only)',
+      'Non-Vegetarian',
+      'Both (Veg & Non-Veg)',
+      'Jain Food',
+      'Eggetarian',
+      'Vegan'
+    ],
+    familyMembers: familyMembersList,
+    occasionTypes: occasionTypes,
+    mealTypes: ['Breakfast', 'Lunch', 'High Tea / Snacks', 'Dinner'],
+    dailyRoles: dailyRolesList,
+    states: [],
+    cities: []
+  });
+
+  const currentDistricts = (masterStates.cities && masterStates.cities.length > 0)
+    ? masterStates.cities
+    : (INDIA_STATES_AND_DISTRICTS[formData.state] || []);
 
   useEffect(() => {
     const initFetch = async () => {
@@ -424,6 +598,123 @@ const AddJob = () => {
         } catch (err) {
           console.error('Error fetching managers:', err);
         }
+
+        // ==========================================
+        // FETCH DYNAMIC MASTER DATA ACROSS ALL 4 FORMS
+        // ==========================================
+        const fetchMaster = async (category) => {
+          try {
+            const res = await axios.get(`${apiUrl}/masters/${category}`, {
+              headers: { 'Authorization': `Bearer ${token}` }
+            });
+            if (res.data && res.data.success && Array.isArray(res.data.masters) && res.data.masters.length > 0) {
+              return res.data.masters;
+            }
+          } catch (e) {
+            // fallback silently
+          }
+          return null;
+        };
+
+        const [
+          positionsData,
+          propCatData,
+          salaryData,
+          expData,
+          shiftData,
+          leaveData,
+          joiningData,
+          facilityData,
+          cookPrefData,
+          cookingPrefData,
+          familyData,
+          eventsData,
+          mealTypeData,
+          statesData,
+          plansData
+        ] = await Promise.all([
+          fetchMaster('job-positions'),
+          fetchMaster('property-categories'),
+          fetchMaster('salaries'),
+          fetchMaster('experiences'),
+          fetchMaster('shift-types'),
+          fetchMaster('leaves'),
+          fetchMaster('joining-types'),
+          fetchMaster('facilities'),
+          fetchMaster('cook-preferences'),
+          fetchMaster('cooking-preferences'),
+          fetchMaster('family-members'),
+          fetchMaster('events'),
+          fetchMaster('meal-types'),
+          fetchMaster('states'),
+          (async () => {
+            try {
+              const pRes = await axios.get(`${apiUrl}/plans`);
+              if (pRes.data && pRes.data.success && Array.isArray(pRes.data.plans) && pRes.data.plans.length > 0) {
+                return pRes.data.plans;
+              }
+            } catch (pe) {}
+            return null;
+          })()
+        ]);
+
+        setMasterStates(prev => {
+          const next = { ...prev };
+          if (positionsData && positionsData.length > 0) {
+            next.jobPositions = positionsData.map(p => p.name);
+          }
+          if (propCatData && propCatData.length > 0) {
+            next.propertyCategories = propCatData.map(p => p.name);
+          }
+          if (salaryData && salaryData.length > 0) {
+            next.commercialSalaries = salaryData.map(s => s.name);
+            next.domesticSalaries = salaryData.map(s => s.name);
+          }
+          if (expData && expData.length > 0) {
+            next.commercialExperiences = expData.map(e => e.name);
+          }
+          if (shiftData && shiftData.length > 0) {
+            next.commercialShifts = shiftData.map(s => s.name);
+          }
+          if (leaveData && leaveData.length > 0) {
+            next.commercialLeaves = leaveData.map(l => l.name);
+          }
+          if (joiningData && joiningData.length > 0) {
+            next.commercialJoining = joiningData.map(j => j.name);
+          }
+          if (facilityData && facilityData.length > 0) {
+            next.commercialFacilities = facilityData.map(f => f.name);
+          }
+          if (cookPrefData && cookPrefData.length > 0) {
+            next.cookPreferences = cookPrefData.map(c => c.name);
+          }
+          if (cookingPrefData && cookingPrefData.length > 0) {
+            next.cookingPreferences = cookingPrefData.map(c => c.name);
+          }
+          if (familyData && familyData.length > 0) {
+            next.familyMembers = familyData.map(f => f.name);
+          }
+          if (eventsData && eventsData.length > 0) {
+            next.occasionTypes = eventsData.map(e => e.name);
+          }
+          if (mealTypeData && mealTypeData.length > 0) {
+            next.mealTypes = mealTypeData.map(m => m.name);
+          }
+          if (statesData && statesData.length > 0) {
+            next.states = statesData;
+          }
+          if (plansData && plansData.length > 0) {
+            const mappedDaily = plansData.map(p => ({
+              role: p.title || p.label || p.name || 'Staff',
+              rate: p.rate || p.price || 999,
+              category: p.category || 'Kitchen Staff',
+              desc: p.description || 'Verified staff member'
+            }));
+            if (mappedDaily.length > 0) next.dailyRoles = mappedDaily;
+          }
+          return next;
+        });
+
       } catch (error) {
         console.error('Initial fetch failed', error);
       } finally {
@@ -432,6 +723,27 @@ const AddJob = () => {
     };
     initFetch();
   }, []);
+
+  // Fetch Cities Dynamically when State Changes
+  useEffect(() => {
+    if (!formData.state) return;
+    const matchedState = masterStates.states.find(s => s.name === formData.state);
+    if (matchedState && matchedState._id) {
+      axios.get(`${apiUrl}/masters/cities?parentId=${matchedState._id}`, {
+        headers: { Authorization: `Bearer ${token}` }
+      }).then(res => {
+        if (res.data?.success && Array.isArray(res.data.masters) && res.data.masters.length > 0) {
+          setMasterStates(prev => ({ ...prev, cities: res.data.masters.map(c => c.name) }));
+        } else {
+          setMasterStates(prev => ({ ...prev, cities: INDIA_STATES_AND_DISTRICTS[formData.state] || [] }));
+        }
+      }).catch(() => {
+        setMasterStates(prev => ({ ...prev, cities: INDIA_STATES_AND_DISTRICTS[formData.state] || [] }));
+      });
+    } else {
+      setMasterStates(prev => ({ ...prev, cities: INDIA_STATES_AND_DISTRICTS[formData.state] || [] }));
+    }
+  }, [formData.state, masterStates.states]);
 
   // Live Calculations for Daily Staff
   const calculateDailyTotals = () => {
@@ -752,7 +1064,10 @@ const AddJob = () => {
       
       let computedTitle = formData.title.trim();
       if (!computedTitle) {
-        if (serviceType === 'hotel') computedTitle = `${cTitle} for ${formData.outletName || 'Commercial Outlet'} in ${formData.city}`;
+        if (serviceType === 'hotel') {
+          const staffSummary = commercialStaffList.map(s => `${s.role} (${s.vacancies})`).join(', ');
+          computedTitle = `${staffSummary} for ${formData.outletName || 'Commercial Outlet'} in ${formData.city}`;
+        }
         else if (serviceType === 'home') computedTitle = `Domestic ${dStaffCategory} (${dFoodPreference}) for ${dFamilyMembers}`;
         else if (serviceType === 'daily') computedTitle = `Daily Basis (${dailyStaffList[0]?.role || 'Staff'}) for ${formData.city}`;
         else if (serviceType === 'party') computedTitle = `Chef for Party (${partyTotals.totalGuests} Guests • ${partyDatesList.length} Days)`;
@@ -768,24 +1083,53 @@ const AddJob = () => {
 
       // Category Specific Mapping
       if (serviceType === 'hotel') {
+        const firstStaff = commercialStaffList[0] || {};
+        const totalVacancies = commercialStaffList.reduce((sum, s) => sum + (parseInt(s.vacancies, 10) || 1), 0);
+        
         payload.set('hiringPurpose', 'commercial');
         payload.set('outletName', formData.outletName || '');
         payload.set('propertyCategory', formData.propertyCategory || 'Restaurant');
-        payload.set('category', cCategory);
-        payload.set('jobPosition', cTitle);
-        payload.set('openings', cOpenings);
-        payload.set('packageOrGuestOrVacancy', cOpenings);
-        payload.set('salaryRange', cSalaryCustom ? cSalaryCustomVal : cSalary);
-        payload.set('salary', cSalaryCustom ? cSalaryCustomVal : cSalary);
-        payload.set('experienceRange', cExpCustom ? cExpCustomVal : cExp);
-        payload.set('experience', cExpCustom ? cExpCustomVal : cExp);
-        payload.set('joiningType', cJoining === 'Custom' ? cJoiningCustomVal : cJoining);
-        payload.set('joiningDate', cJoining === 'Custom' ? cJoiningCustomVal : cJoining);
-        payload.set('allowedLeave', cLeave);
-        payload.set('leavePerMonth', cLeave);
-        payload.set('travelCharges', cFare === 'Custom' ? cFareCustomVal : cFare);
-        payload.set('basicFacility', cFacility);
-        payload.set('isUrgent', cIsUrgent.toString());
+        payload.set('category', firstStaff.category || 'Chef / Kitchen Staff');
+        payload.set('jobPosition', firstStaff.role || 'Head Chef/ Master Chef');
+        payload.set('openings', totalVacancies.toString());
+        payload.set('packageOrGuestOrVacancy', totalVacancies.toString());
+        payload.set('jobType', firstStaff.shiftType === 'Custom' ? firstStaff.shiftCustomVal : (firstStaff.shiftType || 'Full Time (10-12 hrs)'));
+        payload.set('salaryRange', firstStaff.salaryCustom ? firstStaff.salaryCustomVal : (firstStaff.salary || '₹12,000 – ₹15,000'));
+        payload.set('salary', firstStaff.salaryCustom ? firstStaff.salaryCustomVal : (firstStaff.salary || '₹12,000 – ₹15,000'));
+        payload.set('experienceRange', firstStaff.expCustom ? firstStaff.expCustomVal : (firstStaff.experience || '2 – 5 Years'));
+        payload.set('experience', firstStaff.expCustom ? firstStaff.expCustomVal : (firstStaff.experience || '2 – 5 Years'));
+        payload.set('joiningType', firstStaff.joiningTimeline === 'Custom' ? firstStaff.joiningCustomVal : (firstStaff.joiningTimeline || 'Immediate'));
+        payload.set('joiningDate', firstStaff.joiningTimeline === 'Custom' ? firstStaff.joiningCustomVal : (firstStaff.joiningTimeline || 'Immediate'));
+        payload.set('allowedLeave', firstStaff.allowedLeave === 'Custom' ? firstStaff.leaveCustomVal : (firstStaff.allowedLeave || '2 days/month'));
+        payload.set('leavePerMonth', firstStaff.allowedLeave === 'Custom' ? firstStaff.leaveCustomVal : (firstStaff.allowedLeave || '2 days/month'));
+        payload.set('travelCharges', firstStaff.otherPerks || '');
+        payload.set('otherFacilities', firstStaff.otherPerks || '');
+        payload.set('basicFacility', firstStaff.facilities === 'Custom' ? firstStaff.facilitiesCustomVal : (firstStaff.facilities || 'Food & Accommodation'));
+        payload.set('isUrgent', firstStaff.isUrgent ? 'true' : 'false');
+
+        const formattedCommercialList = commercialStaffList.map(s => ({
+          serviceCategory: s.category,
+          staffCategory: s.role,
+          role: s.role,
+          noOfStaff: parseInt(s.vacancies, 10) || 1,
+          count: parseInt(s.vacancies, 10) || 1,
+          vacancies: parseInt(s.vacancies, 10) || 1,
+          salaryRange: s.salaryCustom ? s.salaryCustomVal : s.salary,
+          salary: s.salaryCustom ? s.salaryCustomVal : s.salary,
+          experienceRange: s.expCustom ? s.expCustomVal : s.experience,
+          experience: s.expCustom ? s.expCustomVal : s.experience,
+          shiftType: s.shiftType === 'Custom' ? s.shiftCustomVal : s.shiftType,
+          jobType: s.shiftType === 'Custom' ? s.shiftCustomVal : s.shiftType,
+          allowedLeave: s.allowedLeave === 'Custom' ? s.leaveCustomVal : s.allowedLeave,
+          joiningType: s.joiningTimeline === 'Custom' ? s.joiningCustomVal : s.joiningTimeline,
+          joiningTimeline: s.joiningTimeline === 'Custom' ? s.joiningCustomVal : s.joiningTimeline,
+          facilities: s.facilities === 'Custom' ? s.facilitiesCustomVal : s.facilities,
+          basicFacility: s.facilities === 'Custom' ? s.facilitiesCustomVal : s.facilities,
+          otherPerks: s.otherPerks,
+          isUrgent: s.isUrgent
+        }));
+
+        payload.set('commercialStaffList', JSON.stringify(formattedCommercialList));
       } else if (serviceType === 'home') {
         payload.set('hiringPurpose', 'domestic');
         payload.set('category', 'domestic');
@@ -1142,208 +1486,346 @@ const AddJob = () => {
               </Box>
             </HStack>
 
-            {/* === 1. COMMERCIAL FORM (MATCHING APP 100%) === */}
+            {/* === 1. COMMERCIAL FORM (MULTI-STAFF SUPPORT) === */}
             {serviceType === 'hotel' && (
               <VStack spacing="5" align="stretch">
-                <SimpleGrid columns={{ base: 1, md: 3 }} spacing="4">
+                {/* Outlet / Property details */}
+                <SimpleGrid columns={{ base: 1, md: 2 }} spacing="4" p="4" bg="#f1f5f9" borderRadius="xl">
                   <FormControl isRequired>
-                    <FormLabel {...formLabelStyle}>OUTLET / BUSINESS NAME *</FormLabel>
+                    <FormLabel {...formLabelStyle}>OUTLET / BUSINESS NAME **</FormLabel>
                     <Input
                       name="outletName"
                       value={formData.outletName}
                       onChange={handleChange}
-                      placeholder="e.g. Royal Spice Restaurant"
+                      placeholder="e.g. Royal Cafe / Grand Hotel"
                       {...inputStyle}
+                      bg="white"
                       h="42px"
                     />
                   </FormControl>
 
                   <FormControl isRequired>
-                    <FormLabel {...formLabelStyle}>STAFF CATEGORY *</FormLabel>
+                    <FormLabel {...formLabelStyle}>PROPERTY CATEGORY **</FormLabel>
                     <Select
-                      value={cCategory}
-                      onChange={(e) => {
-                        setCCategory(e.target.value);
-                        const roles = commercialStaffCategoriesMap[e.target.value] || [];
-                        setCTitle(roles[0] || 'Head Chef/ Master Chef');
-                      }}
+                      name="propertyCategory"
+                      value={formData.propertyCategory}
+                      onChange={handleChange}
                       {...selectStyle}
+                      bg="white"
                       h="42px"
                     >
-                      {commercialServiceCategories.map(cat => (
+                      {(masterStates.propertyCategories && masterStates.propertyCategories.length > 0
+                        ? masterStates.propertyCategories
+                        : commercialPropertyCategories).map(cat => (
                         <option key={cat} value={cat}>{cat}</option>
                       ))}
                     </Select>
                   </FormControl>
-
-                  <FormControl isRequired>
-                    <FormLabel {...formLabelStyle}>JOB TITLE / POSITION *</FormLabel>
-                    <Select
-                      value={cTitle}
-                      onChange={(e) => setCTitle(e.target.value)}
-                      {...selectStyle}
-                      h="42px"
-                    >
-                      {(commercialStaffCategoriesMap[cCategory] || []).map(pos => (
-                        <option key={pos} value={pos}>{pos}</option>
-                      ))}
-                    </Select>
-                  </FormControl>
                 </SimpleGrid>
 
-                <SimpleGrid columns={{ base: 1, md: 4 }} spacing="4">
-                  <FormControl isRequired>
-                    <FormLabel {...formLabelStyle}>OPENINGS / VACANCIES *</FormLabel>
-                    <Input
-                      type="number"
-                      value={cOpenings}
-                      onChange={(e) => setCOpenings(e.target.value)}
-                      placeholder="1"
-                      {...inputStyle}
-                      h="42px"
-                    />
-                  </FormControl>
+                {/* Staff Requirements List */}
+                {commercialStaffList.map((staff, idx) => (
+                  <Box
+                    key={staff.id}
+                    p="5"
+                    borderRadius="xl"
+                    border="1.5px solid #e2e8f0"
+                    bg="#fafcff"
+                    boxShadow="sm"
+                    position="relative"
+                  >
+                    <Flex justify="space-between" align="center" mb="4" pb="2.5" borderBottom="1px solid #e2e8f0">
+                      <HStack spacing="2.5">
+                        <Badge colorScheme="blue" fontSize="11px" px="2.5" py="1" borderRadius="md" fontWeight="800">
+                          STAFF REQUIREMENT #{idx + 1}
+                        </Badge>
+                        <Text fontSize="xs" fontWeight="700" color="#334155">
+                          {staff.role} ({staff.vacancies} {parseInt(staff.vacancies, 10) > 1 ? 'Vacancies' : 'Vacancy'})
+                        </Text>
+                      </HStack>
 
-                  <FormControl isRequired>
-                    <FormLabel {...formLabelStyle}>SALARY RANGE *</FormLabel>
-                    <Select
-                      value={cSalary}
-                      onChange={(e) => {
-                        setCSalary(e.target.value);
-                        setCSalaryCustom(e.target.value === 'Custom Range');
-                      }}
-                      {...selectStyle}
-                      h="42px"
-                    >
-                      {salaryRanges.map(sal => (
-                        <option key={sal} value={sal}>{sal}</option>
-                      ))}
-                    </Select>
-                    {cSalaryCustom && (
-                      <Input
-                        mt="2"
-                        placeholder="Enter custom salary (e.g. ₹40,000/month)"
-                        value={cSalaryCustomVal}
-                        onChange={(e) => setCSalaryCustomVal(e.target.value)}
-                        {...inputStyle}
-                        h="38px"
-                      />
-                    )}
-                  </FormControl>
+                      {commercialStaffList.length > 1 && (
+                        <Button
+                          size="xs"
+                          variant="ghost"
+                          colorScheme="red"
+                          leftIcon={<Trash2 size={13} />}
+                          onClick={() => handleRemoveCommercialStaff(staff.id)}
+                        >
+                          Remove Staff
+                        </Button>
+                      )}
+                    </Flex>
 
-                  <FormControl isRequired>
-                    <FormLabel {...formLabelStyle}>EXPERIENCE *</FormLabel>
-                    <Select
-                      value={cExp}
-                      onChange={(e) => {
-                        setCExp(e.target.value);
-                        setCExpCustom(e.target.value === 'Custom');
-                      }}
-                      {...selectStyle}
-                      h="42px"
-                    >
-                      {expOptionsList.map(exp => (
-                        <option key={exp} value={exp}>{exp}</option>
-                      ))}
-                    </Select>
-                    {cExpCustom && (
-                      <Input
-                        mt="2"
-                        placeholder="Enter custom experience"
-                        value={cExpCustomVal}
-                        onChange={(e) => setCExpCustomVal(e.target.value)}
-                        {...inputStyle}
-                        h="38px"
-                      />
-                    )}
-                  </FormControl>
+                    <VStack spacing="4" align="stretch">
+                      {/* Row 1: Category, Role, Vacancies */}
+                      <SimpleGrid columns={{ base: 1, md: 3 }} spacing="4">
+                        <FormControl isRequired>
+                          <FormLabel {...formLabelStyle}>STAFF CATEGORY **</FormLabel>
+                          <Select
+                            value={staff.category}
+                            onChange={(e) => handleUpdateCommercialStaff(staff.id, 'category', e.target.value)}
+                            {...selectStyle}
+                            bg="white"
+                            h="42px"
+                          >
+                            {(masterStates.commercialCategories && masterStates.commercialCategories.length > 0
+                              ? masterStates.commercialCategories
+                              : commercialServiceCategories).map(cat => (
+                              <option key={cat} value={cat}>{cat}</option>
+                            ))}
+                          </Select>
+                        </FormControl>
 
-                  <FormControl isRequired>
-                    <FormLabel {...formLabelStyle}>JOINING DATE *</FormLabel>
-                    <Select
-                      value={cJoining}
-                      onChange={(e) => setCJoining(e.target.value)}
-                      {...selectStyle}
-                      h="42px"
-                    >
-                      {joiningTypeOptions.map(j => (
-                        <option key={j} value={j}>{j}</option>
-                      ))}
-                    </Select>
-                    {cJoining === 'Custom' && (
-                      <Input
-                        mt="2"
-                        type="date"
-                        value={cJoiningCustomVal}
-                        onChange={(e) => setCJoiningCustomVal(e.target.value)}
-                        {...inputStyle}
-                        h="38px"
-                      />
-                    )}
-                  </FormControl>
-                </SimpleGrid>
+                        <FormControl isRequired>
+                          <FormLabel {...formLabelStyle}>JOB POSITION / ROLE **</FormLabel>
+                          <Select
+                            value={staff.role}
+                            onChange={(e) => handleUpdateCommercialStaff(staff.id, 'role', e.target.value)}
+                            {...selectStyle}
+                            bg="white"
+                            h="42px"
+                          >
+                            {(masterStates.staffMap[staff.category] || (masterStates.jobPositions && masterStates.jobPositions.length > 0 ? masterStates.jobPositions : commercialStaffCategoriesMap[staff.category] || [])).map(pos => (
+                              <option key={pos} value={pos}>{pos}</option>
+                            ))}
+                          </Select>
+                        </FormControl>
 
-                <SimpleGrid columns={{ base: 1, md: 3 }} spacing="4">
-                  <FormControl>
-                    <FormLabel {...formLabelStyle}>ALLOWED LEAVES</FormLabel>
-                    <Select
-                      value={cLeave}
-                      onChange={(e) => setCLeave(e.target.value)}
-                      {...selectStyle}
-                      h="42px"
-                    >
-                      {leaveOptionsList.map(l => (
-                        <option key={l} value={l}>{l}</option>
-                      ))}
-                    </Select>
-                  </FormControl>
+                        <FormControl isRequired>
+                          <FormLabel {...formLabelStyle}>NO. OF VACANCIES **</FormLabel>
+                          <Input
+                            type="number"
+                            min={1}
+                            value={staff.vacancies}
+                            onChange={(e) => handleUpdateCommercialStaff(staff.id, 'vacancies', e.target.value)}
+                            placeholder="1"
+                            {...inputStyle}
+                            bg="white"
+                            h="42px"
+                          />
+                        </FormControl>
+                      </SimpleGrid>
 
-                  <FormControl>
-                    <FormLabel {...formLabelStyle}>TRAIN / TRAVEL CHARGES</FormLabel>
-                    <Select
-                      value={cFare}
-                      onChange={(e) => setCFare(e.target.value)}
-                      {...selectStyle}
-                      h="42px"
-                    >
-                      {['No Reimbursement', 'Reimbursement', 'Custom'].map(f => (
-                        <option key={f} value={f}>{f}</option>
-                      ))}
-                    </Select>
-                    {cFare === 'Custom' && (
-                      <Input
-                        mt="2"
-                        placeholder="Enter custom fare note"
-                        value={cFareCustomVal}
-                        onChange={(e) => setCFareCustomVal(e.target.value)}
-                        {...inputStyle}
-                        h="38px"
-                      />
-                    )}
-                  </FormControl>
+                      {/* Row 2: Salary, Experience, Shift */}
+                      <SimpleGrid columns={{ base: 1, md: 3 }} spacing="4">
+                        <FormControl isRequired>
+                          <FormLabel {...formLabelStyle}>SALARY BUDGET **</FormLabel>
+                          <Select
+                            value={staff.salary}
+                            onChange={(e) => handleUpdateCommercialStaff(staff.id, 'salary', e.target.value)}
+                            {...selectStyle}
+                            bg="white"
+                            h="42px"
+                          >
+                            {(masterStates.commercialSalaries && masterStates.commercialSalaries.length > 0
+                              ? masterStates.commercialSalaries
+                              : commercialSalaryRanges).map(sal => (
+                              <option key={sal} value={sal}>{sal}</option>
+                            ))}
+                          </Select>
+                          {staff.salaryCustom && (
+                            <Input
+                              mt="2"
+                              placeholder="Enter custom salary (e.g. ₹40,000/month)"
+                              value={staff.salaryCustomVal}
+                              onChange={(e) => handleUpdateCommercialStaff(staff.id, 'salaryCustomVal', e.target.value)}
+                              {...inputStyle}
+                              bg="white"
+                              h="38px"
+                            />
+                          )}
+                        </FormControl>
 
-                  <FormControl>
-                    <FormLabel {...formLabelStyle}>BASIC FACILITIES</FormLabel>
-                    <Input
-                      value={cFacility}
-                      onChange={(e) => setCFacility(e.target.value)}
-                      placeholder="e.g. Food & Accommodation"
-                      {...inputStyle}
-                      h="42px"
-                    />
-                  </FormControl>
-                </SimpleGrid>
+                        <FormControl isRequired>
+                          <FormLabel {...formLabelStyle}>EXPERIENCE REQUIRED **</FormLabel>
+                          <Select
+                            value={staff.experience}
+                            onChange={(e) => handleUpdateCommercialStaff(staff.id, 'experience', e.target.value)}
+                            {...selectStyle}
+                            bg="white"
+                            h="42px"
+                          >
+                            {(masterStates.commercialExperiences && masterStates.commercialExperiences.length > 0
+                              ? masterStates.commercialExperiences
+                              : commercialExpOptions).map(exp => (
+                              <option key={exp} value={exp}>{exp}</option>
+                            ))}
+                          </Select>
+                          {staff.expCustom && (
+                            <Input
+                              mt="2"
+                              placeholder="Enter custom experience"
+                              value={staff.expCustomVal}
+                              onChange={(e) => handleUpdateCommercialStaff(staff.id, 'expCustomVal', e.target.value)}
+                              {...inputStyle}
+                              bg="white"
+                              h="38px"
+                            />
+                          )}
+                        </FormControl>
 
-                {/* Urgent Requirement Toggle */}
-                <Flex p="3.5" bg="#fff1f2" border="1px solid #fecdd3" borderRadius="xl" align="center" justify="space-between">
-                  <HStack spacing="2.5">
-                    <AlertCircle size={18} color="#e11d48" />
-                    <Box>
-                      <Text fontWeight="800" fontSize="xs" color="#9f1239">Urgent Hiring Requirement</Text>
-                      <Text fontSize="11px" color="#64748b">Highlights this position with an Urgent badge for faster candidate applications.</Text>
-                    </Box>
-                  </HStack>
-                  <Switch isChecked={cIsUrgent} onChange={(e) => setCIsUrgent(e.target.checked)} colorScheme="red" />
+                        <FormControl isRequired>
+                          <FormLabel {...formLabelStyle}>SHIFT / JOB TYPE **</FormLabel>
+                          <Select
+                            value={staff.shiftType}
+                            onChange={(e) => handleUpdateCommercialStaff(staff.id, 'shiftType', e.target.value)}
+                            {...selectStyle}
+                            bg="white"
+                            h="42px"
+                          >
+                            {(masterStates.commercialShifts && masterStates.commercialShifts.length > 0
+                              ? masterStates.commercialShifts
+                              : commercialShiftOptions).map(shift => (
+                              <option key={shift} value={shift}>{shift}</option>
+                            ))}
+                          </Select>
+                          {staff.shiftType === 'Custom' && (
+                            <Input
+                              mt="2"
+                              placeholder="Enter custom shift type"
+                              value={staff.shiftCustomVal}
+                              onChange={(e) => handleUpdateCommercialStaff(staff.id, 'shiftCustomVal', e.target.value)}
+                              {...inputStyle}
+                              bg="white"
+                              h="38px"
+                            />
+                          )}
+                        </FormControl>
+                      </SimpleGrid>
+
+                      {/* Row 3: Leave, Joining, Facilities */}
+                      <SimpleGrid columns={{ base: 1, md: 3 }} spacing="4">
+                        <FormControl isRequired>
+                          <FormLabel {...formLabelStyle}>ALLOWED LEAVE **</FormLabel>
+                          <Select
+                            value={staff.allowedLeave}
+                            onChange={(e) => handleUpdateCommercialStaff(staff.id, 'allowedLeave', e.target.value)}
+                            {...selectStyle}
+                            bg="white"
+                            h="42px"
+                          >
+                            {(masterStates.commercialLeaves && masterStates.commercialLeaves.length > 0
+                              ? masterStates.commercialLeaves
+                              : commercialLeaveOptions).map(l => (
+                              <option key={l} value={l}>{l}</option>
+                            ))}
+                          </Select>
+                          {staff.allowedLeave === 'Custom' && (
+                            <Input
+                              mt="2"
+                              placeholder="Enter custom leave"
+                              value={staff.leaveCustomVal}
+                              onChange={(e) => handleUpdateCommercialStaff(staff.id, 'leaveCustomVal', e.target.value)}
+                              {...inputStyle}
+                              bg="white"
+                              h="38px"
+                            />
+                          )}
+                        </FormControl>
+
+                        <FormControl isRequired>
+                          <FormLabel {...formLabelStyle}>JOINING TIMELINE **</FormLabel>
+                          <Select
+                            value={staff.joiningTimeline}
+                            onChange={(e) => handleUpdateCommercialStaff(staff.id, 'joiningTimeline', e.target.value)}
+                            {...selectStyle}
+                            bg="white"
+                            h="42px"
+                          >
+                            {(masterStates.commercialJoining && masterStates.commercialJoining.length > 0
+                              ? masterStates.commercialJoining
+                              : commercialJoiningOptions).map(j => (
+                              <option key={j} value={j}>{j}</option>
+                            ))}
+                          </Select>
+                          {staff.joiningTimeline === 'Custom' && (
+                            <Input
+                              mt="2"
+                              type="date"
+                              value={staff.joiningCustomVal}
+                              onChange={(e) => handleUpdateCommercialStaff(staff.id, 'joiningCustomVal', e.target.value)}
+                              {...inputStyle}
+                              bg="white"
+                              h="38px"
+                            />
+                          )}
+                        </FormControl>
+
+                        <FormControl isRequired>
+                          <FormLabel {...formLabelStyle}>FACILITIES PROVIDED **</FormLabel>
+                          <Select
+                            value={staff.facilities}
+                            onChange={(e) => handleUpdateCommercialStaff(staff.id, 'facilities', e.target.value)}
+                            {...selectStyle}
+                            bg="white"
+                            h="42px"
+                          >
+                            {(masterStates.commercialFacilities && masterStates.commercialFacilities.length > 0
+                              ? masterStates.commercialFacilities
+                              : commercialFacilitiesOptions).map(f => (
+                              <option key={f} value={f}>{f}</option>
+                            ))}
+                          </Select>
+                          {staff.facilities === 'Custom' && (
+                            <Input
+                              mt="2"
+                              placeholder="Enter custom facilities note"
+                              value={staff.facilitiesCustomVal}
+                              onChange={(e) => handleUpdateCommercialStaff(staff.id, 'facilitiesCustomVal', e.target.value)}
+                              {...inputStyle}
+                              bg="white"
+                              h="38px"
+                            />
+                          )}
+                        </FormControl>
+                      </SimpleGrid>
+
+                      {/* Row 4: Other Perks / Benefits */}
+                      <FormControl>
+                        <FormLabel {...formLabelStyle}>OTHER PERKS / BENEFITS</FormLabel>
+                        <Input
+                          value={staff.otherPerks}
+                          onChange={(e) => handleUpdateCommercialStaff(staff.id, 'otherPerks', e.target.value)}
+                          placeholder="e.g. Travel Allowance, Tips, PF & ESI, Overtime Pay"
+                          {...inputStyle}
+                          bg="white"
+                          h="42px"
+                        />
+                      </FormControl>
+
+                      {/* Urgent Requirement Toggle */}
+                      <Flex p="3.5" bg="#fff1f2" border="1px solid #fecdd3" borderRadius="xl" align="center" justify="space-between">
+                        <HStack spacing="2.5">
+                          <AlertCircle size={18} color="#e11d48" />
+                          <Box>
+                            <Text fontWeight="800" fontSize="xs" color="#9f1239">Urgent Hiring Requirement</Text>
+                            <Text fontSize="11px" color="#64748b">Highlights this position with an Urgent badge for faster candidate applications.</Text>
+                          </Box>
+                        </HStack>
+                        <Switch isChecked={staff.isUrgent} onChange={(e) => handleUpdateCommercialStaff(staff.id, 'isUrgent', e.target.checked)} colorScheme="red" />
+                      </Flex>
+                    </VStack>
+                  </Box>
+                ))}
+
+                {/* Bottom Right: + Add More Staff Button */}
+                <Flex justify="flex-end" pt="1">
+                  <Button
+                    leftIcon={<Plus size={16} />}
+                    colorScheme="blue"
+                    bg="#2563eb"
+                    _hover={{ bg: '#1d4ed8' }}
+                    color="white"
+                    size="md"
+                    borderRadius="lg"
+                    fontWeight="700"
+                    boxShadow="sm"
+                    px="5"
+                    onClick={handleAddCommercialStaff}
+                  >
+                    + Add More Staff
+                  </Button>
                 </Flex>
               </VStack>
             )}
@@ -1374,7 +1856,9 @@ const AddJob = () => {
                       {...selectStyle}
                       h="42px"
                     >
-                      {cookPreferences.map(cp => (
+                      {(masterStates.cookPreferences && masterStates.cookPreferences.length > 0
+                        ? masterStates.cookPreferences
+                        : cookPreferences).map(cp => (
                         <option key={cp} value={cp}>{cp}</option>
                       ))}
                     </Select>
@@ -1388,7 +1872,9 @@ const AddJob = () => {
                       {...selectStyle}
                       h="42px"
                     >
-                      {familyMembersList.map(fm => (
+                      {(masterStates.familyMembers && masterStates.familyMembers.length > 0
+                        ? masterStates.familyMembers
+                        : familyMembersList).map(fm => (
                         <option key={fm} value={fm}>{fm}</option>
                       ))}
                     </Select>
@@ -1418,7 +1904,9 @@ const AddJob = () => {
                       {...selectStyle}
                       h="42px"
                     >
-                      {['Pure Veg', 'Veg + Non Veg'].map(fp => (
+                      {(masterStates.cookingPreferences && masterStates.cookingPreferences.length > 0
+                        ? masterStates.cookingPreferences
+                        : ['Pure Veg', 'Veg + Non Veg']).map(fp => (
                         <option key={fp} value={fp}>{fp}</option>
                       ))}
                     </Select>
@@ -1451,7 +1939,9 @@ const AddJob = () => {
                       {...selectStyle}
                       h="42px"
                     >
-                      {domesticSalaries.map(sal => (
+                      {(masterStates.domesticSalaries && masterStates.domesticSalaries.length > 0
+                        ? masterStates.domesticSalaries
+                        : domesticSalaries).map(sal => (
                         <option key={sal} value={sal}>{sal}</option>
                       ))}
                     </Select>
@@ -1475,7 +1965,9 @@ const AddJob = () => {
                       {...selectStyle}
                       h="42px"
                     >
-                      {expOptionsList.map(exp => (
+                      {(masterStates.commercialExperiences && masterStates.commercialExperiences.length > 0
+                        ? masterStates.commercialExperiences
+                        : expOptionsList).map(exp => (
                         <option key={exp} value={exp}>{exp}</option>
                       ))}
                     </Select>
@@ -1489,7 +1981,9 @@ const AddJob = () => {
                       {...selectStyle}
                       h="42px"
                     >
-                      {joiningTypeOptions.map(j => (
+                      {(masterStates.commercialJoining && masterStates.commercialJoining.length > 0
+                        ? masterStates.commercialJoining
+                        : joiningTypeOptions).map(j => (
                         <option key={j} value={j}>{j}</option>
                       ))}
                     </Select>
@@ -1503,7 +1997,9 @@ const AddJob = () => {
                       {...selectStyle}
                       h="42px"
                     >
-                      {leaveOptionsList.map(l => (
+                      {(masterStates.commercialLeaves && masterStates.commercialLeaves.length > 0
+                        ? masterStates.commercialLeaves
+                        : leaveOptionsList).map(l => (
                         <option key={l} value={l}>{l}</option>
                       ))}
                     </Select>
@@ -1916,7 +2412,9 @@ const AddJob = () => {
                               {...selectStyle}
                               h="40px"
                             >
-                              {occasionTypes.map(occ => (
+                              {(masterStates.occasionTypes && masterStates.occasionTypes.length > 0
+                                ? masterStates.occasionTypes
+                                : occasionTypes).map(occ => (
                                 <option key={occ} value={occ}>{occ}</option>
                               ))}
                             </Select>
@@ -1982,7 +2480,9 @@ const AddJob = () => {
                                     bg="white"
                                     h="38px"
                                   >
-                                    {['Breakfast', 'Lunch', 'High Tea / Snacks', 'Dinner', 'Full Day Party'].map(m => (
+                                    {(masterStates.mealTypes && masterStates.mealTypes.length > 0
+                                      ? masterStates.mealTypes
+                                      : ['Breakfast', 'Lunch', 'High Tea / Snacks', 'Dinner', 'Full Day Party']).map(m => (
                                       <option key={m} value={m}>{m}</option>
                                     ))}
                                   </Select>
@@ -2086,98 +2586,179 @@ const AddJob = () => {
                                 </SimpleGrid>
                               </Box>
 
-                              {/* IF MENU CHOICE IS "NOW": INTERACTIVE DISH SELECTOR */}
-                              {meal.menuChoice === 'now' && (
-                                <Box p="4" bg="white" border="1.5px solid #e9d5ff" borderRadius="xl">
-                                  {/* Filter Bar: All | Veg | Nonveg */}
-                                  <Flex justify="space-between" align="center" mb="3" flexWrap="wrap" gap="2">
-                                    <HStack spacing="1" bg="#f1f5f9" p="1" borderRadius="full">
-                                      {['All', 'Veg', 'Nonveg'].map((pref) => {
-                                        const isActive = meal.foodPrefFilter === pref;
-                                        return (
+                                  {/* IF MENU CHOICE IS "NOW": INTERACTIVE DISH SELECTOR */}
+                                  {meal.menuChoice === 'now' && (
+                                    <Box p="4" bg="white" border="1.5px solid #e9d5ff" borderRadius="xl">
+                                      {/* Filter Bar: Food Pref + Select Cuisines + Search */}
+                                      <Flex justify="space-between" align="center" mb="3" flexWrap="wrap" gap="2.5">
+                                        {/* 1. Food Type Filter: All | Veg | Nonveg */}
+                                        <HStack spacing="1" bg="#f1f5f9" p="1" borderRadius="full">
+                                          {['All', 'Veg', 'Nonveg'].map((pref) => {
+                                            const isActive = meal.foodPrefFilter === pref;
+                                            return (
+                                              <Button
+                                                key={pref}
+                                                size="xs"
+                                                borderRadius="full"
+                                                px="3"
+                                                h="28px"
+                                                bg={isActive ? '#0052cc' : 'transparent'}
+                                                color={isActive ? 'white' : '#475569'}
+                                                fontWeight="700"
+                                                _hover={{ bg: isActive ? '#0052cc' : '#e2e8f0' }}
+                                                onClick={() => {
+                                                  setPartyDatesList(prev => prev.map(d => d.id === day.id ? {
+                                                    ...d,
+                                                    meals: d.meals.map(m => m.id === meal.id ? { ...m, foodPrefFilter: pref } : m)
+                                                  } : d));
+                                                }}
+                                              >
+                                                {pref}
+                                              </Button>
+                                            );
+                                          })}
+                                        </HStack>
+
+                                        {/* 2. Select Cuisines Filter Chips (Scrollable / Select Multiple) */}
+                                        <HStack
+                                          spacing="1.5"
+                                          flex="1"
+                                          minW="220px"
+                                          maxW={{ base: '100%', lg: '560px' }}
+                                          overflowX="auto"
+                                          py="1"
+                                          px="2"
+                                          bg="#f8fafc"
+                                          borderRadius="xl"
+                                          border="1px solid #e2e8f0"
+                                          sx={{
+                                            '::-webkit-scrollbar': { height: '3px' },
+                                            '::-webkit-scrollbar-thumb': { background: '#cbd5e1', borderRadius: '3px' }
+                                          }}
+                                        >
+                                          {['All Cuisines', ...Array.from(new Set(menuCatalogItems.map(d => d.cuisine).filter(Boolean)))].map((cuisine) => {
+                                            const isAll = cuisine === 'All Cuisines';
+                                            const isSelected = isAll
+                                              ? (!meal.selectedCuisines || meal.selectedCuisines.length === 0 || meal.selectedCuisines.includes('All') || meal.selectedCuisines.includes('All Cuisines'))
+                                              : (meal.selectedCuisines && meal.selectedCuisines.includes(cuisine));
+
+                                            return (
+                                              <Button
+                                                key={cuisine}
+                                                size="xs"
+                                                h="26px"
+                                                borderRadius="full"
+                                                px="2.5"
+                                                fontSize="11px"
+                                                fontWeight="700"
+                                                whiteSpace="nowrap"
+                                                variant={isSelected ? 'solid' : 'outline'}
+                                                bg={isSelected ? (isAll ? '#475569' : '#7c3aed') : 'white'}
+                                                color={isSelected ? 'white' : '#475569'}
+                                                borderColor={isSelected ? (isAll ? '#475569' : '#7c3aed') : '#dde6f5'}
+                                                _hover={{ bg: isSelected ? (isAll ? '#334155' : '#6d28d9') : '#f1f5f9' }}
+                                                onClick={() => {
+                                                  setPartyDatesList(prev => prev.map(d => d.id === day.id ? {
+                                                    ...d,
+                                                    meals: d.meals.map(m => {
+                                                      if (m.id !== meal.id) return m;
+                                                      if (isAll) {
+                                                        return { ...m, selectedCuisines: ['All'] };
+                                                      }
+                                                      let current = (m.selectedCuisines || []).filter(x => x !== 'All' && x !== 'All Cuisines');
+                                                      if (current.includes(cuisine)) {
+                                                        const next = current.filter(x => x !== cuisine);
+                                                        return { ...m, selectedCuisines: next.length === 0 ? ['All'] : next };
+                                                      } else {
+                                                        return { ...m, selectedCuisines: [...current, cuisine] };
+                                                      }
+                                                    })
+                                                  } : d));
+                                                }}
+                                              >
+                                                {isSelected && !isAll && '✓ '}
+                                                {cuisine}
+                                              </Button>
+                                            );
+                                          })}
+                                        </HStack>
+
+                                        {/* 3. Dish Search */}
+                                        <InputGroup size="xs" w={{ base: '100%', sm: '180px' }}>
+                                          <InputLeftElement pointerEvents="none">
+                                            <Search size={12} color="#94a3b8" />
+                                          </InputLeftElement>
+                                          <Input
+                                            placeholder="Search dishes..."
+                                            value={dishSearchQuery}
+                                            onChange={(e) => setDishSearchQuery(e.target.value)}
+                                            borderRadius="md"
+                                            bg="#f8fafc"
+                                          />
+                                        </InputGroup>
+                                      </Flex>
+
+                                      {/* Subtitle Checkmark line, Selected count and Close All */}
+                                      <Flex justify="space-between" align="center" mb="3" py="1.5" px="2" bg="#f8fafc" borderRadius="md">
+                                        <HStack spacing="1.5" flex="1">
+                                          <CheckCircle2 size={13} color="#16a34a" />
+                                          <Text fontSize="11px" color="#64748b" noOfLines={1}>
+                                            Can be made without onion, garlic
+                                          </Text>
+                                        </HStack>
+                                        <HStack spacing="2">
+                                          <Badge colorScheme="blue" fontSize="10.5px" px="2" py="0.5" borderRadius="md">
+                                            Selected: {meal.selectedMenu.length}
+                                          </Badge>
                                           <Button
-                                            key={pref}
                                             size="xs"
-                                            borderRadius="full"
-                                            px="3"
-                                            h="28px"
-                                            bg={isActive ? '#0052cc' : 'transparent'}
-                                            color={isActive ? 'white' : '#475569'}
-                                            fontWeight="700"
-                                            _hover={{ bg: isActive ? '#0052cc' : '#e2e8f0' }}
+                                            h="22px"
+                                            fontSize="10px"
+                                            variant="outline"
+                                            borderColor="#cbd5e1"
                                             onClick={() => {
-                                              setPartyDatesList(prev => prev.map(d => d.id === day.id ? {
-                                                ...d,
-                                                meals: d.meals.map(m => m.id === meal.id ? { ...m, foodPrefFilter: pref } : m)
-                                              } : d));
+                                              const allExpanded = Object.keys(expandedCategories).length > 0;
+                                              if (allExpanded) setExpandedCategories({});
+                                              else {
+                                                const map = {};
+                                                DEFAULT_PARTY_CATEGORIES.forEach(c => map[c] = true);
+                                                setExpandedCategories(map);
+                                              }
                                             }}
                                           >
-                                            {pref}
+                                            {Object.keys(expandedCategories).length > 0 ? 'Close All ▴' : 'Expand All ▾'}
                                           </Button>
-                                        );
-                                      })}
-                                    </HStack>
+                                        </HStack>
+                                      </Flex>
 
-                                    {/* Dish Search */}
-                                    <InputGroup size="xs" w="200px">
-                                      <InputLeftElement pointerEvents="none">
-                                        <Search size={12} color="#94a3b8" />
-                                      </InputLeftElement>
-                                      <Input
-                                        placeholder="Search dishes..."
-                                        value={dishSearchQuery}
-                                        onChange={(e) => setDishSearchQuery(e.target.value)}
-                                        borderRadius="md"
-                                        bg="#f8fafc"
-                                      />
-                                    </InputGroup>
-                                  </Flex>
+                                      {/* Category Accordion Dropdowns */}
+                                      <VStack spacing="3" align="stretch">
+                                        {DEFAULT_PARTY_CATEGORIES.map((cat) => {
+                                          const isExp = !!expandedCategories[cat];
+                                          const catDishes = menuCatalogItems.filter(dish => {
+                                            const matchesCat = dish.category.toLowerCase().includes(cat.toLowerCase()) || cat.toLowerCase().includes(dish.category.toLowerCase());
+                                            if (!matchesCat) return false;
+                                            if (meal.foodPrefFilter === 'Veg' && dish.isNonVeg) return false;
+                                            if (meal.foodPrefFilter === 'Nonveg' && !dish.isNonVeg) return false;
 
-                                  {/* Subtitle Checkmark line, Selected count and Close All */}
-                                  <Flex justify="space-between" align="center" mb="3" py="1.5" px="2" bg="#f8fafc" borderRadius="md">
-                                    <HStack spacing="1.5" flex="1">
-                                      <CheckCircle2 size={13} color="#16a34a" />
-                                      <Text fontSize="11px" color="#64748b" noOfLines={1}>
-                                        Can be made without onion, garlic
-                                      </Text>
-                                    </HStack>
-                                    <HStack spacing="2">
-                                      <Badge colorScheme="blue" fontSize="10.5px" px="2" py="0.5" borderRadius="md">
-                                        Selected: {meal.selectedMenu.length}
-                                      </Badge>
-                                      <Button
-                                        size="xs"
-                                        h="22px"
-                                        fontSize="10px"
-                                        variant="outline"
-                                        borderColor="#cbd5e1"
-                                        onClick={() => {
-                                          const allExpanded = Object.keys(expandedCategories).length > 0;
-                                          if (allExpanded) setExpandedCategories({});
-                                          else {
-                                            const map = {};
-                                            DEFAULT_PARTY_CATEGORIES.forEach(c => map[c] = true);
-                                            setExpandedCategories(map);
-                                          }
-                                        }}
-                                      >
-                                        {Object.keys(expandedCategories).length > 0 ? 'Close All ▴' : 'Expand All ▾'}
-                                      </Button>
-                                    </HStack>
-                                  </Flex>
+                                            // Cuisine filtering
+                                            const hasCuisineFilter = meal.selectedCuisines &&
+                                              meal.selectedCuisines.length > 0 &&
+                                              !meal.selectedCuisines.includes('All') &&
+                                              !meal.selectedCuisines.includes('All Cuisines');
 
-                                  {/* Category Accordion Dropdowns */}
-                                  <VStack spacing="3" align="stretch">
-                                    {DEFAULT_PARTY_CATEGORIES.map((cat) => {
-                                      const isExp = !!expandedCategories[cat];
-                                      const catDishes = menuCatalogItems.filter(dish => {
-                                        const matchesCat = dish.category.toLowerCase().includes(cat.toLowerCase()) || cat.toLowerCase().includes(dish.category.toLowerCase());
-                                        if (!matchesCat) return false;
-                                        if (meal.foodPrefFilter === 'Veg' && dish.isNonVeg) return false;
-                                        if (meal.foodPrefFilter === 'Nonveg' && !dish.isNonVeg) return false;
-                                        if (dishSearchQuery && !dish.name.toLowerCase().includes(dishSearchQuery.toLowerCase())) return false;
-                                        return true;
-                                      });
+                                            if (hasCuisineFilter) {
+                                              const dishCuisine = (dish.cuisine || '').toLowerCase().trim();
+                                              const matchesCuisine = meal.selectedCuisines.some(sc => {
+                                                const cleanSc = sc.toLowerCase().trim();
+                                                return dishCuisine.includes(cleanSc) || cleanSc.includes(dishCuisine);
+                                              });
+                                              if (!matchesCuisine) return false;
+                                            }
+
+                                            if (dishSearchQuery && !dish.name.toLowerCase().includes(dishSearchQuery.toLowerCase())) return false;
+                                            return true;
+                                          });
 
                                       const selectedInCat = catDishes.filter(d => meal.selectedMenu.includes(d.name));
 
@@ -2500,7 +3081,9 @@ const AddJob = () => {
                   {...selectStyle}
                   h="42px"
                 >
-                  {ALL_INDIAN_STATES.map(st => (
+                  {(masterStates.states && masterStates.states.length > 0
+                    ? masterStates.states.map(st => st.name)
+                    : ALL_INDIAN_STATES).map(st => (
                     <option key={st} value={st}>{st}</option>
                   ))}
                 </Select>
@@ -2606,6 +3189,30 @@ const AddJob = () => {
                 onClick={() => {
                   setSelectedCustomer(null);
                   setSearchPhone('');
+                  setCommercialStaffList([
+                    {
+                      id: '1',
+                      category: 'Chef / Kitchen Staff',
+                      role: 'Head Chef/ Master Chef',
+                      vacancies: '1',
+                      salary: '₹12,000 – ₹15,000',
+                      salaryCustom: false,
+                      salaryCustomVal: '',
+                      experience: '2 – 5 Years',
+                      expCustom: false,
+                      expCustomVal: '',
+                      shiftType: 'Full Time (10-12 hrs)',
+                      shiftCustomVal: '',
+                      allowedLeave: '2 days/month',
+                      leaveCustomVal: '',
+                      joiningTimeline: 'Immediate',
+                      joiningCustomVal: '',
+                      facilities: 'Food & Accommodation',
+                      facilitiesCustomVal: '',
+                      otherPerks: '',
+                      isUrgent: false
+                    }
+                  ]);
                 }}
               >
                 Reset

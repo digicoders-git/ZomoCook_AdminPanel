@@ -433,10 +433,10 @@ const ViewJob = () => {
                         <Tr key={idx}>
                           <Td {...tdStyle} borderRight="1px solid #edf2f7">{idx + 1}</Td>
                           <Td {...tdStyle} borderRight="1px solid #edf2f7" fontWeight="700" color="#475569">{s.staffCategory || s.role || job.jobPosition}</Td>
-                          <Td {...tdStyle} borderRight="1px solid #edf2f7">{s.noOfStaff || s.count || '1'}</Td>
+                          <Td {...tdStyle} borderRight="1px solid #edf2f7">{s.vacancies || s.noOfStaff || s.count || '1'}</Td>
                           <Td {...tdStyle} borderRight="1px solid #edf2f7" color="#059669" fontWeight="700">{formattedSalary}</Td>
-                          <Td {...tdStyle} borderRight="1px solid #edf2f7">{s.experienceRange || job.experienceRange || '-'}</Td>
-                          <Td {...tdStyle} borderRight="1px solid #edf2f7">{job.joiningType || '-'}</Td>
+                          <Td {...tdStyle} borderRight="1px solid #edf2f7">{s.experienceRange || s.experience || job.experienceRange || '-'}</Td>
+                          <Td {...tdStyle} borderRight="1px solid #edf2f7">{s.joiningType || s.joiningTimeline || job.joiningType || '-'}</Td>
                           <Td {...tdStyle}>{new Date(job.createdAt).toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' })}</Td>
                         </Tr>
                       );

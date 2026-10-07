@@ -152,11 +152,110 @@ const CandidateList = () => {
   const [stateFilter, setStateFilter] = useState('');
   const [cityFilter, setCityFilter] = useState('');
 
-  // Extract unique options dynamically from candidates data
-  const uniqueJobCategories = Array.from(new Set(candidates.flatMap(c => c.jobPreference?.jobCategory || []))).filter(Boolean);
-  const uniqueJobPositions = Array.from(new Set(candidates.flatMap(c => c.jobPreference?.jobPositions || []))).filter(Boolean);
-  const uniqueStates = Array.from(new Set(candidates.map(c => c.state))).filter(Boolean);
-  const uniqueCities = Array.from(new Set(candidates.map(c => c.city))).filter(Boolean);
+  // Master Data State for Filters
+  const [masterJobCategories, setMasterJobCategories] = useState([]);
+  const [masterJobPositions, setMasterJobPositions] = useState([]);
+  const [masterStates, setMasterStates] = useState([]);
+  const [masterCities, setMasterCities] = useState([]);
+  const [stateCities, setStateCities] = useState([]);
+
+  useEffect(() => {
+    const fetchMasters = async () => {
+      const token = localStorage.getItem('adminToken');
+      const headers = token ? { 'Authorization': `Bearer ${token}` } : {};
+      try {
+        const [catRes, posRes, stateRes, cityRes] = await Promise.allSettled([
+          axios.get(`${API_BASE_URL}/masters/job-categories`, { headers }),
+          axios.get(`${API_BASE_URL}/masters/job-positions`, { headers }),
+          axios.get(`${API_BASE_URL}/masters/states`, { headers }),
+          axios.get(`${API_BASE_URL}/masters/cities`, { headers })
+        ]);
+
+        if (catRes.status === 'fulfilled' && catRes.value?.data?.success) {
+          setMasterJobCategories(catRes.value.data.masters || []);
+        }
+        if (posRes.status === 'fulfilled' && posRes.value?.data?.success) {
+          setMasterJobPositions(posRes.value.data.masters || []);
+        }
+        if (stateRes.status === 'fulfilled' && stateRes.value?.data?.success) {
+          setMasterStates(stateRes.value.data.masters || []);
+        }
+        if (cityRes.status === 'fulfilled' && cityRes.value?.data?.success) {
+          setMasterCities(cityRes.value.data.masters || []);
+          setStateCities(cityRes.value.data.masters || []);
+        }
+      } catch (err) {
+        console.error('Error fetching master filters:', err);
+      }
+    };
+    fetchMasters();
+  }, []);
+
+  // Fetch / filter cities based on selected state
+  useEffect(() => {
+    if (!stateFilter) {
+      setStateCities(masterCities);
+      return;
+    }
+    const stateObj = masterStates.find(s => s.name?.toLowerCase() === stateFilter.toLowerCase());
+    if (stateObj) {
+      const token = localStorage.getItem('adminToken');
+      const headers = token ? { 'Authorization': `Bearer ${token}` } : {};
+      axios.get(`${API_BASE_URL}/masters/cities`, {
+        params: { parentId: stateObj._id },
+        headers
+      }).then(res => {
+        if (res.data.success && res.data.masters && res.data.masters.length > 0) {
+          setStateCities(res.data.masters);
+        } else {
+          const filtered = masterCities.filter(c => {
+            const pid = c.parentId?._id || c.parentId;
+            return pid === stateObj._id || c.parentId?.name?.toLowerCase() === stateFilter.toLowerCase();
+          });
+          setStateCities(filtered.length > 0 ? filtered : masterCities);
+        }
+      }).catch(() => {
+        const filtered = masterCities.filter(c => {
+          const pid = c.parentId?._id || c.parentId;
+          return pid === stateObj._id || c.parentId?.name?.toLowerCase() === stateFilter.toLowerCase();
+        });
+        setStateCities(filtered.length > 0 ? filtered : masterCities);
+      });
+    } else {
+      setStateCities(masterCities);
+    }
+  }, [stateFilter, masterStates, masterCities]);
+
+  // Positions filtered by category
+  const availableJobPositions = (() => {
+    if (!categoryFilter) return masterJobPositions;
+    const catObj = masterJobCategories.find(c => c.name?.toLowerCase() === categoryFilter.toLowerCase());
+    if (catObj) {
+      const filtered = masterJobPositions.filter(p => {
+        const pid = p.parentId?._id || p.parentId;
+        return pid === catObj._id || p.parentId?.name?.toLowerCase() === categoryFilter.toLowerCase();
+      });
+      return filtered.length > 0 ? filtered : masterJobPositions;
+    }
+    return masterJobPositions;
+  })();
+
+  // Display option lists (Master data prioritized, falling back to candidates if master not yet configured)
+  const displayJobCategories = masterJobCategories.length > 0
+    ? masterJobCategories.filter(m => m.status !== 'inactive').map(m => m.name)
+    : Array.from(new Set(candidates.flatMap(c => c.jobPreference?.jobCategory || []))).filter(Boolean);
+
+  const displayJobPositions = availableJobPositions.length > 0
+    ? availableJobPositions.filter(m => m.status !== 'inactive').map(m => m.name)
+    : Array.from(new Set(candidates.flatMap(c => c.jobPreference?.jobPositions || []))).filter(Boolean);
+
+  const displayStates = masterStates.length > 0
+    ? masterStates.filter(m => m.status !== 'inactive').map(m => m.name)
+    : Array.from(new Set(candidates.map(c => c.state))).filter(Boolean);
+
+  const displayCities = (stateFilter ? stateCities : masterCities).length > 0
+    ? (stateFilter ? stateCities : masterCities).filter(m => m.status !== 'inactive').map(m => m.name)
+    : Array.from(new Set(candidates.map(c => c.city))).filter(Boolean);
 
   // Filter and Pagination Logic
   const filteredCandidates = candidates.filter(c => {
@@ -172,10 +271,10 @@ const CandidateList = () => {
     }
     if (leadManagerFilter && c.leadManager !== leadManagerFilter) return false;
     if (kycFilter && (c.kycStatus || 'pending').toLowerCase() !== kycFilter.toLowerCase()) return false;
-    if (categoryFilter && !(c.jobPreference?.jobCategory || []).includes(categoryFilter)) return false;
-    if (positionFilter && !(c.jobPreference?.jobPositions || []).includes(positionFilter)) return false;
-    if (stateFilter && (c.state || '').toLowerCase() !== stateFilter.toLowerCase()) return false;
-    if (cityFilter && (c.city || '').toLowerCase() !== cityFilter.toLowerCase()) return false;
+    if (categoryFilter && !(c.jobPreference?.jobCategory || []).some(cat => String(cat).toLowerCase() === categoryFilter.toLowerCase())) return false;
+    if (positionFilter && !(c.jobPreference?.jobPositions || []).some(pos => String(pos).toLowerCase() === positionFilter.toLowerCase())) return false;
+    if (stateFilter && String(c.state || '').toLowerCase() !== stateFilter.toLowerCase()) return false;
+    if (cityFilter && String(c.city || '').toLowerCase() !== cityFilter.toLowerCase()) return false;
     return true;
   });
 
@@ -263,9 +362,12 @@ const CandidateList = () => {
 
           <Box flex="1" minW="150px">
             <Text fontSize="11px" fontWeight="700" color="#475569" mb="1.5">Job Category</Text>
-            <Select size="sm" h="38px" borderRadius="lg" bg="#f8faff" border="1.5px solid #dde6f5" value={categoryFilter} onChange={(e) => setCategoryFilter(e.target.value)} fontSize="xs">
+            <Select size="sm" h="38px" borderRadius="lg" bg="#f8faff" border="1.5px solid #dde6f5" value={categoryFilter} onChange={(e) => {
+              setCategoryFilter(e.target.value);
+              setPositionFilter('');
+            }} fontSize="xs">
               <option value="">All Job Categories</option>
-              {uniqueJobCategories.map(cat => (
+              {displayJobCategories.map(cat => (
                 <option key={cat} value={cat}>{cat}</option>
               ))}
             </Select>
@@ -275,7 +377,7 @@ const CandidateList = () => {
             <Text fontSize="11px" fontWeight="700" color="#475569" mb="1.5">Job Position</Text>
             <Select size="sm" h="38px" borderRadius="lg" bg="#f8faff" border="1.5px solid #dde6f5" value={positionFilter} onChange={(e) => setPositionFilter(e.target.value)} fontSize="xs">
               <option value="">All Job Positions</option>
-              {uniqueJobPositions.map(pos => (
+              {displayJobPositions.map(pos => (
                 <option key={pos} value={pos}>{pos}</option>
               ))}
             </Select>
@@ -283,9 +385,12 @@ const CandidateList = () => {
 
           <Box flex="1" minW="140px">
             <Text fontSize="11px" fontWeight="700" color="#475569" mb="1.5">State Name</Text>
-            <Select size="sm" h="38px" borderRadius="lg" bg="#f8faff" border="1.5px solid #dde6f5" value={stateFilter} onChange={(e) => setStateFilter(e.target.value)} fontSize="xs">
+            <Select size="sm" h="38px" borderRadius="lg" bg="#f8faff" border="1.5px solid #dde6f5" value={stateFilter} onChange={(e) => {
+              setStateFilter(e.target.value);
+              setCityFilter('');
+            }} fontSize="xs">
               <option value="">All States</option>
-              {uniqueStates.map(st => (
+              {displayStates.map(st => (
                 <option key={st} value={st}>{st}</option>
               ))}
             </Select>
@@ -295,7 +400,7 @@ const CandidateList = () => {
             <Text fontSize="11px" fontWeight="700" color="#475569" mb="1.5">City Name</Text>
             <Select size="sm" h="38px" borderRadius="lg" bg="#f8faff" border="1.5px solid #dde6f5" value={cityFilter} onChange={(e) => setCityFilter(e.target.value)} fontSize="xs">
               <option value="">All Cities</option>
-              {uniqueCities.map(ct => (
+              {displayCities.map(ct => (
                 <option key={ct} value={ct}>{ct}</option>
               ))}
             </Select>
