@@ -53,7 +53,7 @@ import {
   Link as LinkIcon
 } from 'lucide-react';
 
-const CUISINE_OPTIONS = [
+const DEFAULT_CUISINE_OPTIONS = [
   'North Indian',
   'Chinese',
   'South Indian',
@@ -69,7 +69,7 @@ const CUISINE_OPTIONS = [
   'Beverages'
 ];
 
-const CATEGORY_OPTIONS = [
+const DEFAULT_CATEGORY_OPTIONS = [
   'Main Course',
   'Starter',
   'Snacks',
@@ -86,6 +86,11 @@ export default function MenuItemManagement() {
   const [loading, setLoading] = useState(false);
   const [showAddModal, setShowAddModal] = useState(false);
   const [editingItemId, setEditingItemId] = useState(null);
+
+  // Dynamic Masters State
+  const [cuisineOptions, setCuisineOptions] = useState(DEFAULT_CUISINE_OPTIONS);
+  const [categoryOptions, setCategoryOptions] = useState(DEFAULT_CATEGORY_OPTIONS);
+  const [foodTypeOptions, setFoodTypeOptions] = useState(['Veg', 'Non-Veg']);
 
   // Form State
   const [itemName, setItemName] = useState('');
@@ -133,7 +138,32 @@ export default function MenuItemManagement() {
 
   useEffect(() => {
     fetchMenuItems();
+    fetchMasters();
   }, []);
+
+  const fetchMasters = async () => {
+    const token = localStorage.getItem('adminToken');
+    const headers = token ? { 'Authorization': `Bearer ${token}` } : {};
+    try {
+      const [cRes, catRes, ftRes] = await Promise.allSettled([
+        axios.get(`${API_BASE_URL}/masters/cuisines`, { headers }),
+        axios.get(`${API_BASE_URL}/masters/meal-categories`, { headers }),
+        axios.get(`${API_BASE_URL}/masters/food-types`, { headers })
+      ]);
+
+      if (cRes.status === 'fulfilled' && cRes.value?.data?.success && Array.isArray(cRes.value.data.masters) && cRes.value.data.masters.length > 0) {
+        setCuisineOptions(cRes.value.data.masters.map(m => m.name));
+      }
+      if (catRes.status === 'fulfilled' && catRes.value?.data?.success && Array.isArray(catRes.value.data.masters) && catRes.value.data.masters.length > 0) {
+        setCategoryOptions(catRes.value.data.masters.map(m => m.name));
+      }
+      if (ftRes.status === 'fulfilled' && ftRes.value?.data?.success && Array.isArray(ftRes.value.data.masters) && ftRes.value.data.masters.length > 0) {
+        setFoodTypeOptions(ftRes.value.data.masters.map(m => m.name));
+      }
+    } catch (e) {
+      console.error('Error fetching masters for MenuItemManagement:', e);
+    }
+  };
 
   const fetchMenuItems = async () => {
     setLoading(true);
@@ -490,7 +520,7 @@ export default function MenuItemManagement() {
                 fontWeight="semibold"
               >
                 <option value="All">All Cuisines</option>
-                {CUISINE_OPTIONS.map(c => (
+                {cuisineOptions.map(c => (
                   <option key={c} value={c}>{c}</option>
                 ))}
               </Select>
@@ -507,8 +537,11 @@ export default function MenuItemManagement() {
                 fontWeight="semibold"
               >
                 <option value="All">All Food Types</option>
-                <option value="veg">🌿 Veg</option>
-                <option value="non-veg">🍗 Non-Veg</option>
+                {foodTypeOptions.map(ft => (
+                  <option key={ft} value={ft.toLowerCase().includes('non') ? 'non-veg' : (ft.toLowerCase().includes('veg') ? 'veg' : ft.toLowerCase())}>
+                    {ft.toLowerCase().includes('non') ? '🍗 Non-Veg' : (ft.toLowerCase().includes('veg') ? '🌿 Veg' : ft)}
+                  </option>
+                ))}
               </Select>
 
               {/* Category Filter */}
@@ -523,7 +556,7 @@ export default function MenuItemManagement() {
                 fontWeight="semibold"
               >
                 <option value="All">All Categories</option>
-                {CATEGORY_OPTIONS.map(cat => (
+                {categoryOptions.map(cat => (
                   <option key={cat} value={cat}>{cat}</option>
                 ))}
               </Select>
@@ -702,7 +735,7 @@ export default function MenuItemManagement() {
                       bg="gray.50"
                       _focus={{ bg: 'white', borderColor: 'blue.500' }}
                     >
-                      {CUISINE_OPTIONS.map(c => (
+                      {cuisineOptions.map(c => (
                         <option key={c} value={c}>{c}</option>
                       ))}
                     </Select>
@@ -719,7 +752,7 @@ export default function MenuItemManagement() {
                       bg="gray.50"
                       _focus={{ bg: 'white', borderColor: 'blue.500' }}
                     >
-                      {CATEGORY_OPTIONS.map(cat => (
+                      {categoryOptions.map(cat => (
                         <option key={cat} value={cat}>{cat}</option>
                       ))}
                     </Select>

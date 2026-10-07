@@ -158,17 +158,19 @@ const CandidateList = () => {
   const [masterStates, setMasterStates] = useState([]);
   const [masterCities, setMasterCities] = useState([]);
   const [stateCities, setStateCities] = useState([]);
+  const [masterKycStatuses, setMasterKycStatuses] = useState([]);
 
   useEffect(() => {
     const fetchMasters = async () => {
       const token = localStorage.getItem('adminToken');
       const headers = token ? { 'Authorization': `Bearer ${token}` } : {};
       try {
-        const [catRes, posRes, stateRes, cityRes] = await Promise.allSettled([
+        const [catRes, posRes, stateRes, cityRes, kycRes] = await Promise.allSettled([
           axios.get(`${API_BASE_URL}/masters/job-categories`, { headers }),
           axios.get(`${API_BASE_URL}/masters/job-positions`, { headers }),
           axios.get(`${API_BASE_URL}/masters/states`, { headers }),
-          axios.get(`${API_BASE_URL}/masters/cities`, { headers })
+          axios.get(`${API_BASE_URL}/masters/cities`, { headers }),
+          axios.get(`${API_BASE_URL}/masters/kyc-statuses`, { headers })
         ]);
 
         if (catRes.status === 'fulfilled' && catRes.value?.data?.success) {
@@ -183,6 +185,9 @@ const CandidateList = () => {
         if (cityRes.status === 'fulfilled' && cityRes.value?.data?.success) {
           setMasterCities(cityRes.value.data.masters || []);
           setStateCities(cityRes.value.data.masters || []);
+        }
+        if (kycRes.status === 'fulfilled' && kycRes.value?.data?.success) {
+          setMasterKycStatuses(kycRes.value.data.masters || []);
         }
       } catch (err) {
         console.error('Error fetching master filters:', err);
@@ -257,6 +262,10 @@ const CandidateList = () => {
     ? (stateFilter ? stateCities : masterCities).filter(m => m.status !== 'inactive').map(m => m.name)
     : Array.from(new Set(candidates.map(c => c.city))).filter(Boolean);
 
+  const displayKycStatuses = masterKycStatuses.length > 0
+    ? masterKycStatuses.filter(m => m.status !== 'inactive').map(m => m.name)
+    : ['Pending', 'Approved', 'Rejected'];
+
   // Filter and Pagination Logic
   const filteredCandidates = candidates.filter(c => {
     if (isLeadManager) {
@@ -271,7 +280,24 @@ const CandidateList = () => {
     }
     if (leadManagerFilter && c.leadManager !== leadManagerFilter) return false;
     if (kycFilter && (c.kycStatus || 'pending').toLowerCase() !== kycFilter.toLowerCase()) return false;
-    if (categoryFilter && !(c.jobPreference?.jobCategory || []).some(cat => String(cat).toLowerCase() === categoryFilter.toLowerCase())) return false;
+    if (categoryFilter) {
+      const matchCat = categoryFilter.toLowerCase();
+      const candCategories = (c.jobPreference?.jobCategory || []).map(cat => String(cat).toLowerCase());
+      const hasMatch = candCategories.some(cat => 
+        cat === matchCat || 
+        (matchCat.includes('hotel') && cat.includes('hotel')) ||
+        (matchCat.includes('commercial') && (cat.includes('commercial') || cat.includes('hotel'))) ||
+        (matchCat.includes('home') && (cat.includes('home') || cat.includes('domestic'))) ||
+        (matchCat.includes('daily') && cat.includes('daily')) ||
+        (matchCat.includes('party') && cat.includes('party'))
+      );
+      if (!hasMatch) return false;
+    }
+    if (positionFilter && !(c.jobPreference?.jobPositions || []).some(pos => String(pos).toLowerCase() === positionFilter.toLowerCase())) return false;
+    if (stateFilter && String(c.state || '').toLowerCase() !== stateFilter.toLowerCase()) return false;
+    if (cityFilter && String(c.city || '').toLowerCase() !== cityFilter.toLowerCase()) return false;
+    return true;
+  });
     if (positionFilter && !(c.jobPreference?.jobPositions || []).some(pos => String(pos).toLowerCase() === positionFilter.toLowerCase())) return false;
     if (stateFilter && String(c.state || '').toLowerCase() !== stateFilter.toLowerCase()) return false;
     if (cityFilter && String(c.city || '').toLowerCase() !== cityFilter.toLowerCase()) return false;
@@ -354,9 +380,9 @@ const CandidateList = () => {
             <Text fontSize="11px" fontWeight="700" color="#475569" mb="1.5">KYC Status</Text>
             <Select size="sm" h="38px" borderRadius="lg" bg="#f8faff" border="1.5px solid #dde6f5" value={kycFilter} onChange={(e) => setKycFilter(e.target.value)} fontSize="xs">
               <option value="">All KYC Status</option>
-              <option value="pending">Pending</option>
-              <option value="approved">Approved</option>
-              <option value="rejected">Rejected</option>
+              {displayKycStatuses.map(status => (
+                <option key={status} value={status.toLowerCase()}>{status}</option>
+              ))}
             </Select>
           </Box>
 

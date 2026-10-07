@@ -57,12 +57,13 @@ const WebSettings = () => {
   const faviconInputRef = useRef();
   const toast = useToast();
 
+  const [masterCategories, setMasterCategories] = useState([]);
+  const [willDoText, setWillDoText] = useState('');
+  const [willNotDoText, setWillNotDoText] = useState('');
+
   useEffect(() => {
     fetchSettings();
   }, []);
-
-  const [willDoText, setWillDoText] = useState('');
-  const [willNotDoText, setWillNotDoText] = useState('');
 
   useEffect(() => {
     const categoryObj = settings.responsibilities?.[selectedCategoryKey];
@@ -73,10 +74,21 @@ const WebSettings = () => {
   const fetchSettings = async () => {
     try {
       const token = localStorage.getItem('adminToken');
-      const { data } = await axios.get(`${API_BASE_URL}/settings`, {
-        headers: { Authorization: `Bearer ${token}` }
-      });
-      if (data.success) {
+      const [settingsRes, mastersRes] = await Promise.allSettled([
+        axios.get(`${API_BASE_URL}/settings`, {
+          headers: { Authorization: `Bearer ${token}` }
+        }),
+        axios.get(`${API_BASE_URL}/masters/job-categories`, {
+          headers: { Authorization: `Bearer ${token}` }
+        })
+      ]);
+
+      if (mastersRes.status === 'fulfilled' && mastersRes.value.data?.success) {
+        setMasterCategories(mastersRes.value.data.data || []);
+      }
+
+      if (settingsRes.status === 'fulfilled' && settingsRes.value.data?.success) {
+        const data = settingsRes.value.data;
         setSettings({
           ...data.settings,
           logo: null,
@@ -131,16 +143,47 @@ const WebSettings = () => {
     setSettings(prev => ({ ...prev, importantInstruction: content }));
   };
 
+  // Build combined dynamic category list
+  const standardCategories = [
+    { key: 'chef', name: 'Chef / Kitchen Staff' },
+    { key: 'cook', name: 'Home Cook / Cook' },
+    { key: 'helper', name: 'Kitchen Helper / Assistant' },
+    { key: 'waiter', name: 'Waiter / Steward' },
+    { key: 'dishwasher', name: 'Dishwasher / Utility Staff' },
+    { key: 'sitter', name: 'Baby Sitter / Nanny' }
+  ];
+
+  const categoryMap = new Map();
+  standardCategories.forEach(c => categoryMap.set(c.key, { key: c.key, name: c.name }));
+
+  (masterCategories || []).forEach(m => {
+    const rawName = m.name || '';
+    if (!rawName) return;
+    let key = m.value?.trim() || '';
+    if (!key) {
+      const lower = rawName.toLowerCase();
+      if (lower.includes('domestic') || lower.includes('home cook')) key = 'cook';
+      else if (lower.includes('kitchen staff') || lower.includes('chef')) key = 'chef';
+      else if (lower.includes('service') || lower.includes('waiter')) key = 'waiter';
+      else if (lower.includes('housekeeping') || lower.includes('dishwasher')) key = 'dishwasher';
+      else key = rawName.toLowerCase().replace(/[^a-z0-9]+/g, '_');
+    }
+    categoryMap.set(key, { key, name: rawName });
+  });
+
+  if (settings.responsibilities) {
+    Object.keys(settings.responsibilities).forEach(k => {
+      if (!categoryMap.has(k)) {
+        categoryMap.set(k, { key: k, name: settings.responsibilities[k]?.displayName || k });
+      }
+    });
+  }
+
+  const categoryOptions = Array.from(categoryMap.values());
+
   const getCategoryDisplayName = (key) => {
-    const names = {
-      chef: 'Chef / Kitchen Staff',
-      cook: 'Home Cook / Cook',
-      helper: 'Kitchen Helper / Assistant',
-      waiter: 'Waiter / Steward',
-      dishwasher: 'Dishwasher / Utility Staff',
-      sitter: 'Baby Sitter / Nanny'
-    };
-    return names[key] || key;
+    const found = categoryOptions.find(c => c.key === key);
+    return found ? found.name : key;
   };
 
   const handleCategoryChange = (newKey) => {
@@ -372,12 +415,9 @@ const WebSettings = () => {
                     value={selectedCategoryKey} 
                     onChange={(e) => handleCategoryChange(e.target.value)}
                   >
-                    <option value="chef">Chef / Kitchen Staff</option>
-                    <option value="cook">Home Cook / Cook</option>
-                    <option value="helper">Kitchen Helper / Assistant</option>
-                    <option value="waiter">Waiter / Steward</option>
-                    <option value="dishwasher">Dishwasher / Utility Staff</option>
-                    <option value="sitter">Baby Sitter / Nanny</option>
+                    {categoryOptions.map(cat => (
+                      <option key={cat.key} value={cat.key}>{cat.name}</option>
+                    ))}
                   </Select>
                 </FormControl>
 

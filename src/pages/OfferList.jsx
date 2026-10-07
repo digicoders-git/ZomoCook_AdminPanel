@@ -29,6 +29,10 @@ const OfferList = () => {
   const [currentPage, setCurrentPage] = useState(1);
   const [itemsPerPage, setItemsPerPage] = useState(10);
 
+  // Dynamic Master State
+  const [masterOfferTypes, setMasterOfferTypes] = useState(['FLAT', 'PERCENTAGE']);
+  const [masterApplicableTypes, setMasterApplicableTypes] = useState(['All', 'Service Package', 'Hiring Processing Fee', 'Chef for Party', 'Daily Staff']);
+
   // Modal
   const [isOpen, setIsOpen] = useState(false);
   const [currentOffer, setCurrentOffer] = useState(null);
@@ -45,6 +49,25 @@ const OfferList = () => {
   const toast = useToast();
   const token = localStorage.getItem('adminToken');
   const apiUrl = import.meta.env.VITE_API_URL;
+
+  const fetchMasters = async () => {
+    try {
+      const headers = token ? { Authorization: `Bearer ${token}` } : {};
+      const [typeRes, appRes] = await Promise.allSettled([
+        axios.get(`${apiUrl}/masters/offer-types`, { headers }),
+        axios.get(`${apiUrl}/masters/applicable-types`, { headers })
+      ]);
+
+      if (typeRes.status === 'fulfilled' && typeRes.value?.data?.success && Array.isArray(typeRes.value.data.masters) && typeRes.value.data.masters.length > 0) {
+        setMasterOfferTypes(typeRes.value.data.masters.map(m => m.name));
+      }
+      if (appRes.status === 'fulfilled' && appRes.value?.data?.success && Array.isArray(appRes.value.data.masters) && appRes.value.data.masters.length > 0) {
+        setMasterApplicableTypes(appRes.value.data.masters.map(m => m.name));
+      }
+    } catch (e) {
+      console.error('Error fetching offer masters:', e);
+    }
+  };
 
   const fetchOffers = async () => {
     try {
@@ -66,6 +89,7 @@ const OfferList = () => {
 
   useEffect(() => {
     fetchOffers();
+    fetchMasters();
   }, []);
 
   // Filter Logic
@@ -241,17 +265,18 @@ const OfferList = () => {
               <FormControl>
                   <FormLabel fontSize="sm" color="gray.600" fontWeight="bold">Offer Type</FormLabel>
                   <Select placeholder="All Types" value={filterType} onChange={(e) => setFilterType(e.target.value)} borderRadius="md">
-                      <option value="FLAT">Flat</option>
-                      <option value="PERCENTAGE">Percentage</option>
+                      {masterOfferTypes.map(type => (
+                        <option key={type} value={type}>{type === 'FLAT' ? 'Flat Amount' : (type === 'PERCENTAGE' ? 'Percentage' : type)}</option>
+                      ))}
                   </Select>
               </FormControl>
               
               <FormControl>
                   <FormLabel fontSize="sm" color="gray.600" fontWeight="bold">Applicable On</FormLabel>
                   <Select placeholder="All" value={filterApplicableOn} onChange={(e) => setFilterApplicableOn(e.target.value)} borderRadius="md">
-                      <option value="Service Package">Service Package</option>
-                      <option value="Hiring Processing Fee">Hiring Processing Fee</option>
-                      <option value="All">All</option>
+                      {masterApplicableTypes.map(app => (
+                        <option key={app} value={app}>{app}</option>
+                      ))}
                   </Select>
               </FormControl>
               
@@ -440,8 +465,9 @@ const OfferList = () => {
                 <FormControl isRequired>
                   <FormLabel fontSize="sm" fontWeight="semibold">Offer Type</FormLabel>
                   <Select value={formData.offerType} onChange={(e) => setFormData({ ...formData, offerType: e.target.value })}>
-                      <option value="FLAT">Flat Amount</option>
-                      <option value="PERCENTAGE">Percentage</option>
+                      {masterOfferTypes.map(type => (
+                        <option key={type} value={type}>{type === 'FLAT' ? 'Flat Amount' : (type === 'PERCENTAGE' ? 'Percentage' : type)}</option>
+                      ))}
                   </Select>
                 </FormControl>
 
@@ -455,9 +481,9 @@ const OfferList = () => {
                 <FormControl isRequired>
                   <FormLabel fontSize="sm" fontWeight="semibold">Applicable On</FormLabel>
                   <Select value={formData.applicableOn} onChange={(e) => setFormData({ ...formData, applicableOn: e.target.value })}>
-                      <option value="Service Package">Service Package</option>
-                      <option value="Hiring Processing Fee">Hiring Processing Fee</option>
-                      <option value="All">All</option>
+                      {masterApplicableTypes.map(app => (
+                        <option key={app} value={app}>{app}</option>
+                      ))}
                   </Select>
                 </FormControl>
 

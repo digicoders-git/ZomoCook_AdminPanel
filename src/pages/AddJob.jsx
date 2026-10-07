@@ -360,7 +360,7 @@ const AddJob = () => {
     setCommercialStaffList(prev => [
       ...prev,
       {
-        id: Date.now().toString(),
+        id: `staff_${Date.now()}_${Math.random().toString(36).substring(2, 8)}`,
         category: 'Chef / Kitchen Staff',
         role: 'Commi 1 / Commi 2',
         vacancies: '1',
@@ -384,12 +384,14 @@ const AddJob = () => {
     ]);
   };
 
-  const handleRemoveCommercialStaff = (id) => {
-    if (commercialStaffList.length === 1) {
-      toast({ title: 'At least 1 staff requirement is required', status: 'info', duration: 2000 });
-      return;
-    }
-    setCommercialStaffList(prev => prev.filter(s => s.id !== id));
+  const handleRemoveCommercialStaff = (id, index) => {
+    setCommercialStaffList(prev => {
+      if (prev.length <= 1) {
+        toast({ title: 'At least 1 staff requirement is required', status: 'info', duration: 2000 });
+        return prev;
+      }
+      return prev.filter((s, idx) => (id !== undefined && s.id !== undefined) ? s.id !== id : idx !== index);
+    });
   };
 
   const handleUpdateCommercialStaff = (id, field, value) => {
@@ -922,19 +924,21 @@ const AddJob = () => {
     ]);
   };
 
-  const handleRemovePartyDay = (dayId) => {
-    if (partyDatesList.length === 1) {
-      toast({ title: 'At least 1 Event Day is required', status: 'info', duration: 2000 });
-      return;
-    }
-    setPartyDatesList(prev => prev.filter(d => d.id !== dayId));
+  const handleRemovePartyDay = (dayId, index) => {
+    setPartyDatesList(prev => {
+      if (prev.length <= 1) {
+        toast({ title: 'At least 1 Event Day is required', status: 'info', duration: 2000 });
+        return prev;
+      }
+      return prev.filter((d, idx) => (dayId !== undefined && d.id !== undefined) ? d.id !== dayId : idx !== index);
+    });
   };
 
   const handleAddMealToDay = (dayId) => {
     setPartyDatesList(prev => prev.map(d => {
       if (d.id === dayId) {
         const newMeal = {
-          id: Date.now().toString(),
+          id: `meal_${Date.now()}_${Math.random().toString(36).substring(2, 7)}`,
           mealType: d.meals.length === 1 ? 'Lunch' : 'Dinner',
           guests: d.meals[0]?.guests || 30,
           servingTime: '01:30 PM',
@@ -962,14 +966,14 @@ const AddJob = () => {
     }));
   };
 
-  const handleRemoveMealFromDay = (dayId, mealId) => {
+  const handleRemoveMealFromDay = (dayId, mealId, mIdx) => {
     setPartyDatesList(prev => prev.map(d => {
       if (d.id === dayId) {
-        if (d.meals.length === 1) {
+        if (d.meals.length <= 1) {
           toast({ title: 'At least 1 meal is required per day', status: 'info', duration: 2000 });
           return d;
         }
-        return { ...d, meals: d.meals.filter(m => m.id !== mealId) };
+        return { ...d, meals: d.meals.filter((m, idx) => (mealId !== undefined && m.id !== undefined) ? m.id !== mealId : idx !== mIdx) };
       }
       return d;
     }));
@@ -1546,11 +1550,16 @@ const AddJob = () => {
 
                       {commercialStaffList.length > 1 && (
                         <Button
+                          type="button"
                           size="xs"
                           variant="ghost"
                           colorScheme="red"
                           leftIcon={<Trash2 size={13} />}
-                          onClick={() => handleRemoveCommercialStaff(staff.id)}
+                          onClick={(e) => {
+                            e.preventDefault();
+                            e.stopPropagation();
+                            handleRemoveCommercialStaff(staff.id, idx);
+                          }}
                         >
                           Remove Staff
                         </Button>
@@ -2232,14 +2241,16 @@ const AddJob = () => {
                         </Box>
 
                         <IconButton
+                          type="button"
                           size="sm"
                           mt="4"
                           variant="ghost"
                           colorScheme="red"
                           icon={<Trash2 size={16} />}
-                          onClick={() => {
-                            if (dailyStaffList.length === 1) return;
-                            setDailyStaffList(prev => prev.filter(s => s.id !== item.id));
+                          onClick={(e) => {
+                            e.preventDefault();
+                            e.stopPropagation();
+                            setDailyStaffList(prev => prev.length > 1 ? prev.filter((s, sIdx) => s.id ? s.id !== item.id : sIdx !== idx) : prev);
                           }}
                           aria-label="Remove staff"
                         />
@@ -2391,11 +2402,16 @@ const AddJob = () => {
                             </Button>
                             {partyDatesList.length > 1 && (
                               <IconButton
+                                type="button"
                                 size="xs"
                                 variant="ghost"
                                 colorScheme="red"
                                 icon={<Trash2 size={14} />}
-                                onClick={() => handleRemovePartyDay(day.id)}
+                                onClick={(e) => {
+                                  e.preventDefault();
+                                  e.stopPropagation();
+                                  handleRemovePartyDay(day.id, idx);
+                                }}
                                 aria-label="Delete Day"
                               />
                             )}
@@ -2455,11 +2471,16 @@ const AddJob = () => {
 
                                 {day.meals.length > 1 && (
                                   <IconButton
+                                    type="button"
                                     size="xs"
                                     variant="ghost"
                                     colorScheme="red"
                                     icon={<Trash2 size={13} />}
-                                    onClick={() => handleRemoveMealFromDay(day.id, meal.id)}
+                                    onClick={(e) => {
+                                      e.preventDefault();
+                                      e.stopPropagation();
+                                      handleRemoveMealFromDay(day.id, meal.id, mIdx);
+                                    }}
                                     aria-label="Remove Meal"
                                   />
                                 )}
