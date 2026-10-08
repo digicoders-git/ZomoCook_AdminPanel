@@ -2702,11 +2702,10 @@ const AddJob = () => {
                                         </HStack>
 
                                         {/* 2. Select Cuisines Filter Chips (Scrollable / Select Multiple) */}
-                                        <HStack
-                                          spacing="1.5"
+                                        <Box
                                           flex="1"
-                                          minW="220px"
-                                          maxW={{ base: '100%', lg: '560px' }}
+                                          minW={{ base: '100%', md: '220px' }}
+                                          maxW={{ base: '100%', lg: '580px' }}
                                           overflowX="auto"
                                           py="1"
                                           px="2"
@@ -2714,59 +2713,63 @@ const AddJob = () => {
                                           borderRadius="xl"
                                           border="1px solid #e2e8f0"
                                           sx={{
-                                            '::-webkit-scrollbar': { height: '3px' },
-                                            '::-webkit-scrollbar-thumb': { background: '#cbd5e1', borderRadius: '3px' }
+                                            WebkitOverflowScrolling: 'touch',
+                                            '::-webkit-scrollbar': { height: '4px' },
+                                            '::-webkit-scrollbar-thumb': { background: '#cbd5e1', borderRadius: '4px' }
                                           }}
                                         >
-                                          {['All Cuisines', ...Array.from(new Set([...(masterStates.cuisines || []), ...menuCatalogItems.map(d => d.cuisine).filter(Boolean)]))].map((cuisine) => {
-                                            const isAll = cuisine === 'All Cuisines';
-                                            const isSelected = isAll
-                                              ? (!meal.selectedCuisines || meal.selectedCuisines.length === 0 || meal.selectedCuisines.includes('All') || meal.selectedCuisines.includes('All Cuisines'))
-                                              : (meal.selectedCuisines && meal.selectedCuisines.includes(cuisine));
+                                          <HStack spacing="1.5" w="max-content">
+                                            {['All Cuisines', ...Array.from(new Set([...(masterStates.cuisines || []), ...menuCatalogItems.map(d => d.cuisine).filter(Boolean)]))].map((cuisine) => {
+                                              const isAll = cuisine === 'All Cuisines';
+                                              const isSelected = isAll
+                                                ? (!meal.selectedCuisines || meal.selectedCuisines.length === 0 || meal.selectedCuisines.includes('All') || meal.selectedCuisines.includes('All Cuisines'))
+                                                : (meal.selectedCuisines && meal.selectedCuisines.includes(cuisine));
 
-                                            return (
-                                              <Button
-                                                key={cuisine}
-                                                size="xs"
-                                                h="26px"
-                                                borderRadius="full"
-                                                px="2.5"
-                                                fontSize="11px"
-                                                fontWeight="700"
-                                                whiteSpace="nowrap"
-                                                variant={isSelected ? 'solid' : 'outline'}
-                                                bg={isSelected ? (isAll ? '#475569' : '#7c3aed') : 'white'}
-                                                color={isSelected ? 'white' : '#475569'}
-                                                borderColor={isSelected ? (isAll ? '#475569' : '#7c3aed') : '#dde6f5'}
-                                                _hover={{ bg: isSelected ? (isAll ? '#334155' : '#6d28d9') : '#f1f5f9' }}
-                                                onClick={() => {
-                                                  setPartyDatesList(prev => prev.map(d => d.id === day.id ? {
-                                                    ...d,
-                                                    meals: d.meals.map(m => {
-                                                      if (m.id !== meal.id) return m;
-                                                      if (isAll) {
-                                                        return { ...m, selectedCuisines: ['All'] };
-                                                      }
-                                                      let current = (m.selectedCuisines || []).filter(x => x !== 'All' && x !== 'All Cuisines');
-                                                      if (current.includes(cuisine)) {
-                                                        const next = current.filter(x => x !== cuisine);
-                                                        return { ...m, selectedCuisines: next.length === 0 ? ['All'] : next };
-                                                      } else {
-                                                        return { ...m, selectedCuisines: [...current, cuisine] };
-                                                      }
-                                                    })
-                                                  } : d));
-                                                }}
-                                              >
-                                                {isSelected && !isAll && '✓ '}
-                                                {cuisine}
-                                              </Button>
-                                            );
-                                          })}
-                                        </HStack>
+                                              return (
+                                                <Button
+                                                  key={cuisine}
+                                                  size="xs"
+                                                  h="26px"
+                                                  borderRadius="full"
+                                                  px="2.5"
+                                                  fontSize="11px"
+                                                  fontWeight="700"
+                                                  whiteSpace="nowrap"
+                                                  flexShrink={0}
+                                                  variant={isSelected ? 'solid' : 'outline'}
+                                                  bg={isSelected ? (isAll ? '#475569' : '#7c3aed') : 'white'}
+                                                  color={isSelected ? 'white' : '#475569'}
+                                                  borderColor={isSelected ? (isAll ? '#475569' : '#7c3aed') : '#dde6f5'}
+                                                  _hover={{ bg: isSelected ? (isAll ? '#334155' : '#6d28d9') : '#f1f5f9' }}
+                                                  onClick={() => {
+                                                    setPartyDatesList(prev => prev.map(d => d.id === day.id ? {
+                                                      ...d,
+                                                      meals: d.meals.map(m => {
+                                                        if (m.id !== meal.id) return m;
+                                                        if (isAll) {
+                                                          return { ...m, selectedCuisines: ['All'] };
+                                                        }
+                                                        let current = (m.selectedCuisines || []).filter(x => x !== 'All' && x !== 'All Cuisines');
+                                                        if (current.includes(cuisine)) {
+                                                          const next = current.filter(x => x !== cuisine);
+                                                          return { ...m, selectedCuisines: next.length === 0 ? ['All'] : next };
+                                                        } else {
+                                                          return { ...m, selectedCuisines: [...current, cuisine] };
+                                                        }
+                                                      })
+                                                    } : d));
+                                                  }}
+                                                >
+                                                  {isSelected && !isAll && '✓ '}
+                                                  {cuisine}
+                                                </Button>
+                                              );
+                                            })}
+                                          </HStack>
+                                        </Box>
 
                                         {/* 3. Dish Search */}
-                                        <InputGroup size="xs" w={{ base: '100%', sm: '180px' }}>
+                                        <InputGroup size="xs" w={{ base: '100%', sm: '180px' }} flexShrink={0}>
                                           <InputLeftElement pointerEvents="none">
                                             <Search size={12} color="#94a3b8" />
                                           </InputLeftElement>

@@ -49,6 +49,7 @@ const DailyBasisJobsList = () => {
   
   const [jobs, setJobs] = useState([]);
   const [leadManagers, setLeadManagers] = useState([]);
+  const [masterCities, setMasterCities] = useState([]);
   const [isLoading, setIsLoading] = useState(true);
 
   // View Details Modal State
@@ -129,9 +130,23 @@ const DailyBasisJobsList = () => {
     }
   };
 
+  const fetchMasterCities = async () => {
+    try {
+      const response = await axios.get(`${API_BASE_URL}/masters/cities?limit=1000`, {
+        headers: { 'Authorization': `Bearer ${token}` }
+      });
+      if (response.data.success && response.data.masters) {
+        setMasterCities(response.data.masters);
+      }
+    } catch (error) {
+      console.error('Error fetching master cities:', error);
+    }
+  };
+
   useEffect(() => {
     fetchJobs();
     fetchLeadManagers();
+    fetchMasterCities();
   }, []);
 
   const getCustomerName = (job) => {
@@ -348,9 +363,15 @@ const DailyBasisJobsList = () => {
             <FormLabel fontSize="xs" fontWeight="700" color="#475569">City</FormLabel>
             <Select size="sm" h="38px" borderRadius="lg" bg="#f8faff" border="1.5px solid #dde6f5" value={filters.city} onChange={(e) => setFilters({...filters, city: e.target.value})}>
               <option value="">All Cities</option>
-              {Array.from(new Set(jobs.map(j => j.city))).filter(Boolean).map(city => (
-                <option key={city} value={city}>{city}</option>
-              ))}
+              {masterCities.length > 0 ? (
+                masterCities.map(city => (
+                  <option key={city._id || city.name} value={city.name}>{city.name}</option>
+                ))
+              ) : (
+                Array.from(new Set(jobs.map(j => j.city))).filter(Boolean).map(city => (
+                  <option key={city} value={city}>{city}</option>
+                ))
+              )}
             </Select>
           </FormControl>
           <FormControl>
