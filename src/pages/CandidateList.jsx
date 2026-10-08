@@ -298,11 +298,6 @@ const CandidateList = () => {
     if (cityFilter && String(c.city || '').toLowerCase() !== cityFilter.toLowerCase()) return false;
     return true;
   });
-    if (positionFilter && !(c.jobPreference?.jobPositions || []).some(pos => String(pos).toLowerCase() === positionFilter.toLowerCase())) return false;
-    if (stateFilter && String(c.state || '').toLowerCase() !== stateFilter.toLowerCase()) return false;
-    if (cityFilter && String(c.city || '').toLowerCase() !== cityFilter.toLowerCase()) return false;
-    return true;
-  });
 
   const indexOfLastRecord = currentPage * entriesPerPage;
   const indexOfFirstRecord = indexOfLastRecord - entriesPerPage;
