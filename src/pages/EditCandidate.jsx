@@ -303,10 +303,10 @@ const EditCandidate = () => {
       });
       return;
     }
-    if (current.length >= 5) {
+    if (current.length >= 3) {
       toast({
         title: 'Limit reached',
-        description: 'Maximum 5 job positions can be selected.',
+        description: 'Maximum 3 job positions can be selected.',
         status: 'warning',
         duration: 2500,
         position: 'top-right'
@@ -467,11 +467,11 @@ const EditCandidate = () => {
                   <HStack spacing="2">
                     <Icon as={Briefcase} size={16} color={BRAND} />
                     <Text fontSize="xs" fontWeight="700" color="#1e293b" textTransform="uppercase" letterSpacing="0.5px">
-                      Job Positions (Max 5 Positions)
+                      Job Positions (Max 3 Positions)
                     </Text>
                   </HStack>
                   <Badge
-                    bg={(formData.jobPositions?.length || 0) >= 5 ? '#ff6b00' : BRAND}
+                    bg={(formData.jobPositions?.length || 0) >= 3 ? '#ff6b00' : BRAND}
                     color="white"
                     px="2.5"
                     py="0.5"
@@ -479,20 +479,20 @@ const EditCandidate = () => {
                     fontSize="11px"
                     fontWeight="700"
                   >
-                    {formData.jobPositions?.length || 0} / 5 Selected
+                    {formData.jobPositions?.length || 0} / 3 Selected
                   </Badge>
                 </Flex>
 
                 <SimpleGrid columns={{ base: 1, md: 2 }} spacing="3" mb="3">
                   <Select
-                    placeholder={(formData.jobPositions?.length || 0) >= 5 ? 'Maximum 5 positions selected' : 'Select from Master Positions...'}
+                    placeholder={(formData.jobPositions?.length || 0) >= 3 ? 'Maximum 3 positions selected' : 'Select from Master Positions...'}
                     value=""
                     onChange={(e) => {
                       if (e.target.value) {
                         addJobPosition(e.target.value);
                       }
                     }}
-                    isDisabled={(formData.jobPositions?.length || 0) >= 5}
+                    isDisabled={(formData.jobPositions?.length || 0) >= 3}
                     {...selectStyle}
                     bg="white"
                   >
@@ -521,7 +521,7 @@ const EditCandidate = () => {
                           }
                         }
                       }}
-                      isDisabled={(formData.jobPositions?.length || 0) >= 5}
+                      isDisabled={(formData.jobPositions?.length || 0) >= 3}
                       {...inputStyle}
                       bg="white"
                     />
@@ -539,7 +539,7 @@ const EditCandidate = () => {
                           setCustomPositionInput('');
                         }
                       }}
-                      isDisabled={!customPositionInput.trim() || (formData.jobPositions?.length || 0) >= 5}
+                      isDisabled={!customPositionInput.trim() || (formData.jobPositions?.length || 0) >= 3}
                       _hover={{ bg: '#003d91' }}
                     >
                       Add
@@ -717,10 +717,21 @@ const EditCandidate = () => {
               <Box border="1px solid #e8edf5" borderRadius="xl" p="5" mb="6" bg="#f8faff">
                 <Text fontSize="sm" fontWeight="700" mb="4">Add Skills</Text>
                 <SimpleGrid columns={{ base: 1, md: 2 }} spacing="4" mb="4">
-                  <FormControl><FormLabel {...labelStyle}>Category</FormLabel><Select value={tempSkill.category || ''} onChange={(e) => setTempSkill({...tempSkill, category: e.target.value})} {...selectStyle} placeholder="Select Category">
-                    {masters.skillCategories.map(m => <option key={m._id} value={m.name}>{m.name}</option>)}
+                  <FormControl><FormLabel {...labelStyle}>Skill / Category</FormLabel><Select value={tempSkill.category || ''} onChange={(e) => setTempSkill({...tempSkill, category: e.target.value})} {...selectStyle} placeholder="Select Skill / Category">
+                    {masters.skillCategories
+                      .filter(m => {
+                        if (!formData.jobPositions || formData.jobPositions.length === 0) return true;
+                        const parentName = m.parentId?.name || (typeof m.parentId === 'string' ? m.parentId : '');
+                        if (!parentName) return true;
+                        return formData.jobPositions.some(p => 
+                          p.toLowerCase() === parentName.toLowerCase() || 
+                          parentName.toLowerCase().includes(p.toLowerCase()) || 
+                          p.toLowerCase().includes(parentName.toLowerCase())
+                        );
+                      })
+                      .map(m => <option key={m._id} value={m.name}>{m.name} {m.parentId?.name ? `(${m.parentId.name})` : ''}</option>)}
                   </Select></FormControl>
-                  <FormControl><FormLabel {...labelStyle}>Skills</FormLabel><Input value={tempSkill.skills} onChange={(e) => setTempSkill({...tempSkill, skills: e.target.value})} {...inputStyle} /></FormControl>
+                  <FormControl><FormLabel {...labelStyle}>Specific Skills</FormLabel><Input value={tempSkill.skills} onChange={(e) => setTempSkill({...tempSkill, skills: e.target.value})} placeholder="e.g. Dosa, Sambar, Rasam" {...inputStyle} /></FormControl>
                 </SimpleGrid>
                 <Button leftIcon={<Plus size={16} />} size="sm" bg="#10b981" color="white" onClick={() => { if(tempSkill.category && tempSkill.skills) { setFormData(prev => ({...prev, cookingSkills: [...prev.cookingSkills, tempSkill]})); setTempSkill({category:'', skills:''}); } }}>Add Skill</Button>
                 <VStack align="stretch" mt="4" spacing="2">

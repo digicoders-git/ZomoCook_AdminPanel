@@ -530,32 +530,31 @@ const AddJob = () => {
 
   const [jobImage, setJobImage] = useState(null);
 
-  // Dynamic Master Data State (with built-in smart defaults as fallback)
+  // Dynamic Master Data State (100% Synchronized directly from Master APIs)
   const [masterStates, setMasterStates] = useState({
     jobPositions: [],
-    commercialCategories: commercialServiceCategories,
-    staffMap: commercialStaffCategoriesMap,
-    propertyCategories: commercialPropertyCategories,
-    commercialSalaries: commercialSalaryRanges,
-    commercialExperiences: commercialExpOptions,
-    commercialShifts: commercialShiftOptions,
-    commercialLeaves: commercialLeaveOptions,
-    commercialJoining: commercialJoiningOptions,
-    commercialFacilities: commercialFacilitiesOptions,
-    domesticSalaries: domesticSalaries,
-    cookPreferences: cookPreferences,
-    cookingPreferences: [
-      'Vegetarian (Veg Only)',
-      'Non-Vegetarian',
-      'Both (Veg & Non-Veg)',
-      'Jain Food',
-      'Eggetarian',
-      'Vegan'
-    ],
-    familyMembers: familyMembersList,
-    occasionTypes: occasionTypes,
-    mealTypes: ['Breakfast', 'Lunch', 'High Tea / Snacks', 'Dinner'],
-    dailyRoles: dailyRolesList,
+    commercialCategories: [],
+    staffMap: {},
+    propertyCategories: [],
+    commercialSalaries: [],
+    commercialExperiences: [],
+    commercialShifts: [],
+    commercialLeaves: [],
+    commercialJoining: [],
+    commercialFacilities: [],
+    commercialBenefits: [],
+    domesticStaffCategories: [],
+    domesticSalaries: [],
+    cookPreferences: [],
+    cookingPreferences: [],
+    foodPreferences: [],
+    genderPreferences: [],
+    serviceDurations: [],
+    familyMembers: [],
+    occasionTypes: [],
+    mealTypes: [],
+    cuisines: [],
+    dailyRoles: [],
     states: [],
     cities: []
   });
@@ -620,6 +619,7 @@ const AddJob = () => {
 
         const [
           positionsData,
+          jobCatData,
           propCatData,
           salaryData,
           expData,
@@ -627,27 +627,38 @@ const AddJob = () => {
           leaveData,
           joiningData,
           facilityData,
+          benefitData,
           cookPrefData,
           cookingPrefData,
+          foodPrefData,
           familyData,
+          genderData,
+          durationData,
           eventsData,
           mealTypeData,
+          cuisinesData,
           statesData,
           plansData
         ] = await Promise.all([
           fetchMaster('job-positions'),
+          fetchMaster('job-categories'),
           fetchMaster('property-categories'),
           fetchMaster('salaries'),
           fetchMaster('experiences'),
-          fetchMaster('shift-types'),
+          fetchMaster('time-ranges'),
           fetchMaster('leaves'),
           fetchMaster('joining-types'),
           fetchMaster('facilities'),
+          fetchMaster('benefits'),
           fetchMaster('cook-preferences'),
           fetchMaster('cooking-preferences'),
+          fetchMaster('food-preferences'),
           fetchMaster('family-members'),
+          fetchMaster('gender-preferences'),
+          fetchMaster('service-durations'),
           fetchMaster('events'),
           fetchMaster('meal-types'),
+          fetchMaster('cuisines'),
           fetchMaster('states'),
           (async () => {
             try {
@@ -664,6 +675,31 @@ const AddJob = () => {
           const next = { ...prev };
           if (positionsData && positionsData.length > 0) {
             next.jobPositions = positionsData.map(p => p.name);
+            
+            // Build dynamic staff map by category from master positions
+            const dynamicStaffMap = {};
+            positionsData.forEach(pos => {
+              const parentName = pos.parentId?.name || 'Kitchen Staff';
+              if (!dynamicStaffMap[parentName]) {
+                dynamicStaffMap[parentName] = [];
+              }
+              if (!dynamicStaffMap[parentName].includes(pos.name)) {
+                dynamicStaffMap[parentName].push(pos.name);
+              }
+            });
+            next.staffMap = dynamicStaffMap;
+
+            // Domestic staff categories directly from positions
+            const domPositions = positionsData
+              .filter(p => p.parentId?.name?.toLowerCase().includes('domestic') || p.parentId?.name?.toLowerCase().includes('home') || ['home cook', 'maid', 'driver', 'baby sitter', 'caretaker'].some(k => p.name.toLowerCase().includes(k)))
+              .map(p => p.name);
+            next.domesticStaffCategories = domPositions.length > 0 ? Array.from(new Set(domPositions)) : positionsData.map(p => p.name);
+          }
+          if (jobCatData && jobCatData.length > 0) {
+            const commercialCats = jobCatData
+              .filter(c => !c.name.toLowerCase().includes('party') && !c.name.toLowerCase().includes('daily') && !c.name.toLowerCase().includes('domestic'))
+              .map(c => c.name);
+            next.commercialCategories = commercialCats.length > 0 ? commercialCats : jobCatData.map(c => c.name);
           }
           if (propCatData && propCatData.length > 0) {
             next.propertyCategories = propCatData.map(p => p.name);
@@ -687,20 +723,37 @@ const AddJob = () => {
           if (facilityData && facilityData.length > 0) {
             next.commercialFacilities = facilityData.map(f => f.name);
           }
+          if (benefitData && benefitData.length > 0) {
+            next.commercialBenefits = benefitData.map(b => b.name);
+          }
           if (cookPrefData && cookPrefData.length > 0) {
             next.cookPreferences = cookPrefData.map(c => c.name);
           }
           if (cookingPrefData && cookingPrefData.length > 0) {
             next.cookingPreferences = cookingPrefData.map(c => c.name);
           }
+          if (foodPrefData && foodPrefData.length > 0) {
+            next.foodPreferences = foodPrefData.map(f => f.name);
+          } else if (cookingPrefData && cookingPrefData.length > 0) {
+            next.foodPreferences = cookingPrefData.map(c => c.name);
+          }
           if (familyData && familyData.length > 0) {
             next.familyMembers = familyData.map(f => f.name);
+          }
+          if (genderData && genderData.length > 0) {
+            next.genderPreferences = genderData.map(g => g.name);
+          }
+          if (durationData && durationData.length > 0) {
+            next.serviceDurations = durationData.map(d => d.name);
           }
           if (eventsData && eventsData.length > 0) {
             next.occasionTypes = eventsData.map(e => e.name);
           }
           if (mealTypeData && mealTypeData.length > 0) {
             next.mealTypes = mealTypeData.map(m => m.name);
+          }
+          if (cuisinesData && cuisinesData.length > 0) {
+            next.cuisines = cuisinesData.map(c => c.name);
           }
           if (statesData && statesData.length > 0) {
             next.states = statesData;
@@ -1595,9 +1648,24 @@ const AddJob = () => {
                             bg="white"
                             h="42px"
                           >
-                            {(masterStates.staffMap[staff.category] || (masterStates.jobPositions && masterStates.jobPositions.length > 0 ? masterStates.jobPositions : commercialStaffCategoriesMap[staff.category] || [])).map(pos => (
-                              <option key={pos} value={pos}>{pos}</option>
-                            ))}
+                            {(() => {
+                              const catPositions = masterStates.staffMap && masterStates.staffMap[staff.category];
+                              const positionList = (catPositions && catPositions.length > 0)
+                                ? catPositions
+                                : (masterStates.jobPositions && masterStates.jobPositions.length > 0
+                                    ? masterStates.jobPositions
+                                    : (commercialStaffCategoriesMap[staff.category] || []));
+                              
+                              const uniqueRoles = Array.from(new Set([
+                                staff.role,
+                                ...positionList,
+                                ...(masterStates.jobPositions || [])
+                              ])).filter(Boolean);
+
+                              return uniqueRoles.map(pos => (
+                                <option key={pos} value={pos}>{pos}</option>
+                              ));
+                            })()}
                           </Select>
                         </FormControl>
 
@@ -1627,9 +1695,7 @@ const AddJob = () => {
                             bg="white"
                             h="42px"
                           >
-                            {(masterStates.commercialSalaries && masterStates.commercialSalaries.length > 0
-                              ? masterStates.commercialSalaries
-                              : commercialSalaryRanges).map(sal => (
+                            {Array.from(new Set([...(masterStates.commercialSalaries || commercialSalaryRanges), 'Custom Range'])).map(sal => (
                               <option key={sal} value={sal}>{sal}</option>
                             ))}
                           </Select>
@@ -1655,9 +1721,7 @@ const AddJob = () => {
                             bg="white"
                             h="42px"
                           >
-                            {(masterStates.commercialExperiences && masterStates.commercialExperiences.length > 0
-                              ? masterStates.commercialExperiences
-                              : commercialExpOptions).map(exp => (
+                            {Array.from(new Set([...(masterStates.commercialExperiences || commercialExpOptions), 'Custom'])).map(exp => (
                               <option key={exp} value={exp}>{exp}</option>
                             ))}
                           </Select>
@@ -1683,9 +1747,7 @@ const AddJob = () => {
                             bg="white"
                             h="42px"
                           >
-                            {(masterStates.commercialShifts && masterStates.commercialShifts.length > 0
-                              ? masterStates.commercialShifts
-                              : commercialShiftOptions).map(shift => (
+                            {Array.from(new Set([...(masterStates.commercialShifts || commercialShiftOptions), 'Custom'])).map(shift => (
                               <option key={shift} value={shift}>{shift}</option>
                             ))}
                           </Select>
@@ -1714,9 +1776,7 @@ const AddJob = () => {
                             bg="white"
                             h="42px"
                           >
-                            {(masterStates.commercialLeaves && masterStates.commercialLeaves.length > 0
-                              ? masterStates.commercialLeaves
-                              : commercialLeaveOptions).map(l => (
+                            {Array.from(new Set([...(masterStates.commercialLeaves || commercialLeaveOptions), 'Custom'])).map(l => (
                               <option key={l} value={l}>{l}</option>
                             ))}
                           </Select>
@@ -1742,9 +1802,7 @@ const AddJob = () => {
                             bg="white"
                             h="42px"
                           >
-                            {(masterStates.commercialJoining && masterStates.commercialJoining.length > 0
-                              ? masterStates.commercialJoining
-                              : commercialJoiningOptions).map(j => (
+                            {Array.from(new Set([...(masterStates.commercialJoining || commercialJoiningOptions), 'Custom'])).map(j => (
                               <option key={j} value={j}>{j}</option>
                             ))}
                           </Select>
@@ -1770,9 +1828,7 @@ const AddJob = () => {
                             bg="white"
                             h="42px"
                           >
-                            {(masterStates.commercialFacilities && masterStates.commercialFacilities.length > 0
-                              ? masterStates.commercialFacilities
-                              : commercialFacilitiesOptions).map(f => (
+                            {Array.from(new Set([...(masterStates.commercialFacilities || commercialFacilitiesOptions), 'Custom'])).map(f => (
                               <option key={f} value={f}>{f}</option>
                             ))}
                           </Select>
@@ -1851,7 +1907,9 @@ const AddJob = () => {
                       {...selectStyle}
                       h="42px"
                     >
-                      {['Home Cook', 'Baby Sitter', 'Maid', 'Driver', 'Caretaker'].map(c => (
+                      {(masterStates.domesticStaffCategories && masterStates.domesticStaffCategories.length > 0
+                        ? masterStates.domesticStaffCategories
+                        : ['Home Cook', 'Baby Sitter', 'Maid', 'Driver', 'Caretaker']).map(c => (
                         <option key={c} value={c}>{c}</option>
                       ))}
                     </Select>
@@ -1899,7 +1957,9 @@ const AddJob = () => {
                       {...selectStyle}
                       h="42px"
                     >
-                      {['Anyone', 'Male', 'Female'].map(g => (
+                      {(masterStates.genderPreferences && masterStates.genderPreferences.length > 0
+                        ? masterStates.genderPreferences
+                        : ['Anyone', 'Male', 'Female']).map(g => (
                         <option key={g} value={g}>{g}</option>
                       ))}
                     </Select>
@@ -1913,9 +1973,9 @@ const AddJob = () => {
                       {...selectStyle}
                       h="42px"
                     >
-                      {(masterStates.cookingPreferences && masterStates.cookingPreferences.length > 0
-                        ? masterStates.cookingPreferences
-                        : ['Pure Veg', 'Veg + Non Veg']).map(fp => (
+                      {(masterStates.foodPreferences && masterStates.foodPreferences.length > 0
+                        ? masterStates.foodPreferences
+                        : ['Pure Veg', 'Veg + Non Veg', 'Vegetarian (Veg Only)', 'Non-Vegetarian', 'Both (Veg & Non-Veg)', 'Jain Food', 'Eggetarian', 'Vegan']).map(fp => (
                         <option key={fp} value={fp}>{fp}</option>
                       ))}
                     </Select>
@@ -1929,7 +1989,9 @@ const AddJob = () => {
                       {...selectStyle}
                       h="42px"
                     >
-                      {['10 Hours – ( Morning to Evening)', '24 Hours – Live-in Cook'].map(sd => (
+                      {(masterStates.serviceDurations && masterStates.serviceDurations.length > 0
+                        ? masterStates.serviceDurations
+                        : ['10 Hours – ( Morning to Evening)', '24 Hours – Live-in Cook', '12 Hours (Day)', '12 Hours (Night)', 'Part Time (4-6 Hours)']).map(sd => (
                         <option key={sd} value={sd}>{sd}</option>
                       ))}
                     </Select>
@@ -1948,9 +2010,7 @@ const AddJob = () => {
                       {...selectStyle}
                       h="42px"
                     >
-                      {(masterStates.domesticSalaries && masterStates.domesticSalaries.length > 0
-                        ? masterStates.domesticSalaries
-                        : domesticSalaries).map(sal => (
+                      {Array.from(new Set([...(masterStates.domesticSalaries || domesticSalaries), 'Custom Range'])).map(sal => (
                         <option key={sal} value={sal}>{sal}</option>
                       ))}
                     </Select>
@@ -1974,9 +2034,7 @@ const AddJob = () => {
                       {...selectStyle}
                       h="42px"
                     >
-                      {(masterStates.commercialExperiences && masterStates.commercialExperiences.length > 0
-                        ? masterStates.commercialExperiences
-                        : expOptionsList).map(exp => (
+                      {Array.from(new Set([...(masterStates.commercialExperiences || expOptionsList), 'Custom'])).map(exp => (
                         <option key={exp} value={exp}>{exp}</option>
                       ))}
                     </Select>
@@ -1990,9 +2048,7 @@ const AddJob = () => {
                       {...selectStyle}
                       h="42px"
                     >
-                      {(masterStates.commercialJoining && masterStates.commercialJoining.length > 0
-                        ? masterStates.commercialJoining
-                        : joiningTypeOptions).map(j => (
+                      {Array.from(new Set([...(masterStates.commercialJoining || joiningTypeOptions), 'Custom'])).map(j => (
                         <option key={j} value={j}>{j}</option>
                       ))}
                     </Select>
@@ -2006,9 +2062,7 @@ const AddJob = () => {
                       {...selectStyle}
                       h="42px"
                     >
-                      {(masterStates.commercialLeaves && masterStates.commercialLeaves.length > 0
-                        ? masterStates.commercialLeaves
-                        : leaveOptionsList).map(l => (
+                      {Array.from(new Set([...(masterStates.commercialLeaves || leaveOptionsList), 'Custom'])).map(l => (
                         <option key={l} value={l}>{l}</option>
                       ))}
                     </Select>
@@ -2102,7 +2156,7 @@ const AddJob = () => {
 
                   {/* Preset Buttons */}
                   <Wrap spacing="2" mb="4">
-                    {dailyRolesList.map(preset => (
+                    {(masterStates.dailyRoles && masterStates.dailyRoles.length > 0 ? masterStates.dailyRoles : dailyRolesList).map(preset => (
                       <WrapItem key={preset.role}>
                         <Button
                           size="xs"
@@ -2115,7 +2169,7 @@ const AddJob = () => {
                               ...prev,
                               {
                                 id: Date.now().toString(),
-                                serviceCategory: preset.category,
+                                serviceCategory: preset.category || 'Kitchen Staff',
                                 role: preset.role,
                                 ratePerDay: preset.rate,
                                 genderPref: 'Any Gender',
@@ -2155,12 +2209,17 @@ const AddJob = () => {
                             h="36px"
                             value={item.role}
                             onChange={(e) => {
-                              const match = dailyRolesList.find(r => r.role === e.target.value);
+                              const roles = masterStates.dailyRoles && masterStates.dailyRoles.length > 0 ? masterStates.dailyRoles : dailyRolesList;
+                              const match = roles.find(r => r.role === e.target.value);
                               setDailyStaffList(prev => prev.map(s => s.id === item.id ? { ...s, role: e.target.value, ratePerDay: match?.rate || s.ratePerDay } : s));
                             }}
                           >
-                            {dailyRolesList.map(r => (
-                              <option key={r.role} value={r.role}>{r.role}</option>
+                            {Array.from(new Set([
+                              item.role,
+                              ...(masterStates.dailyRoles && masterStates.dailyRoles.length > 0 ? masterStates.dailyRoles.map(r => r.role) : dailyRolesList.map(r => r.role)),
+                              ...(masterStates.jobPositions || [])
+                            ])).map(role => (
+                              <option key={role} value={role}>{role}</option>
                             ))}
                           </Select>
                         </Box>
@@ -2184,7 +2243,9 @@ const AddJob = () => {
                             value={item.genderPref}
                             onChange={(e) => setDailyStaffList(prev => prev.map(s => s.id === item.id ? { ...s, genderPref: e.target.value } : s))}
                           >
-                            {['Any Gender', 'Male', 'Female'].map(g => (
+                            {(masterStates.genderPreferences && masterStates.genderPreferences.length > 0
+                              ? masterStates.genderPreferences
+                              : ['Any Gender', 'Male', 'Female']).map(g => (
                               <option key={g} value={g}>{g}</option>
                             ))}
                           </Select>
@@ -2657,7 +2718,7 @@ const AddJob = () => {
                                             '::-webkit-scrollbar-thumb': { background: '#cbd5e1', borderRadius: '3px' }
                                           }}
                                         >
-                                          {['All Cuisines', ...Array.from(new Set(menuCatalogItems.map(d => d.cuisine).filter(Boolean)))].map((cuisine) => {
+                                          {['All Cuisines', ...Array.from(new Set([...(masterStates.cuisines || []), ...menuCatalogItems.map(d => d.cuisine).filter(Boolean)]))].map((cuisine) => {
                                             const isAll = cuisine === 'All Cuisines';
                                             const isSelected = isAll
                                               ? (!meal.selectedCuisines || meal.selectedCuisines.length === 0 || meal.selectedCuisines.includes('All') || meal.selectedCuisines.includes('All Cuisines'))

@@ -108,6 +108,8 @@ const EditJob = () => {
           fetchMasterData('facilities', 'facilities'),
           fetchMasterData('experiences', 'experienceRanges'),
           fetchMasterData('salaries', 'salaryRanges'),
+          fetchMasterData('joining-types', 'joiningTypes'),
+          fetchMasterData('leaves', 'leaves'),
           fetchMasterData('events', 'events')
         ]);
 
@@ -341,7 +343,19 @@ const EditJob = () => {
                   <FormControl isRequired><FormLabel {...labelStyle}>No. of Guest</FormLabel><Input name="noOfGuests" value={formData.noOfGuests || ''} onChange={handleChange} placeholder="Enter No Of Guest" {...inputStyle} /></FormControl>
                 </>
               )}
-              {jobCategory !== 'daily' && <FormControl><FormLabel {...labelStyle}>Allowed Leave</FormLabel><Input name="allowedLeave" value={formData.allowedLeave || ''} onChange={handleChange} placeholder="Allowed Leave" {...inputStyle} /></FormControl>}
+              {jobCategory !== 'daily' && (
+                <FormControl>
+                  <FormLabel {...labelStyle}>Allowed Leave</FormLabel>
+                  <Select name="allowedLeave" value={formData.allowedLeave || ''} onChange={handleChange} {...selectStyle} placeholder="Select Allowed Leave">
+                    {(masters.leaves && masters.leaves.length > 0
+                      ? masters.leaves.map(m => <option key={m._id} value={m.name}>{m.name}</option>)
+                      : ['1 day/month', '2 days/month', '3 days/month', '4 days/month', '6 days/month', 'No leaves required'].map(l => (
+                        <option key={l} value={l}>{l}</option>
+                      ))
+                    )}
+                  </Select>
+                </FormControl>
+              )}
               {jobCategory !== 'daily' ? (
                 <>
                   <FormControl isRequired><FormLabel {...labelStyle}>Salary Range</FormLabel><Select name="salaryRange" value={formData.salaryRange || ''} onChange={handleChange} {...selectStyle} placeholder="Select Salary Range">
@@ -350,7 +364,14 @@ const EditJob = () => {
                   <FormControl isRequired><FormLabel {...labelStyle}>Experience Range</FormLabel><Select name="experienceRange" value={formData.experienceRange || ''} onChange={handleChange} {...selectStyle} placeholder="Select Experience Range">
                     {masters.experienceRanges.map(m => <option key={m._id} value={m.name}>{m.name}</option>)}
                   </Select></FormControl>
-                  <FormControl isRequired><FormLabel {...labelStyle}>Joining Type</FormLabel><Select name="joiningType" value={formData.joiningType || ''} onChange={handleChange} {...selectStyle} placeholder="Select Joining Type"><option value="Immediate">Immediate</option><option value="15 Days">15 Days</option><option value="1 Month">1 Month</option></Select></FormControl>
+                  <FormControl isRequired><FormLabel {...labelStyle}>Joining Type</FormLabel><Select name="joiningType" value={formData.joiningType || ''} onChange={handleChange} {...selectStyle} placeholder="Select Joining Type">
+                    {(masters.joiningTypes && masters.joiningTypes.length > 0
+                      ? masters.joiningTypes.map(m => <option key={m._id} value={m.name}>{m.name}</option>)
+                      : ['Immediate', 'Within 3 Days', 'Within 1 Week', 'Within 15 Days', 'Within 1 Month'].map(j => (
+                        <option key={j} value={j}>{j}</option>
+                      ))
+                    )}
+                  </Select></FormControl>
                 </>
               ) : (
                 <FormControl isRequired><FormLabel {...labelStyle}>Date of Event</FormLabel><Input name="dateOfEvent" value={formData.dateOfEvent || ''} onChange={handleChange} type="date" {...inputStyle} /></FormControl>

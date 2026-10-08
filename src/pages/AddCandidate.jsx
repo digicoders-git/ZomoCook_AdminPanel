@@ -214,10 +214,10 @@ const AddCandidate = () => {
       });
       return;
     }
-    if (current.length >= 5) {
+    if (current.length >= 3) {
       toast({
         title: 'Limit reached',
-        description: 'Maximum 5 job positions can be selected.',
+        description: 'Maximum 3 job positions can be selected.',
         status: 'warning',
         duration: 2500,
         position: 'top-right'
@@ -379,11 +379,11 @@ const AddCandidate = () => {
                   <HStack spacing="2">
                     <Icon as={Briefcase} size={16} color={BRAND} />
                     <Text fontSize="xs" fontWeight="700" color="#1e293b" textTransform="uppercase" letterSpacing="0.5px">
-                      Job Positions (Max 5 Positions)
+                      Job Positions (Max 3 Positions)
                     </Text>
                   </HStack>
                   <Badge
-                    bg={(formData.jobPositions?.length || 0) >= 5 ? '#ff6b00' : BRAND}
+                    bg={(formData.jobPositions?.length || 0) >= 3 ? '#ff6b00' : BRAND}
                     color="white"
                     px="2.5"
                     py="0.5"
@@ -391,20 +391,20 @@ const AddCandidate = () => {
                     fontSize="11px"
                     fontWeight="700"
                   >
-                    {formData.jobPositions?.length || 0} / 5 Selected
+                    {formData.jobPositions?.length || 0} / 3 Selected
                   </Badge>
                 </Flex>
 
                 <SimpleGrid columns={{ base: 1, md: 2 }} spacing="3" mb="3">
                   <Select
-                    placeholder={(formData.jobPositions?.length || 0) >= 5 ? 'Maximum 5 positions selected' : 'Select from Master Positions...'}
+                    placeholder={(formData.jobPositions?.length || 0) >= 3 ? 'Maximum 3 positions selected' : 'Select from Master Positions...'}
                     value=""
                     onChange={(e) => {
                       if (e.target.value) {
                         addJobPosition(e.target.value);
                       }
                     }}
-                    isDisabled={(formData.jobPositions?.length || 0) >= 5}
+                    isDisabled={(formData.jobPositions?.length || 0) >= 3}
                     {...selectStyle}
                     bg="white"
                   >
@@ -433,7 +433,7 @@ const AddCandidate = () => {
                           }
                         }
                       }}
-                      isDisabled={(formData.jobPositions?.length || 0) >= 5}
+                      isDisabled={(formData.jobPositions?.length || 0) >= 3}
                       {...inputStyle}
                       bg="white"
                     />
@@ -451,12 +451,13 @@ const AddCandidate = () => {
                           setCustomPositionInput('');
                         }
                       }}
-                      isDisabled={!customPositionInput.trim() || (formData.jobPositions?.length || 0) >= 5}
+                      isDisabled={!customPositionInput.trim() || (formData.jobPositions?.length || 0) >= 3}
                       _hover={{ bg: '#003d91' }}
                     >
                       Add
                     </Button>
                   </HStack>
+
                 </SimpleGrid>
 
                 {/* Selected Positions Badges */}
@@ -628,16 +629,28 @@ const AddCandidate = () => {
               </FormControl>
               <Box border="1px solid #e8edf5" borderRadius="xl" p="5" mb="6" bg="#f8faff">
                 <SimpleGrid columns={{ base: 1, md: 2 }} spacing="4" mb="4">
-                  <Select value={tempSkill.category} onChange={(e) => setTempSkill({...tempSkill, category: e.target.value})} {...selectStyle} placeholder="Category">
-                    {masters.skillCategories.map(m => <option key={m._id} value={m.name}>{m.name}</option>)}
+                  <Select value={tempSkill.category} onChange={(e) => setTempSkill({...tempSkill, category: e.target.value})} {...selectStyle} placeholder="Skill / Category">
+                    {masters.skillCategories
+                      .filter(m => {
+                        if (!formData.jobPositions || formData.jobPositions.length === 0) return true;
+                        const parentName = m.parentId?.name || (typeof m.parentId === 'string' ? m.parentId : '');
+                        if (!parentName) return true;
+                        return formData.jobPositions.some(p => 
+                          p.toLowerCase() === parentName.toLowerCase() || 
+                          parentName.toLowerCase().includes(p.toLowerCase()) || 
+                          p.toLowerCase().includes(parentName.toLowerCase())
+                        );
+                      })
+                      .map(m => <option key={m._id} value={m.name}>{m.name} {m.parentId?.name ? `(${m.parentId.name})` : ''}</option>)}
                   </Select>
-                  <Input value={tempSkill.skills} onChange={(e) => setTempSkill({...tempSkill, skills: e.target.value})} placeholder="Specific Skills" {...inputStyle} />
+                  <Input value={tempSkill.skills} onChange={(e) => setTempSkill({...tempSkill, skills: e.target.value})} placeholder="Specific Skills (e.g. Dosa, Rasam, Sambar)" {...inputStyle} />
                 </SimpleGrid>
                 <Button size="sm" bg="#10b981" color="white" onClick={() => { if(tempSkill.category && tempSkill.skills) { setFormData(prev => ({...prev, cookingSkills: [...prev.cookingSkills, tempSkill]})); setTempSkill({category:'', skills:''}); } }}>Add Skill</Button>
                 <VStack align="stretch" mt="4" spacing="2">
                   {formData.cookingSkills.map((s, i) => (<HStack key={i} justify="space-between" bg="white" p="3" border="1px solid #e2e8f0"><Text fontSize="xs">{s.category}: {s.skills}</Text><IconButton size="xs" colorScheme="red" icon={<Trash2 size={14} />} onClick={() => removeFromList('cookingSkills', i)} /></HStack>))}
                 </VStack>
               </Box>
+
               <HStack justify="space-between"><Button onClick={() => setActiveTab(1)} variant="outline" size="sm" px="6">Previous</Button><Button onClick={() => setActiveTab(3)} bg={BRAND} color="white" size="sm" px="6">Next</Button></HStack>
             </TabPanel>
 
