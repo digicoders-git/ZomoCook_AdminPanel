@@ -84,16 +84,17 @@ const WebSettings = () => {
       ]);
 
       if (mastersRes.status === 'fulfilled' && mastersRes.value.data?.success) {
-        setMasterCategories(mastersRes.value.data.data || []);
+        setMasterCategories(mastersRes.value.data.masters || mastersRes.value.data.data || []);
       }
 
       if (settingsRes.status === 'fulfilled' && settingsRes.value.data?.success) {
         const data = settingsRes.value.data;
+        const fetchedSettings = data.settings || {};
         setSettings({
-          ...data.settings,
+          ...fetchedSettings,
           logo: null,
           favicon: null,
-          appVersion: data.settings.appVersion || {
+          appVersion: fetchedSettings.appVersion || {
             latestVersion: '1.0.7',
             latestBuildNumber: 8,
             minRequiredVersion: '1.0.7',
@@ -106,8 +107,8 @@ const WebSettings = () => {
         });
         const serverBaseUrl = API_BASE_URL.replace('/api', '');
         setPreviews({
-          logo: data.settings.logo ? `${serverBaseUrl}/${data.settings.logo.replace(/\\/g, '/')}` : null,
-          favicon: data.settings.favicon ? `${serverBaseUrl}/${data.settings.favicon.replace(/\\/g, '/')}` : null
+          logo: fetchedSettings.logo ? `${serverBaseUrl}/${fetchedSettings.logo.replace(/\\/g, '/')}` : null,
+          favicon: fetchedSettings.favicon ? `${serverBaseUrl}/${fetchedSettings.favicon.replace(/\\/g, '/')}` : null
         });
       }
     } catch (error) {
@@ -143,35 +144,29 @@ const WebSettings = () => {
     setSettings(prev => ({ ...prev, importantInstruction: content }));
   };
 
-  // Build combined dynamic category list
-  const standardCategories = [
-    { key: 'chef', name: 'Chef / Kitchen Staff' },
-    { key: 'cook', name: 'Home Cook / Cook' },
-    { key: 'helper', name: 'Kitchen Helper / Assistant' },
-    { key: 'waiter', name: 'Waiter / Steward' },
-    { key: 'dishwasher', name: 'Dishwasher / Utility Staff' },
-    { key: 'sitter', name: 'Baby Sitter / Nanny' }
-  ];
-
+  // Build dynamic category list from Masters and Database
   const categoryMap = new Map();
-  standardCategories.forEach(c => categoryMap.set(c.key, { key: c.key, name: c.name }));
 
-  (masterCategories || []).forEach(m => {
-    const rawName = m.name || '';
-    if (!rawName) return;
-    let key = m.value?.trim() || '';
-    if (!key) {
-      const lower = rawName.toLowerCase();
-      if (lower.includes('domestic') || lower.includes('home cook')) key = 'cook';
-      else if (lower.includes('kitchen staff') || lower.includes('chef')) key = 'chef';
-      else if (lower.includes('service') || lower.includes('waiter')) key = 'waiter';
-      else if (lower.includes('housekeeping') || lower.includes('dishwasher')) key = 'dishwasher';
-      else key = rawName.toLowerCase().replace(/[^a-z0-9]+/g, '_');
-    }
-    categoryMap.set(key, { key, name: rawName });
-  });
+  // 1. Populate dynamic categories from Master Data (Job Categories)
+  if (masterCategories && masterCategories.length > 0) {
+    masterCategories.forEach(m => {
+      const rawName = m.name || '';
+      if (!rawName) return;
+      let key = m.value?.trim() || '';
+      if (!key) {
+        const lower = rawName.toLowerCase();
+        if (lower.includes('domestic') || lower.includes('home cook')) key = 'cook';
+        else if (lower.includes('kitchen staff') || lower.includes('chef')) key = 'chef';
+        else if (lower.includes('service') || lower.includes('waiter')) key = 'waiter';
+        else if (lower.includes('housekeeping') || lower.includes('dishwasher')) key = 'dishwasher';
+        else key = rawName.toLowerCase().replace(/[^a-z0-9]+/g, '_');
+      }
+      categoryMap.set(key, { key, name: rawName });
+    });
+  }
 
-  if (settings.responsibilities) {
+  // 2. Include any existing responsibilities configurations stored in database
+  if (settings.responsibilities && typeof settings.responsibilities === 'object') {
     Object.keys(settings.responsibilities).forEach(k => {
       if (!categoryMap.has(k)) {
         categoryMap.set(k, { key: k, name: settings.responsibilities[k]?.displayName || k });
@@ -179,7 +174,30 @@ const WebSettings = () => {
     });
   }
 
+  // 3. Fallback only if no master categories and no saved responsibilities exist
+  if (categoryMap.size === 0) {
+    const standardCategories = [
+      { key: 'chef', name: 'Chef / Kitchen Staff' },
+      { key: 'cook', name: 'Home Cook / Cook' },
+      { key: 'helper', name: 'Kitchen Helper / Assistant' },
+      { key: 'waiter', name: 'Waiter / Steward' },
+      { key: 'dishwasher', name: 'Dishwasher / Utility Staff' },
+      { key: 'sitter', name: 'Baby Sitter / Nanny' }
+    ];
+    standardCategories.forEach(c => categoryMap.set(c.key, c));
+  }
+
   const categoryOptions = Array.from(categoryMap.values());
+
+  // Auto-sync selected category if current key is invalid or not in list
+  useEffect(() => {
+    if (categoryOptions.length > 0) {
+      const exists = categoryOptions.some(c => c.key === selectedCategoryKey);
+      if (!exists) {
+        setSelectedCategoryKey(categoryOptions[0].key);
+      }
+    }
+  }, [categoryOptions.length, masterCategories, settings.responsibilities]);
 
   const getCategoryDisplayName = (key) => {
     const found = categoryOptions.find(c => c.key === key);
