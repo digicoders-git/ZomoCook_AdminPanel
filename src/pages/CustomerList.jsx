@@ -231,9 +231,8 @@ const CustomerList = () => {
       type: 'info',
       onConfirm: async () => {
         try {
-          const apiUrl = import.meta.env.VITE_API_URL;
           const token = localStorage.getItem('adminToken');
-          const response = await axios.patch(`${apiUrl}/customers/${id}/status`, {}, {
+          const response = await axios.patch(`${API_BASE_URL}/customers/${id}/status`, {}, {
             headers: { 'Authorization': `Bearer ${token}` }
           });
           if (response.data.success) {
@@ -257,9 +256,8 @@ const CustomerList = () => {
       type: 'danger',
       onConfirm: async () => {
         try {
-          const apiUrl = import.meta.env.VITE_API_URL;
           const token = localStorage.getItem('adminToken');
-          const response = await axios.delete(`${apiUrl}/customers/${id}`, {
+          const response = await axios.delete(`${API_BASE_URL}/customers/${id}`, {
             headers: { 'Authorization': `Bearer ${token}` }
           });
           if (response.data.success) {

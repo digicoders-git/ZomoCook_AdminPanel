@@ -1,6 +1,7 @@
-import { useState, useEffect, useRef } from 'react';
-import { Box, VStack, HStack, Text, Icon, Tabs, TabList, TabPanels, Tab, TabPanel, FormControl, FormLabel, Input, SimpleGrid, Image, Flex, Textarea, Button, useToast, Spinner, Select } from '@chakra-ui/react';
-import { Globe, MapPin, Share2, Save, Upload, ClipboardList } from 'lucide-react';
+import { useState, useEffect, useRef, useMemo } from 'react';
+import { Box, VStack, HStack, Text, Icon, Tabs, TabList, TabPanels, Tab, TabPanel, FormControl, FormLabel, Input, SimpleGrid, Image, Flex, Textarea, Button, useToast, Spinner, Select, Badge } from '@chakra-ui/react';
+import { Globe, MapPin, Share2, Save, Upload, ClipboardList, ExternalLink } from 'lucide-react';
+import { Link } from 'react-router-dom';
 import axios from 'axios';
 import ReactQuill from 'react-quill-new';
 import 'react-quill-new/dist/quill.snow.css';
@@ -18,7 +19,7 @@ const SectionTitle = ({ children }) => (
 const WebSettings = () => {
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
-  const [selectedCategoryKey, setSelectedCategoryKey] = useState('chef');
+  const [selectedCategoryKey, setSelectedCategoryKey] = useState('');
   const [settings, setSettings] = useState({
     siteName: '',
     companyEmail: '',
@@ -65,22 +66,13 @@ const WebSettings = () => {
     fetchSettings();
   }, []);
 
-  useEffect(() => {
-    const categoryObj = settings.responsibilities?.[selectedCategoryKey];
-    setWillDoText(categoryObj?.willDo?.join('\n') || '');
-    setWillNotDoText(categoryObj?.willNotDo?.join('\n') || '');
-  }, [selectedCategoryKey, settings.responsibilities]);
-
   const fetchSettings = async () => {
     try {
       const token = localStorage.getItem('adminToken');
+      const headers = token ? { Authorization: `Bearer ${token}` } : {};
       const [settingsRes, mastersRes] = await Promise.allSettled([
-        axios.get(`${API_BASE_URL}/settings`, {
-          headers: { Authorization: `Bearer ${token}` }
-        }),
-        axios.get(`${API_BASE_URL}/masters/job-categories`, {
-          headers: { Authorization: `Bearer ${token}` }
-        })
+        axios.get(`${API_BASE_URL}/settings`, { headers }),
+        axios.get(`${API_BASE_URL}/masters/job-categories`, { headers })
       ]);
 
       if (mastersRes.status === 'fulfilled' && mastersRes.value.data?.success) {
@@ -144,50 +136,90 @@ const WebSettings = () => {
     setSettings(prev => ({ ...prev, importantInstruction: content }));
   };
 
-  // Build dynamic category list from Masters and Database
-  const categoryMap = new Map();
+  const getLegacyKeyForCategory = (name) => {
+    if (!name) return null;
+    const lower = name.toLowerCase();
+    if (lower.includes('kitchen') || lower.includes('chef')) return 'chef';
+    if (lower.includes('domestic') || lower.includes('home cook') || (lower.includes('cook') && !lower.includes('kitchen'))) return 'cook';
+    if (lower.includes('waiter') || lower.includes('service') || lower.includes('steward')) return 'waiter';
+    if (lower.includes('dishwasher') || lower.includes('housekeeping') || lower.includes('cleaning')) return 'dishwasher';
+    if (lower.includes('sitter') || lower.includes('nanny') || lower.includes('baby')) return 'sitter';
+    if (lower.includes('helper') || lower.includes('assistant')) return 'helper';
+    return null;
+  };
 
-  // 1. Populate dynamic categories from Master Data (Job Categories)
-  if (masterCategories && masterCategories.length > 0) {
-    masterCategories.forEach(m => {
-      const rawName = m.name || '';
-      if (!rawName) return;
-      let key = m.value?.trim() || '';
-      if (!key) {
-        const lower = rawName.toLowerCase();
-        if (lower.includes('domestic') || lower.includes('home cook')) key = 'cook';
-        else if (lower.includes('kitchen staff') || lower.includes('chef')) key = 'chef';
-        else if (lower.includes('service') || lower.includes('waiter')) key = 'waiter';
-        else if (lower.includes('housekeeping') || lower.includes('dishwasher')) key = 'dishwasher';
-        else key = rawName.toLowerCase().replace(/[^a-z0-9]+/g, '_');
+  const findCategoryResponsibilities = (catKey, catName, respObj) => {
+    if (!respObj || typeof respObj !== 'object') return null;
+
+    // 1. Direct match by key (e.g. _id)
+    if (catKey && respObj[catKey]) {
+      return respObj[catKey];
+    }
+
+    if (catName) {
+      // 2. Direct match by exact name
+      if (respObj[catName]) return respObj[catName];
+
+      // 3. Match by normalized slug
+      const slug = catName.toLowerCase().replace(/[^a-z0-9]+/g, '_');
+      if (respObj[slug]) return respObj[slug];
+
+      // 4. Match by displayName in stored objects
+      const lowerName = catName.toLowerCase();
+      for (const [, v] of Object.entries(respObj)) {
+        if (v && typeof v === 'object') {
+          const dName = (v.displayName || '').toLowerCase();
+          if (dName && (dName === lowerName || lowerName.includes(dName) || dName.includes(lowerName))) {
+            return v;
+          }
+        }
       }
-      categoryMap.set(key, { key, name: rawName });
-    });
-  }
 
-  // 2. Include any existing responsibilities configurations stored in database
-  if (settings.responsibilities && typeof settings.responsibilities === 'object') {
-    Object.keys(settings.responsibilities).forEach(k => {
-      if (!categoryMap.has(k)) {
-        categoryMap.set(k, { key: k, name: settings.responsibilities[k]?.displayName || k });
+      // 5. Match by legacy key (chef, cook, waiter, dishwasher, sitter, helper)
+      const legacyKey = getLegacyKeyForCategory(catName);
+      if (legacyKey && respObj[legacyKey]) {
+        return respObj[legacyKey];
       }
-    });
-  }
+    }
 
-  // 3. Fallback only if no master categories and no saved responsibilities exist
-  if (categoryMap.size === 0) {
-    const standardCategories = [
-      { key: 'chef', name: 'Chef / Kitchen Staff' },
-      { key: 'cook', name: 'Home Cook / Cook' },
-      { key: 'helper', name: 'Kitchen Helper / Assistant' },
-      { key: 'waiter', name: 'Waiter / Steward' },
-      { key: 'dishwasher', name: 'Dishwasher / Utility Staff' },
-      { key: 'sitter', name: 'Baby Sitter / Nanny' }
-    ];
-    standardCategories.forEach(c => categoryMap.set(c.key, c));
-  }
+    return null;
+  };
 
-  const categoryOptions = Array.from(categoryMap.values());
+  // Build dynamic category list directly from Master Job Categories
+  const categoryOptions = useMemo(() => {
+    const list = [];
+    const seen = new Set();
+
+    if (masterCategories && masterCategories.length > 0) {
+      masterCategories.forEach(m => {
+        if (!m || m.status === 'inactive') return;
+        const name = (m.name || '').trim();
+        if (!name || seen.has(name.toLowerCase())) return;
+        seen.add(name.toLowerCase());
+        list.push({
+          key: m._id || name.toLowerCase().replace(/[^a-z0-9]+/g, '_'),
+          id: m._id,
+          name: name,
+          value: m.value
+        });
+      });
+    }
+
+    // Fallback only if no master categories exist
+    if (list.length === 0) {
+      const standardCategories = [
+        { key: 'chef', id: 'chef', name: 'Chef / Kitchen Staff' },
+        { key: 'cook', id: 'cook', name: 'Home Cook / Cook' },
+        { key: 'helper', id: 'helper', name: 'Kitchen Helper / Assistant' },
+        { key: 'waiter', id: 'waiter', name: 'Waiter / Steward' },
+        { key: 'dishwasher', id: 'dishwasher', name: 'Dishwasher / Utility Staff' },
+        { key: 'sitter', id: 'sitter', name: 'Baby Sitter / Nanny' }
+      ];
+      return standardCategories;
+    }
+
+    return list;
+  }, [masterCategories]);
 
   // Auto-sync selected category if current key is invalid or not in list
   useEffect(() => {
@@ -197,26 +229,42 @@ const WebSettings = () => {
         setSelectedCategoryKey(categoryOptions[0].key);
       }
     }
-  }, [categoryOptions.length, masterCategories, settings.responsibilities]);
+  }, [categoryOptions, selectedCategoryKey]);
 
-  const getCategoryDisplayName = (key) => {
-    const found = categoryOptions.find(c => c.key === key);
-    return found ? found.name : key;
-  };
+  // Update textareas whenever selectedCategoryKey or settings.responsibilities changes
+  useEffect(() => {
+    if (!selectedCategoryKey) return;
+    const currentCat = categoryOptions.find(c => c.key === selectedCategoryKey);
+    const catData = findCategoryResponsibilities(selectedCategoryKey, currentCat?.name, settings.responsibilities);
+    setWillDoText(catData?.willDo?.join('\n') || '');
+    setWillNotDoText(catData?.willNotDo?.join('\n') || '');
+  }, [selectedCategoryKey, settings.responsibilities, categoryOptions]);
 
   const handleCategoryChange = (newKey) => {
-    const currentWillDo = willDoText.split('\n').map(l => l.trim()).filter(l => l.length > 0);
-    const currentWillNotDo = willNotDoText.split('\n').map(l => l.trim()).filter(l => l.length > 0);
+    if (selectedCategoryKey) {
+      const currentCat = categoryOptions.find(c => c.key === selectedCategoryKey);
+      const catName = currentCat?.name || selectedCategoryKey;
+      const currentWillDo = willDoText.split('\n').map(l => l.trim()).filter(l => l.length > 0);
+      const currentWillNotDo = willNotDoText.split('\n').map(l => l.trim()).filter(l => l.length > 0);
 
-    setSettings(prev => {
-      const updatedResp = { ...prev.responsibilities || {} };
-      updatedResp[selectedCategoryKey] = {
-        displayName: updatedResp[selectedCategoryKey]?.displayName || getCategoryDisplayName(selectedCategoryKey),
+      const entry = {
+        displayName: catName,
+        categoryName: catName,
+        categoryId: currentCat?.id || selectedCategoryKey,
         willDo: currentWillDo,
         willNotDo: currentWillNotDo
       };
-      return { ...prev, responsibilities: updatedResp };
-    });
+
+      setSettings(prev => {
+        const updatedResp = { ...prev.responsibilities || {} };
+        updatedResp[selectedCategoryKey] = entry;
+        const slug = catName.toLowerCase().replace(/[^a-z0-9]+/g, '_');
+        updatedResp[slug] = entry;
+        const legacy = getLegacyKeyForCategory(catName);
+        if (legacy) updatedResp[legacy] = entry;
+        return { ...prev, responsibilities: updatedResp };
+      });
+    }
 
     setSelectedCategoryKey(newKey);
   };
@@ -235,15 +283,26 @@ const WebSettings = () => {
       const token = localStorage.getItem('adminToken');
       const formData = new FormData();
 
+      const currentCat = categoryOptions.find(c => c.key === selectedCategoryKey);
+      const catName = currentCat?.name || selectedCategoryKey;
       const currentWillDo = willDoText.split('\n').map(l => l.trim()).filter(l => l.length > 0);
       const currentWillNotDo = willNotDoText.split('\n').map(l => l.trim()).filter(l => l.length > 0);
 
       const updatedResp = { ...settings.responsibilities || {} };
-      updatedResp[selectedCategoryKey] = {
-        displayName: updatedResp[selectedCategoryKey]?.displayName || getCategoryDisplayName(selectedCategoryKey),
-        willDo: currentWillDo,
-        willNotDo: currentWillNotDo
-      };
+      if (selectedCategoryKey) {
+        const entry = {
+          displayName: catName,
+          categoryName: catName,
+          categoryId: currentCat?.id || selectedCategoryKey,
+          willDo: currentWillDo,
+          willNotDo: currentWillNotDo
+        };
+        updatedResp[selectedCategoryKey] = entry;
+        const slug = catName.toLowerCase().replace(/[^a-z0-9]+/g, '_');
+        updatedResp[slug] = entry;
+        const legacy = getLegacyKeyForCategory(catName);
+        if (legacy) updatedResp[legacy] = entry;
+      }
 
       // Append all fields
       Object.keys(settings).forEach(key => {
@@ -424,10 +483,29 @@ const WebSettings = () => {
             {/* Responsibilities Settings */}
             <TabPanel p="0">
               <VStack align="stretch" spacing="6">
-                <SectionTitle>Category Responsibilities (What staff will do / NOT do)</SectionTitle>
+                <Flex justify="space-between" align="center" flexWrap="wrap" gap="2">
+                  <SectionTitle>Category Responsibilities (What staff will do / NOT do)</SectionTitle>
+                  <Button 
+                    as={Link} 
+                    to="/masters/job-categories" 
+                    size="xs" 
+                    variant="outline" 
+                    colorScheme="blue" 
+                    leftIcon={<ExternalLink size={13} />} 
+                    borderRadius="md"
+                    _hover={{ bg: 'blue.50' }}
+                  >
+                    Manage Master Job Categories
+                  </Button>
+                </Flex>
                 
-                <FormControl maxW="400px">
-                  <FormLabel {...labelStyle}>Select Job Category</FormLabel>
+                <FormControl maxW="450px">
+                  <HStack justify="space-between" mb="1.5">
+                    <FormLabel {...labelStyle} mb="0">Select Job Category (From Masters)</FormLabel>
+                    <Badge colorScheme="blue" fontSize="2xs" px="2" py="0.5" borderRadius="full">
+                      {categoryOptions.length} Categories
+                    </Badge>
+                  </HStack>
                   <Select 
                     {...inputStyle} 
                     value={selectedCategoryKey} 

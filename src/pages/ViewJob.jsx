@@ -2,9 +2,10 @@ import React, { useState, useEffect } from 'react';
 import {
   Box, VStack, HStack, Text, Badge, Icon, Flex,
   Button, Spinner, useToast, Image, Table, Thead, Tbody, Tr, Th, Td, Divider,
-  useDisclosure, SimpleGrid
+  useDisclosure, SimpleGrid, Modal, ModalOverlay, ModalContent, ModalHeader,
+  ModalFooter, ModalBody, ModalCloseButton, Input, Select, FormControl, FormLabel
 } from '@chakra-ui/react';
-import { ArrowLeft, LayoutList, FileText, CheckCircle2, Users, Calendar, Clock, MapPin, Building2, Phone, Mail, UtensilsCrossed, Zap, CreditCard } from 'lucide-react';
+import { ArrowLeft, LayoutList, FileText, CheckCircle2, Users, Calendar, Clock, MapPin, Building2, Phone, Mail, UtensilsCrossed, Zap, CreditCard, ShieldCheck, UserPlus, Key, Search } from 'lucide-react';
 import { useParams, useNavigate } from 'react-router-dom';
 import axios from 'axios';
 import { PageHeader, PageFooter, BRAND, ACCENT, thStyle, tdStyle } from '../components/ui';
@@ -12,6 +13,7 @@ import JobApplicantsModal from './JobApplicantsModal';
 
 const ViewJob = () => {
   const { isOpen, onOpen, onClose } = useDisclosure();
+  const { isOpen: isAssignOpen, onOpen: onAssignOpen, onClose: onAssignClose } = useDisclosure();
   const { id } = useParams();
   const navigate = useNavigate();
   const toast = useToast();
@@ -21,6 +23,14 @@ const ViewJob = () => {
   const [assignedCount, setAssignedCount] = useState(0);
   const [applications, setApplications] = useState([]);
   const [transaction, setTransaction] = useState(null);
+
+  // Assign staff state
+  const [candidateList, setCandidateList] = useState([]);
+  const [candidateSearch, setCandidateSearch] = useState('');
+  const [selectedCandidateId, setSelectedCandidateId] = useState('');
+  const [staffRole, setStaffRole] = useState('Cook');
+  const [isAssigningStaff, setIsAssigningStaff] = useState(false);
+  const [isLoadingCandidates, setIsLoadingCandidates] = useState(false);
 
   const fetchJob = async () => {
     setIsLoading(true);
@@ -49,6 +59,75 @@ const ViewJob = () => {
       toast({ title: 'Error', description: 'Failed to fetch job details', status: 'error' });
     } finally {
       setIsLoading(false);
+    }
+  };
+
+  const openAssignModal = async () => {
+    onAssignOpen();
+    setIsLoadingCandidates(true);
+    try {
+      const apiUrl = import.meta.env.VITE_API_URL;
+      const token = localStorage.getItem('adminToken');
+      const res = await axios.get(`${apiUrl}/candidates?limit=200`, {
+        headers: { 'Authorization': `Bearer ${token}` }
+      });
+      if (res.data.success) {
+        setCandidateList(res.data.candidates || []);
+      }
+    } catch (e) {
+      console.error('Error fetching candidates:', e);
+    } finally {
+      setIsLoadingCandidates(false);
+    }
+  };
+
+  const handleAssignStaffSubmit = async () => {
+    if (!selectedCandidateId) {
+      toast({ title: 'Please select a candidate', status: 'warning', duration: 3000 });
+      return;
+    }
+    const cand = candidateList.find(c => c._id === selectedCandidateId);
+    if (!cand) return;
+
+    setIsAssigningStaff(true);
+    try {
+      const apiUrl = import.meta.env.VITE_API_URL;
+      const token = localStorage.getItem('adminToken');
+      const expStr = cand.jobPreference?.experience
+        ? `${cand.jobPreference.experience.value || ''} ${cand.jobPreference.experience.unit || 'years'}`
+        : '';
+      const res = await axios.post(`${apiUrl}/jobs/${id}/assign-staff`, {
+        candidateId: cand._id,
+        name: cand.name || 'Staff',
+        role: staffRole,
+        phone: cand.phone || '',
+        experience: expStr
+      }, {
+        headers: { 'Authorization': `Bearer ${token}` }
+      });
+
+      if (res.data.success) {
+        toast({
+          title: '🎉 Staff Assigned Successfully!',
+          description: `${cand.name} assigned as ${staffRole}. Start OTP: ${res.data.startOtp}, End OTP: ${res.data.endOtp}`,
+          status: 'success',
+          duration: 6000,
+          isClosable: true
+        });
+        onAssignClose();
+        setSelectedCandidateId('');
+        fetchJob();
+      }
+    } catch (err) {
+      toast({
+        title: 'Assignment Failed',
+        description: err.response?.data?.message || err.message,
+        status: 'error',
+        duration: 5000,
+        isClosable: true
+      });
+    } finally {
+      setIsAssigningStaff(false);
     }
   };
 
@@ -278,48 +357,74 @@ const ViewJob = () => {
         )}
 
         {/* Assigned Staff & Live OTP Execution Tracking */}
-        {job.assignedStaff && Array.isArray(job.assignedStaff) && job.assignedStaff.length > 0 && (
+        {(isDaily || isParty || (job.assignedStaff && Array.isArray(job.assignedStaff) && job.assignedStaff.length > 0)) && (
           <Box bg="white" borderRadius="xl" border="1px solid #e8edf5" boxShadow="sm" overflow="hidden">
-            <Box p="4" borderBottom="1px solid #f1f5f9" bg="#f0fDF4">
+            <Flex p="4" borderBottom="1px solid #f1f5f9" bg="#f0fDF4" justify="space-between" align="center" flexWrap="wrap" gap="2">
               <HStack spacing="2">
                 <Icon as={ShieldCheck} color="#16a34a" boxSize={5} />
-                <Text fontSize="sm" fontWeight="800" color="#16a34a">Assigned Staff & Live OTP Execution Tracking</Text>
+                <Box>
+                  <Text fontSize="sm" fontWeight="800" color="#16a34a">Assigned Staff & Live OTP Execution Tracking</Text>
+                  <Text fontSize="xs" color="#64748b">Cook enters Start OTP to begin • Customer shares End OTP to complete</Text>
+                </Box>
               </HStack>
-            </Box>
-            <Box overflowX="auto">
-              <Table variant="simple" size="sm">
-                <Thead bg="#f8faff">
-                  <Tr>
-                    <Th {...thStyle} borderRight="1px solid #edf2f7">#</Th>
-                    <Th {...thStyle} borderRight="1px solid #edf2f7">Staff Name</Th>
-                    <Th {...thStyle} borderRight="1px solid #edf2f7">Role / Position</Th>
-                    <Th {...thStyle} borderRight="1px solid #edf2f7">Phone Number</Th>
-                    <Th {...thStyle} borderRight="1px solid #edf2f7">Experience</Th>
-                    <Th {...thStyle} borderRight="1px solid #edf2f7">Start OTP</Th>
-                    <Th {...thStyle}>Live Status</Th>
-                  </Tr>
-                </Thead>
-                <Tbody>
-                  {job.assignedStaff.map((staff, idx) => (
-                    <Tr key={idx}>
-                      <Td {...tdStyle} borderRight="1px solid #edf2f7">{idx + 1}</Td>
-                      <Td {...tdStyle} borderRight="1px solid #edf2f7" fontWeight="700" color="#1e293b">{staff.name || 'Staff'}</Td>
-                      <Td {...tdStyle} borderRight="1px solid #edf2f7">{staff.role || 'Chef'}</Td>
-                      <Td {...tdStyle} borderRight="1px solid #edf2f7" fontWeight="600">{staff.phone || 'N/A'}</Td>
-                      <Td {...tdStyle} borderRight="1px solid #edf2f7">{staff.experience || 'Verified'}</Td>
-                      <Td {...tdStyle} borderRight="1px solid #edf2f7" fontWeight="800" color="#0284c7" bg="#f0f9ff">
-                        {staff.startOtp || '4821'}
-                      </Td>
-                      <Td {...tdStyle}>
-                        <Badge colorScheme={staff.status === 'Completed' ? 'green' : (staff.status === 'In Progress' ? 'blue' : 'purple')}>
-                          {staff.status || 'Assigned'}
-                        </Badge>
-                      </Td>
+              <Button
+                size="sm"
+                colorScheme="green"
+                leftIcon={<UserPlus size={15} />}
+                onClick={openAssignModal}
+                fontWeight="700"
+                borderRadius="lg"
+              >
+                + Assign Staff (OTP Flow)
+              </Button>
+            </Flex>
+            {job.assignedStaff && Array.isArray(job.assignedStaff) && job.assignedStaff.length > 0 ? (
+              <Box overflowX="auto">
+                <Table variant="simple" size="sm">
+                  <Thead bg="#f8faff">
+                    <Tr>
+                      <Th {...thStyle} borderRight="1px solid #edf2f7">#</Th>
+                      <Th {...thStyle} borderRight="1px solid #edf2f7">Staff Name</Th>
+                      <Th {...thStyle} borderRight="1px solid #edf2f7">Role / Position</Th>
+                      <Th {...thStyle} borderRight="1px solid #edf2f7">Phone Number</Th>
+                      <Th {...thStyle} borderRight="1px solid #edf2f7">Experience</Th>
+                      <Th {...thStyle} borderRight="1px solid #edf2f7">Start OTP (Cook)</Th>
+                      <Th {...thStyle} borderRight="1px solid #edf2f7">End OTP (Customer)</Th>
+                      <Th {...thStyle}>Live Status</Th>
                     </Tr>
-                  ))}
-                </Tbody>
-              </Table>
-            </Box>
+                  </Thead>
+                  <Tbody>
+                    {job.assignedStaff.map((staff, idx) => (
+                      <Tr key={idx}>
+                        <Td {...tdStyle} borderRight="1px solid #edf2f7">{idx + 1}</Td>
+                        <Td {...tdStyle} borderRight="1px solid #edf2f7" fontWeight="700" color="#1e293b">{staff.name || 'Staff'}</Td>
+                        <Td {...tdStyle} borderRight="1px solid #edf2f7">{staff.role || 'Chef'}</Td>
+                        <Td {...tdStyle} borderRight="1px solid #edf2f7" fontWeight="600">{staff.phone || 'N/A'}</Td>
+                        <Td {...tdStyle} borderRight="1px solid #edf2f7">{staff.experience || 'Verified'}</Td>
+                        <Td {...tdStyle} borderRight="1px solid #edf2f7" fontWeight="800" color="#0284c7" bg="#f0f9ff">
+                          {staff.startOtp || job.startOtp || 'N/A'}
+                        </Td>
+                        <Td {...tdStyle} borderRight="1px solid #edf2f7" fontWeight="800" color="#16a34a" bg="#f0fdf4">
+                          {staff.endOtp || job.endOtp || 'N/A'}
+                        </Td>
+                        <Td {...tdStyle}>
+                          <Badge colorScheme={staff.status === 'Completed' ? 'green' : (staff.status === 'Started' || staff.status === 'In Progress' ? 'blue' : 'purple')}>
+                            {staff.status || 'Assigned'}
+                          </Badge>
+                        </Td>
+                      </Tr>
+                    ))}
+                  </Tbody>
+                </Table>
+              </Box>
+            ) : (
+              <Box p="6" textAlign="center">
+                <Text fontSize="xs" color="#64748b" mb="3" fontWeight="600">No staff assigned to this booking yet.</Text>
+                <Button size="xs" colorScheme="blue" leftIcon={<UserPlus size={14} />} onClick={openAssignModal}>
+                  Assign Staff Now
+                </Button>
+              </Box>
+            )}
           </Box>
         )}
 
@@ -597,6 +702,107 @@ const ViewJob = () => {
         jobId={job._id}
         jobTitle={job.title}
       />
+
+      {/* Assign Staff Modal */}
+      <Modal isOpen={isAssignOpen} onClose={onAssignClose} size="lg">
+        <ModalOverlay bg="blackAlpha.400" backdropFilter="blur(4px)" />
+        <ModalContent borderRadius="2xl">
+          <ModalHeader borderBottom="1px solid #f1f5f9" pb="3">
+            <HStack spacing="2">
+              <Icon as={UserPlus} color="#0073FF" />
+              <Box>
+                <Text fontSize="md" fontWeight="800" color="#1e293b">Assign Staff to Booking</Text>
+                <Text fontSize="xs" color="#64748b">Generates Start OTP for Cook & End OTP for Customer</Text>
+              </Box>
+            </HStack>
+          </ModalHeader>
+          <ModalCloseButton />
+          <ModalBody py="4">
+            <VStack spacing="4" align="stretch">
+              <FormControl>
+                <FormLabel fontSize="xs" fontWeight="700">Role / Designation</FormLabel>
+                <Select
+                  size="sm"
+                  borderRadius="lg"
+                  value={staffRole}
+                  onChange={(e) => setStaffRole(e.target.value)}
+                >
+                  <option value="Cook">Cook</option>
+                  <option value="Chef">Chef</option>
+                  <option value="Assistant Cook">Assistant Cook</option>
+                  <option value="Helper">Helper</option>
+                  <option value="Waiter">Waiter</option>
+                  <option value="Cleaner">Cleaner</option>
+                  <option value="All-Rounder">All-Rounder</option>
+                </Select>
+              </FormControl>
+
+              <FormControl>
+                <FormLabel fontSize="xs" fontWeight="700">Search & Select Candidate</FormLabel>
+                <Input
+                  size="sm"
+                  borderRadius="lg"
+                  placeholder="Filter by name, phone, or city..."
+                  value={candidateSearch}
+                  onChange={(e) => setCandidateSearch(e.target.value)}
+                  mb="2"
+                />
+                {isLoadingCandidates ? (
+                  <Flex justify="center" py="4"><Spinner size="sm" color={BRAND} /></Flex>
+                ) : (
+                  <Box maxH="220px" overflowY="auto" border="1px solid #e2e8f0" borderRadius="lg" p="1">
+                    {candidateList
+                      .filter(c => {
+                        if (!candidateSearch) return true;
+                        const s = candidateSearch.toLowerCase();
+                        return (c.name || '').toLowerCase().includes(s) ||
+                               (c.phone || '').includes(s) ||
+                               (c.city || '').toLowerCase().includes(s);
+                      })
+                      .map(c => {
+                        const isSelected = selectedCandidateId === c._id;
+                        return (
+                          <Box
+                            key={c._id}
+                            p="2.5"
+                            borderRadius="md"
+                            cursor="pointer"
+                            bg={isSelected ? '#eff6ff' : 'transparent'}
+                            border={isSelected ? '1px solid #3b82f6' : '1px solid transparent'}
+                            _hover={{ bg: isSelected ? '#eff6ff' : '#f8fafc' }}
+                            onClick={() => setSelectedCandidateId(c._id)}
+                            mb="1"
+                          >
+                            <Flex justify="space-between" align="center">
+                              <Box>
+                                <Text fontSize="xs" fontWeight="700" color="#1e293b">{c.name || 'Unknown'}</Text>
+                                <Text fontSize="10px" color="#64748b">📞 {c.phone || 'N/A'} • 📍 {c.city || 'N/A'}</Text>
+                              </Box>
+                              {isSelected && <Badge colorScheme="blue" fontSize="10px">Selected</Badge>}
+                            </Flex>
+                          </Box>
+                        );
+                      })}
+                  </Box>
+                )}
+              </FormControl>
+            </VStack>
+          </ModalBody>
+          <ModalFooter borderTop="1px solid #f1f5f9" pt="3">
+            <Button size="sm" variant="ghost" mr="3" onClick={onAssignClose}>Cancel</Button>
+            <Button
+              size="sm"
+              colorScheme="blue"
+              isLoading={isAssigningStaff}
+              loadingText="Assigning..."
+              onClick={handleAssignStaffSubmit}
+              isDisabled={!selectedCandidateId}
+            >
+              Assign Staff & Send OTP
+            </Button>
+          </ModalFooter>
+        </ModalContent>
+      </Modal>
 
       <PageFooter />
     </Box>

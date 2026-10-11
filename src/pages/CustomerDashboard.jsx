@@ -788,12 +788,17 @@ const CustomerDashboard = () => {
                     {(!customer.notes || customer.notes.length === 0) ? (
                       <Text fontSize="sm" color="#94a3b8">No notes added yet.</Text>
                     ) : (
-                      customer.notes.slice().reverse().map((note, idx) => (
-                        <Box key={idx} p="3" bg={idx % 2 === 0 ? '#fffbeb' : '#ecfdf5'} borderRadius="md" border="1px solid" borderColor={idx % 2 === 0 ? '#fde68a' : '#a7f3d0'}>
-                          <Text fontSize="sm" color="#1e293b" mb="2">{note.content}</Text>
-                          <Text fontSize="xs" color="#64748b">Added by {note.addedBy} on {formatDateTime(note.createdAt)}</Text>
-                        </Box>
-                      ))
+                      customer.notes.slice().reverse().map((note, idx) => {
+                        const content = typeof note === 'object' && note !== null ? note.content : String(note || '');
+                        const addedBy = (typeof note === 'object' && note?.addedBy) ? note.addedBy : 'Admin';
+                        const date = (typeof note === 'object' && note?.createdAt) ? note.createdAt : new Date();
+                        return (
+                          <Box key={idx} p="3" bg={idx % 2 === 0 ? '#fffbeb' : '#ecfdf5'} borderRadius="md" border="1px solid" borderColor={idx % 2 === 0 ? '#fde68a' : '#a7f3d0'}>
+                            <Text fontSize="sm" color="#1e293b" mb="2">{content}</Text>
+                            <Text fontSize="xs" color="#64748b">Added by {addedBy} on {formatDateTime(date)}</Text>
+                          </Box>
+                        );
+                      })
                     )}
                   </VStack>
                 </Box>

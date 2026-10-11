@@ -61,8 +61,19 @@ const EditCustomer = () => {
           headers: { 'Authorization': `Bearer ${token}` }
         });
         if (response.data.success) {
-          const { password, ...rest } = response.data.customer;
-          setFormData({ ...rest, password: '' }); // Don't show hashed password
+          const c = response.data.customer;
+          setFormData({
+            name: c.name || '',
+            propertyCategory: c.propertyCategory || '',
+            email: c.email || '',
+            password: '',
+            contactName: c.contactName || '',
+            contactPhone: c.contactPhone || '',
+            contactAddress: c.contactAddress || '',
+            customerStatus: c.customerStatus || 'running',
+            accountStatus: c.accountStatus || 'active',
+            leadManager: c.leadManager || '',
+          });
         }
       } catch (error) {
         toast({ title: 'Error', description: 'Failed to fetch customer data.', status: 'error', duration: 3000, position: 'top-right' });
@@ -90,17 +101,33 @@ const EditCustomer = () => {
     setIsLoading(true);
 
     try {
-      const apiUrl = import.meta.env.VITE_API_URL;
       const token = localStorage.getItem('adminToken');
       
       const data = new FormData();
-      Object.keys(formData).forEach(key => {
-        if (key === 'password' && !formData[key]) return; // Don't send empty password
-        data.append(key, formData[key]);
+      const fields = [
+        'name',
+        'propertyCategory',
+        'email',
+        'contactName',
+        'contactPhone',
+        'contactAddress',
+        'customerStatus',
+        'accountStatus',
+        'leadManager'
+      ];
+      fields.forEach(field => {
+        if (formData[field] !== undefined && formData[field] !== null) {
+          data.append(field, formData[field]);
+        }
       });
-      if (profilePic) data.append('profilePic', profilePic);
+      if (formData.password) {
+        data.append('password', formData.password);
+      }
+      if (profilePic) {
+        data.append('profilePic', profilePic);
+      }
 
-      const response = await axios.put(`${apiUrl}/customers/${id}`, data, {
+      const response = await axios.put(`${API_BASE_URL}/customers/${id}`, data, {
         headers: {
           'Authorization': `Bearer ${token}`,
           'Content-Type': 'multipart/form-data'

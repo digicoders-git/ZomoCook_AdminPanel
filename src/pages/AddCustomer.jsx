@@ -67,14 +67,17 @@ const AddCustomer = () => {
     setIsLoading(true);
 
     try {
-      const apiUrl = import.meta.env.VITE_API_URL;
       const token = localStorage.getItem('adminToken');
       
       const data = new FormData();
-      Object.keys(formData).forEach(key => data.append(key, formData[key]));
+      Object.keys(formData).forEach(key => {
+        if (formData[key] !== undefined && formData[key] !== null) {
+          data.append(key, formData[key]);
+        }
+      });
       if (profilePic) data.append('profilePic', profilePic);
 
-      const response = await axios.post(`${apiUrl}/customers`, data, {
+      const response = await axios.post(`${API_BASE_URL}/customers`, data, {
         headers: {
           'Authorization': `Bearer ${token}`,
           'Content-Type': 'multipart/form-data'
