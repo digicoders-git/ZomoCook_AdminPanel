@@ -69,11 +69,26 @@ const ViewJob = () => {
   };
 
   const openAssignModal = async (preferredRole = '') => {
-    if (preferredRole) {
-      setStaffRole(preferredRole);
-    } else if (job?.staffRequirements?.[0]?.role) {
-      setStaffRole(job.staffRequirements[0].role);
+    let resolvedRole = '';
+    if (typeof preferredRole === 'string' && preferredRole.trim().length > 0) {
+      resolvedRole = preferredRole.trim();
+    } else if (job?.staffRequirements && Array.isArray(job.staffRequirements) && job.staffRequirements.length > 0) {
+      const assignedRoles = (job.assignedStaff || []).map(s => (s.role || '').toLowerCase());
+      const unassignedReq = job.staffRequirements.find(r => {
+        const rRole = (r.role || r.category || r.staffCategory || '').toLowerCase();
+        return rRole && !assignedRoles.includes(rRole);
+      });
+      resolvedRole = unassignedReq?.role || unassignedReq?.category || job.staffRequirements[0].role || job.staffRequirements[0].category || '';
     }
+
+    if (!resolvedRole) {
+      const isPartyJob = job?.jobCategory === 'party' || job?.bookingType === 'party' || (job?.title && job.title.toLowerCase().includes('party')) || Boolean(job?.partyRequirement);
+      resolvedRole = isPartyJob ? 'Chef for Party' : 'Cook';
+    }
+
+    setStaffRole(resolvedRole);
+    setSelectedCandidateId('');
+    setCandidateSearch('');
     onAssignOpen();
     setIsLoadingCandidates(true);
     try {
@@ -100,6 +115,15 @@ const ViewJob = () => {
     const cand = candidateList.find(c => c._id === selectedCandidateId);
     if (!cand) return;
 
+    // Ensure role is strictly a string to prevent serializing React synthetic events or objects
+    let roleToSend = '';
+    if (typeof staffRole === 'string' && staffRole.trim().length > 0) {
+      roleToSend = staffRole.trim();
+    } else {
+      const isPartyJob = job?.jobCategory === 'party' || job?.bookingType === 'party' || (job?.title && job.title.toLowerCase().includes('party')) || Boolean(job?.partyRequirement);
+      roleToSend = isPartyJob ? 'Chef for Party' : (job?.staffRequirements?.[0]?.role || 'Cook');
+    }
+
     setIsAssigningStaff(true);
     try {
       const apiUrl = import.meta.env.VITE_API_URL;
@@ -110,7 +134,7 @@ const ViewJob = () => {
       const res = await axios.post(`${apiUrl}/jobs/${id}/assign-staff`, {
         candidateId: cand._id,
         name: cand.name || 'Staff',
-        role: staffRole,
+        role: roleToSend,
         phone: cand.phone || '',
         experience: expStr
       }, {
@@ -120,7 +144,7 @@ const ViewJob = () => {
       if (res.data.success) {
         toast({
           title: '🎉 Staff Assigned Successfully!',
-          description: `${cand.name} assigned as ${staffRole}. Start OTP: ${res.data.startOtp}, End OTP: ${res.data.endOtp}`,
+          description: `${cand.name} assigned as ${roleToSend}. Start OTP: ${res.data.startOtp}, End OTP: ${res.data.endOtp}`,
           status: 'success',
           duration: 6000,
           isClosable: true
@@ -439,7 +463,7 @@ const ViewJob = () => {
                 size="sm"
                 colorScheme="green"
                 leftIcon={<UserPlus size={15} />}
-                onClick={openAssignModal}
+                onClick={() => openAssignModal()}
                 fontWeight="700"
                 borderRadius="lg"
               >
@@ -488,7 +512,7 @@ const ViewJob = () => {
             ) : (
               <Box p="6" textAlign="center">
                 <Text fontSize="xs" color="#64748b" mb="3" fontWeight="600">No staff assigned to this booking yet.</Text>
-                <Button size="xs" colorScheme="blue" leftIcon={<UserPlus size={14} />} onClick={openAssignModal}>
+                <Button size="xs" colorScheme="blue" leftIcon={<UserPlus size={14} />} onClick={() => openAssignModal()}>
                   Assign Staff Now
                 </Button>
               </Box>
@@ -796,7 +820,7 @@ const ViewJob = () => {
                 <Select
                   size="sm"
                   borderRadius="lg"
-                  value={staffRole}
+                  value={typeof staffRole === 'string' ? staffRole : ''}
                   onChange={(e) => setStaffRole(e.target.value)}
                 >
                   {job.staffRequirements && Array.isArray(job.staffRequirements) && job.staffRequirements.map((r, i) => {
@@ -804,6 +828,8 @@ const ViewJob = () => {
                     if (!rTitle) return null;
                     return <option key={`req-role-${i}`} value={rTitle}>{rTitle} (Job Requirement)</option>;
                   })}
+                  {isParty && <option value="Chef for Party">Chef for Party</option>}
+                  {isParty && <option value="Waiter Staff">Waiter Staff</option>}
                   <option value="Cook">Cook</option>
                   <option value="Chef">Chef</option>
                   <option value="Assistant Cook">Assistant Cook</option>
