@@ -1117,7 +1117,9 @@ const JobList = () => {
           onClose={onApplicantsClose}
           jobId={selectedJob._id}
           jobTitle={selectedJob.title}
+          job={selectedJob}
           initialTab={applicantsModalTab}
+          onSuccess={fetchJobs}
         />
       )}
 

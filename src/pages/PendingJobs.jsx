@@ -1413,6 +1413,8 @@ const PendingJobs = () => {
           onClose={onApplicantsClose}
           jobId={selectedJob._id}
           jobTitle={selectedJob.title}
+          job={selectedJob}
+          onSuccess={fetchJobs}
         />
       )}
 

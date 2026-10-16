@@ -24,6 +24,10 @@ const ViewJob = () => {
   const [applications, setApplications] = useState([]);
   const [transaction, setTransaction] = useState(null);
 
+  // Modal target state
+  const [selectedRoleForModal, setSelectedRoleForModal] = useState('');
+  const [modalInitialTab, setModalInitialTab] = useState(0);
+
   // Assign staff state
   const [candidateList, setCandidateList] = useState([]);
   const [candidateSearch, setCandidateSearch] = useState('');
@@ -53,7 +57,9 @@ const ViewJob = () => {
         const apps = appsResponse.data.applications;
         setApplications(apps);
         setAppliedCount(apps.length);
-        setAssignedCount(apps.filter(app => app.status === 'Applied').length);
+        const assignedAppsCount = apps.filter(app => ['Assigned', 'Hired', 'Offer Accepted', 'Joined'].includes(app.status)).length;
+        const jobAssignedStaffCount = response.data.job?.assignedStaff?.length || 0;
+        setAssignedCount(Math.max(assignedAppsCount, jobAssignedStaffCount));
       }
     } catch (error) {
       toast({ title: 'Error', description: 'Failed to fetch job details', status: 'error' });
@@ -62,7 +68,12 @@ const ViewJob = () => {
     }
   };
 
-  const openAssignModal = async () => {
+  const openAssignModal = async (preferredRole = '') => {
+    if (preferredRole) {
+      setStaffRole(preferredRole);
+    } else if (job?.staffRequirements?.[0]?.role) {
+      setStaffRole(job.staffRequirements[0].role);
+    }
     onAssignOpen();
     setIsLoadingCandidates(true);
     try {
@@ -262,48 +273,69 @@ const ViewJob = () => {
                     <Th {...thStyle} borderRight="1px solid #edf2f7" textAlign="center">ASSIGNED CANDIDATE</Th>
                     <Th {...thStyle} borderRight="1px solid #edf2f7">RATE / DAY</Th>
                     <Th {...thStyle} borderRight="1px solid #edf2f7">START DATE</Th>
-                    <Th {...thStyle}>SHIFT TIMINGS</Th>
+                    <Th {...thStyle} borderRight="1px solid #edf2f7">SHIFT TIMINGS</Th>
+                    <Th {...thStyle} textAlign="center">ACTION</Th>
                   </Tr>
                 </Thead>
                 <Tbody>
                   {job.staffRequirements && job.staffRequirements.length > 0 ? (
                     job.staffRequirements.map((s, idx) => {
                       const roleName = s.role || s.category || s.staffCategory || 'Staff';
+                      const requiredCount = Number(s.count || s.noOfStaff || 1);
                       
                       // Calculate role-specific applied count
                       const roleApplied = applications.filter(app => {
-                        const appRole = app.appliedRole || app.applicationData?.role || app.applicationData?.appliedRole || (app.candidate?.jobPreference?.jobPositions?.[0]) || '';
+                        const appRole = (app.appliedRole || app.applicationData?.role || app.applicationData?.appliedRole || (app.candidate?.jobPreference?.jobPositions?.[0]) || '').toLowerCase().trim();
+                        const rName = roleName.toLowerCase().trim();
                         if (appRole) {
-                          return appRole.toLowerCase().trim() === roleName.toLowerCase().trim();
+                          return appRole === rName || rName.includes(appRole) || appRole.includes(rName);
                         }
-                        return idx === 0;
+                        return idx === 0 || job.staffRequirements.length === 1;
                       }).length;
 
                       // Calculate role-specific assigned count
                       let roleAssigned = 0;
                       if (job.assignedStaff && Array.isArray(job.assignedStaff)) {
-                        roleAssigned = job.assignedStaff.filter(st => (st.role || '').toLowerCase().trim() === roleName.toLowerCase().trim()).length;
+                        const chefKeywords = ['chef', 'cook', 'continental', 'chinese', 'indian', 'tandoor', 'halwai', 'bakery', 'party', 'main', 'head', 'culinary'];
+                        const helperKeywords = ['helper', 'cleaner', 'waiter', 'bartender', 'service', 'steward', 'allrounder'];
+                        roleAssigned = job.assignedStaff.filter(st => {
+                          const stRole = (st.role || '').toLowerCase().trim();
+                          const rName = roleName.toLowerCase().trim();
+                          if (stRole === rName || rName.includes(stRole) || stRole.includes(rName) || (job.staffRequirements.length === 1)) {
+                            return true;
+                          }
+                          const isRChef = chefKeywords.some(k => rName.includes(k));
+                          const isStChef = chefKeywords.some(k => stRole.includes(k));
+                          const isRHelper = helperKeywords.some(k => rName.includes(k));
+                          const isStHelper = helperKeywords.some(k => stRole.includes(k));
+                          if (isRChef && isStChef && !isRHelper && !isStHelper) return true;
+                          if (isRHelper && isStHelper) return true;
+                          return false;
+                        }).length;
                       }
                       if (roleAssigned === 0 && applications.length > 0) {
                         roleAssigned = applications.filter(app => {
-                          const appRole = app.appliedRole || app.applicationData?.role || (app.candidate?.jobPreference?.jobPositions?.[0]) || '';
-                          const isMatch = appRole ? appRole.toLowerCase().trim() === roleName.toLowerCase().trim() : idx === 0;
+                          const appRole = (app.appliedRole || app.applicationData?.role || (app.candidate?.jobPreference?.jobPositions?.[0]) || '').toLowerCase().trim();
+                          const rName = roleName.toLowerCase().trim();
+                          const isMatch = appRole ? (appRole === rName || rName.includes(appRole) || appRole.includes(rName)) : (idx === 0 || job.staffRequirements.length === 1);
                           return isMatch && ['Shortlisted', 'Assigned', 'Hired', 'Offer Accepted', 'Joined'].includes(app.status);
                         }).length;
                       }
+
+                      const isFull = roleAssigned >= requiredCount;
 
                       return (
                         <Tr key={idx}>
                           <Td {...tdStyle} borderRight="1px solid #edf2f7">{idx + 1}</Td>
                           <Td {...tdStyle} borderRight="1px solid #edf2f7" fontWeight="700" color="#1e293b">{roleName}</Td>
                           <Td {...tdStyle} borderRight="1px solid #edf2f7">{s.genderPref || 'Any Gender'}</Td>
-                          <Td {...tdStyle} borderRight="1px solid #edf2f7" fontWeight="700">{s.count || s.noOfStaff || 1}</Td>
+                          <Td {...tdStyle} borderRight="1px solid #edf2f7" fontWeight="700">{requiredCount}</Td>
                           <Td {...tdStyle} borderRight="1px solid #edf2f7">{s.days || s.noOfDays || 1}</Td>
                           <Td {...tdStyle} borderRight="1px solid #edf2f7" textAlign="center">
                             <Flex justify="center">
                               <Flex
-                                w="24px"
-                                h="24px"
+                                w="26px"
+                                h="26px"
                                 borderRadius="full"
                                 bg="#2563eb"
                                 color="white"
@@ -312,8 +344,13 @@ const ViewJob = () => {
                                 fontSize="xs"
                                 fontWeight="800"
                                 cursor="pointer"
-                                onClick={onOpen}
-                                _hover={{ transform: 'scale(1.1)' }}
+                                title="Click to view applicants & assign with OTP flow"
+                                onClick={() => {
+                                  setSelectedRoleForModal(roleName);
+                                  setModalInitialTab(0);
+                                  onOpen();
+                                }}
+                                _hover={{ transform: 'scale(1.15)', bg: '#1d4ed8' }}
                                 transition="all 0.2s"
                               >
                                 {roleApplied}
@@ -323,15 +360,24 @@ const ViewJob = () => {
                           <Td {...tdStyle} borderRight="1px solid #edf2f7" textAlign="center">
                             <Flex justify="center">
                               <Flex
-                                w="24px"
-                                h="24px"
+                                w="26px"
+                                h="26px"
                                 borderRadius="full"
-                                bg="#2563eb"
+                                bg={isFull ? "#16a34a" : roleAssigned > 0 ? "#0284c7" : "#64748b"}
                                 color="white"
                                 align="center"
                                 justify="center"
                                 fontSize="xs"
                                 fontWeight="800"
+                                cursor="pointer"
+                                title="Click to view assigned staff & OTP details"
+                                onClick={() => {
+                                  setSelectedRoleForModal(roleName);
+                                  setModalInitialTab(1);
+                                  onOpen();
+                                }}
+                                _hover={{ transform: 'scale(1.15)' }}
+                                transition="all 0.2s"
                               >
                                 {roleAssigned}
                               </Flex>
@@ -339,13 +385,35 @@ const ViewJob = () => {
                           </Td>
                           <Td {...tdStyle} borderRight="1px solid #edf2f7" color="#059669" fontWeight="700">₹{s.perDayRate || s.ratePerDay || s.salary || 0}</Td>
                           <Td {...tdStyle} borderRight="1px solid #edf2f7">{s.startDate || (job.dateOfEvent ? new Date(job.dateOfEvent).toISOString().split('T')[0] : 'N/A')}</Td>
-                          <Td {...tdStyle}>{s.startTime && s.endTime ? `${s.startTime} – ${s.endTime}` : (s.timing || job.servingTime || '16:00 - 23:00')}</Td>
+                          <Td {...tdStyle} borderRight="1px solid #edf2f7">{s.startTime && s.endTime ? `${s.startTime} – ${s.endTime}` : (s.timing || job.servingTime || '16:00 - 23:00')}</Td>
+                          <Td {...tdStyle} textAlign="center">
+                            <Button
+                              size="xs"
+                              colorScheme={isFull ? "green" : "blue"}
+                              variant={isFull ? "outline" : "solid"}
+                              leftIcon={isFull ? <ShieldCheck size={13} /> : <UserPlus size={13} />}
+                              onClick={() => {
+                                setSelectedRoleForModal(roleName);
+                                setStaffRole(roleName);
+                                if (roleApplied > 0) {
+                                  setModalInitialTab(0);
+                                  onOpen();
+                                } else {
+                                  openAssignModal(roleName);
+                                }
+                              }}
+                              borderRadius="md"
+                              fontWeight="700"
+                            >
+                              {isFull ? "Assigned" : "+ Assign Staff"}
+                            </Button>
+                          </Td>
                         </Tr>
                       );
                     })
                   ) : (
                     <Tr>
-                      <Td colSpan={10} textAlign="center" py="4" color="#64748b">
+                      <Td colSpan={11} textAlign="center" py="4" color="#64748b">
                         {job.title} ({job.package || job.salaryRange || 'N/A'})
                       </Td>
                     </Tr>
@@ -701,6 +769,10 @@ const ViewJob = () => {
         onClose={onClose}
         jobId={job._id}
         jobTitle={job.title}
+        job={job}
+        initialTab={modalInitialTab}
+        targetRole={selectedRoleForModal}
+        onSuccess={fetchJob}
       />
 
       {/* Assign Staff Modal */}
@@ -727,6 +799,11 @@ const ViewJob = () => {
                   value={staffRole}
                   onChange={(e) => setStaffRole(e.target.value)}
                 >
+                  {job.staffRequirements && Array.isArray(job.staffRequirements) && job.staffRequirements.map((r, i) => {
+                    const rTitle = r.role || r.category || r.staffCategory;
+                    if (!rTitle) return null;
+                    return <option key={`req-role-${i}`} value={rTitle}>{rTitle} (Job Requirement)</option>;
+                  })}
                   <option value="Cook">Cook</option>
                   <option value="Chef">Chef</option>
                   <option value="Assistant Cook">Assistant Cook</option>

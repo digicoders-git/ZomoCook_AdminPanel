@@ -5,11 +5,12 @@ import {
   Menu, MenuButton, MenuList, MenuItem, Modal, ModalOverlay,
   ModalContent, ModalHeader, ModalFooter, ModalBody, ModalCloseButton,
   SimpleGrid, FormControl, Icon, IconButton, AlertDialog, AlertDialogOverlay,
-  AlertDialogContent, AlertDialogHeader, AlertDialogBody, AlertDialogFooter
+  AlertDialogContent, AlertDialogHeader, AlertDialogBody, AlertDialogFooter,
+  Input, Spinner
 } from '@chakra-ui/react';
 import {
   UtensilsCrossed, Filter, RotateCcw, Clock, Calendar, Eye,
-  UserPlus, MoreVertical, CheckCircle2, Edit3, Trash2
+  UserPlus, MoreVertical, CheckCircle2, Edit3, Trash2, UserCheck, ShieldCheck
 } from 'lucide-react';
 import {
   PageHeader, PageFooter, BRAND, TableCard, TableControls
@@ -73,6 +74,16 @@ const PartyChefBookingsList = () => {
   const [isDeleting, setIsDeleting] = useState(false);
   const { isOpen: isDeleteOpen, onOpen: onDeleteOpen, onClose: onDeleteClose } = useDisclosure();
   const cancelDeleteRef = useRef();
+
+  // Assign Staff Modal State
+  const [selectedJobForStaff, setSelectedJobForStaff] = useState(null);
+  const [candidateList, setCandidateList] = useState([]);
+  const [selectedCandidateId, setSelectedCandidateId] = useState('');
+  const [staffRole, setStaffRole] = useState('Chef for Party');
+  const [candidateSearch, setCandidateSearch] = useState('');
+  const [isLoadingCandidates, setIsLoadingCandidates] = useState(false);
+  const [isAssigningStaff, setIsAssigningStaff] = useState(false);
+  const { isOpen: isStaffOpen, onOpen: onStaffOpen, onClose: onStaffClose } = useDisclosure();
 
   const token = localStorage.getItem('adminToken');
   const adminData = JSON.parse(localStorage.getItem('adminData') || '{}');
@@ -300,6 +311,84 @@ const PartyChefBookingsList = () => {
     }
   };
 
+  // Open Assign Staff Modal
+  const openAssignStaffModal = async (job) => {
+    setSelectedJobForStaff(job);
+    const assignedRoles = (job.assignedStaff || []).map(s => (s.role || '').toLowerCase());
+    const unassignedReq = (job.staffRequirements || []).find(r => {
+      const rRole = (r.role || '').toLowerCase();
+      return !assignedRoles.some(ar => ar.includes(rRole) || rRole.includes(ar) || (rRole.includes('chef') && ar.includes('cook')));
+    });
+    const reqRole = unassignedReq?.role || job.staffRequirements?.[0]?.role || 'Chef for Party';
+    setStaffRole(reqRole);
+    setSelectedCandidateId('');
+    setCandidateSearch('');
+    onStaffOpen();
+    setIsLoadingCandidates(true);
+    try {
+      const res = await axios.get(`${API_BASE_URL}/candidates?limit=200`, {
+        headers: { Authorization: `Bearer ${token}` }
+      });
+      if (res.data.success) {
+        setCandidateList(res.data.candidates || []);
+      }
+    } catch (e) {
+      console.error('Error fetching candidates:', e);
+    } finally {
+      setIsLoadingCandidates(false);
+    }
+  };
+
+  // Submit Assign Staff with OTP
+  const handleAssignStaffSubmit = async () => {
+    if (!selectedCandidateId || !selectedJobForStaff) {
+      toast({ title: 'Please select a cook / candidate', status: 'warning', duration: 3000, position: 'top-right' });
+      return;
+    }
+    const cand = candidateList.find(c => c._id === selectedCandidateId);
+    if (!cand) return;
+
+    setIsAssigningStaff(true);
+    try {
+      const expStr = cand.jobPreference?.experience
+        ? `${cand.jobPreference.experience.value || ''} ${cand.jobPreference.experience.unit || 'years'}`
+        : '';
+      const res = await axios.post(`${API_BASE_URL}/jobs/${selectedJobForStaff._id}/assign-staff`, {
+        candidateId: cand._id,
+        name: cand.name || 'Chef',
+        role: staffRole,
+        phone: cand.phone || '',
+        experience: expStr
+      }, {
+        headers: { Authorization: `Bearer ${token}` }
+      });
+
+      if (res.data.success) {
+        toast({
+          title: '🎉 Chef Assigned Successfully!',
+          description: `${cand.name} assigned as ${staffRole}. Start OTP: ${res.data.startOtp}, End OTP: ${res.data.endOtp}`,
+          status: 'success',
+          duration: 6000,
+          isClosable: true,
+          position: 'top-right'
+        });
+        onStaffClose();
+        fetchJobs();
+      }
+    } catch (err) {
+      toast({
+        title: 'Assignment Failed',
+        description: err.response?.data?.message || err.message,
+        status: 'error',
+        duration: 5000,
+        isClosable: true,
+        position: 'top-right'
+      });
+    } finally {
+      setIsAssigningStaff(false);
+    }
+  };
+
   const filteredJobs = jobs.filter(job => {
     if (isLeadManager) {
       const cleanStr = (s) => String(s || '').toLowerCase().replace(/[\s_-]/g, '');
@@ -414,6 +503,7 @@ const PartyChefBookingsList = () => {
                   <Th {...darkThStyle}>Venue Address</Th>
                   <Th {...darkThStyle}>Advance / Total</Th>
                   <Th {...darkThStyle}>Lead Manager</Th>
+                  <Th {...darkThStyle}>Assigned Chef</Th>
                   <Th {...darkThStyle}>Status</Th>
                   <Th {...darkThStyle}>Actions</Th>
                 </Tr>
@@ -484,6 +574,33 @@ const PartyChefBookingsList = () => {
                         </Badge>
                       </Td>
                       <Td {...customTdStyle}>
+                        {job.assignedStaff && job.assignedStaff.length > 0 ? (
+                          <VStack align="center" spacing="1">
+                            <Badge bg="#dcfce7" color="#15803d" px="2" py="0.5" borderRadius="md" fontSize="10px" fontWeight="700">
+                              {job.assignedStaff[0].name}
+                            </Badge>
+                            <HStack spacing="1" fontSize="10px">
+                              <Text fontWeight="600" color="#64748b">OTP:</Text>
+                              <Text fontWeight="800" color="#0369a1">{job.assignedStaff[0].startOtp || 'N/A'}</Text>
+                            </HStack>
+                          </VStack>
+                        ) : (
+                          <Button
+                            size="xs"
+                            colorScheme="orange"
+                            variant="subtle"
+                            bg="#fff7ed"
+                            color="#c2410c"
+                            border="1px solid #fed7aa"
+                            borderRadius="md"
+                            leftIcon={<UserPlus size={11} />}
+                            onClick={() => openAssignStaffModal(job)}
+                          >
+                            Assign Chef
+                          </Button>
+                        )}
+                      </Td>
+                      <Td {...customTdStyle}>
                         <Badge px="2.5" py="1" borderRadius="md" bg={statusBg} color={statusColor} fontSize="11px" fontWeight="700">
                           {job.status || 'NEW'}
                         </Badge>
@@ -526,7 +643,21 @@ const PartyChefBookingsList = () => {
                               View Order
                             </MenuItem>
 
-                            {/* 2. Mark as Paid */}
+                            {/* 2. Assign Cook / Staff */}
+                            <MenuItem
+                              icon={<UserCheck size={15} color="#16a34a" />}
+                              fontSize="xs"
+                              fontWeight="600"
+                              color="#1e293b"
+                              borderRadius="md"
+                              py="2"
+                              _hover={{ bg: '#f0fdf4', color: '#16a34a' }}
+                              onClick={() => openAssignStaffModal(job)}
+                            >
+                              Assign Cook / Staff (OTP)
+                            </MenuItem>
+
+                            {/* 3. Mark as Paid */}
                             <MenuItem
                               icon={<CheckCircle2 size={15} color="#16a34a" />}
                               fontSize="xs"
@@ -613,7 +744,7 @@ const PartyChefBookingsList = () => {
                   );
                 })}
                 {paginatedJobs.length === 0 && (
-                  <Tr><Td colSpan={9} textAlign="center" py="8" color="#94a3b8">No Chef for Party records found.</Td></Tr>
+                  <Tr><Td colSpan={10} textAlign="center" py="8" color="#94a3b8">No Chef for Party records found.</Td></Tr>
                 )}
               </Tbody>
             </Table>
@@ -677,6 +808,50 @@ const PartyChefBookingsList = () => {
                     <Text><Box as="span" fontWeight="700" color="#475569">25% Advance Amount:</Box> <Box as="span" color="#059669" fontWeight="700">₹{selectedJobView.advanceAmount || selectedJobView.jobPostFee || 0}</Box></Text>
                     <Text><Box as="span" fontWeight="700" color="#475569">Payment Status:</Box> {selectedJobView.paymentStatus ? selectedJobView.paymentStatus.toUpperCase() : 'FREE'}</Text>
                   </SimpleGrid>
+                </Box>
+
+                <Box bg="#f0fdf4" p="3.5" borderRadius="lg" border="1px solid #bbf7d0">
+                  <HStack justify="space-between" mb="2">
+                    <HStack spacing="1.5">
+                      <Icon as={ShieldCheck} color="#16a34a" />
+                      <Text fontWeight="800" color="#16a34a" fontSize="xs">ASSIGNED CHEF & OTP TRACKING</Text>
+                    </HStack>
+                    {(!selectedJobView.assignedStaff || selectedJobView.assignedStaff.length === 0) && (
+                      <Button
+                        size="xs"
+                        colorScheme="orange"
+                        leftIcon={<UserPlus size={11} />}
+                        onClick={() => {
+                          onViewClose();
+                          openAssignStaffModal(selectedJobView);
+                        }}
+                      >
+                        + Assign Chef
+                      </Button>
+                    )}
+                  </HStack>
+                  {selectedJobView.assignedStaff && selectedJobView.assignedStaff.length > 0 ? (
+                    selectedJobView.assignedStaff.map((staff, sIdx) => (
+                      <Box key={sIdx} bg="white" p="2.5" borderRadius="md" border="1px solid #dcfce7" mb="1.5">
+                        <SimpleGrid columns={2} spacing="2">
+                          <Text><Box as="span" fontWeight="700" color="#475569">Chef Name:</Box> <b>{staff.name || 'N/A'}</b></Text>
+                          <Text><Box as="span" fontWeight="700" color="#475569">Role:</Box> {staff.role || 'Chef for Party'}</Text>
+                          <Text><Box as="span" fontWeight="700" color="#475569">Phone:</Box> {staff.phone || 'N/A'}</Text>
+                          <Text><Box as="span" fontWeight="700" color="#475569">Status:</Box> <Badge colorScheme="green">{staff.status || 'Assigned'}</Badge></Text>
+                          <Box bg="#eff6ff" p="1.5" borderRadius="md" border="1px solid #bfdbfe">
+                            <Text fontSize="10px" color="#1e40af" fontWeight="700">Start OTP (Cook enters):</Text>
+                            <Text fontSize="sm" fontWeight="800" color="#1d4ed8">{staff.startOtp || 'N/A'}</Text>
+                          </Box>
+                          <Box bg="#f0fdf4" p="1.5" borderRadius="md" border="1px solid #bbf7d0">
+                            <Text fontSize="10px" color="#166534" fontWeight="700">End OTP (Customer shares):</Text>
+                            <Text fontSize="sm" fontWeight="800" color="#15803d">{staff.endOtp || 'N/A'}</Text>
+                          </Box>
+                        </SimpleGrid>
+                      </Box>
+                    ))
+                  ) : (
+                    <Text color="#64748b" fontSize="xs">No chef has been assigned yet. Click "+ Assign Chef" to assign a verified cook and generate OTPs.</Text>
+                  )}
                 </Box>
               </VStack>
             )}
@@ -811,6 +986,116 @@ const PartyChefBookingsList = () => {
           </AlertDialogContent>
         </AlertDialogOverlay>
       </AlertDialog>
+
+      {/* ── 5. Assign Staff Modal (OTP Flow) ── */}
+      <Modal isOpen={isStaffOpen} onClose={onStaffClose} size="lg">
+        <ModalOverlay bg="blackAlpha.400" backdropFilter="blur(4px)" />
+        <ModalContent borderRadius="2xl">
+          <ModalHeader borderBottom="1px solid #f1f5f9" pb="3">
+            <HStack spacing="2">
+              <Icon as={UserPlus} color="#ea580c" />
+              <Box>
+                <Text fontSize="md" fontWeight="800" color="#1e293b">Assign Chef to Party Booking</Text>
+                <Text fontSize="xs" color="#64748b">Generates Start OTP for Cook & End OTP for Customer</Text>
+              </Box>
+            </HStack>
+          </ModalHeader>
+          <ModalCloseButton />
+          <ModalBody py="4">
+            {selectedJobForStaff && (
+              <VStack spacing="4" align="stretch">
+                <Box bg="#fff7ed" p="3" borderRadius="lg" border="1px solid #fed7aa">
+                  <Text fontSize="xs" color="#c2410c">Booking: <b>{selectedJobForStaff.jobCode || 'N/A'}</b> ({getCustomerName(selectedJobForStaff)})</Text>
+                  <Text fontSize="xs" color="#64748b">Event: <b>{selectedJobForStaff.event || selectedJobForStaff.title || 'Party'}</b> • Guests: <b>{selectedJobForStaff.noOfGuests || 'N/A'}</b></Text>
+                </Box>
+
+                <FormControl>
+                  <FormLabel fontSize="xs" fontWeight="700">Role / Designation</FormLabel>
+                  <Select
+                    size="sm"
+                    borderRadius="lg"
+                    value={staffRole}
+                    onChange={(e) => setStaffRole(e.target.value)}
+                  >
+                    <option value="Chef for Party">Chef for Party</option>
+                    <option value="Head Chef">Head Chef</option>
+                    <option value="Assistant Cook">Assistant Cook</option>
+                    <option value="Helper">Helper</option>
+                    <option value="Waiter">Waiter</option>
+                    <option value="All-Rounder">All-Rounder</option>
+                  </Select>
+                </FormControl>
+
+                <FormControl>
+                  <FormLabel fontSize="xs" fontWeight="700">Search & Select Cook / Candidate</FormLabel>
+                  <Input
+                    size="sm"
+                    borderRadius="lg"
+                    placeholder="Filter by name, phone, or city..."
+                    value={candidateSearch}
+                    onChange={(e) => setCandidateSearch(e.target.value)}
+                    mb="2"
+                  />
+                  {isLoadingCandidates ? (
+                    <Flex justify="center" py="4"><Spinner size="sm" color="#ea580c" /></Flex>
+                  ) : (
+                    <Box maxH="220px" overflowY="auto" border="1px solid #e2e8f0" borderRadius="lg" p="1">
+                      {candidateList
+                        .filter(c => {
+                          if (!candidateSearch) return true;
+                          const s = candidateSearch.toLowerCase();
+                          return (c.name || '').toLowerCase().includes(s) ||
+                                 (c.phone || '').includes(s) ||
+                                 (c.city || '').toLowerCase().includes(s);
+                        })
+                        .map(c => {
+                          const isSelected = selectedCandidateId === c._id;
+                          return (
+                            <Box
+                              key={c._id}
+                              p="2.5"
+                              borderRadius="md"
+                              cursor="pointer"
+                              bg={isSelected ? '#fff7ed' : 'transparent'}
+                              border={isSelected ? '1px solid #ea580c' : '1px solid transparent'}
+                              _hover={{ bg: isSelected ? '#fff7ed' : '#f8fafc' }}
+                              onClick={() => setSelectedCandidateId(c._id)}
+                              mb="1"
+                            >
+                              <Flex justify="space-between" align="center">
+                                <Box>
+                                  <Text fontSize="xs" fontWeight="700" color="#1e293b">{c.name || 'Unknown'}</Text>
+                                  <Text fontSize="10px" color="#64748b">📞 {c.phone || 'N/A'} • 📍 {c.city || 'N/A'}</Text>
+                                </Box>
+                                {isSelected && <Badge colorScheme="orange" fontSize="10px">Selected</Badge>}
+                              </Flex>
+                            </Box>
+                          );
+                        })}
+                      {candidateList.length === 0 && (
+                        <Text textAlign="center" py="4" fontSize="xs" color="#94a3b8">No candidates found.</Text>
+                      )}
+                    </Box>
+                  )}
+                </FormControl>
+              </VStack>
+            )}
+          </ModalBody>
+          <ModalFooter borderTop="1px solid #f1f5f9" pt="3">
+            <Button size="sm" variant="ghost" mr="3" onClick={onStaffClose}>Cancel</Button>
+            <Button
+              size="sm"
+              colorScheme="orange"
+              isLoading={isAssigningStaff}
+              loadingText="Assigning..."
+              onClick={handleAssignStaffSubmit}
+              isDisabled={!selectedCandidateId}
+            >
+              Assign Chef & Generate OTPs
+            </Button>
+          </ModalFooter>
+        </ModalContent>
+      </Modal>
 
       <PageFooter />
     </Box>
