@@ -6,7 +6,7 @@ import {
   Modal, ModalOverlay, ModalContent, ModalHeader, ModalFooter, ModalBody, ModalCloseButton,
   FormControl, FormLabel
 } from '@chakra-ui/react';
-import { Plus, Edit2, Trash2, Info, Send, Crown, Diamond, Receipt, ShieldCheck } from 'lucide-react';
+import { Plus, Edit2, Trash2, Info, Send, Crown, Diamond, Receipt, ShieldCheck, Users, Flame, Utensils, Sparkles, UserCheck } from 'lucide-react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import axios from 'axios';
 import Swal from 'sweetalert2';
@@ -61,6 +61,15 @@ const PlanList = () => {
       threeMealsRate: 1399,
       guestRatePerDay: 65
     },
+    partyCharges: {
+      perPersonCookingCharge: 65,
+      addOns: [
+        { key: 'burnerStove', name: 'Commercial Burner / Stove Setup', description: 'High flame burner for bulk party cooking', rate: 350, isActive: true },
+        { key: 'crockery', name: 'Crockery & Cutlery Rental Support', description: 'Serving platters, plates & cutlery arrangements', rate: 500, isActive: false },
+        { key: 'kitchenCleaner', name: 'Kitchen Deep Cleaning Helper', description: 'Helper to clean counter & utensils after party', rate: 400, isActive: true },
+        { key: 'waiterStaff', name: 'Waiter / Serving Staff', description: 'Professional waiter for serving guests', rate: 600, isActive: true }
+      ]
+    },
     advancePercentage: 25,
     platformFeePercentage: 10,
     gstPercentage: 18
@@ -68,6 +77,54 @@ const PlanList = () => {
   const [isUpdatingDailyCharges, setIsUpdatingDailyCharges] = useState(false);
   const [isAddCategoryOpen, setIsAddCategoryOpen] = useState(false);
   const [newCategory, setNewCategory] = useState({ category: '', label: '', rate: '', description: '', isActive: true });
+
+  const handlePartyGuestRateChange = (val) => {
+    setDailyChargesForm(prev => ({
+      ...prev,
+      partyCharges: {
+        ...(prev.partyCharges || {}),
+        perPersonCookingCharge: Number(val) || 0
+      }
+    }));
+  };
+
+  const handlePartyAddOnRateChange = (index, val) => {
+    setDailyChargesForm(prev => {
+      const updatedAddOns = [...(prev.partyCharges?.addOns || [])];
+      if (updatedAddOns[index]) {
+        updatedAddOns[index] = {
+          ...updatedAddOns[index],
+          rate: Number(val) || 0
+        };
+      }
+      return {
+        ...prev,
+        partyCharges: {
+          ...(prev.partyCharges || {}),
+          addOns: updatedAddOns
+        }
+      };
+    });
+  };
+
+  const handlePartyAddOnToggle = (index) => {
+    setDailyChargesForm(prev => {
+      const updatedAddOns = [...(prev.partyCharges?.addOns || [])];
+      if (updatedAddOns[index]) {
+        updatedAddOns[index] = {
+          ...updatedAddOns[index],
+          isActive: updatedAddOns[index].isActive === false ? true : false
+        };
+      }
+      return {
+        ...prev,
+        partyCharges: {
+          ...(prev.partyCharges || {}),
+          addOns: updatedAddOns
+        }
+      };
+    });
+  };
 
   const fetchData = async () => {
     setIsLoading(true);
@@ -119,6 +176,15 @@ const PlanList = () => {
               twoMealsRate: s.dailyCharges.domesticCharges?.twoMealsRate ?? 899,
               threeMealsRate: s.dailyCharges.domesticCharges?.threeMealsRate ?? 1399,
               guestRatePerDay: s.dailyCharges.domesticCharges?.guestRatePerDay ?? 65
+            },
+            partyCharges: s.dailyCharges.partyCharges || {
+              perPersonCookingCharge: 65,
+              addOns: [
+                { key: 'burnerStove', name: 'Commercial Burner / Stove Setup', description: 'High flame burner for bulk party cooking', rate: 350, isActive: true },
+                { key: 'crockery', name: 'Crockery & Cutlery Rental Support', description: 'Serving platters, plates & cutlery arrangements', rate: 500, isActive: false },
+                { key: 'kitchenCleaner', name: 'Kitchen Deep Cleaning Helper', description: 'Helper to clean counter & utensils after party', rate: 400, isActive: true },
+                { key: 'waiterStaff', name: 'Waiter / Serving Staff', description: 'Professional waiter for serving guests', rate: 600, isActive: true }
+              ]
             },
             advancePercentage: s.dailyCharges.advancePercentage ?? 25,
             platformFeePercentage: s.dailyCharges.platformFeePercentage ?? 10,
@@ -979,6 +1045,155 @@ const PlanList = () => {
                 </HStack>
               </Box>
             </SimpleGrid>
+          </Box>
+
+          {/* Section: Chef for Party & Add-on Charges */}
+          <Box bg="white" p="6" borderRadius="xl" boxShadow="sm" border="1px solid #e2e8f0" mb="8">
+            <Text fontSize="md" fontWeight="bold" color="#1e293b" mb="1">Chef for Party & Add-on Charges</Text>
+            <Text fontSize="xs" color="#64748b" mb="6">Manage per person cooking charge and add-on services for party / event bookings.</Text>
+
+            {/* Per Person Cooking Charge Box */}
+            <Box p="4" borderRadius="lg" border="1px solid #e2e8f0" bg="#f8fafc" mb="6">
+              <Flex justify="space-between" align="center" direction={{ base: 'column', sm: 'row' }} gap="4">
+                <HStack spacing="4">
+                  <Flex w="42px" h="42px" borderRadius="full" bg="#eff6ff" align="center" justify="center">
+                    <Icon as={Users} color="#2563eb" size={22} />
+                  </Flex>
+                  <VStack align="start" spacing="0">
+                    <Text fontSize="sm" fontWeight="bold" color="#1e293b">Per Person Cooking Charge</Text>
+                    <Text fontSize="xs" color="#64748b">Current rate per guest / person</Text>
+                  </VStack>
+                </HStack>
+                <HStack spacing="3">
+                  <HStack bg="white" px="3" py="1.5" borderRadius="md" border="1px solid #cbd5e1">
+                    <Text fontWeight="bold" color="#10b981">₹</Text>
+                    <Input
+                      w="80px"
+                      size="sm"
+                      type="number"
+                      border="none"
+                      fontWeight="bold"
+                      color="#1e293b"
+                      _focus={{ boxShadow: 'none' }}
+                      value={dailyChargesForm.partyCharges?.perPersonCookingCharge ?? 65}
+                      onChange={(e) => handlePartyGuestRateChange(e.target.value)}
+                    />
+                  </HStack>
+                  <Button
+                    size="sm"
+                    colorScheme="blue"
+                    variant="solid"
+                    bg="#2563eb"
+                    leftIcon={<Edit2 size={13} />}
+                    onClick={handleUpdateDailyCharges}
+                    isLoading={isUpdatingDailyCharges}
+                  >
+                    Edit
+                  </Button>
+                </HStack>
+              </Flex>
+            </Box>
+
+            {/* Add-on Services List */}
+            <Box>
+              <Text fontSize="sm" fontWeight="bold" color="#1e293b" mb="1">Add-on Services</Text>
+              <Text fontSize="xs" color="#64748b" mb="4">Enable or disable add-ons and manage charges</Text>
+
+              <VStack spacing="3" align="stretch">
+                {(dailyChargesForm.partyCharges?.addOns || []).map((addon, aIdx) => {
+                  let addonIcon = Flame;
+                  let iconBg = '#fef2f2';
+                  let iconColor = '#ef4444';
+
+                  if (addon.key === 'crockery') {
+                    addonIcon = Utensils;
+                    iconBg = '#eff6ff';
+                    iconColor = '#3b82f6';
+                  } else if (addon.key === 'kitchenCleaner') {
+                    addonIcon = Sparkles;
+                    iconBg = '#ecfdf5';
+                    iconColor = '#10b981';
+                  } else if (addon.key === 'waiterStaff') {
+                    addonIcon = UserCheck;
+                    iconBg = '#fffbeb';
+                    iconColor = '#f59e0b';
+                  }
+
+                  const isActive = addon.isActive !== false;
+
+                  return (
+                    <Flex
+                      key={addon.key || aIdx}
+                      p="3.5"
+                      borderRadius="lg"
+                      border="1px solid #f1f5f9"
+                      bg={isActive ? 'white' : '#f8fafc'}
+                      justify="space-between"
+                      align="center"
+                      direction={{ base: 'column', md: 'row' }}
+                      gap="3"
+                      _hover={{ borderColor: '#e2e8f0' }}
+                    >
+                      <HStack spacing="3.5" flex="1">
+                        <Flex w="38px" h="38px" borderRadius="full" bg={iconBg} align="center" justify="center" flexShrink={0}>
+                          <Icon as={addonIcon} color={iconColor} size={18} />
+                        </Flex>
+                        <VStack align="start" spacing="0">
+                          <Text fontSize="sm" fontWeight="bold" color={isActive ? '#1e293b' : '#94a3b8'}>
+                            {addon.name}
+                          </Text>
+                          <Text fontSize="xs" color="#64748b">
+                            {addon.description}
+                          </Text>
+                        </VStack>
+                      </HStack>
+
+                      <HStack spacing="4">
+                        <HStack bg="white" px="3" py="1" borderRadius="md" border="1px solid #cbd5e1">
+                          <Text fontWeight="bold" color="#10b981">₹</Text>
+                          <Input
+                            w="70px"
+                            size="sm"
+                            type="number"
+                            border="none"
+                            fontWeight="bold"
+                            color="#1e293b"
+                            _focus={{ boxShadow: 'none' }}
+                            value={addon.rate}
+                            onChange={(e) => handlePartyAddOnRateChange(aIdx, e.target.value)}
+                          />
+                          <Icon as={Edit2} size={13} color="#94a3b8" />
+                        </HStack>
+
+                        <HStack spacing="2" w="90px">
+                          <Switch
+                            size="md"
+                            colorScheme="green"
+                            isChecked={isActive}
+                            onChange={() => handlePartyAddOnToggle(aIdx)}
+                          />
+                          <Text fontSize="xs" fontWeight="600" color={isActive ? '#16a34a' : '#94a3b8'}>
+                            {isActive ? 'Active' : 'Disabled'}
+                          </Text>
+                        </HStack>
+                      </HStack>
+                    </Flex>
+                  );
+                })}
+              </VStack>
+
+              <Flex justify="flex-end" mt="6">
+                <Button
+                  colorScheme="blue"
+                  bg="#2563eb"
+                  isLoading={isUpdatingDailyCharges}
+                  onClick={handleUpdateDailyCharges}
+                  px="6"
+                >
+                  Save Changes
+                </Button>
+              </Flex>
+            </Box>
           </Box>
 
           {/* Section 3: Billing Percentages */}
