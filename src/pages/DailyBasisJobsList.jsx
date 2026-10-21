@@ -798,7 +798,7 @@ const DailyBasisJobsList = () => {
                       <Box key={idx} bg="white" p="2.5" borderRadius="md" mb="2" border="1px solid #dcfce7">
                         <Flex justify="space-between" mb="1">
                           <Text fontWeight="700" color="#166534">{s.role || s.category || 'Staff'} x {s.count || 1}</Text>
-                          <Text fontWeight="700" color="#059669">Rate: ₹{s.perDayRate || s.ratePerDay || 0}/Day</Text>
+                          <Text fontWeight="700" color="#059669">Rate: ₹{Math.round(Number(s.perDayRate || s.ratePerDay || 0) * 0.75)}/Day</Text>
                         </Flex>
                         <Text>Days: {s.days || 1} | Gender: {s.genderPref || 'Any'}</Text>
                         <Text>Start Date: {s.startDate || 'N/A'} | Timings: {s.startTime && s.endTime ? `${s.startTime} – ${s.endTime}` : (s.timing || 'N/A')}</Text>

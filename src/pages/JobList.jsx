@@ -390,8 +390,27 @@ const JobList = () => {
   };
 
   const formatSalary = (row) => {
-    if (row.jobCategory === 'daily') {
-      return row.package ? `₹${row.package}/Day` : 'N/A';
+    if (row.jobCategory === 'daily' || row.bookingType === 'daily' || String(row.title || '').toLowerCase().includes('daily')) {
+      if (row.staffRequirements && row.staffRequirements.length > 0) {
+        const rates = row.staffRequirements
+          .map(s => Number(s.ratePerDay || s.rate || s.salary || 0))
+          .filter(r => r > 0)
+          .map(r => Math.round(r * 0.75));
+        if (rates.length > 0) {
+          const minR = Math.min(...rates);
+          const maxR = Math.max(...rates);
+          return minR === maxR ? `₹${minR}/Day` : `₹${minR} - ₹${maxR}/Day`;
+        }
+      }
+      if (row.package) {
+        const raw = Number(String(row.package).replace(/[^\d]/g, '')) || 0;
+        return raw > 0 ? `₹${Math.round(raw * 0.75)}/Day` : `₹${row.package}/Day`;
+      }
+      if (row.salaryRange) {
+        const raw = Number(String(row.salaryRange).replace(/[^\d]/g, '')) || 0;
+        return raw > 0 ? `₹${Math.round(raw * 0.75)}/Day` : (row.salaryRange.startsWith('₹') ? row.salaryRange : `₹${row.salaryRange}`);
+      }
+      return 'N/A';
     }
     if (!row.salaryRange) return 'N/A';
     return row.salaryRange.startsWith('₹') ? row.salaryRange : `₹${row.salaryRange}`;

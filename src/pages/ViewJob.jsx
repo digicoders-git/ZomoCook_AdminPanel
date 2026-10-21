@@ -338,6 +338,10 @@ const ViewJob = () => {
                           if (net > 0) return net;
                           return 2680;
                         }
+                        if (job.jobCategory === 'daily' || job.bookingType === 'daily' || String(job.title || '').toLowerCase().includes('daily')) {
+                          const raw = Number(s.perDayRate || s.ratePerDay || s.salary || 0);
+                          return raw > 0 ? Math.round(raw * 0.75) : raw;
+                        }
                         return s.perDayRate || s.ratePerDay || s.salary || 0;
                       };
                       
