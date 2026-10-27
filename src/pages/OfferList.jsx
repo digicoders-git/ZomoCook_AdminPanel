@@ -31,7 +31,16 @@ const OfferList = () => {
 
   // Dynamic Master State
   const [masterOfferTypes, setMasterOfferTypes] = useState(['FLAT', 'PERCENTAGE']);
-  const [masterApplicableTypes, setMasterApplicableTypes] = useState(['All', 'Service Package', 'Hiring Processing Fee', 'Chef for Party', 'Daily Staff']);
+  const [masterApplicableTypes, setMasterApplicableTypes] = useState([
+    'All',
+    'Chef for Party',
+    'Daily Basis Staff',
+    'Home Cook Hiring',
+    'Commercial Hiring',
+    'Service Package',
+    'Hiring Processing Fee',
+    'Subscription'
+  ]);
 
   // Modal
   const [isOpen, setIsOpen] = useState(false);
@@ -39,7 +48,7 @@ const OfferList = () => {
   
   const initialFormState = { 
     code: '', title: '', subtitle: '', 
-    offerType: 'PERCENTAGE', discountValue: 0, 
+    offerType: 'PERCENTAGE', discountValue: 0, maxDiscountValue: 0,
     targetPlatform: 'All', applicableOn: 'All', minOrderValue: 0, 
     usageLimitTotal: 0, usageLimitPerUser: 1, 
     validFrom: '', validTo: '', status: 'ACTIVE' 
@@ -71,7 +80,7 @@ const OfferList = () => {
 
   const fetchOffers = async () => {
     try {
-      const res = await axios.get(`${apiUrl}/offers`, { headers: { Authorization: `Bearer ${token}` } });
+      const res = await axios.get(`${apiUrl}/offers?platform=All`, { headers: { Authorization: `Bearer ${token}` } });
       if (res.data.success) {
         const mappedOffers = res.data.offers.map(o => ({
            ...o,
@@ -138,7 +147,8 @@ const OfferList = () => {
         title: offer.title || '',
         subtitle: offer.subtitle || '',
         offerType: offer.offerType || 'PERCENTAGE',
-        discountValue: offer.discountValue || 0,
+        discountValue: offer.discountValue !== undefined ? offer.discountValue : (offer.discountPercent || 0),
+        maxDiscountValue: offer.maxDiscountValue || 0,
         targetPlatform: offer.targetPlatform || 'All',
         applicableOn: offer.applicableOn || 'All',
         minOrderValue: offer.minOrderValue || 0,
@@ -314,6 +324,7 @@ const OfferList = () => {
                 <Th color="gray.500" fontSize="xs">OFFER NAME</Th>
                 <Th color="gray.500" fontSize="xs" textAlign="center">OFFER TYPE</Th>
                 <Th color="gray.500" fontSize="xs" textAlign="center">DISCOUNT</Th>
+                <Th color="gray.500" fontSize="xs" textAlign="center">PLATFORM</Th>
                 <Th color="gray.500" fontSize="xs" textAlign="center">APPLICABLE ON</Th>
                 <Th color="gray.500" fontSize="xs" textAlign="center">MIN. ORDER / PACKAGE<br/>VALUE</Th>
                 <Th color="gray.500" fontSize="xs" textAlign="center">USAGE LIMIT<br/>(Total / Per User)</Th>
@@ -343,6 +354,14 @@ const OfferList = () => {
                   </Td>
                   <Td textAlign="center" fontWeight="500">
                       {o.offerType === 'FLAT' ? `₹${o.discountValue}` : `${o.discountValue}%`}
+                      {o.offerType === 'PERCENTAGE' && o.maxDiscountValue > 0 && (
+                        <Text fontSize="10px" color="gray.500">Cap: ₹{o.maxDiscountValue}</Text>
+                      )}
+                  </Td>
+                  <Td textAlign="center">
+                      <Badge colorScheme={o.targetPlatform === 'Website' ? 'purple' : (o.targetPlatform === 'App' ? 'blue' : 'gray')} fontSize="xs">
+                          {o.targetPlatform || 'All'}
+                      </Badge>
                   </Td>
                   <Td textAlign="center" color="gray.600" fontSize="sm">
                       {o.applicableOn}
@@ -472,10 +491,28 @@ const OfferList = () => {
                 </FormControl>
 
                 <FormControl isRequired>
-                  <FormLabel fontSize="sm" fontWeight="semibold">Discount Value</FormLabel>
+                  <FormLabel fontSize="sm" fontWeight="semibold">Discount Value {formData.offerType === 'PERCENTAGE' ? '(%)' : '(₹)'}</FormLabel>
                   <NumberInput min={0} value={formData.discountValue} onChange={(v) => setFormData({ ...formData, discountValue: v === '' ? '' : Number(v) })}>
                     <NumberInputField />
                   </NumberInput>
+                </FormControl>
+
+                {formData.offerType === 'PERCENTAGE' && (
+                  <FormControl>
+                    <FormLabel fontSize="sm" fontWeight="semibold">Max Discount Cap (₹)</FormLabel>
+                    <NumberInput min={0} value={formData.maxDiscountValue} onChange={(v) => setFormData({ ...formData, maxDiscountValue: v === '' ? 0 : Number(v) })}>
+                      <NumberInputField placeholder="0 = No cap" />
+                    </NumberInput>
+                  </FormControl>
+                )}
+
+                <FormControl isRequired>
+                  <FormLabel fontSize="sm" fontWeight="semibold">Target Platform</FormLabel>
+                  <Select value={formData.targetPlatform} onChange={(e) => setFormData({ ...formData, targetPlatform: e.target.value })}>
+                      <option value="All">All Platforms (App & Website)</option>
+                      <option value="App">Mobile App Only</option>
+                      <option value="Website">Website Only</option>
+                  </Select>
                 </FormControl>
 
                 <FormControl isRequired>

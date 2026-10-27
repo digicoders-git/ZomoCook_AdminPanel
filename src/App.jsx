@@ -74,30 +74,61 @@ export const checkUserHasPermission = (adminData, permToCheck) => {
   if (userPermissions.includes('global:full_access')) return true;
   if (userPermissions.includes(permToCheck)) return true;
 
-  // Legacy normalization mapping
+  // Legacy and module normalization mapping
   const mapping = {
-    'dashboard:view': ['Dashboard', 'dashboard'],
+    'dashboard:view': ['Dashboard', 'dashboard', 'Dashboard Analytics', 'Live Activity'],
     'customer_client:view': ['Customer/Client', 'Customer/Client List', 'Customer List', 'customer_client'],
     'customer_client:add': ['Add Customer/Client', 'Add Customer', 'customer_client'],
     'customer_client:edit': ['Edit Customer', 'customer_client'],
-    'job_management:view': ['Jobs', 'Job List', 'Pending Jobs', 'job_management'],
-    'job_management:add': ['Add Job', 'job_management'],
-    'candidates:view': ['Candidates', 'Candidate List', 'All Applications', 'Applied Candidates List', 'Shortlisted Candidate List', 'candidates'],
+    'job_management:view': [
+      'Jobs', 'Job List', 'Pending Jobs', 'job_management', 
+      'Quick Bookings & Events', 'Booking Dashboard', 'Bookings', 'Bookings List', 
+      'Daily Basis Jobs', 'Chef for Party', 'Party Menu Catalog', 'Party Menu Items',
+      'Staff Assignments', 'Replacements', 'Live / Ongoing Bookings', 'Live / Ongoing', 
+      'Completed Bookings', 'Cancelled & Refunds', 'Booking Reviews', 'Reviews', 
+      'Booking Reports', 'Reports', 'quick_bookings'
+    ],
+    'job_management:add': ['Add Job', 'job_management', 'Add Menu Item'],
+    'quick_bookings:view': [
+      'Quick Bookings & Events', 'Booking Dashboard', 'Bookings', 'Bookings List', 
+      'Daily Basis Jobs', 'Chef for Party', 'Party Menu Catalog', 'Party Menu Items',
+      'Staff Assignments', 'Live / Ongoing Bookings', 'Live / Ongoing', 
+      'Completed Bookings', 'Cancelled & Refunds', 'Booking Reviews', 'Reviews', 
+      'Booking Reports', 'Reports', 'quick_bookings', 'job_management'
+    ],
+    'party_menu:view': ['Party Menu Catalog', 'Party Menu Items', 'Add Menu Item', 'Menu Item List', 'party_menu', 'job_management'],
+    'candidates:view': [
+      'Candidates', 'Candidate List', 'All Applications', 'Applied Candidates List', 
+      'Applied Candidates', 'Shortlisted Candidate List', 'Shortlisted Candidates', 
+      'Demo Scheduled', 'Reschedule Requests', 'Hired Candidates', 'Rejected Candidates', 
+      'On Hold Candidates', 'Not Interested', 'candidates'
+    ],
     'candidates:add': ['Add Candidate', 'candidates'],
-    'service_packages:view': ['Subscription Plans', 'Plan List', 'Subscription History', 'service_packages'],
-    'service_packages:add': ['Add Plan', 'service_packages'],
-    'offer_management:view': ['Offers', 'offer_management'],
-    'banner_management:view': ['Banners', 'banner_management'],
-    'cook_approvals:view': ['Cook Approvals', 'cook_approvals'],
+    'service_packages:view': [
+      'Subscription Plans', 'Plan List', 'Subscription History', 'service_packages', 
+      'Platform Fees Settings', 'Daily Basis Charges', 'Hiring & Support Packages', 
+      'Subscription Plans List'
+    ],
+    'service_packages:add': ['Add Plan', 'Add Subscription Plan', 'service_packages'],
+    'offer_management:view': ['Offers', 'Offer List', 'offer_management'],
+    'banner_management:view': ['Banners', 'Banner List', 'banner_management'],
+    'cook_approvals:view': ['Cook Approvals', 'Pending Approvals', 'Document Verification', 'cook_approvals'],
     'notifications:view': ['Notifications', 'Notification List', 'notifications'],
     'notifications:add': ['Add Notification', 'notifications'],
-    'query_management:view': ['Query History', 'query_management'],
-    'finance_revenue:view': ['Finance / Revenue', 'finance_revenue'],
-    'role_permission:view': ['Roles & Permissions', 'User List', 'role_permission'],
+    'query_management:view': ['Query History', 'Contact Enquiries', 'query_management'],
+    'finance_revenue:view': ['Finance / Revenue', 'Transaction History', 'Revenue Overview', 'Payouts', 'finance_revenue'],
+    'role_permission:view': ['Roles & Permissions', 'User List', 'Role List', 'Manage Roles', 'Assign Permissions', 'role_permission'],
     'role_permission:add': ['Add Role', 'Add User', 'role_permission'],
-    'role_permission:manage': ['Manage Roles', 'role_permission'],
-    'masters:view': ['Masters', 'masters'],
-    'settings:view': ['Web Settings', 'settings']
+    'role_permission:manage': ['Manage Roles', 'Assign Permissions', 'role_permission'],
+    'masters:view': [
+      'Masters', 'masters', 'Job Menu Items', 'Job Categories', 'Skill Categories', 
+      'Skills', 'Job Types', 'Job Positions', 'Experience Ranges', 'Salary Ranges', 
+      'Time Ranges', 'Joining Types', 'Leaves / Month', 'Cooking Categories', 'Events', 
+      'Family Members', 'Cooking Preferences', 'Cook Preferences', 'Food Preferences', 
+      'Gender Preferences', 'Service Durations', 'Facilities', 'Benefits', 
+      'Property Categories', 'Sliders', 'Videos', 'CMS', 'States', 'Cities'
+    ],
+    'settings:view': ['Web Settings', 'General Settings', 'Contact Information', 'CMS Settings', 'settings']
   };
 
   const legacyNames = mapping[permToCheck];

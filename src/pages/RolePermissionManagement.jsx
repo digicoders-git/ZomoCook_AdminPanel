@@ -13,6 +13,8 @@ import { useNavigate } from 'react-router-dom';
 
 const modules = [
   { id: 'dashboard', name: 'Dashboard', desc: 'View dashboard and analytics' },
+  { id: 'quick_bookings', name: 'Quick Bookings & Events', desc: 'Party Chef bookings, Daily basis jobs, live events' },
+  { id: 'party_menu', name: 'Party Menu Catalog', desc: 'Manage party menu items & dishes' },
   { id: 'customer_client', name: 'Customer / Client', desc: 'Manage customers and inquiries' },
   { id: 'candidates', name: 'Candidates', desc: 'View and manage candidates' },
   { id: 'cook_approvals', name: 'Cook Approvals', desc: 'Approve / reject cook profiles' },
@@ -59,8 +61,28 @@ const normalizePermissionsList = (rawPerms) => {
     'Jobs': 'job_management:view',
     'Job List': 'job_management:view',
     'Pending Jobs': 'job_management:view',
+    'Replacements': 'job_management:view',
     'Add Job': 'job_management:add',
     'Edit Job': 'job_management:edit',
+
+    'quick_bookings': 'quick_bookings:view',
+    'Quick Bookings & Events': 'quick_bookings:view',
+    'Booking Dashboard': 'quick_bookings:view',
+    'Bookings List': 'quick_bookings:view',
+    'Daily Basis Jobs': 'quick_bookings:view',
+    'Chef for Party': 'quick_bookings:view',
+    'Staff Assignments': 'quick_bookings:view',
+    'Live / Ongoing Bookings': 'quick_bookings:view',
+    'Completed Bookings': 'quick_bookings:view',
+    'Cancelled & Refunds': 'quick_bookings:view',
+    'Booking Reviews': 'quick_bookings:view',
+    'Booking Reports': 'quick_bookings:view',
+
+    'party_menu': 'party_menu:view',
+    'Party Menu Catalog': 'party_menu:view',
+    'Party Menu Items': 'party_menu:view',
+    'Add Menu Item': 'party_menu:add',
+    'Menu Item List': 'party_menu:view',
     
     'candidates': 'candidates:view',
     'Candidates': 'candidates:view',

@@ -303,12 +303,6 @@ const DEFAULT_MENU_CATALOG = [
   { name: 'Green Salad', cuisine: 'Continental', category: 'Sides', isNonVeg: false }
 ];
 
-const availableOffers = [
-  { code: 'ZOMO40', discountValue: 40, offerType: 'PERCENTAGE', title: 'Flat 40% OFF' },
-  { code: 'NEW50', discountValue: 50, offerType: 'PERCENTAGE', title: '50% OFF on Hiring' },
-  { code: 'PARTY20', discountValue: 20, offerType: 'PERCENTAGE', title: '20% OFF on Party Chef' }
-];
-
 const AddJob = () => {
   const navigate = useNavigate();
   const toast = useToast();
@@ -319,6 +313,8 @@ const AddJob = () => {
   const [customers, setCustomers] = useState([]);
   const [isFetchingCustomers, setIsFetchingCustomers] = useState(true);
   const [managers, setManagers] = useState([]);
+  const [dynamicOffers, setDynamicOffers] = useState([]);
+  const [isFetchingOffers, setIsFetchingOffers] = useState(false);
 
   // Customer Selection State
   const [selectedCustomer, setSelectedCustomer] = useState(null);
@@ -454,6 +450,7 @@ const AddJob = () => {
   ]);
   const [dailyCouponInput, setDailyCouponInput] = useState('');
   const [dailyAppliedCoupon, setDailyAppliedCoupon] = useState(null);
+  const [dailyAppliedOffer, setDailyAppliedOffer] = useState(null);
   const [dailyCouponDiscount, setDailyCouponDiscount] = useState(0);
 
   // ==========================================
@@ -502,6 +499,7 @@ const AddJob = () => {
   // Party Promo Code / Coupon
   const [partyCouponInput, setPartyCouponInput] = useState('');
   const [partyAppliedCoupon, setPartyAppliedCoupon] = useState(null);
+  const [partyAppliedOffer, setPartyAppliedOffer] = useState(null);
   const [partyCouponDiscountValue, setPartyCouponDiscountValue] = useState(0);
 
   // Category Accordion Expanded map for Party Dish list
@@ -770,6 +768,16 @@ const AddJob = () => {
           return next;
         });
 
+        // Fetch dynamic active offers for Admin booking
+        setIsFetchingOffers(true);
+        axios.get(`${apiUrl}/offers?activeOnly=true&platform=Website`).then(res => {
+          if (res.data?.success && Array.isArray(res.data.offers)) {
+            setDynamicOffers(res.data.offers);
+          }
+        }).catch(err => console.warn('Could not fetch active offers:', err)).finally(() => {
+          setIsFetchingOffers(false);
+        });
+
       } catch (error) {
         console.error('Initial fetch failed', error);
       } finally {
@@ -801,10 +809,21 @@ const AddJob = () => {
   }, [formData.state, masterStates.states]);
 
   // Live Calculations for Daily Staff
+  // Live Calculations for Daily Staff
   const calculateDailyTotals = () => {
     const staffCost = dailyStaffList.reduce((sum, s) => sum + (s.ratePerDay * s.count * s.days), 0);
     let discount = 0;
-    if (dailyAppliedCoupon && dailyCouponDiscount > 0) {
+    if (dailyAppliedOffer) {
+      if (dailyAppliedOffer.discountAmount !== undefined && dailyAppliedOffer.discountAmount > 0) {
+        discount = dailyAppliedOffer.discountAmount;
+      } else if (dailyAppliedOffer.offerType === 'PERCENTAGE') {
+        let disc = Math.round(staffCost * ((dailyAppliedOffer.discountValue || 0) / 100));
+        if (dailyAppliedOffer.maxDiscountValue > 0) disc = Math.min(disc, dailyAppliedOffer.maxDiscountValue);
+        discount = Math.min(staffCost, disc);
+      } else {
+        discount = Math.min(staffCost, dailyAppliedOffer.discountValue || 0);
+      }
+    } else if (dailyAppliedCoupon && dailyCouponDiscount > 0) {
       discount = Math.round(staffCost * (dailyCouponDiscount / 100));
     }
     const taxable = Math.max(0, staffCost - discount);
@@ -834,7 +853,8 @@ const AddJob = () => {
 
     const baseChefRate = 1999.0 * (partyDatesList.length || 1);
     const guestRateTotal = totalGuests * 55.0;
-    const menuItemsTotal = totalDishes * 150.0;
+    const perDishRate = Number(dailyChargesConfig?.partyCharges?.perDishCookingCharge) || 250.0;
+    const menuItemsTotal = totalDishes * perDishRate;
 
     let addOnsTotal = 0;
     if (partyBurnerStove) addOnsTotal += 350;
@@ -844,7 +864,17 @@ const AddJob = () => {
 
     const grossSubtotal = baseChefRate + guestRateTotal + menuItemsTotal + addOnsTotal;
     let discountAmount = 0;
-    if (partyAppliedCoupon && partyCouponDiscountValue > 0) {
+    if (partyAppliedOffer) {
+      if (partyAppliedOffer.discountAmount !== undefined && partyAppliedOffer.discountAmount > 0) {
+        discountAmount = partyAppliedOffer.discountAmount;
+      } else if (partyAppliedOffer.offerType === 'PERCENTAGE') {
+        let disc = Math.round(grossSubtotal * ((partyAppliedOffer.discountValue || 0) / 100));
+        if (partyAppliedOffer.maxDiscountValue > 0) disc = Math.min(disc, partyAppliedOffer.maxDiscountValue);
+        discountAmount = Math.min(grossSubtotal, disc);
+      } else {
+        discountAmount = Math.min(grossSubtotal, partyAppliedOffer.discountValue || 0);
+      }
+    } else if (partyAppliedCoupon && partyCouponDiscountValue > 0) {
       discountAmount = Math.round(grossSubtotal * (partyCouponDiscountValue / 100));
     }
     const taxable = Math.max(0, grossSubtotal - discountAmount);
@@ -1069,31 +1099,92 @@ const AddJob = () => {
     }));
   };
 
-  const applyPartyCouponCode = (code) => {
+  const applyPartyCouponCode = async (code) => {
     const trimmed = (code || partyCouponInput).trim().toUpperCase();
-    if (!trimmed) return;
-    const match = availableOffers.find(o => o.code === trimmed);
-    if (match) {
-      setPartyAppliedCoupon(trimmed);
-      setPartyCouponDiscountValue(match.discountValue);
-      setPartyCouponInput(trimmed);
-      toast({ title: `Coupon ${trimmed} Applied!`, description: `${match.discountValue}% discount added.`, status: 'success', duration: 2500 });
-    } else {
-      toast({ title: 'Invalid Coupon Code', status: 'error', duration: 2500 });
+    if (!trimmed) {
+      toast({ title: 'Please enter a coupon code', status: 'warning', duration: 2500 });
+      return;
+    }
+    const currentGross = calculatePartyTotals().grossSubtotal;
+    try {
+      const res = await axios.post(`${apiUrl}/offers/validate`, {
+        code: trimmed,
+        orderAmount: currentGross,
+        platform: 'Website',
+        applicableOn: 'Chef for Party'
+      });
+      if (res.data?.success && res.data?.valid) {
+        const off = res.data.offer;
+        setPartyAppliedCoupon(off.code);
+        setPartyAppliedOffer(off);
+        setPartyCouponDiscountValue(off.discountValue);
+        setPartyCouponInput(off.code);
+        toast({
+          title: `Coupon ${off.code} Applied!`,
+          description: `You saved ₹${off.discountAmount}!`,
+          status: 'success',
+          duration: 3000
+        });
+      } else {
+        toast({ title: res.data?.message || 'Invalid coupon code', status: 'error', duration: 3000 });
+      }
+    } catch (err) {
+      // Fallback check in dynamicOffers
+      const match = dynamicOffers.find(o => o.code?.toUpperCase() === trimmed);
+      if (match) {
+        setPartyAppliedCoupon(trimmed);
+        setPartyAppliedOffer(match);
+        setPartyCouponDiscountValue(match.discountValue);
+        setPartyCouponInput(trimmed);
+        toast({ title: `Coupon ${trimmed} Applied!`, description: `${match.title || match.code} applied.`, status: 'success', duration: 2500 });
+      } else {
+        const msg = err.response?.data?.message || 'Invalid or expired coupon code';
+        toast({ title: msg, status: 'error', duration: 3000 });
+      }
     }
   };
 
-  const applyDailyCouponCode = (code) => {
+  const applyDailyCouponCode = async (code) => {
     const trimmed = (code || dailyCouponInput).trim().toUpperCase();
-    if (!trimmed) return;
-    const match = availableOffers.find(o => o.code === trimmed);
-    if (match) {
-      setDailyAppliedCoupon(trimmed);
-      setDailyCouponDiscount(match.discountValue);
-      setDailyCouponInput(trimmed);
-      toast({ title: `Coupon ${trimmed} Applied!`, description: `${match.discountValue}% discount added.`, status: 'success', duration: 2500 });
-    } else {
-      toast({ title: 'Invalid Coupon Code', status: 'error', duration: 2500 });
+    if (!trimmed) {
+      toast({ title: 'Please enter a coupon code', status: 'warning', duration: 2500 });
+      return;
+    }
+    const currentCost = dailyStaffList.reduce((sum, s) => sum + (s.ratePerDay * s.count * s.days), 0);
+    try {
+      const res = await axios.post(`${apiUrl}/offers/validate`, {
+        code: trimmed,
+        orderAmount: currentCost,
+        platform: 'Website',
+        applicableOn: 'Daily Basis Staff'
+      });
+      if (res.data?.success && res.data?.valid) {
+        const off = res.data.offer;
+        setDailyAppliedCoupon(off.code);
+        setDailyAppliedOffer(off);
+        setDailyCouponDiscount(off.discountValue);
+        setDailyCouponInput(off.code);
+        toast({
+          title: `Coupon ${off.code} Applied!`,
+          description: `You saved ₹${off.discountAmount}!`,
+          status: 'success',
+          duration: 3000
+        });
+      } else {
+        toast({ title: res.data?.message || 'Invalid coupon code', status: 'error', duration: 3000 });
+      }
+    } catch (err) {
+      const match = dynamicOffers.find(o => o.code?.toUpperCase() === trimmed);
+      if (match) {
+        setDailyAppliedCoupon(trimmed);
+        setDailyAppliedOffer(match);
+        setDailyCouponDiscount(match.discountValue);
+        setDailyCouponInput(trimmed);
+        toast({ title: `Coupon ${trimmed} Applied!`, description: `${match.title || match.code} applied.`, status: 'success', duration: 2500 });
+      } else {
+        const msg = err.response?.data?.message || 'Invalid or expired coupon code';
+        toast({ title: msg, status: 'error', duration: 3000 });
+      }
     }
   };
 
@@ -2339,18 +2430,20 @@ const AddJob = () => {
                       </Button>
                     </HStack>
                     <Wrap spacing="1.5">
-                      {availableOffers.map(o => (
-                        <WrapItem key={o.code}>
-                          <Button
-                            size="xs"
-                            variant={dailyAppliedCoupon === o.code ? 'solid' : 'outline'}
-                            colorScheme="green"
-                            onClick={() => applyDailyCouponCode(o.code)}
-                          >
-                            {o.code} ({o.discountValue}% OFF)
-                          </Button>
-                        </WrapItem>
-                      ))}
+                      {dynamicOffers
+                        .filter(o => !o.applicableOn || o.applicableOn === 'All' || o.applicableOn.toLowerCase().includes('daily'))
+                        .map(o => (
+                          <WrapItem key={o.code}>
+                            <Button
+                              size="xs"
+                              variant={dailyAppliedCoupon === o.code ? 'solid' : 'outline'}
+                              colorScheme="green"
+                              onClick={() => applyDailyCouponCode(o.code)}
+                            >
+                              {o.code} ({o.offerType === 'PERCENTAGE' ? `${o.discountValue}% OFF` : `₹${o.discountValue} OFF`})
+                            </Button>
+                          </WrapItem>
+                        ))}
                     </Wrap>
                   </Box>
 
@@ -3061,24 +3154,26 @@ const AddJob = () => {
                   </HStack>
 
                   <Wrap spacing="2">
-                    {availableOffers.map(offer => {
-                      const isApplied = partyAppliedCoupon === offer.code;
-                      return (
-                        <WrapItem key={offer.code}>
-                          <Button
-                            size="xs"
-                            variant={isApplied ? 'solid' : 'outline'}
-                            colorScheme="purple"
-                            onClick={() => applyPartyCouponCode(offer.code)}
-                            borderRadius="full"
-                            fontSize="xs"
-                            px="3"
-                          >
-                            {offer.code} ({offer.discountValue}% OFF)
-                          </Button>
-                        </WrapItem>
-                      );
-                    })}
+                    {dynamicOffers
+                      .filter(o => !o.applicableOn || o.applicableOn === 'All' || o.applicableOn.toLowerCase().includes('party'))
+                      .map(offer => {
+                        const isApplied = partyAppliedCoupon === offer.code;
+                        return (
+                          <WrapItem key={offer.code}>
+                            <Button
+                              size="xs"
+                              variant={isApplied ? 'solid' : 'outline'}
+                              colorScheme="purple"
+                              onClick={() => applyPartyCouponCode(offer.code)}
+                              borderRadius="full"
+                              fontSize="xs"
+                              px="3"
+                            >
+                              {offer.code} ({offer.offerType === 'PERCENTAGE' ? `${offer.discountValue}% OFF` : `₹${offer.discountValue} OFF`})
+                            </Button>
+                          </WrapItem>
+                        );
+                      })}
                   </Wrap>
                 </Box>
 

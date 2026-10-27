@@ -1,9 +1,9 @@
 import React, { useState, useEffect } from 'react';
 import { 
   Box, SimpleGrid, FormControl, FormLabel, Input, Select, HStack, Button, 
-  useToast, Spinner, Text, Divider, Flex, Icon
+  useToast, Spinner, Text, Divider, Flex, Icon, InputGroup, InputRightElement, IconButton
 } from '@chakra-ui/react';
-import { Save, RotateCcw, List, Upload } from 'lucide-react';
+import { Save, RotateCcw, List, Upload, Eye, EyeOff, RefreshCw } from 'lucide-react';
 import { useNavigate, Link, useParams } from 'react-router-dom';
 import { PageHeader, FormCard, PageFooter, BRAND, ACCENT, inputStyle, selectStyle, labelStyle, Loading } from '../components/ui';
 import axios from 'axios';
@@ -15,6 +15,7 @@ const EditUser = () => {
   const [isLoading, setIsLoading] = useState(false);
   const [isFetching, setIsFetching] = useState(true);
   const [roles, setRoles] = useState([]);
+  const [showPassword, setShowPassword] = useState(false);
   const [formData, setFormData] = useState({
     name: '',
     email: '',
@@ -156,8 +157,41 @@ const EditUser = () => {
               <Input type="file" p="1" {...inputStyle} onChange={(e) => setProfilePic(e.target.files[0])} />
             </FormControl>
             <FormControl>
-              <FormLabel {...labelStyle}>New Password (Optional)</FormLabel>
-              <Input name="password" type="password" value={formData.password} onChange={handleChange} placeholder="Leave blank to keep current" {...inputStyle} />
+              <Flex justify="space-between" align="center" mb="1">
+                <FormLabel {...labelStyle} mb="0">New Password (Optional)</FormLabel>
+                <Button
+                  size="xs"
+                  variant="link"
+                  color={BRAND}
+                  fontWeight="600"
+                  leftIcon={<RefreshCw size={11} />}
+                  onClick={() => setFormData(prev => ({ ...prev, password: 'Zomo@' + Math.floor(1000 + Math.random() * 9000) + '!' }))}
+                >
+                  Generate
+                </Button>
+              </Flex>
+              <InputGroup>
+                <Input 
+                  name="password" 
+                  type={showPassword ? 'text' : 'password'} 
+                  value={formData.password} 
+                  onChange={handleChange} 
+                  placeholder="Leave blank to keep current" 
+                  pr="44px"
+                  {...inputStyle} 
+                />
+                <InputRightElement h="full">
+                  <IconButton
+                    aria-label="Toggle password visibility"
+                    icon={showPassword ? <EyeOff size={16} /> : <Eye size={16} />}
+                    variant="ghost"
+                    size="sm"
+                    color="#64748b"
+                    onClick={() => setShowPassword(!showPassword)}
+                    title={showPassword ? 'Hide Password' : 'See Password'}
+                  />
+                </InputRightElement>
+              </InputGroup>
             </FormControl>
           </SimpleGrid>
 

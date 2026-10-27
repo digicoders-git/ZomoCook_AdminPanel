@@ -755,10 +755,10 @@ const Layout = ({ children }) => {
   const [isCollapsed, setIsCollapsed] = useState(false);
 
   const handleLogout = () => {
-    localStorage.removeItem('adminToken');
-    localStorage.removeItem('adminData');
+    localStorage.clear();
+    sessionStorage.clear();
     onLogoutClose();
-    navigate('/login');
+    window.location.replace('/login');
   };
 
   return (

@@ -15,40 +15,125 @@ import axios from 'axios';
 import { useNavigate } from 'react-router-dom';
 
 const PERMISSION_MODULES = [
-  { name: 'Dashboard', permissions: [] },
-  { name: 'States', permissions: ['Add State', 'State List'] },
-  { name: 'Roles', permissions: ['Add Role', 'Role List'] },
-  { name: 'Permissions', permissions: ['Add Permission', 'Permission List'] },
-  { name: 'Users', permissions: ['Add User', 'User List'] },
-  { name: 'Cities', permissions: ['Add City', 'City List'] },
-  { name: 'Facility', permissions: ['Add Facility', 'Facility List'] },
-  { name: 'Property Category', permissions: ['Add Property Category', 'Property Category List'] },
-  { name: 'Customer/Client', permissions: ['Add Customer/Client', 'Customer/Client List'] },
-  { name: 'Position', permissions: ['Add Position', 'Position List'] },
-  { name: 'Salary Range', permissions: ['Add Salary Range', 'Salary Range List'] },
-  { name: 'Experience Range', permissions: ['Add Experience Range', 'Experience Range List'] },
-  { name: 'Profile', permissions: [] },
-  { name: 'Web Settings', permissions: [] },
-  { name: 'Cooking Preference', permissions: ['Add Cooking Preference', 'Cooking Preference List'] },
-  { name: 'Job Type', permissions: ['Add Job Type', 'Job Type List'] },
-  { name: 'Event', permissions: ['Add Event', 'Event List'] },
-  { name: 'Cooking Category', permissions: ['Add Cooking Category', 'Cooking Category List'] },
-  { name: 'Time Range', permissions: ['Add Time Range', 'Time Range List'] },
-  { name: 'Logout', permissions: [] },
-  { name: 'Outlet Status', permissions: ['Add Outlet Status', 'Outlet Status List'] },
-  { name: 'Jobs', permissions: ['Add Job', 'Job List'] },
-  { name: 'Benefits', permissions: ['Add Benefit', 'Benefit List'] },
-  { name: 'Outlets', permissions: ['Add Outlet', 'Outlet List'] },
-  { name: 'Notifications', permissions: ['Add Notification', 'Notification List'] },
-  { name: 'Candidates', permissions: ['Add Candidate', 'Candidate List', 'Shortlisted Candidate List', 'Applied Candidates List'] },
-  { name: 'CMS', permissions: ['Add CMS', 'CMS List'] },
-  { name: 'Sliders', permissions: ['Add Slider', 'Slider List'] },
-  { name: 'Videos', permissions: ['Add Video', 'Video List'] },
-  { name: 'Menu Item', permissions: ['Add Menu Item', 'Menu Item List'] },
-  { name: 'Job Category', permissions: ['Add Job Category', 'Job Category List'] },
-  { name: 'Skill Category', permissions: ['Add Skill Category', 'Skill Category List'] },
-  { name: 'Skill', permissions: ['Add Skill', 'Skill List'] },
-  { name: 'Query History', permissions: [] },
+  { name: 'Dashboard', permissions: ['Dashboard Analytics', 'Live Activity'] },
+  { 
+    name: 'Quick Bookings & Events', 
+    permissions: [
+      'Booking Dashboard', 
+      'Bookings List', 
+      'Daily Basis Jobs', 
+      'Chef for Party', 
+      'Staff Assignments', 
+      'Live / Ongoing Bookings', 
+      'Completed Bookings', 
+      'Cancelled & Refunds', 
+      'Booking Reviews', 
+      'Booking Reports'
+    ] 
+  },
+  { 
+    name: 'Party Menu Catalog', 
+    permissions: ['Add Menu Item', 'Menu Item List'] 
+  },
+  { 
+    name: 'Jobs', 
+    permissions: ['Add Job', 'Job List', 'Pending Jobs', 'Replacements'] 
+  },
+  { 
+    name: 'Candidates', 
+    permissions: [
+      'Add Candidate', 
+      'Candidate List', 
+      'All Applications', 
+      'Applied Candidates', 
+      'Shortlisted Candidates', 
+      'Demo Scheduled', 
+      'Reschedule Requests', 
+      'Hired Candidates', 
+      'Rejected Candidates', 
+      'On Hold Candidates', 
+      'Not Interested'
+    ] 
+  },
+  { 
+    name: 'Cook Approvals', 
+    permissions: ['Pending Approvals', 'Document Verification'] 
+  },
+  { 
+    name: 'Customer/Client', 
+    permissions: ['Add Customer/Client', 'Customer/Client List'] 
+  },
+  { 
+    name: 'Subscription Plans', 
+    permissions: [
+      'Platform Fees Settings', 
+      'Daily Basis Charges', 
+      'Hiring & Support Packages', 
+      'Subscription Plans List', 
+      'Add Subscription Plan', 
+      'Subscription History'
+    ] 
+  },
+  { 
+    name: 'Finance / Revenue', 
+    permissions: ['Transaction History', 'Revenue Overview', 'Payouts'] 
+  },
+  { 
+    name: 'Offers', 
+    permissions: ['Add Offer', 'Offer List'] 
+  },
+  { 
+    name: 'Banners', 
+    permissions: ['Add Banner', 'Banner List'] 
+  },
+  { 
+    name: 'Notifications', 
+    permissions: ['Add Notification', 'Notification List'] 
+  },
+  { 
+    name: 'Query History', 
+    permissions: ['Query History', 'Contact Enquiries'] 
+  },
+  { 
+    name: 'Roles & Permissions', 
+    permissions: ['Add Role', 'Role List', 'Manage Roles', 'Add User', 'User List', 'Assign Permissions'] 
+  },
+  { 
+    name: 'Masters', 
+    permissions: [
+      'Job Menu Items',
+      'Job Categories',
+      'Skill Categories',
+      'Skills',
+      'Job Types',
+      'Job Positions',
+      'Experience Ranges',
+      'Salary Ranges',
+      'Time Ranges',
+      'Joining Types',
+      'Leaves / Month',
+      'Cooking Categories',
+      'Events',
+      'Family Members',
+      'Cooking Preferences',
+      'Cook Preferences',
+      'Food Preferences',
+      'Gender Preferences',
+      'Service Durations',
+      'Facilities',
+      'Benefits',
+      'Property Categories',
+      'Sliders',
+      'Videos',
+      'CMS',
+      'States',
+      'Cities'
+    ] 
+  },
+  { 
+    name: 'Web Settings', 
+    permissions: ['General Settings', 'Contact Information', 'CMS Settings'] 
+  },
 ];
 
 const RoleList = () => {

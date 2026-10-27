@@ -807,6 +807,12 @@ const PartyChefBookingsList = () => {
                   <SimpleGrid columns={2} spacing="2">
                     <Text><Box as="span" fontWeight="700" color="#475569">25% Advance Amount:</Box> <Box as="span" color="#059669" fontWeight="700">₹{selectedJobView.advanceAmount || selectedJobView.jobPostFee || 0}</Box></Text>
                     <Text><Box as="span" fontWeight="700" color="#475569">Payment Status:</Box> {selectedJobView.paymentStatus ? selectedJobView.paymentStatus.toUpperCase() : 'FREE'}</Text>
+                    {selectedJobView.appliedCoupon && (
+                      <Text><Box as="span" fontWeight="700" color="#475569">Applied Offer/Coupon:</Box> <Badge colorScheme="green">{selectedJobView.appliedCoupon}</Badge></Text>
+                    )}
+                    {(selectedJobView.pricing?.discount > 0 || selectedJobView.discountAmount > 0) && (
+                      <Text><Box as="span" fontWeight="700" color="#475569">Coupon Discount:</Box> <Box as="span" color="green.600" fontWeight="700">-₹{selectedJobView.pricing?.discount || selectedJobView.discountAmount}</Box></Text>
+                    )}
                   </SimpleGrid>
                 </Box>
 

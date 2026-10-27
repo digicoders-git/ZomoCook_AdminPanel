@@ -1,9 +1,11 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import {
   Box, VStack, HStack, Text, Heading, Button, 
   useToast, Flex, Icon, Input, InputGroup, InputRightElement, IconButton,
+  Modal, ModalOverlay, ModalContent, ModalHeader, ModalFooter, ModalBody, ModalCloseButton,
+  useDisclosure, Badge, Divider
 } from '@chakra-ui/react';
-import { Eye, EyeOff, ArrowRight, UtensilsCrossed, ShieldCheck, Zap } from 'lucide-react';
+import { Eye, EyeOff, ArrowRight, UtensilsCrossed, ShieldCheck, Zap, KeyRound, Lock, Smartphone, RefreshCw, CheckCircle2 } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import axios from 'axios';
 
@@ -20,6 +22,132 @@ const Login = () => {
   const [password, setPassword] = useState('');
   const navigate = useNavigate();
   const toast = useToast();
+
+  // Clear any existing session or cached tokens on mount to prevent auto-login
+  useEffect(() => {
+    localStorage.removeItem('adminToken');
+    localStorage.removeItem('adminData');
+    sessionStorage.clear();
+  }, []);
+
+  // Reset Password Modal State
+  const { isOpen: isResetOpen, onOpen: onResetOpen, onClose: onResetClose } = useDisclosure();
+  const [resetStep, setResetStep] = useState(1); // 1: Request OTP, 2: Enter OTP & New Password
+  const [resetIdentifier, setResetIdentifier] = useState('');
+  const [resetPhone, setResetPhone] = useState('');
+  const [resetMaskedPhone, setResetMaskedPhone] = useState('');
+  const [resetOtp, setResetOtp] = useState('');
+  const [resetNewPassword, setResetNewPassword] = useState('');
+  const [resetConfirmPassword, setResetConfirmPassword] = useState('');
+  const [showResetNewPassword, setShowResetNewPassword] = useState(false);
+  const [showResetConfirmPassword, setShowResetConfirmPassword] = useState(false);
+  const [isResetSubmitting, setIsResetSubmitting] = useState(false);
+
+  const handleOpenResetModal = () => {
+    setResetStep(1);
+    setResetIdentifier(email || '');
+    setResetPhone('');
+    setResetMaskedPhone('');
+    setResetOtp('');
+    setResetNewPassword('');
+    setResetConfirmPassword('');
+    setShowResetNewPassword(false);
+    setShowResetConfirmPassword(false);
+    onResetOpen();
+  };
+
+  const handleSendResetOtp = async (e) => {
+    if (e) e.preventDefault();
+    if (!resetIdentifier.trim()) {
+      toast({
+        title: 'Input Required',
+        description: 'Please enter registered email or mobile number',
+        status: 'warning',
+        duration: 3000,
+        isClosable: true,
+      });
+      return;
+    }
+
+    setIsResetSubmitting(true);
+    try {
+      const res = await axios.post(`${API_BASE_URL}/admin/forgot-password`, {
+        identifier: resetIdentifier.trim()
+      });
+      if (res.data.success) {
+        setResetPhone(res.data.phone);
+        setResetMaskedPhone(res.data.maskedPhone || res.data.phone);
+        setResetStep(2);
+        toast({
+          title: 'OTP Sent',
+          description: res.data.message || 'OTP sent successfully to registered mobile.',
+          status: 'success',
+          duration: 4000,
+          isClosable: true,
+          position: 'top',
+        });
+      }
+    } catch (err) {
+      toast({
+        title: 'Failed to Send OTP',
+        description: err.response?.data?.message || 'Could not send OTP. Please check your email or mobile.',
+        status: 'error',
+        duration: 4000,
+        isClosable: true,
+        position: 'top',
+      });
+    } finally {
+      setIsResetSubmitting(false);
+    }
+  };
+
+  const handleConfirmResetPassword = async (e) => {
+    if (e) e.preventDefault();
+    if (!resetOtp.trim()) {
+      toast({ title: 'OTP Required', description: 'Please enter the 6-digit OTP', status: 'warning' });
+      return;
+    }
+    if (!resetNewPassword || resetNewPassword.length < 6) {
+      toast({ title: 'Password Too Short', description: 'Password must be at least 6 characters long', status: 'warning' });
+      return;
+    }
+    if (resetNewPassword !== resetConfirmPassword) {
+      toast({ title: 'Mismatch', description: 'Passwords do not match', status: 'error' });
+      return;
+    }
+
+    setIsResetSubmitting(true);
+    try {
+      const res = await axios.post(`${API_BASE_URL}/admin/reset-password`, {
+        phone: resetPhone,
+        otp: resetOtp.trim(),
+        newPassword: resetNewPassword
+      });
+      if (res.data.success) {
+        toast({
+          title: 'Password Reset Successful!',
+          description: res.data.message || 'You can now sign in with your new password.',
+          status: 'success',
+          duration: 4000,
+          isClosable: true,
+          position: 'top',
+        });
+        onResetClose();
+        setPassword(resetNewPassword);
+      }
+    } catch (err) {
+      toast({
+        title: 'Reset Failed',
+        description: err.response?.data?.message || 'Failed to reset password. Please check your OTP.',
+        status: 'error',
+        duration: 4000,
+        isClosable: true,
+        position: 'top',
+      });
+    } finally {
+      setIsResetSubmitting(false);
+    }
+  };
 
   const handleLogin = async (e) => {
     e.preventDefault();
@@ -235,7 +363,7 @@ const Login = () => {
                 <Text fontSize="sm" color="#64748b" fontWeight="500" lineHeight="1.4">Sign in to continue to admin</Text>
               </Box>
 
-              <form onSubmit={handleLogin}>
+              <form onSubmit={handleLogin} autoComplete="off">
 
                 {/* Email */}
                 <Box mb="5">
@@ -248,6 +376,7 @@ const Login = () => {
                     value={email}
                     onChange={(e) => setEmail(e.target.value)}
                     required
+                    autoComplete="off"
                     h="44px"
                     fontSize="14px"
                     color="#1e293b"
@@ -262,7 +391,7 @@ const Login = () => {
                 </Box>
 
                 {/* Password */}
-                <Box mb="6">
+                <Box mb="2">
                   <Text fontSize="xs" fontWeight="700" color="#475569" textTransform="uppercase" letterSpacing="0.8px" mb="2">
                     Password
                   </Text>
@@ -273,6 +402,7 @@ const Login = () => {
                       value={password}
                       onChange={(e) => setPassword(e.target.value)}
                       required
+                      autoComplete="new-password"
                       h="44px"
                       fontSize="14px"
                       color="#1e293b"
@@ -298,6 +428,20 @@ const Login = () => {
                     </InputRightElement>
                   </InputGroup>
                 </Box>
+
+                {/* Forgot Password Link */}
+                <Flex justify="flex-end" mb="5">
+                  <Button
+                    variant="link"
+                    size="xs"
+                    color={SECONDARY}
+                    fontWeight="600"
+                    _hover={{ textDecoration: 'underline', color: BRAND }}
+                    onClick={handleOpenResetModal}
+                  >
+                    Forgot / Reset Password?
+                  </Button>
+                </Flex>
 
                 {/* Submit Button */}
                 <Button
@@ -325,6 +469,209 @@ const Login = () => {
             </Box>
           </Box>
         </Box>
+      </Flex>
+
+      {/* ── Forgot / Reset Password Modal ── */}
+      <Modal isOpen={isResetOpen} onClose={onResetClose} isCentered size="md">
+        <ModalOverlay bg="blackAlpha.600" backdropFilter="blur(5px)" />
+        <ModalContent borderRadius="xl" overflow="hidden" boxShadow="2xl">
+          <ModalHeader bg="#f8faff" borderBottom="1px solid #edf2f7" py="4">
+            <HStack spacing="3">
+              <Flex w="36px" h="36px" borderRadius="lg" bg={`${BRAND}15`} align="center" justify="center">
+                <Icon as={KeyRound} color={BRAND} boxSize="18px" />
+              </Flex>
+              <Box>
+                <Heading size="sm" color="#1e293b">Reset Admin Password</Heading>
+                <Text fontSize="xs" color="#64748b" fontWeight="normal">
+                  {resetStep === 1 ? 'Step 1 of 2: Verify registered account' : 'Step 2 of 2: Enter OTP & Set new password'}
+                </Text>
+              </Box>
+            </HStack>
+          </ModalHeader>
+          <ModalCloseButton mt="1" />
+
+          <ModalBody py="6">
+            {resetStep === 1 ? (
+              <form onSubmit={handleSendResetOtp}>
+                <VStack spacing="4" align="stretch">
+                  <Box>
+                    <Text fontSize="xs" fontWeight="700" color="#475569" mb="2" textTransform="uppercase" letterSpacing="0.5px">
+                      Email or Registered Mobile Number
+                    </Text>
+                    <InputGroup>
+                      <Input
+                        type="text"
+                        placeholder="e.g. admin@zomocook.in or 9876543210"
+                        value={resetIdentifier}
+                        onChange={(e) => setResetIdentifier(e.target.value)}
+                        autoFocus
+                        h="44px"
+                        fontSize="14px"
+                        borderRadius="10px"
+                        border="1.5px solid #dde6f5"
+                        _focus={{ borderColor: BRAND, boxShadow: `0 0 0 3px ${BRAND}20` }}
+                      />
+                    </InputGroup>
+                    <Text fontSize="xs" color="#94a3b8" mt="1.5">
+                      We will send a 6-digit verification code to the registered mobile number on this account.
+                    </Text>
+                  </Box>
+
+                  <Button
+                    type="submit"
+                    h="44px"
+                    bg={BRAND}
+                    color="white"
+                    fontSize="sm"
+                    fontWeight="700"
+                    borderRadius="10px"
+                    isLoading={isResetSubmitting}
+                    loadingText="Sending OTP..."
+                    rightIcon={<ArrowRight size={16} />}
+                    _hover={{ bg: '#003d91' }}
+                  >
+                    Send Verification OTP
+                  </Button>
+                </VStack>
+              </form>
+            ) : (
+              <form onSubmit={handleConfirmResetPassword}>
+                <VStack spacing="4" align="stretch">
+                  <Box p="3" bg="#f1f5f9" borderRadius="lg" border="1px solid #e2e8f0">
+                    <HStack justify="space-between">
+                      <HStack spacing="2">
+                        <Smartphone size={16} color="#64748b" />
+                        <Text fontSize="xs" color="#334155" fontWeight="600">
+                          OTP sent to: <Text as="span" color={BRAND}>{resetMaskedPhone}</Text>
+                        </Text>
+                      </HStack>
+                      <Button
+                        size="xs"
+                        variant="ghost"
+                        color={BRAND}
+                        onClick={() => setResetStep(1)}
+                        fontWeight="700"
+                      >
+                        Change
+                      </Button>
+                    </HStack>
+                  </Box>
+
+                  {/* OTP Input */}
+                  <Box>
+                    <Text fontSize="xs" fontWeight="700" color="#475569" mb="1.5" textTransform="uppercase" letterSpacing="0.5px">
+                      6-Digit OTP
+                    </Text>
+                    <Input
+                      type="text"
+                      maxLength={6}
+                      placeholder="Enter 6-digit OTP"
+                      value={resetOtp}
+                      onChange={(e) => setResetOtp(e.target.value.replace(/\D/g, ''))}
+                      letterSpacing="4px"
+                      fontWeight="bold"
+                      textAlign="center"
+                      fontSize="lg"
+                      h="44px"
+                      borderRadius="10px"
+                      border="1.5px solid #dde6f5"
+                      _focus={{ borderColor: BRAND, boxShadow: `0 0 0 3px ${BRAND}20` }}
+                    />
+                  </Box>
+
+                  {/* New Password */}
+                  <Box>
+                    <Text fontSize="xs" fontWeight="700" color="#475569" mb="1.5" textTransform="uppercase" letterSpacing="0.5px">
+                      New Password
+                    </Text>
+                    <InputGroup>
+                      <Input
+                        type={showResetNewPassword ? 'text' : 'password'}
+                        placeholder="Minimum 6 characters"
+                        value={resetNewPassword}
+                        onChange={(e) => setResetNewPassword(e.target.value)}
+                        h="44px"
+                        fontSize="14px"
+                        borderRadius="10px"
+                        border="1.5px solid #dde6f5"
+                        _focus={{ borderColor: BRAND, boxShadow: `0 0 0 3px ${BRAND}20` }}
+                      />
+                      <InputRightElement h="44px">
+                        <IconButton
+                          aria-label="Toggle password"
+                          icon={showResetNewPassword ? <EyeOff size={16} /> : <Eye size={16} />}
+                          variant="ghost"
+                          size="sm"
+                          color="#94a3b8"
+                          onClick={() => setShowResetNewPassword(!showResetNewPassword)}
+                        />
+                      </InputRightElement>
+                    </InputGroup>
+                  </Box>
+
+                  {/* Confirm Password */}
+                  <Box>
+                    <Text fontSize="xs" fontWeight="700" color="#475569" mb="1.5" textTransform="uppercase" letterSpacing="0.5px">
+                      Confirm New Password
+                    </Text>
+                    <InputGroup>
+                      <Input
+                        type={showResetConfirmPassword ? 'text' : 'password'}
+                        placeholder="Re-enter new password"
+                        value={resetConfirmPassword}
+                        onChange={(e) => setResetConfirmPassword(e.target.value)}
+                        h="44px"
+                        fontSize="14px"
+                        borderRadius="10px"
+                        border="1.5px solid #dde6f5"
+                        _focus={{ borderColor: BRAND, boxShadow: `0 0 0 3px ${BRAND}20` }}
+                      />
+                      <InputRightElement h="44px">
+                        <IconButton
+                          aria-label="Toggle confirm password"
+                          icon={showResetConfirmPassword ? <EyeOff size={16} /> : <Eye size={16} />}
+                          variant="ghost"
+                          size="sm"
+                          color="#94a3b8"
+                          onClick={() => setShowResetConfirmPassword(!showResetConfirmPassword)}
+                        />
+                      </InputRightElement>
+                    </InputGroup>
+                  </Box>
+
+                  <HStack justify="space-between" pt="2">
+                    <Button
+                      size="sm"
+                      variant="ghost"
+                      color="#64748b"
+                      leftIcon={<RefreshCw size={14} />}
+                      isLoading={isResetSubmitting}
+                      onClick={handleSendResetOtp}
+                    >
+                      Resend OTP
+                    </Button>
+                    <Button
+                      type="submit"
+                      h="42px"
+                      px="6"
+                      bg={BRAND}
+                      color="white"
+                      fontSize="sm"
+                      fontWeight="700"
+                      borderRadius="10px"
+                      isLoading={isResetSubmitting}
+                      loadingText="Resetting..."
+                      _hover={{ bg: '#003d91' }}
+                    >
+                      Set New Password
+                    </Button>
+                  </HStack>
+                </VStack>
+              </form>
+            )}
+          </ModalBody>
+        </ModalContent>
+      </Modal>
       </Flex>
     </Box>
   );

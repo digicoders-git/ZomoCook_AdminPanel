@@ -2,9 +2,10 @@ import { useState, useEffect } from 'react';
 import {
   Box, Flex, Text, HStack, Table, Thead, Tbody, Tr, Th, Td, Switch,
   IconButton, Avatar, Spinner, useToast, Button, useDisclosure,
-  Modal, ModalOverlay, ModalContent, ModalHeader, ModalFooter, ModalBody, ModalCloseButton, Badge, Divider, VStack, SimpleGrid
+  Modal, ModalOverlay, ModalContent, ModalHeader, ModalFooter, ModalBody, ModalCloseButton, Badge, Divider, VStack, SimpleGrid,
+  Input, InputGroup, InputRightElement, FormControl, FormLabel, Tooltip
 } from '@chakra-ui/react';
-import { Edit3, Trash2, Filter, Plus, Eye } from 'lucide-react';
+import { Edit3, Trash2, Filter, Plus, Eye, Key, EyeOff, Copy, Check, RefreshCw } from 'lucide-react';
 import { Link, useNavigate, useSearchParams } from 'react-router-dom';
 import {
   PageHeader, TableCard, TableControls, TableFooter, PageFooter, BRAND, ACCENT,
@@ -22,8 +23,92 @@ const UserList = () => {
   const toast = useToast();
   const { isOpen, onOpen, onClose } = useDisclosure();
   const { isOpen: isViewOpen, onOpen: onViewOpen, onClose: onViewClose } = useDisclosure();
+  const { isOpen: isResetOpen, onOpen: onResetOpen, onClose: onResetClose } = useDisclosure();
   const [confirmConfig, setConfirmConfig] = useState({ title: '', description: '', onConfirm: () => { }, type: 'danger' });
   const [selectedUser, setSelectedUser] = useState(null);
+  const [resetUserTarget, setResetUserTarget] = useState(null);
+  const [newPassword, setNewPassword] = useState('');
+  const [showNewPassword, setShowNewPassword] = useState(true);
+  const [isResettingPassword, setIsResettingPassword] = useState(false);
+  const [isCopied, setIsCopied] = useState(false);
+
+  const handleOpenResetCredentials = (user) => {
+    setResetUserTarget(user);
+    setNewPassword('');
+    setShowNewPassword(true);
+    setIsCopied(false);
+    onResetOpen();
+  };
+
+  const generateRandomPassword = () => {
+    const chars = 'ABCDEFGHJKLMNPQRSTUVWXYZabcdefghijkmnpqrstuvwxyz23456789@#$';
+    let pass = 'Zomo@';
+    for (let i = 0; i < 4; i++) {
+      pass += Math.floor(Math.random() * 10);
+    }
+    pass += '!';
+    setNewPassword(pass);
+    setIsCopied(false);
+  };
+
+  const handleCopyPassword = () => {
+    if (!newPassword) return;
+    navigator.clipboard.writeText(newPassword);
+    setIsCopied(true);
+    toast({ title: 'Password Copied', status: 'info', duration: 2000, isClosable: true });
+    setTimeout(() => setIsCopied(false), 2000);
+  };
+
+  const handleSubmitResetPassword = async (e) => {
+    if (e) e.preventDefault();
+    if (!newPassword || newPassword.length < 6) {
+      toast({ title: 'Invalid Password', description: 'Password must be at least 6 characters', status: 'warning' });
+      return;
+    }
+
+    setIsResettingPassword(true);
+    try {
+      const apiUrl = import.meta.env.VITE_API_URL;
+      const token = localStorage.getItem('adminToken');
+      
+      let res;
+      try {
+        res = await axios.put(`${apiUrl}/admin/users/${resetUserTarget._id}/reset-password`, {
+          password: newPassword
+        }, {
+          headers: { 'Authorization': `Bearer ${token}` }
+        });
+      } catch (firstErr) {
+        // Fallback to standard user update route if dedicated route doesn't match
+        res = await axios.put(`${apiUrl}/admin/users/${resetUserTarget._id}`, {
+          password: newPassword
+        }, {
+          headers: { 'Authorization': `Bearer ${token}` }
+        });
+      }
+
+      if (res.data?.success) {
+        toast({
+          title: 'Credentials Updated',
+          description: `Password for ${resetUserTarget.name} has been reset successfully.`,
+          status: 'success',
+          duration: 4000,
+          isClosable: true
+        });
+        onResetClose();
+      }
+    } catch (err) {
+      toast({
+        title: 'Reset Failed',
+        description: err.response?.data?.message || 'Failed to update credentials',
+        status: 'error',
+        duration: 4000,
+        isClosable: true
+      });
+    } finally {
+      setIsResettingPassword(false);
+    }
+  };
   
   // Pagination State
   const [currentPage, setCurrentPage] = useState(1);
@@ -180,39 +265,57 @@ const UserList = () => {
                     </Td>
                     <Td py="4" border="1px solid #edf2f7" textAlign="center">
                       <HStack spacing="2" justify="center">
-                        <IconButton
-                          icon={<Eye size={16} />}
-                          size="sm"
-                          bg="#3b82f6"
-                          color="white"
-                          borderRadius="md"
-                          _hover={{ bg: '#2563eb' }}
-                          onClick={() => {
-                            setSelectedUser(user);
-                            onViewOpen();
-                          }}
-                          aria-label="view"
-                        />
-                        <IconButton
-                          icon={<Edit3 size={16} />}
-                          size="sm"
-                          bg="#f97316"
-                          color="white"
-                          borderRadius="md"
-                          _hover={{ bg: '#ea580c' }}
-                          onClick={() => navigate(`/users/edit/${user._id}`)}
-                          aria-label="edit"
-                        />
-                        <IconButton
-                          icon={<Trash2 size={16} />}
-                          size="sm"
-                          bg="#e11d48"
-                          color="white"
-                          borderRadius="md"
-                          _hover={{ bg: '#be123c' }}
-                          onClick={() => handleDelete(user._id)}
-                          aria-label="delete"
-                        />
+                        <Tooltip label="View Details" hasArrow>
+                          <IconButton
+                            icon={<Eye size={16} />}
+                            size="sm"
+                            bg="#3b82f6"
+                            color="white"
+                            borderRadius="md"
+                            _hover={{ bg: '#2563eb' }}
+                            onClick={() => {
+                              setSelectedUser(user);
+                              onViewOpen();
+                            }}
+                            aria-label="view"
+                          />
+                        </Tooltip>
+                        <Tooltip label="Reset Credentials / Password" hasArrow>
+                          <IconButton
+                            icon={<Key size={16} />}
+                            size="sm"
+                            bg="#8b5cf6"
+                            color="white"
+                            borderRadius="md"
+                            _hover={{ bg: '#7c3aed' }}
+                            onClick={() => handleOpenResetCredentials(user)}
+                            aria-label="reset-credentials"
+                          />
+                        </Tooltip>
+                        <Tooltip label="Edit User" hasArrow>
+                          <IconButton
+                            icon={<Edit3 size={16} />}
+                            size="sm"
+                            bg="#f97316"
+                            color="white"
+                            borderRadius="md"
+                            _hover={{ bg: '#ea580c' }}
+                            onClick={() => navigate(`/users/edit/${user._id}`)}
+                            aria-label="edit"
+                          />
+                        </Tooltip>
+                        <Tooltip label="Delete User" hasArrow>
+                          <IconButton
+                            icon={<Trash2 size={16} />}
+                            size="sm"
+                            bg="#e11d48"
+                            color="white"
+                            borderRadius="md"
+                            _hover={{ bg: '#be123c' }}
+                            onClick={() => handleDelete(user._id)}
+                            aria-label="delete"
+                          />
+                        </Tooltip>
                       </HStack>
                     </Td>
                   </Tr>
@@ -295,6 +398,143 @@ const UserList = () => {
               </VStack>
             )}
           </ModalBody>
+          <ModalFooter bg="#f8faff" borderTop="1px solid #edf2f7" py="3">
+            <HStack spacing="3" justify="space-between" w="full">
+              <Button
+                leftIcon={<Key size={15} />}
+                size="sm"
+                bg="#8b5cf6"
+                color="white"
+                _hover={{ bg: '#7c3aed' }}
+                onClick={() => {
+                  onViewClose();
+                  handleOpenResetCredentials(selectedUser);
+                }}
+              >
+                Reset Credentials
+              </Button>
+              <Button size="sm" variant="ghost" onClick={onViewClose}>Close</Button>
+            </HStack>
+          </ModalFooter>
+        </ModalContent>
+      </Modal>
+
+      {/* ── Reset User Credentials Modal ── */}
+      <Modal isOpen={isResetOpen} onClose={onResetClose} size="md" isCentered>
+        <ModalOverlay bg="blackAlpha.600" backdropFilter="blur(4px)" />
+        <ModalContent borderRadius="xl" overflow="hidden" boxShadow="2xl">
+          <ModalHeader bg="#f8faff" borderBottom="1px solid #edf2f7" py="4">
+            <HStack spacing="3">
+              <Flex w="36px" h="36px" borderRadius="lg" bg="#8b5cf615" align="center" justify="center">
+                <Key size={18} color="#8b5cf6" />
+              </Flex>
+              <Box>
+                <Text fontSize="md" fontWeight="bold" color="#1e293b">Reset User Credentials</Text>
+                <Text fontSize="xs" color="#64748b" fontWeight="normal">Set a new login password for this staff user</Text>
+              </Box>
+            </HStack>
+          </ModalHeader>
+          <ModalCloseButton mt="1" />
+
+          <ModalBody py="5">
+            {resetUserTarget && (
+              <VStack spacing="4" align="stretch">
+                <Box p="3" bg="#f8faff" borderRadius="lg" border="1px solid #e8edf5">
+                  <HStack spacing="3">
+                    <Avatar size="sm" name={resetUserTarget.name} />
+                    <Box>
+                      <Text fontSize="sm" fontWeight="bold" color="#1e293b">{resetUserTarget.name}</Text>
+                      <Text fontSize="xs" color="#64748b">{resetUserTarget.email || resetUserTarget.phone}</Text>
+                    </Box>
+                    <Badge ml="auto" colorScheme="purple">{resetUserTarget.role?.name || 'Staff'}</Badge>
+                  </HStack>
+                </Box>
+
+                <FormControl isRequired>
+                  <Flex justify="space-between" align="center" mb="1.5">
+                    <FormLabel mb="0" fontSize="xs" fontWeight="700" color="#475569" textTransform="uppercase" letterSpacing="0.5px">
+                      New Password
+                    </FormLabel>
+                    <Button
+                      size="xs"
+                      variant="link"
+                      color="#8b5cf6"
+                      fontWeight="600"
+                      leftIcon={<RefreshCw size={12} />}
+                      onClick={generateRandomPassword}
+                    >
+                      Generate Strong Password
+                    </Button>
+                  </Flex>
+
+                  <InputGroup>
+                    <Input
+                      type={showNewPassword ? 'text' : 'password'}
+                      value={newPassword}
+                      onChange={(e) => {
+                        setNewPassword(e.target.value);
+                        setIsCopied(false);
+                      }}
+                      placeholder="Enter minimum 6 characters"
+                      h="42px"
+                      fontSize="14px"
+                      borderRadius="8px"
+                      border="1.5px solid #dde6f5"
+                      pr="72px"
+                      _focus={{ borderColor: '#8b5cf6', boxShadow: '0 0 0 3px rgba(139, 92, 246, 0.2)' }}
+                    />
+                    <InputRightElement h="42px" w="70px">
+                      <HStack spacing="1" pr="2">
+                        {newPassword && (
+                          <IconButton
+                            aria-label="Copy password"
+                            icon={isCopied ? <Check size={14} color="#16a34a" /> : <Copy size={14} />}
+                            size="xs"
+                            variant="ghost"
+                            color="#64748b"
+                            onClick={handleCopyPassword}
+                            title="Copy Password"
+                          />
+                        )}
+                        <IconButton
+                          aria-label="Toggle password visibility"
+                          icon={showNewPassword ? <EyeOff size={14} /> : <Eye size={14} />}
+                          size="xs"
+                          variant="ghost"
+                          color="#64748b"
+                          onClick={() => setShowNewPassword(!showNewPassword)}
+                          title={showNewPassword ? 'Hide Password' : 'See Password'}
+                        />
+                      </HStack>
+                    </InputRightElement>
+                  </InputGroup>
+                  <Text fontSize="11px" color="#94a3b8" mt="1">
+                    Click the eye icon to see or hide the password as you type.
+                  </Text>
+                </FormControl>
+              </VStack>
+            )}
+          </ModalBody>
+
+          <ModalFooter bg="#f8faff" borderTop="1px solid #edf2f7" py="3">
+            <HStack spacing="3" justify="flex-end" w="full">
+              <Button size="sm" variant="ghost" onClick={onResetClose} isDisabled={isResettingPassword}>
+                Cancel
+              </Button>
+              <Button
+                size="sm"
+                bg="#8b5cf6"
+                color="white"
+                px="6"
+                _hover={{ bg: '#7c3aed' }}
+                onClick={handleSubmitResetPassword}
+                isLoading={isResettingPassword}
+                loadingText="Updating..."
+              >
+                Update Credentials
+              </Button>
+            </HStack>
+          </ModalFooter>
         </ModalContent>
       </Modal>
 

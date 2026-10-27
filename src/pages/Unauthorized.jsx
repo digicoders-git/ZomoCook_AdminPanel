@@ -127,9 +127,9 @@ const Unauthorized = () => {
 
           <Button
             onClick={() => {
-              localStorage.removeItem('adminToken');
-              localStorage.removeItem('adminData');
-              window.location.href = '/login';
+              localStorage.clear();
+              sessionStorage.clear();
+              window.location.replace('/login');
             }}
             variant="ghost"
             color="#ef4444"
