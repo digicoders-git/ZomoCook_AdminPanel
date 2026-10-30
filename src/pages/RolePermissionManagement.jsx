@@ -14,6 +14,7 @@ import { useNavigate } from 'react-router-dom';
 const modules = [
   { id: 'dashboard', name: 'Dashboard', desc: 'View dashboard and analytics' },
   { id: 'quick_bookings', name: 'Quick Bookings & Events', desc: 'Party Chef bookings, Daily basis jobs, live events' },
+  { id: 'reviews', name: 'Rating & Reviews', desc: 'Customer ratings, performance reviews and feedback' },
   { id: 'party_menu', name: 'Party Menu Catalog', desc: 'Manage party menu items & dishes' },
   { id: 'customer_client', name: 'Customer / Client', desc: 'Manage customers and inquiries' },
   { id: 'candidates', name: 'Candidates', desc: 'View and manage candidates' },
@@ -75,7 +76,9 @@ const normalizePermissionsList = (rawPerms) => {
     'Live / Ongoing Bookings': 'quick_bookings:view',
     'Completed Bookings': 'quick_bookings:view',
     'Cancelled & Refunds': 'quick_bookings:view',
-    'Booking Reviews': 'quick_bookings:view',
+    'Booking Reviews': 'job_management:view',
+    'Rating & Reviews': 'job_management:view',
+    'reviews': 'job_management:view',
     'Booking Reports': 'quick_bookings:view',
 
     'party_menu': 'party_menu:view',

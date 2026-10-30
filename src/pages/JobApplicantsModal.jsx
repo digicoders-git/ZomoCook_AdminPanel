@@ -107,8 +107,8 @@ const CandidateCard = ({
               {isAssigned ? "Assigned" : app.status}
             </Badge>
             {role && (
-              <Badge colorScheme="purple" variant="subtle" fontSize="10px" px="2" borderRadius="md">
-                {role}
+              <Badge colorScheme="purple" variant="solid" fontSize="10px" px="2" py="0.5" borderRadius="md">
+                {isAssigned ? `Role: ${role}` : `Applied: ${role}`}
               </Badge>
             )}
           </Flex>
@@ -261,6 +261,7 @@ const JobApplicantsModal = ({
   const [assigningId, setAssigningId] = useState(null);
   const [selectedApps, setSelectedApps] = useState([]);
   const [activeTab, setActiveTab] = useState(initialTab);
+  const [selectedRoleFilter, setSelectedRoleFilter] = useState(targetRole || 'All');
   
   // Role selection dialog state (when multiple requirements exist and user clicks assign)
   const [roleSelectApp, setRoleSelectApp] = useState(null);
@@ -275,8 +276,9 @@ const JobApplicantsModal = ({
       fetchJobDetails();
       setSelectedApps([]);
       setActiveTab(initialTab);
+      setSelectedRoleFilter(targetRole || 'All');
     }
-  }, [isOpen, jobId, initialTab]);
+  }, [isOpen, jobId, initialTab, targetRole]);
 
   useEffect(() => {
     if (propJob) {
@@ -337,15 +339,16 @@ const JobApplicantsModal = ({
 
     // Available requirements for this job
     const reqs = job?.staffRequirements || [];
+    const activeTargetRole = (selectedRoleFilter && selectedRoleFilter !== 'All') ? selectedRoleFilter : targetRole;
     
     // If job has multiple requirements and no role specified yet, open role selector dialog
-    if (!chosenRole && !targetRole && reqs.length > 1) {
+    if (!chosenRole && !activeTargetRole && reqs.length > 1) {
       setRoleSelectApp(app);
       setSelectedRoleForAssign(app.appliedRole || reqs[0]?.role || 'Cook');
       return;
     }
 
-    const finalRole = chosenRole || targetRole || app.appliedRole || app.applicationData?.role || (reqs[0]?.role) || (candidate.jobPreference?.jobPositions?.[0]) || 'Cook';
+    const finalRole = chosenRole || activeTargetRole || app.appliedRole || app.applicationData?.role || (reqs[0]?.role) || (candidate.jobPreference?.jobPositions?.[0]) || 'Cook';
     const exp = candidate.jobPreference?.experience;
     const expStr = exp ? `${exp.value || ''} ${exp.unit || 'years'}` : '';
 
@@ -428,6 +431,7 @@ const JobApplicantsModal = ({
     setLoading(true);
     try {
       const token = localStorage.getItem("adminToken");
+      const activeRole = (selectedRoleFilter && selectedRoleFilter !== 'All') ? selectedRoleFilter : (targetRole || job?.staffRequirements?.[0]?.role || 'Cook');
       // Assign staff via OTP endpoint for each selected candidate
       for (const appId of selectedApps) {
         const app = applications.find(a => a._id === appId);
@@ -437,7 +441,7 @@ const JobApplicantsModal = ({
           if (candId) {
             const exp = cand.jobPreference?.experience;
             const expStr = exp ? `${exp.value || ''} ${exp.unit || 'years'}` : '';
-            const role = targetRole || app.appliedRole || (job?.staffRequirements?.[0]?.role) || 'Cook';
+            const role = activeRole || app.appliedRole || 'Cook';
             await axios.post(`${API_BASE_URL}/jobs/${jobId}/assign-staff`, {
               candidateId: candId,
               name: cand.name || 'Staff',
@@ -470,6 +474,60 @@ const JobApplicantsModal = ({
     }
   };
 
+  // Extract all roles present in job requirements or applications
+  const availableRoles = [];
+  if (job?.staffRequirements && Array.isArray(job.staffRequirements)) {
+    job.staffRequirements.forEach(r => {
+      const title = r.role || r.category || r.staffCategory;
+      if (title && !availableRoles.includes(title)) availableRoles.push(title);
+    });
+  }
+  if (job?.commercialStaffList && Array.isArray(job.commercialStaffList)) {
+    job.commercialStaffList.forEach(r => {
+      const title = r.role || r.category || r.staffCategory;
+      if (title && !availableRoles.includes(title)) availableRoles.push(title);
+    });
+  }
+  if (job?.partyRequirement?.role && !availableRoles.includes(job.partyRequirement.role)) {
+    availableRoles.push(job.partyRequirement.role);
+  }
+  if (job?.jobPosition && !availableRoles.includes(job.jobPosition)) {
+    availableRoles.push(job.jobPosition);
+  }
+  applications.forEach(a => {
+    const r = a.appliedRole || a.role || a.applicationData?.role;
+    if (r && !availableRoles.includes(r)) availableRoles.push(r);
+  });
+  if (job?.assignedStaff && Array.isArray(job.assignedStaff)) {
+    job.assignedStaff.forEach(s => {
+      if (s.role && !availableRoles.includes(s.role)) availableRoles.push(s.role);
+    });
+  }
+
+  const getApplicantRole = (app) => {
+    return (
+      app.appliedRole ||
+      app.role ||
+      app.applicationData?.role ||
+      app.staffEntry?.role ||
+      (app.candidate?.jobPreference?.jobPositions && app.candidate.jobPreference.jobPositions[0]) ||
+      ""
+    );
+  };
+
+  const matchesRole = (app, roleFilter) => {
+    if (!roleFilter || roleFilter === "All" || roleFilter === "All Positions" || roleFilter === "All Roles") {
+      return true;
+    }
+    const filterNorm = (roleFilter || "").toLowerCase().trim();
+    const candRole = (getApplicantRole(app) || "").toLowerCase().trim();
+    if (!candRole) {
+      if (availableRoles.length <= 1) return true;
+      return false;
+    }
+    return candRole === filterNorm || candRole.includes(filterNorm) || filterNorm.includes(candRole);
+  };
+
   // Helper to check if application is assigned
   const isAppAssigned = (a) => {
     if (a.status === 'Assigned') return true;
@@ -480,14 +538,8 @@ const JobApplicantsModal = ({
     return false;
   };
 
-  // Group applications
-  const applied = applications.filter(a => statusGroups.Applied(a.status) && !isAppAssigned(a));
-  const shortlisted = applications.filter(a => statusGroups.Shortlisted(a.status) && !isAppAssigned(a));
-  const hired = applications.filter(a => statusGroups.Hired(a.status) && !isAppAssigned(a));
-  const rejected = applications.filter(a => statusGroups.Rejected(a.status));
-
   // Synthesize assigned list including applications with status Assigned and job.assignedStaff entries
-  const assignedList = [];
+  const allAssignedList = [];
   const assignedCandidateIds = new Set();
 
   applications.forEach(app => {
@@ -495,7 +547,7 @@ const JobApplicantsModal = ({
       const candId = (app.candidate?._id || app.candidate)?.toString();
       assignedCandidateIds.add(candId);
       const staffEntry = job?.assignedStaff?.find(s => (s.candidate?._id || s.candidate)?.toString() === candId);
-      assignedList.push({ ...app, staffEntry });
+      allAssignedList.push({ ...app, staffEntry });
     }
   });
 
@@ -504,7 +556,7 @@ const JobApplicantsModal = ({
     job.assignedStaff.forEach(s => {
       const candId = (s.candidate?._id || s.candidate)?.toString();
       if (candId && !assignedCandidateIds.has(candId)) {
-        assignedList.push({
+        allAssignedList.push({
           _id: `staff-${candId}`,
           status: 'Assigned',
           appliedRole: s.role,
@@ -515,6 +567,16 @@ const JobApplicantsModal = ({
       }
     });
   }
+
+  // Filter both applications and assigned list by selected role filter
+  const roleFilteredApplications = applications.filter(a => matchesRole(a, selectedRoleFilter));
+  const assignedList = allAssignedList.filter(item => matchesRole(item, selectedRoleFilter));
+
+  // Group applications
+  const applied = roleFilteredApplications.filter(a => statusGroups.Applied(a.status) && !isAppAssigned(a));
+  const shortlisted = roleFilteredApplications.filter(a => statusGroups.Shortlisted(a.status) && !isAppAssigned(a));
+  const hired = roleFilteredApplications.filter(a => statusGroups.Hired(a.status) && !isAppAssigned(a));
+  const rejected = roleFilteredApplications.filter(a => statusGroups.Rejected(a.status));
 
   const EmptyState = ({ message = "No candidates in this category" }) => (
     <VStack py="8" spacing="3">
@@ -561,30 +623,86 @@ const JobApplicantsModal = ({
           <ModalBody px="5" py="4">
             {loading ? (
               <Loading message="Loading applicants..." size="sm" />
-            ) : applications.length === 0 && assignedList.length === 0 ? (
+            ) : applications.length === 0 && allAssignedList.length === 0 ? (
               <VStack py="12" spacing="3">
                 <Text fontSize="3xl">😕</Text>
                 <Text fontSize="sm" color="#94a3b8" fontWeight="600">No applicants yet for this job</Text>
               </VStack>
             ) : (
-              <Tabs colorScheme="blue" variant="soft-rounded" size="sm" index={activeTab} onChange={setActiveTab}>
-                <TabList mb="4" gap="2" flexWrap="wrap">
-                  <Tab fontWeight="700" fontSize="xs" _selected={{ bg: "#eff6ff", color: "#1d4ed8" }}>
-                    Applied ({applied.length})
-                  </Tab>
-                  <Tab fontWeight="700" fontSize="xs" _selected={{ bg: "#f0fdf4", color: "#15803d" }}>
-                    Assigned ({assignedList.length})
-                  </Tab>
-                  <Tab fontWeight="700" fontSize="xs" _selected={{ bg: "#fff7ed", color: "orange.600" }}>
-                    Shortlisted ({shortlisted.length})
-                  </Tab>
-                  <Tab fontWeight="700" fontSize="xs" _selected={{ bg: "#f0fdf4", color: "green.600" }}>
-                    Hired ({hired.length})
-                  </Tab>
-                  <Tab fontWeight="700" fontSize="xs" _selected={{ bg: "#fff1f2", color: ACCENT }}>
-                    Rejected ({rejected.length})
-                  </Tab>
-                </TabList>
+              <>
+                {/* Position / Role Filter Selector Bar */}
+                {availableRoles.length > 0 && (
+                  <Flex
+                    align="center"
+                    justify="space-between"
+                    mb="3"
+                    p="2.5"
+                    bg="#f8fafc"
+                    borderRadius="xl"
+                    border="1px solid #e2e8f0"
+                    flexWrap="wrap"
+                    gap="2"
+                  >
+                    <HStack spacing="2">
+                      <Icon as={Briefcase} size={15} color="#475569" />
+                      <Text fontSize="xs" fontWeight="700" color="#334155">
+                        Filter by Position:
+                      </Text>
+                      {selectedRoleFilter !== 'All' && (
+                        <Badge colorScheme="purple" fontSize="10px" px="2" py="0.5" borderRadius="md">
+                          Showing: {selectedRoleFilter}
+                        </Badge>
+                      )}
+                    </HStack>
+                    <HStack spacing="2">
+                      <Select
+                        size="xs"
+                        w="auto"
+                        minW="180px"
+                        borderRadius="md"
+                        bg="white"
+                        fontWeight="700"
+                        color={BRAND}
+                        value={selectedRoleFilter}
+                        onChange={(e) => setSelectedRoleFilter(e.target.value)}
+                      >
+                        <option value="All">All Positions ({applications.length + allAssignedList.length})</option>
+                        {availableRoles.map((r, i) => {
+                          const count = applications.filter(a => matchesRole(a, r)).length + allAssignedList.filter(a => matchesRole(a, r)).length;
+                          return (
+                            <option key={i} value={r}>
+                              {r} ({count})
+                            </option>
+                          );
+                        })}
+                      </Select>
+                      {selectedRoleFilter !== 'All' && (
+                        <Button size="xs" variant="ghost" colorScheme="blue" onClick={() => setSelectedRoleFilter('All')}>
+                          Show All
+                        </Button>
+                      )}
+                    </HStack>
+                  </Flex>
+                )}
+
+                <Tabs colorScheme="blue" variant="soft-rounded" size="sm" index={activeTab} onChange={setActiveTab}>
+                  <TabList mb="4" gap="2" flexWrap="wrap">
+                    <Tab fontWeight="700" fontSize="xs" _selected={{ bg: "#eff6ff", color: "#1d4ed8" }}>
+                      Applied ({applied.length})
+                    </Tab>
+                    <Tab fontWeight="700" fontSize="xs" _selected={{ bg: "#f0fdf4", color: "#15803d" }}>
+                      Assigned ({assignedList.length})
+                    </Tab>
+                    <Tab fontWeight="700" fontSize="xs" _selected={{ bg: "#fff7ed", color: "orange.600" }}>
+                      Shortlisted ({shortlisted.length})
+                    </Tab>
+                    <Tab fontWeight="700" fontSize="xs" _selected={{ bg: "#f0fdf4", color: "green.600" }}>
+                      Hired ({hired.length})
+                    </Tab>
+                    <Tab fontWeight="700" fontSize="xs" _selected={{ bg: "#fff1f2", color: ACCENT }}>
+                      Rejected ({rejected.length})
+                    </Tab>
+                  </TabList>
 
                 <TabPanels>
                   {/* 1. Applied Candidates Tab */}
@@ -676,6 +794,7 @@ const JobApplicantsModal = ({
                   </TabPanel>
                 </TabPanels>
               </Tabs>
+              </>
             )}
           </ModalBody>
         </ModalContent>

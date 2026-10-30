@@ -73,10 +73,11 @@ const navCategories = [
           { name: 'Completed Bookings', path: '/quick-bookings/completed', permission: 'job_management:view' },
           { name: 'Cancelled & Refunds', path: '/quick-bookings/cancelled', permission: 'job_management:view' },
           { name: 'Payments', path: '/finance', permission: 'finance_revenue:view' },
-          { name: 'Reviews', path: '/quick-bookings/reviews', permission: 'job_management:view' },
+          { name: 'Rating & Reviews', path: '/reviews', permission: 'job_management:view' },
           { name: 'Reports', path: '/quick-bookings/reports', permission: 'job_management:view' },
         ]
       },
+      { name: 'Rating & Reviews', icon: Star, path: '/reviews', permission: 'job_management:view' },
       { name: 'Party Menu Items', icon: UtensilsCrossed, path: '/menu-items', permission: 'job_management:view' }
     ]
   },

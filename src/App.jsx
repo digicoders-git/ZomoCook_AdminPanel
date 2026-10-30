@@ -54,6 +54,7 @@ import MenuItemManagement from './pages/MenuItemManagement';
 import DailyBasisJobsList from './pages/DailyBasisJobsList';
 import PartyChefBookingsList from './pages/PartyChefBookingsList';
 import QuickBookingsDashboard from './pages/QuickBookingsDashboard';
+import RatingReviewList from './pages/RatingReviewList';
 
 // ─── Helper: Get current logged-in user's data ──────────────────────────────
 const getAdminData = () => {
@@ -337,7 +338,8 @@ function App() {
         <Route path="/quick-bookings/live" element={<PermissionRoute permission="job_management:view"><Layout><DailyBasisJobsList /></Layout></PermissionRoute>} />
         <Route path="/quick-bookings/completed" element={<PermissionRoute permission="job_management:view"><Layout><DailyBasisJobsList /></Layout></PermissionRoute>} />
         <Route path="/quick-bookings/cancelled" element={<PermissionRoute permission="job_management:view"><Layout><DailyBasisJobsList /></Layout></PermissionRoute>} />
-        <Route path="/quick-bookings/reviews" element={<PermissionRoute permission="job_management:view"><Layout><PartyChefBookingsList /></Layout></PermissionRoute>} />
+        <Route path="/quick-bookings/reviews" element={<PermissionRoute permission="job_management:view"><Layout><RatingReviewList /></Layout></PermissionRoute>} />
+        <Route path="/reviews" element={<PermissionRoute permission="job_management:view"><Layout><RatingReviewList /></Layout></PermissionRoute>} />
         <Route path="/quick-bookings/reports" element={<PermissionRoute permission="job_management:view"><Layout><DailyBasisJobsList /></Layout></PermissionRoute>} />
         
         <Route path="/pending-jobs" element={
