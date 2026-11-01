@@ -504,13 +504,22 @@ const JobApplicantsModal = ({
     });
   }
 
+  const normalizeRole = (r) => {
+    if (!r) return '';
+    return String(r)
+      .toLowerCase()
+      .replace(/\(.*?\)/g, '')
+      .replace(/[^a-z0-9]/g, '')
+      .trim();
+  };
+
   const getApplicantRole = (app) => {
     return (
       app.appliedRole ||
       app.role ||
-      app.applicationData?.role ||
       app.staffEntry?.role ||
-      (app.candidate?.jobPreference?.jobPositions && app.candidate.jobPreference.jobPositions[0]) ||
+      app.applicationData?.role ||
+      app.applicationData?.appliedRole ||
       ""
     );
   };
@@ -519,13 +528,13 @@ const JobApplicantsModal = ({
     if (!roleFilter || roleFilter === "All" || roleFilter === "All Positions" || roleFilter === "All Roles") {
       return true;
     }
-    const filterNorm = (roleFilter || "").toLowerCase().trim();
-    const candRole = (getApplicantRole(app) || "").toLowerCase().trim();
+    const filterNorm = normalizeRole(roleFilter);
+    const candRole = normalizeRole(getApplicantRole(app));
     if (!candRole) {
       if (availableRoles.length <= 1) return true;
       return false;
     }
-    return candRole === filterNorm || candRole.includes(filterNorm) || filterNorm.includes(candRole);
+    return candRole === filterNorm;
   };
 
   // Helper to check if application is assigned

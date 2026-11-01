@@ -588,14 +588,18 @@ const DailyBasisJobsList = () => {
                       </Td>
                       <Td {...customTdStyle}>
                         {job.assignedStaff && job.assignedStaff.length > 0 ? (
-                          <VStack align="center" spacing="1">
-                            <Badge bg="#dcfce7" color="#15803d" px="2" py="0.5" borderRadius="md" fontSize="10px" fontWeight="700">
-                              {job.assignedStaff[0].name}
-                            </Badge>
-                            <HStack spacing="1" fontSize="10px">
-                              <Text fontWeight="600" color="#64748b">OTP:</Text>
-                              <Text fontWeight="800" color="#0369a1">{job.assignedStaff[0].startOtp || 'N/A'}</Text>
-                            </HStack>
+                          <VStack align="center" spacing="1.5">
+                            {job.assignedStaff.map((staff, sIdx) => (
+                              <Box key={sIdx} textAlign="center">
+                                <Badge bg="#dcfce7" color="#15803d" px="2" py="0.5" borderRadius="md" fontSize="10px" fontWeight="700">
+                                  {staff.name} {staff.role ? `(${staff.role})` : ''}
+                                </Badge>
+                                <HStack spacing="1" fontSize="10px" justify="center">
+                                  <Text fontWeight="600" color="#64748b">OTP:</Text>
+                                  <Text fontWeight="800" color="#0369a1">{staff.startOtp || 'N/A'}</Text>
+                                </HStack>
+                              </Box>
+                            ))}
                           </VStack>
                         ) : (
                           <Button

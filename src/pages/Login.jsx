@@ -672,7 +672,6 @@ const Login = () => {
           </ModalBody>
         </ModalContent>
       </Modal>
-      </Flex>
     </Box>
   );
 };

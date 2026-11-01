@@ -576,6 +576,7 @@ const Navbar = ({ onOpen, toggleCollapse, isCollapsed, onLogoutOpen }) => {
     if (pathname.includes('/settings')) return 'Web Settings';
     if (pathname.includes('/profile')) return 'Profile';
     if (pathname.includes('/offers')) return 'Manage Offers';
+    if (pathname.includes('/reviews')) return 'Rating & Review';
     if (pathname.includes('/banners')) return 'Manage Banners';
     if (pathname.includes('/subscriptions')) return 'Subscription History';
     if (pathname.includes('/plans')) return 'Plans Management';

@@ -345,12 +345,17 @@ const ViewJob = () => {
                         return s.perDayRate || s.ratePerDay || s.salary || 0;
                       };
                       
+                      const normRole = (r) => {
+                        if (!r) return '';
+                        return String(r).toLowerCase().replace(/\(.*?\)/g, '').replace(/[^a-z0-9]/g, '').trim();
+                      };
+                      
                       // Calculate role-specific applied count
                       const roleApplied = applications.filter(app => {
-                        const appRole = (app.appliedRole || app.applicationData?.role || app.applicationData?.appliedRole || (app.candidate?.jobPreference?.jobPositions?.[0]) || '').toLowerCase().trim();
-                        const rName = roleName.toLowerCase().trim();
+                        const appRole = normRole(app.appliedRole || app.applicationData?.role || app.applicationData?.appliedRole || '');
+                        const rName = normRole(roleName);
                         if (appRole) {
-                          return appRole === rName || rName.includes(appRole) || appRole.includes(rName);
+                          return appRole === rName;
                         }
                         return idx === 0 || job.staffRequirements.length === 1;
                       }).length;
@@ -358,28 +363,17 @@ const ViewJob = () => {
                       // Calculate role-specific assigned count
                       let roleAssigned = 0;
                       if (job.assignedStaff && Array.isArray(job.assignedStaff)) {
-                        const chefKeywords = ['chef', 'cook', 'continental', 'chinese', 'indian', 'tandoor', 'halwai', 'bakery', 'party', 'main', 'head', 'culinary'];
-                        const helperKeywords = ['helper', 'cleaner', 'waiter', 'bartender', 'service', 'steward', 'allrounder'];
                         roleAssigned = job.assignedStaff.filter(st => {
-                          const stRole = (st.role || '').toLowerCase().trim();
-                          const rName = roleName.toLowerCase().trim();
-                          if (stRole === rName || rName.includes(stRole) || stRole.includes(rName) || (job.staffRequirements.length === 1)) {
-                            return true;
-                          }
-                          const isRChef = chefKeywords.some(k => rName.includes(k));
-                          const isStChef = chefKeywords.some(k => stRole.includes(k));
-                          const isRHelper = helperKeywords.some(k => rName.includes(k));
-                          const isStHelper = helperKeywords.some(k => stRole.includes(k));
-                          if (isRChef && isStChef && !isRHelper && !isStHelper) return true;
-                          if (isRHelper && isStHelper) return true;
-                          return false;
+                          const stRole = normRole(st.role || '');
+                          const rName = normRole(roleName);
+                          return stRole === rName;
                         }).length;
                       }
                       if (roleAssigned === 0 && applications.length > 0) {
                         roleAssigned = applications.filter(app => {
-                          const appRole = (app.appliedRole || app.applicationData?.role || (app.candidate?.jobPreference?.jobPositions?.[0]) || '').toLowerCase().trim();
-                          const rName = roleName.toLowerCase().trim();
-                          const isMatch = appRole ? (appRole === rName || rName.includes(appRole) || appRole.includes(rName)) : (idx === 0 || job.staffRequirements.length === 1);
+                          const appRole = normRole(app.appliedRole || app.applicationData?.role || '');
+                          const rName = normRole(roleName);
+                          const isMatch = appRole ? (appRole === rName) : (idx === 0 || job.staffRequirements.length === 1);
                           return isMatch && ['Shortlisted', 'Assigned', 'Hired', 'Offer Accepted', 'Joined'].includes(app.status);
                         }).length;
                       }
