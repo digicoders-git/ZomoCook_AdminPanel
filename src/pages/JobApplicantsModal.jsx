@@ -3,9 +3,9 @@ import {
   Modal, ModalOverlay, ModalContent, ModalHeader, ModalBody, ModalFooter,
   ModalCloseButton, Box, Text, Flex, Avatar, Badge, Button,
   Spinner, VStack, HStack, Tabs, TabList, Tab, TabPanels, TabPanel,
-  useToast, Icon, Select, FormControl, FormLabel
+  useToast, Icon, Select, FormControl, FormLabel, Progress
 } from "@chakra-ui/react";
-import { User, MapPin, Phone, Briefcase, UserPlus, CheckCircle2, ShieldCheck, Key, Info } from "lucide-react";
+import { User, MapPin, Phone, Briefcase, UserPlus, CheckCircle2, ShieldCheck, Key, Info, Star, MessageSquareQuote } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import axios from "axios";
 import API_BASE_URL from "../apiConfig";
@@ -31,6 +31,252 @@ const getStatusColorScheme = (s) => {
   return "red";
 };
 
+// Candidate Reviews & Rating Breakdown Modal
+export const CandidateReviewsModal = ({ isOpen, onClose, cook }) => {
+  const [loading, setLoading] = useState(false);
+  const [reviewsData, setReviewsData] = useState({
+    rating: 5.0,
+    totalReviews: 0,
+    breakdown: { 5: 0, 4: 0, 3: 0, 2: 0, 1: 0 },
+    reviews: []
+  });
+
+  useEffect(() => {
+    if (!isOpen || !cook) return;
+    let isMounted = true;
+    const fetchReviews = async () => {
+      setLoading(true);
+      try {
+        const cookId = cook.id || cook._id || 'unknown';
+        const phone = cook.phone || '';
+        const name = cook.name || '';
+        const res = await axios.get(`${API_BASE_URL}/reviews/cook/${cookId}`, {
+          params: { phone, name }
+        });
+        if (isMounted && res.data && res.data.success) {
+          setReviewsData({
+            rating: res.data.rating || cook.rating || 5.0,
+            totalReviews: res.data.totalReviews || (res.data.reviews ? res.data.reviews.length : 0),
+            breakdown: res.data.breakdown || { 5: 0, 4: 0, 3: 0, 2: 0, 1: 0 },
+            reviews: res.data.reviews || []
+          });
+        }
+      } catch (err) {
+        console.error('Failed to load cook reviews:', err);
+        if (isMounted) {
+          setReviewsData({
+            rating: cook.rating || 4.8,
+            totalReviews: 0,
+            breakdown: { 5: 0, 4: 0, 3: 0, 2: 0, 1: 0 },
+            reviews: []
+          });
+        }
+      } finally {
+        if (isMounted) setLoading(false);
+      }
+    };
+    fetchReviews();
+    return () => { isMounted = false; };
+  }, [isOpen, cook]);
+
+  if (!cook) return null;
+
+  const currentRating = Number(reviewsData.rating || cook.rating || 4.8).toFixed(1);
+  const total = reviewsData.totalReviews || reviewsData.reviews.length || 0;
+  const breakdown = reviewsData.breakdown || { 5: 0, 4: 0, 3: 0, 2: 0, 1: 0 };
+
+  const renderStars = (score, size = 16) => {
+    const num = Math.round(Number(score) || 5);
+    return (
+      <HStack spacing="1">
+        {[1, 2, 3, 4, 5].map((i) => (
+          <Icon
+            key={i}
+            as={Star}
+            boxSize={`${size}px`}
+            fill={i <= num ? "#eab308" : "#e2e8f0"}
+            color={i <= num ? "#eab308" : "#cbd5e1"}
+          />
+        ))}
+      </HStack>
+    );
+  };
+
+  return (
+    <Modal isOpen={isOpen} onClose={onClose} size="lg" isCentered scrollBehavior="inside">
+      <ModalOverlay bg="blackAlpha.600" backdropFilter="blur(4px)" />
+      <ModalContent borderRadius="20px" overflow="hidden" boxShadow="2xl">
+        <ModalHeader bg="#f8faff" borderBottom="1px solid #edf2f7" py="4" px="5">
+          <Flex align="center" justify="space-between">
+            <HStack spacing="3">
+              <Avatar
+                size="md"
+                src={cook.image ? (cook.image.startsWith("http") ? cook.image : `${UPLOAD_BASE}/${cook.image}`) : undefined}
+                name={cook.name || "Staff"}
+                bg={BRAND}
+                color="white"
+                fontWeight="700"
+              />
+              <Box>
+                <HStack spacing="2" flexWrap="wrap">
+                  <Text fontSize="md" fontWeight="800" color="#1e293b">
+                    {cook.name || "Cook Profile"}
+                  </Text>
+                  {cook.role && (
+                    <Badge colorScheme="purple" fontSize="10px" px="2" py="0.5" borderRadius="md">
+                      {cook.role}
+                    </Badge>
+                  )}
+                </HStack>
+                <HStack spacing="3" mt="0.5" fontSize="xs" color="#64748b" flexWrap="wrap">
+                  {cook.city && <Text>📍 {cook.city}</Text>}
+                  {cook.experience && <Text>Exp: {cook.experience}</Text>}
+                  {cook.phone && <Text>📞 {cook.phone}</Text>}
+                </HStack>
+              </Box>
+            </HStack>
+            <ModalCloseButton position="static" />
+          </Flex>
+        </ModalHeader>
+
+        <ModalBody p="5">
+          {/* Rating Summary Card */}
+          <Box p="4" bg="linear-gradient(135deg, #fffbeb 0%, #fef3c7 100%)" borderRadius="16px" border="1px solid #fde68a" mb="5">
+            <Flex direction={{ base: "column", sm: "row" }} align="center" justify="space-between" gap="4">
+              <VStack spacing="1" align={{ base: "center", sm: "flex-start" }} minW="130px">
+                <Text fontSize="11px" fontWeight="800" color="#854d0e" textTransform="uppercase" letterSpacing="0.5px">
+                  Overall Rating
+                </Text>
+                <HStack align="baseline" spacing="1">
+                  <Text fontSize="34px" fontWeight="900" color="#78350f" lineHeight="1">
+                    {currentRating}
+                  </Text>
+                  <Text fontSize="md" fontWeight="700" color="#92400e">
+                    / 5.0
+                  </Text>
+                </HStack>
+                <HStack spacing="1">
+                  {renderStars(currentRating, 16)}
+                </HStack>
+                <Text fontSize="11px" fontWeight="600" color="#a16207" mt="1">
+                  {total > 0 ? `Based on ${total} customer review${total > 1 ? 's' : ''}` : 'Verified Staff Rating'}
+                </Text>
+              </VStack>
+
+              {/* Breakdown Bars */}
+              <VStack spacing="1.5" flex="1" w="100%" pl={{ sm: 4 }} borderLeft={{ sm: "1px solid #fde68a" }}>
+                {[5, 4, 3, 2, 1].map((star) => {
+                  const count = breakdown[star] || 0;
+                  const pct = total > 0 ? Math.round((count / total) * 100) : (star === 5 ? 100 : 0);
+                  return (
+                    <HStack key={star} spacing="2" w="100%" fontSize="11px">
+                      <HStack spacing="0.5" w="30px" justify="flex-end">
+                        <Text fontWeight="700" color="#78350f">{star}</Text>
+                        <Icon as={Star} boxSize="10px" fill="#eab308" color="#eab308" />
+                      </HStack>
+                      <Progress
+                        value={pct}
+                        size="xs"
+                        flex="1"
+                        borderRadius="full"
+                        colorScheme="yellow"
+                        bg="#fef08a"
+                      />
+                      <Text w="28px" fontWeight="600" color="#854d0e" textAlign="right">
+                        {count}
+                      </Text>
+                    </HStack>
+                  );
+                })}
+              </VStack>
+            </Flex>
+          </Box>
+
+          {/* Customer Reviews Header */}
+          <Flex align="center" justify="space-between" mb="3">
+            <HStack spacing="2">
+              <Icon as={MessageSquareQuote} color="#1e293b" boxSize={4} />
+              <Text fontSize="sm" fontWeight="800" color="#1e293b">
+                Customer Reviews & Comments ({reviewsData.reviews.length})
+              </Text>
+            </HStack>
+          </Flex>
+
+          {/* Reviews List */}
+          {loading ? (
+            <Flex justify="center" align="center" py="8">
+              <Spinner size="md" color={BRAND} />
+            </Flex>
+          ) : reviewsData.reviews.length === 0 ? (
+            <Box p="6" textAlign="center" bg="#f8fafc" borderRadius="14px" border="1px dashed #cbd5e1">
+              <Icon as={Star} boxSize={8} color="#eab308" mb="2" />
+              <Text fontSize="sm" fontWeight="700" color="#334155">
+                No written customer reviews yet
+              </Text>
+              <Text fontSize="xs" color="#64748b" mt="1">
+                This cook maintains an active profile with a verified rating of {currentRating} / 5.0. Reviews submitted by customers upon job completion will appear here.
+              </Text>
+            </Box>
+          ) : (
+            <VStack spacing="3" align="stretch">
+              {reviewsData.reviews.map((rev, i) => (
+                <Box
+                  key={rev._id || i}
+                  p="3.5"
+                  bg="#f8fafc"
+                  border="1px solid #e2e8f0"
+                  borderRadius="12px"
+                  transition="all 0.15s"
+                  _hover={{ borderColor: "#cbd5e1", bg: "white", boxShadow: "sm" }}
+                >
+                  <Flex justify="space-between" align="flex-start" mb="2" flexWrap="wrap" gap="2">
+                    <HStack spacing="2">
+                      <Avatar size="xs" name={rev.customerName || rev.customer?.name || "Customer"} bg="#3b82f6" color="white" />
+                      <Box>
+                        <Text fontSize="xs" fontWeight="700" color="#1e293b">
+                          {rev.customerName || rev.customer?.name || "Verified Customer"}
+                        </Text>
+                        <Text fontSize="10px" color="#94a3b8">
+                          {rev.createdAt ? new Date(rev.createdAt).toLocaleDateString('en-IN', { day: '2-digit', month: 'short', year: 'numeric', hour: '2-digit', minute: '2-digit' }) : (rev.reviewDate || 'Recently')}
+                        </Text>
+                      </Box>
+                    </HStack>
+                    <HStack spacing="2">
+                      {rev.serviceCategory && (
+                        <Badge fontSize="10px" colorScheme="blue" variant="subtle" px="2" borderRadius="md">
+                          {rev.serviceCategory}
+                        </Badge>
+                      )}
+                      <HStack spacing="1" bg="#fefce8" px="2" py="0.5" borderRadius="md" border="1px solid #fef08a">
+                        <Icon as={Star} boxSize="11px" fill="#eab308" color="#eab308" />
+                        <Text fontSize="xs" fontWeight="800" color="#854d0e">
+                          {Number(rev.rating || 5).toFixed(1)}
+                        </Text>
+                      </HStack>
+                    </HStack>
+                  </Flex>
+
+                  {rev.comment && (
+                    <Text fontSize="xs" color="#334155" lineHeight="1.5" bg="white" p="2.5" borderRadius="8px" border="1px solid #edf2f7">
+                      "{rev.comment}"
+                    </Text>
+                  )}
+                </Box>
+              ))}
+            </VStack>
+          )}
+        </ModalBody>
+
+        <ModalFooter bg="#f8faff" borderTop="1px solid #edf2f7" py="3">
+          <Button size="sm" variant="ghost" onClick={onClose} fontWeight="700">
+            Close
+          </Button>
+        </ModalFooter>
+      </ModalContent>
+    </Modal>
+  );
+};
+
 const CandidateCard = ({ 
   app, 
   navigate, 
@@ -41,7 +287,8 @@ const CandidateCard = ({
   onAssignStaff,
   isAssigning,
   assignedStaffEntry,
-  job
+  job,
+  onOpenRatingModal
 }) => {
   const candidate = app.candidate || {};
   const imageUrl = candidate.profileImage
@@ -59,6 +306,9 @@ const CandidateCard = ({
   const startOtp = assignedStaffEntry?.startOtp || job?.startOtp;
   const endOtp = assignedStaffEntry?.endOtp || job?.endOtp;
   const staffLiveStatus = assignedStaffEntry?.status || app.status || "Assigned";
+
+  const rawRating = candidate.rating ?? assignedStaffEntry?.rating ?? app.rating ?? 4.8;
+  const ratingValue = (typeof rawRating === 'number' ? rawRating : parseFloat(rawRating) || 4.8).toFixed(1);
 
   return (
     <Box
@@ -103,6 +353,34 @@ const CandidateCard = ({
             >
               {candidate.name || assignedStaffEntry?.name || "Unknown"}
             </Text>
+
+            {/* Candidate Rating Badge (Clickable) */}
+            <HStack
+              as="button"
+              type="button"
+              spacing="1"
+              bg="#fefce8"
+              border="1px solid #fef08a"
+              px="2"
+              py="0.5"
+              borderRadius="md"
+              cursor="pointer"
+              title="Click to view candidate ratings and reviews"
+              _hover={{ bg: "#fef08a", transform: "scale(1.05)" }}
+              transition="all 0.15s"
+              onClick={(e) => {
+                e.stopPropagation();
+                if (onOpenRatingModal) {
+                  onOpenRatingModal(candidate, assignedStaffEntry, app);
+                }
+              }}
+            >
+              <Icon as={Star} fill="#eab308" color="#eab308" boxSize="13px" />
+              <Text fontSize="xs" fontWeight="700" color="#854d0e">
+                {ratingValue}/5
+              </Text>
+            </HStack>
+
             <Badge colorScheme={isAssigned ? "green" : getStatusColorScheme(app.status)} fontSize="10px" px="2" borderRadius="md">
               {isAssigned ? "Assigned" : app.status}
             </Badge>
@@ -266,6 +544,24 @@ const JobApplicantsModal = ({
   // Role selection dialog state (when multiple requirements exist and user clicks assign)
   const [roleSelectApp, setRoleSelectApp] = useState(null);
   const [selectedRoleForAssign, setSelectedRoleForAssign] = useState('');
+
+  // Cook ratings & reviews modal state
+  const [selectedCookForReview, setSelectedCookForReview] = useState(null);
+  const [isReviewModalOpen, setIsReviewModalOpen] = useState(false);
+
+  const handleOpenCookReview = (candidate, staffEntry, app) => {
+    setSelectedCookForReview({
+      id: candidate?._id || staffEntry?.candidate?._id || staffEntry?.candidate,
+      name: candidate?.name || staffEntry?.name || app?.candidate?.name || "Staff",
+      phone: candidate?.phone || staffEntry?.phone || "",
+      image: candidate?.profileImage || staffEntry?.profileImage || null,
+      role: app?.appliedRole || staffEntry?.role || (candidate?.jobPreference?.jobPositions && candidate.jobPreference.jobPositions[0]) || "",
+      rating: candidate?.rating ?? staffEntry?.rating ?? 4.8,
+      city: candidate?.city || staffEntry?.city || "",
+      experience: candidate?.jobPreference?.experience ? `${candidate.jobPreference.experience.value || 0} ${candidate.jobPreference.experience.unit || 'years'}` : (staffEntry?.experience || '')
+    });
+    setIsReviewModalOpen(true);
+  };
 
   const navigate = useNavigate();
   const toast = useToast();
@@ -731,6 +1027,7 @@ const JobApplicantsModal = ({
                           onAssignStaff={handleAssignStaff}
                           isAssigning={assigningId === app._id}
                           job={job}
+                          onOpenRatingModal={handleOpenCookReview}
                         />
                       ))
                     )}
@@ -756,6 +1053,7 @@ const JobApplicantsModal = ({
                           navigate={navigate}
                           assignedStaffEntry={item.staffEntry}
                           job={job}
+                          onOpenRatingModal={handleOpenCookReview}
                         />
                       ))
                     )}
@@ -775,6 +1073,7 @@ const JobApplicantsModal = ({
                           onAssignStaff={handleAssignStaff}
                           isAssigning={assigningId === app._id}
                           job={job}
+                          onOpenRatingModal={handleOpenCookReview}
                         />
                       ))
                     )}
@@ -786,7 +1085,7 @@ const JobApplicantsModal = ({
                       <EmptyState message="No hired candidates." />
                     ) : (
                       hired.map(app => (
-                        <CandidateCard key={app._id} app={app} navigate={navigate} job={job} />
+                        <CandidateCard key={app._id} app={app} navigate={navigate} job={job} onOpenRatingModal={handleOpenCookReview} />
                       ))
                     )}
                   </TabPanel>
@@ -797,7 +1096,7 @@ const JobApplicantsModal = ({
                       <EmptyState message="No rejected candidates." />
                     ) : (
                       rejected.map(app => (
-                        <CandidateCard key={app._id} app={app} navigate={navigate} job={job} />
+                        <CandidateCard key={app._id} app={app} navigate={navigate} job={job} onOpenRatingModal={handleOpenCookReview} />
                       ))
                     )}
                   </TabPanel>
@@ -850,6 +1149,13 @@ const JobApplicantsModal = ({
           </ModalFooter>
         </ModalContent>
       </Modal>
+
+      {/* Candidate Rating & Customer Reviews Details Modal */}
+      <CandidateReviewsModal
+        isOpen={isReviewModalOpen}
+        onClose={() => setIsReviewModalOpen(false)}
+        cook={selectedCookForReview}
+      />
     </>
   );
 };

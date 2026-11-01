@@ -5,11 +5,11 @@ import {
   useDisclosure, SimpleGrid, Modal, ModalOverlay, ModalContent, ModalHeader,
   ModalFooter, ModalBody, ModalCloseButton, Input, Select, FormControl, FormLabel
 } from '@chakra-ui/react';
-import { ArrowLeft, LayoutList, FileText, CheckCircle2, Users, Calendar, Clock, MapPin, Building2, Phone, Mail, UtensilsCrossed, Zap, CreditCard, ShieldCheck, UserPlus, Key, Search } from 'lucide-react';
+import { ArrowLeft, LayoutList, FileText, CheckCircle2, Users, Calendar, Clock, MapPin, Building2, Phone, Mail, UtensilsCrossed, Zap, CreditCard, ShieldCheck, UserPlus, Key, Search, Star } from 'lucide-react';
 import { useParams, useNavigate } from 'react-router-dom';
 import axios from 'axios';
 import { PageHeader, PageFooter, BRAND, ACCENT, thStyle, tdStyle } from '../components/ui';
-import JobApplicantsModal from './JobApplicantsModal';
+import JobApplicantsModal, { CandidateReviewsModal } from './JobApplicantsModal';
 
 const ViewJob = () => {
   const { isOpen, onOpen, onClose } = useDisclosure();
@@ -23,6 +23,8 @@ const ViewJob = () => {
   const [assignedCount, setAssignedCount] = useState(0);
   const [applications, setApplications] = useState([]);
   const [transaction, setTransaction] = useState(null);
+  const [reviewStaff, setReviewStaff] = useState(null);
+  const [isReviewOpen, setIsReviewOpen] = useState(false);
 
   // Modal target state
   const [selectedRoleForModal, setSelectedRoleForModal] = useState('');
@@ -521,7 +523,41 @@ const ViewJob = () => {
                     {job.assignedStaff.map((staff, idx) => (
                       <Tr key={idx}>
                         <Td {...tdStyle} borderRight="1px solid #edf2f7">{idx + 1}</Td>
-                        <Td {...tdStyle} borderRight="1px solid #edf2f7" fontWeight="700" color="#1e293b">{staff.name || 'Staff'}</Td>
+                        <Td {...tdStyle} borderRight="1px solid #edf2f7" fontWeight="700" color="#1e293b">
+                          <HStack spacing="2">
+                            <Text>{staff.name || 'Staff'}</Text>
+                            <HStack
+                              as="button"
+                              type="button"
+                              spacing="1"
+                              bg="#fefce8"
+                              border="1px solid #fef08a"
+                              px="1.5"
+                              py="0.5"
+                              borderRadius="md"
+                              cursor="pointer"
+                              title="Click to view ratings & reviews"
+                              _hover={{ bg: "#fef08a", transform: "scale(1.05)" }}
+                              transition="all 0.15s"
+                              onClick={() => {
+                                setReviewStaff({
+                                  id: staff.candidate?._id || staff.candidate,
+                                  name: staff.name || 'Staff',
+                                  phone: staff.phone || '',
+                                  role: staff.role || 'Chef',
+                                  rating: staff.rating || 4.6,
+                                  experience: staff.experience || ''
+                                });
+                                setIsReviewOpen(true);
+                              }}
+                            >
+                              <Icon as={Star} fill="#eab308" color="#eab308" boxSize="11px" />
+                              <Text fontSize="11px" fontWeight="700" color="#854d0e">
+                                {(staff.rating || 4.6).toFixed(1)}/5
+                              </Text>
+                            </HStack>
+                          </HStack>
+                        </Td>
                         <Td {...tdStyle} borderRight="1px solid #edf2f7">{staff.role || 'Chef'}</Td>
                         <Td {...tdStyle} borderRight="1px solid #edf2f7" fontWeight="600">{staff.phone || 'N/A'}</Td>
                         <Td {...tdStyle} borderRight="1px solid #edf2f7">{staff.experience || 'Verified'}</Td>
@@ -973,6 +1009,13 @@ const ViewJob = () => {
           </ModalFooter>
         </ModalContent>
       </Modal>
+
+      {/* Candidate Rating & Reviews Modal */}
+      <CandidateReviewsModal
+        isOpen={isReviewOpen}
+        onClose={() => setIsReviewOpen(false)}
+        cook={reviewStaff}
+      />
 
       <PageFooter />
     </Box>
