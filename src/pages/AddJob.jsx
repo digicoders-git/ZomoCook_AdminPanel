@@ -315,6 +315,7 @@ const AddJob = () => {
   const [managers, setManagers] = useState([]);
   const [dynamicOffers, setDynamicOffers] = useState([]);
   const [isFetchingOffers, setIsFetchingOffers] = useState(false);
+  const [dailyChargesConfig, setDailyChargesConfig] = useState(null);
 
   // Customer Selection State
   const [selectedCustomer, setSelectedCustomer] = useState(null);
@@ -777,6 +778,15 @@ const AddJob = () => {
         }).catch(err => console.warn('Could not fetch active offers:', err)).finally(() => {
           setIsFetchingOffers(false);
         });
+
+        // Fetch dynamic daily/party charges configuration
+        axios.get(`${apiUrl}/settings`, {
+          headers: { 'Authorization': `Bearer ${token}` }
+        }).then(res => {
+          if (res.data?.success && res.data?.settings?.dailyCharges) {
+            setDailyChargesConfig(res.data.settings.dailyCharges);
+          }
+        }).catch(err => console.warn('Could not fetch daily charges config:', err));
 
       } catch (error) {
         console.error('Initial fetch failed', error);
@@ -2282,7 +2292,7 @@ const AddJob = () => {
 
                   {/* Staff List Rows */}
                   <VStack spacing="3" align="stretch">
-                    {dailyStaffList.map((item) => (
+                    {dailyStaffList.map((item, idx) => (
                       <Flex
                         key={item.id}
                         p="3"
@@ -2564,7 +2574,7 @@ const AddJob = () => {
                                 onClick={(e) => {
                                   e.preventDefault();
                                   e.stopPropagation();
-                                  handleRemovePartyDay(day.id, idx);
+                                  handleRemovePartyDay(day.id, dIdx);
                                 }}
                                 aria-label="Delete Day"
                               />
