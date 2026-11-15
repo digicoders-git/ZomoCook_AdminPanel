@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import {
   Box, Flex, Text, HStack, VStack, SimpleGrid, FormControl, FormLabel,
   Input, Select, Textarea, Button, Badge, Spinner, useToast,
@@ -471,7 +471,7 @@ const AddJob = () => {
           foodPreference: 'Vegetarian',
           foodPrefFilter: 'All',
           menuChoice: 'now',
-          selectedCuisines: ['North Indian'],
+          selectedCuisines: ['All'],
           selectedMenu: ['Paneer Butter Masala', 'Dal Makhani', 'Samosa'],
           categoryDishCounts: {
             'Starter': 2,
@@ -553,6 +553,7 @@ const AddJob = () => {
     occasionTypes: [],
     mealTypes: [],
     cuisines: [],
+    mealCategories: [],
     dailyRoles: [],
     states: [],
     cities: []
@@ -574,18 +575,34 @@ const AddJob = () => {
         }
 
         try {
-          const menuRes = await axios.get(`${apiUrl}/menu-items`);
-          if (menuRes.data.success && Array.isArray(menuRes.data.menuItems) && menuRes.data.menuItems.length > 0) {
-            const apiDishes = menuRes.data.menuItems.map(item => ({
-              name: item.name,
-              cuisine: item.cuisine || 'North Indian',
-              category: item.category || 'Main Course',
-              isNonVeg: item.foodType === 'non-veg'
-            }));
-            setMenuCatalogItems([...DEFAULT_MENU_CATALOG, ...apiDishes]);
+          const menuRes = await axios.get(`${apiUrl}/menu-items`, {
+            headers: token ? { 'Authorization': `Bearer ${token}` } : {}
+          });
+          const rawItems = Array.isArray(menuRes.data?.data)
+            ? menuRes.data.data
+            : (Array.isArray(menuRes.data?.menuItems)
+              ? menuRes.data.menuItems
+              : (Array.isArray(menuRes.data) ? menuRes.data : []));
+
+          if (rawItems.length > 0) {
+            const apiDishes = rawItems
+              .filter(item => item && item.isActive !== false)
+              .map(item => ({
+                id: item._id || item.id,
+                name: (item.name || '').trim(),
+                cuisine: (item.cuisine || 'North Indian').trim(),
+                category: (item.category || 'Main Course').trim(),
+                foodType: item.foodType,
+                isNonVeg: item.foodType === 'non-veg' || item.foodType === 'egg' || item.isNonVeg === true,
+                image: item.image || '',
+                cookingCharge: Number(item.cookingCharge) || 250
+              }));
+            if (apiDishes.length > 0) {
+              setMenuCatalogItems(apiDishes);
+            }
           }
         } catch (menuErr) {
-          console.log('Using default menu catalog items');
+          console.warn('Using default menu catalog items due to error:', menuErr);
         }
 
         try {
@@ -636,6 +653,7 @@ const AddJob = () => {
           eventsData,
           mealTypeData,
           cuisinesData,
+          mealCategoriesData,
           statesData,
           plansData
         ] = await Promise.all([
@@ -658,6 +676,7 @@ const AddJob = () => {
           fetchMaster('events'),
           fetchMaster('meal-types'),
           fetchMaster('cuisines'),
+          fetchMaster('meal-categories'),
           fetchMaster('states'),
           (async () => {
             try {
@@ -753,6 +772,9 @@ const AddJob = () => {
           }
           if (cuisinesData && cuisinesData.length > 0) {
             next.cuisines = cuisinesData.map(c => c.name);
+          }
+          if (mealCategoriesData && mealCategoriesData.length > 0) {
+            next.mealCategories = mealCategoriesData.map(c => c.name);
           }
           if (statesData && statesData.length > 0) {
             next.states = statesData;
@@ -910,6 +932,14 @@ const AddJob = () => {
 
   const partyTotals = calculatePartyTotals();
 
+  // Dynamic categories for Party Menu (combining default standard categories, master meal-categories, and categories from fetched dishes)
+  const partyCategories = useMemo(() => {
+    const dynamicCats = menuCatalogItems.map(d => (d.category || '').trim()).filter(Boolean);
+    const masterCats = (masterStates.mealCategories || []).map(c => (c || '').trim()).filter(Boolean);
+    const combined = [...DEFAULT_PARTY_CATEGORIES, ...masterCats, ...dynamicCats];
+    return Array.from(new Set(combined));
+  }, [menuCatalogItems, masterStates.mealCategories]);
+
   // Customer handler
   const handleCustomerSelect = (customerId) => {
     if (!customerId) {
@@ -997,7 +1027,7 @@ const AddJob = () => {
             foodPreference: 'Vegetarian',
             foodPrefFilter: 'All',
             menuChoice: 'now',
-            selectedCuisines: ['North Indian'],
+            selectedCuisines: ['All'],
             selectedMenu: ['Paneer Butter Masala', 'Dal Makhani', 'Samosa'],
             categoryDishCounts: {
               'Starter': 2,
@@ -1038,7 +1068,7 @@ const AddJob = () => {
           foodPreference: 'Vegetarian',
           foodPrefFilter: 'All',
           menuChoice: 'now',
-          selectedCuisines: ['North Indian'],
+          selectedCuisines: ['All'],
           selectedMenu: ['Paneer Tikka', 'Butter Naan'],
           categoryDishCounts: {
             'Starter': 1,
@@ -2909,7 +2939,7 @@ const AddJob = () => {
                                               if (allExpanded) setExpandedCategories({});
                                               else {
                                                 const map = {};
-                                                DEFAULT_PARTY_CATEGORIES.forEach(c => map[c] = true);
+                                                partyCategories.forEach(c => map[c] = true);
                                                 setExpandedCategories(map);
                                               }
                                             }}
@@ -2921,10 +2951,12 @@ const AddJob = () => {
 
                                       {/* Category Accordion Dropdowns */}
                                       <VStack spacing="3" align="stretch">
-                                        {DEFAULT_PARTY_CATEGORIES.map((cat) => {
+                                        {partyCategories.map((cat) => {
                                           const isExp = !!expandedCategories[cat];
                                           const catDishes = menuCatalogItems.filter(dish => {
-                                            const matchesCat = dish.category.toLowerCase().includes(cat.toLowerCase()) || cat.toLowerCase().includes(dish.category.toLowerCase());
+                                            const dishCat = (dish.category || '').toLowerCase().trim();
+                                            const targetCat = cat.toLowerCase().trim();
+                                            const matchesCat = dishCat === targetCat || dishCat.includes(targetCat) || targetCat.includes(dishCat);
                                             if (!matchesCat) return false;
                                             if (meal.foodPrefFilter === 'Veg' && dish.isNonVeg) return false;
                                             if (meal.foodPrefFilter === 'Nonveg' && !dish.isNonVeg) return false;
@@ -2964,7 +2996,7 @@ const AddJob = () => {
                                           >
                                             <HStack spacing="2">
                                               <Text fontWeight="800" fontSize="xs" color="#1e293b">
-                                                {cat} <Text as="span" fontSize="10px" color="#94a3b8" fontWeight="normal">(optional)</Text>
+                                                {cat} <Text as="span" fontSize="10px" color="#94a3b8" fontWeight="normal">({catDishes.length} items)</Text>
                                               </Text>
                                               {selectedInCat.length > 0 && (
                                                 <Badge colorScheme="blue" fontSize="10px" borderRadius="full" px="2">
@@ -2993,7 +3025,7 @@ const AddJob = () => {
                                                     const isChecked = meal.selectedMenu.includes(dish.name);
                                                     return (
                                                       <Flex
-                                                        key={dish.name}
+                                                        key={dish.id || dish._id || `${cat}_${dish.name}`}
                                                         p="2.5"
                                                         borderRadius="lg"
                                                         border={isChecked ? '1.5px solid #2563eb' : '1px solid #e2e8f0'}
@@ -3040,7 +3072,7 @@ const AddJob = () => {
                                     Select number of dishes for each category:
                                   </Text>
                                   <SimpleGrid columns={{ base: 2, sm: 3, md: 4 }} spacing="3">
-                                    {DEFAULT_PARTY_CATEGORIES.map(cat => {
+                                    {partyCategories.map(cat => {
                                       const count = meal.categoryDishCounts[cat] || 0;
                                       return (
                                         <Box key={cat} p="2.5" border="1px solid #e2e8f0" borderRadius="lg" bg="#f8fafc">
