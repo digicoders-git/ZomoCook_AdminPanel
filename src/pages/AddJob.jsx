@@ -19,6 +19,7 @@ import { useNavigate, Link } from 'react-router-dom';
 import axios from 'axios';
 import { PageHeader, TableCard, BRAND, ACCENT, inputStyle, selectStyle } from '../components/ui';
 import { INDIA_STATES_AND_DISTRICTS, ALL_INDIAN_STATES } from '../utils/indiaData';
+import API_BASE_URL, { UPLOAD_BASE_URL } from '../apiConfig';
 
 const formLabelStyle = {
   fontSize: '11px',
@@ -255,31 +256,56 @@ const DEFAULT_MENU_CATALOG = [
   // Starter
   { name: 'Paneer Tikka', cuisine: 'North Indian', category: 'Starter', isNonVeg: false },
   { name: 'Chicken Tikka', cuisine: 'North Indian', category: 'Starter', isNonVeg: true },
+  { name: 'Tandoori Chicken', cuisine: 'Tandoor & Grill', category: 'Starter', isNonVeg: true },
+  { name: 'Paneer Malai Tikka', cuisine: 'Tandoor & Grill', category: 'Starter', isNonVeg: false },
+  { name: 'Chicken Malai Tikka', cuisine: 'Tandoor & Grill', category: 'Starter', isNonVeg: true },
+  { name: 'Hara Bhara Kabab', cuisine: 'North Indian', category: 'Starter', isNonVeg: false },
   { name: 'Veg Spring Rolls', cuisine: 'Chinese', category: 'Starter', isNonVeg: false },
   { name: 'Chilli Chicken', cuisine: 'Chinese', category: 'Starter', isNonVeg: true },
+  { name: 'Crispy Corn', cuisine: 'Chinese', category: 'Starter', isNonVeg: false },
+  { name: 'Honey Chilli Potato', cuisine: 'Chinese', category: 'Starter', isNonVeg: false },
+  { name: 'Chicken 65', cuisine: 'South Indian', category: 'Starter', isNonVeg: true },
   { name: 'Dahi Ke Kabab', cuisine: 'North Indian', category: 'Starter', isNonVeg: false },
   { name: 'Veg Seekh Kabab', cuisine: 'North Indian', category: 'Starter', isNonVeg: false },
 
   // Main Course
   { name: 'Paneer Butter Masala', cuisine: 'North Indian', category: 'Main Course', isNonVeg: false },
   { name: 'Butter Chicken', cuisine: 'North Indian', category: 'Main Course', isNonVeg: true },
+  { name: 'Chicken Tikka Masala', cuisine: 'North Indian', category: 'Main Course', isNonVeg: true },
   { name: 'Dal Makhani', cuisine: 'North Indian', category: 'Main Course', isNonVeg: false },
+  { name: 'Dal Tadka', cuisine: 'North Indian', category: 'Main Course', isNonVeg: false },
   { name: 'Shahi Paneer', cuisine: 'North Indian', category: 'Main Course', isNonVeg: false },
+  { name: 'Kadhai Paneer', cuisine: 'North Indian', category: 'Main Course', isNonVeg: false },
+  { name: 'Mix Veg Curry', cuisine: 'North Indian', category: 'Main Course', isNonVeg: false },
+  { name: 'Malai Kofta', cuisine: 'North Indian', category: 'Main Course', isNonVeg: false },
+  { name: 'Dum Aloo Kashmiri', cuisine: 'North Indian', category: 'Main Course', isNonVeg: false },
+  { name: 'Chana Masala', cuisine: 'North Indian', category: 'Main Course', isNonVeg: false },
+  { name: 'Egg Curry', cuisine: 'North Indian', category: 'Main Course', isNonVeg: true },
+  { name: 'Mutton Rogan Josh', cuisine: 'Mughlai', category: 'Main Course', isNonVeg: true },
+  { name: 'Mughlai Paneer Korma', cuisine: 'Mughlai', category: 'Main Course', isNonVeg: false },
+  { name: 'Sarson Saag & Makki Roti', cuisine: 'Punjabi', category: 'Main Course', isNonVeg: false },
   { name: 'Hakka Noodles', cuisine: 'Chinese', category: 'Main Course', isNonVeg: false },
+  { name: 'Veg Fried Rice', cuisine: 'Chinese', category: 'Main Course', isNonVeg: false },
   { name: 'Chicken Fried Rice', cuisine: 'Chinese', category: 'Main Course', isNonVeg: true },
-  { name: 'Masala Dosa', cuisine: 'South Indian', category: 'Main Course', isNonVeg: false },
   { name: 'Veg Manchurian Gravy', cuisine: 'Chinese', category: 'Main Course', isNonVeg: false },
+  { name: 'Masala Dosa', cuisine: 'South Indian', category: 'Main Course', isNonVeg: false },
+  { name: 'Sambar Vada', cuisine: 'South Indian', category: 'Main Course', isNonVeg: false },
+  { name: 'Pasta Arrabiata (Red Sauce)', cuisine: 'Italian', category: 'Main Course', isNonVeg: false },
+  { name: 'White Sauce Pasta', cuisine: 'Continental', category: 'Main Course', isNonVeg: false },
+  { name: 'Grilled Veggies with Herb Rice', cuisine: 'Continental', category: 'Main Course', isNonVeg: false },
 
   // Bread
   { name: 'Butter Naan', cuisine: 'North Indian', category: 'Bread', isNonVeg: false },
   { name: 'Garlic Naan', cuisine: 'North Indian', category: 'Bread', isNonVeg: false },
   { name: 'Tandoori Roti', cuisine: 'North Indian', category: 'Bread', isNonVeg: false },
   { name: 'Lachha Paratha', cuisine: 'North Indian', category: 'Bread', isNonVeg: false },
+  { name: 'Missi Roti', cuisine: 'North Indian', category: 'Bread', isNonVeg: false },
 
   // Rice
   { name: 'Jeera Rice', cuisine: 'North Indian', category: 'Rice', isNonVeg: false },
   { name: 'Veg Biryani', cuisine: 'North Indian', category: 'Rice', isNonVeg: false },
   { name: 'Chicken Dum Biryani', cuisine: 'North Indian', category: 'Rice', isNonVeg: true },
+  { name: 'Mutton Dum Biryani', cuisine: 'Mughlai', category: 'Rice', isNonVeg: true },
 
   // Snacks
   { name: 'Samosa', cuisine: 'North Indian', category: 'Snacks', isNonVeg: false },
@@ -289,6 +315,7 @@ const DEFAULT_MENU_CATALOG = [
   // Dessert
   { name: 'Gulab Jamun', cuisine: 'Desserts', category: 'Dessert', isNonVeg: false },
   { name: 'Rasmalai', cuisine: 'Desserts', category: 'Dessert', isNonVeg: false },
+  { name: 'Moong Dal Halwa', cuisine: 'Desserts', category: 'Dessert', isNonVeg: false },
 
   // Drinks
   { name: 'Fresh Lime Soda', cuisine: 'Beverages', category: 'Drinks', isNonVeg: false },
@@ -297,16 +324,18 @@ const DEFAULT_MENU_CATALOG = [
   // Breakfast
   { name: 'Idli Sambhar', cuisine: 'South Indian', category: 'Breakfast', isNonVeg: false },
   { name: 'Poha', cuisine: 'North Indian', category: 'Breakfast', isNonVeg: false },
+  { name: 'Aloo Paratha with Curd', cuisine: 'North Indian', category: 'Breakfast', isNonVeg: false },
 
   // Sides
   { name: 'Boondi Raita', cuisine: 'North Indian', category: 'Sides', isNonVeg: false },
+  { name: 'Mix Veg Raita', cuisine: 'North Indian', category: 'Sides', isNonVeg: false },
   { name: 'Green Salad', cuisine: 'Continental', category: 'Sides', isNonVeg: false }
 ];
 
 const AddJob = () => {
   const navigate = useNavigate();
   const toast = useToast();
-  const apiUrl = import.meta.env.VITE_API_URL;
+  const apiUrl = API_BASE_URL || import.meta.env.VITE_API_URL || 'https://api.zomocook.in/api';
   const token = localStorage.getItem('adminToken');
 
   const [isLoading, setIsLoading] = useState(false);
@@ -316,6 +345,7 @@ const AddJob = () => {
   const [dynamicOffers, setDynamicOffers] = useState([]);
   const [isFetchingOffers, setIsFetchingOffers] = useState(false);
   const [dailyChargesConfig, setDailyChargesConfig] = useState(null);
+  const [isMenuLoading, setIsMenuLoading] = useState(false);
 
   // Customer Selection State
   const [selectedCustomer, setSelectedCustomer] = useState(null);
@@ -563,260 +593,268 @@ const AddJob = () => {
     ? masterStates.cities
     : (INDIA_STATES_AND_DISTRICTS[formData.state] || []);
 
-  useEffect(() => {
-    const initFetch = async () => {
-      setIsFetchingCustomers(true);
-      try {
-        const custRes = await axios.get(`${apiUrl}/customers`, {
-          headers: { 'Authorization': `Bearer ${token}` }
-        });
-        if (custRes.data.success) {
-          setCustomers(custRes.data.customers || []);
+  // Dedicated, safe, independent fetch for dynamic menu catalog from API
+  const fetchMenuCatalog = async () => {
+    setIsMenuLoading(true);
+    try {
+      const targetUrl = `${apiUrl}/menu-items?_t=${Date.now()}`;
+      const menuRes = await axios.get(targetUrl);
+      const rawItems = Array.isArray(menuRes.data?.data)
+        ? menuRes.data.data
+        : (Array.isArray(menuRes.data?.menuItems)
+          ? menuRes.data.menuItems
+          : (Array.isArray(menuRes.data) ? menuRes.data : []));
+
+      if (rawItems && rawItems.length > 0) {
+        const apiDishes = rawItems
+          .filter(item => item && item.isActive !== false)
+          .map(item => ({
+            id: item._id || item.id,
+            name: (item.name || '').trim(),
+            cuisine: (item.cuisine || 'North Indian').trim(),
+            category: (item.category || 'Main Course').trim(),
+            foodType: item.foodType,
+            isNonVeg: item.foodType === 'non-veg' || item.foodType === 'egg' || item.isNonVeg === true,
+            image: item.image || '',
+            cookingCharge: Number(item.cookingCharge) || 250
+          }));
+        if (apiDishes.length > 0) {
+          setMenuCatalogItems(apiDishes);
+          console.log(`[AddJob] Successfully loaded ${apiDishes.length} dynamic dishes from API`);
         }
-
-        try {
-          const menuRes = await axios.get(`${apiUrl}/menu-items`, {
-            headers: token ? { 'Authorization': `Bearer ${token}` } : {}
-          });
-          const rawItems = Array.isArray(menuRes.data?.data)
-            ? menuRes.data.data
-            : (Array.isArray(menuRes.data?.menuItems)
-              ? menuRes.data.menuItems
-              : (Array.isArray(menuRes.data) ? menuRes.data : []));
-
-          if (rawItems.length > 0) {
-            const apiDishes = rawItems
-              .filter(item => item && item.isActive !== false)
-              .map(item => ({
-                id: item._id || item.id,
-                name: (item.name || '').trim(),
-                cuisine: (item.cuisine || 'North Indian').trim(),
-                category: (item.category || 'Main Course').trim(),
-                foodType: item.foodType,
-                isNonVeg: item.foodType === 'non-veg' || item.foodType === 'egg' || item.isNonVeg === true,
-                image: item.image || '',
-                cookingCharge: Number(item.cookingCharge) || 250
-              }));
-            if (apiDishes.length > 0) {
-              setMenuCatalogItems(apiDishes);
-            }
-          }
-        } catch (menuErr) {
-          console.warn('Using default menu catalog items due to error:', menuErr);
-        }
-
-        try {
-          const mgrRes = await axios.get(`${apiUrl}/admin/users`, {
-            headers: { 'Authorization': `Bearer ${token}` }
-          });
-          if (mgrRes.data.success) {
-            setManagers(mgrRes.data.users || []);
-          }
-        } catch (err) {
-          console.error('Error fetching managers:', err);
-        }
-
-        // ==========================================
-        // FETCH DYNAMIC MASTER DATA ACROSS ALL 4 FORMS
-        // ==========================================
-        const fetchMaster = async (category) => {
-          try {
-            const res = await axios.get(`${apiUrl}/masters/${category}`, {
-              headers: { 'Authorization': `Bearer ${token}` }
-            });
-            if (res.data && res.data.success && Array.isArray(res.data.masters) && res.data.masters.length > 0) {
-              return res.data.masters;
-            }
-          } catch (e) {
-            // fallback silently
-          }
-          return null;
-        };
-
-        const [
-          positionsData,
-          jobCatData,
-          propCatData,
-          salaryData,
-          expData,
-          shiftData,
-          leaveData,
-          joiningData,
-          facilityData,
-          benefitData,
-          cookPrefData,
-          cookingPrefData,
-          foodPrefData,
-          familyData,
-          genderData,
-          durationData,
-          eventsData,
-          mealTypeData,
-          cuisinesData,
-          mealCategoriesData,
-          statesData,
-          plansData
-        ] = await Promise.all([
-          fetchMaster('job-positions'),
-          fetchMaster('job-categories'),
-          fetchMaster('property-categories'),
-          fetchMaster('salaries'),
-          fetchMaster('experiences'),
-          fetchMaster('time-ranges'),
-          fetchMaster('leaves'),
-          fetchMaster('joining-types'),
-          fetchMaster('facilities'),
-          fetchMaster('benefits'),
-          fetchMaster('cook-preferences'),
-          fetchMaster('cooking-preferences'),
-          fetchMaster('food-preferences'),
-          fetchMaster('family-members'),
-          fetchMaster('gender-preferences'),
-          fetchMaster('service-durations'),
-          fetchMaster('events'),
-          fetchMaster('meal-types'),
-          fetchMaster('cuisines'),
-          fetchMaster('meal-categories'),
-          fetchMaster('states'),
-          (async () => {
-            try {
-              const pRes = await axios.get(`${apiUrl}/plans`);
-              if (pRes.data && pRes.data.success && Array.isArray(pRes.data.plans) && pRes.data.plans.length > 0) {
-                return pRes.data.plans;
-              }
-            } catch (pe) {}
-            return null;
-          })()
-        ]);
-
-        setMasterStates(prev => {
-          const next = { ...prev };
-          if (positionsData && positionsData.length > 0) {
-            next.jobPositions = positionsData.map(p => p.name);
-            
-            // Build dynamic staff map by category from master positions
-            const dynamicStaffMap = {};
-            positionsData.forEach(pos => {
-              const parentName = pos.parentId?.name || 'Kitchen Staff';
-              if (!dynamicStaffMap[parentName]) {
-                dynamicStaffMap[parentName] = [];
-              }
-              if (!dynamicStaffMap[parentName].includes(pos.name)) {
-                dynamicStaffMap[parentName].push(pos.name);
-              }
-            });
-            next.staffMap = dynamicStaffMap;
-
-            // Domestic staff categories directly from positions
-            const domPositions = positionsData
-              .filter(p => p.parentId?.name?.toLowerCase().includes('domestic') || p.parentId?.name?.toLowerCase().includes('home') || ['home cook', 'maid', 'driver', 'baby sitter', 'caretaker'].some(k => p.name.toLowerCase().includes(k)))
-              .map(p => p.name);
-            next.domesticStaffCategories = domPositions.length > 0 ? Array.from(new Set(domPositions)) : positionsData.map(p => p.name);
-          }
-          if (jobCatData && jobCatData.length > 0) {
-            const commercialCats = jobCatData
-              .filter(c => !c.name.toLowerCase().includes('party') && !c.name.toLowerCase().includes('daily') && !c.name.toLowerCase().includes('domestic'))
-              .map(c => c.name);
-            next.commercialCategories = commercialCats.length > 0 ? commercialCats : jobCatData.map(c => c.name);
-          }
-          if (propCatData && propCatData.length > 0) {
-            next.propertyCategories = propCatData.map(p => p.name);
-          }
-          if (salaryData && salaryData.length > 0) {
-            next.commercialSalaries = salaryData.map(s => s.name);
-            next.domesticSalaries = salaryData.map(s => s.name);
-          }
-          if (expData && expData.length > 0) {
-            next.commercialExperiences = expData.map(e => e.name);
-          }
-          if (shiftData && shiftData.length > 0) {
-            next.commercialShifts = shiftData.map(s => s.name);
-          }
-          if (leaveData && leaveData.length > 0) {
-            next.commercialLeaves = leaveData.map(l => l.name);
-          }
-          if (joiningData && joiningData.length > 0) {
-            next.commercialJoining = joiningData.map(j => j.name);
-          }
-          if (facilityData && facilityData.length > 0) {
-            next.commercialFacilities = facilityData.map(f => f.name);
-          }
-          if (benefitData && benefitData.length > 0) {
-            next.commercialBenefits = benefitData.map(b => b.name);
-          }
-          if (cookPrefData && cookPrefData.length > 0) {
-            next.cookPreferences = cookPrefData.map(c => c.name);
-          }
-          if (cookingPrefData && cookingPrefData.length > 0) {
-            next.cookingPreferences = cookingPrefData.map(c => c.name);
-          }
-          if (foodPrefData && foodPrefData.length > 0) {
-            next.foodPreferences = foodPrefData.map(f => f.name);
-          } else if (cookingPrefData && cookingPrefData.length > 0) {
-            next.foodPreferences = cookingPrefData.map(c => c.name);
-          }
-          if (familyData && familyData.length > 0) {
-            next.familyMembers = familyData.map(f => f.name);
-          }
-          if (genderData && genderData.length > 0) {
-            next.genderPreferences = genderData.map(g => g.name);
-          }
-          if (durationData && durationData.length > 0) {
-            next.serviceDurations = durationData.map(d => d.name);
-          }
-          if (eventsData && eventsData.length > 0) {
-            next.occasionTypes = eventsData.map(e => e.name);
-          }
-          if (mealTypeData && mealTypeData.length > 0) {
-            next.mealTypes = mealTypeData.map(m => m.name);
-          }
-          if (cuisinesData && cuisinesData.length > 0) {
-            next.cuisines = cuisinesData.map(c => c.name);
-          }
-          if (mealCategoriesData && mealCategoriesData.length > 0) {
-            next.mealCategories = mealCategoriesData.map(c => c.name);
-          }
-          if (statesData && statesData.length > 0) {
-            next.states = statesData;
-          }
-          if (plansData && plansData.length > 0) {
-            const mappedDaily = plansData.map(p => ({
-              role: p.title || p.label || p.name || 'Staff',
-              rate: p.rate || p.price || 999,
-              category: p.category || 'Kitchen Staff',
-              desc: p.description || 'Verified staff member'
-            }));
-            if (mappedDaily.length > 0) next.dailyRoles = mappedDaily;
-          }
-          return next;
-        });
-
-        // Fetch dynamic active offers for Admin booking
-        setIsFetchingOffers(true);
-        axios.get(`${apiUrl}/offers?activeOnly=true&platform=Website`).then(res => {
-          if (res.data?.success && Array.isArray(res.data.offers)) {
-            setDynamicOffers(res.data.offers);
-          }
-        }).catch(err => console.warn('Could not fetch active offers:', err)).finally(() => {
-          setIsFetchingOffers(false);
-        });
-
-        // Fetch dynamic daily/party charges configuration
-        axios.get(`${apiUrl}/settings`, {
-          headers: { 'Authorization': `Bearer ${token}` }
-        }).then(res => {
-          if (res.data?.success && res.data?.settings?.dailyCharges) {
-            setDailyChargesConfig(res.data.settings.dailyCharges);
-          }
-        }).catch(err => console.warn('Could not fetch daily charges config:', err));
-
-      } catch (error) {
-        console.error('Initial fetch failed', error);
-      } finally {
-        setIsFetchingCustomers(false);
       }
+    } catch (menuErr) {
+      console.warn('[AddJob] Could not fetch dynamic menu items from API:', menuErr);
+    } finally {
+      setIsMenuLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    // 1. Fetch live dynamic menu items immediately and independently
+    fetchMenuCatalog();
+
+    // 2. Fetch customers independently
+    setIsFetchingCustomers(true);
+    axios.get(`${apiUrl}/customers`, {
+      headers: token ? { 'Authorization': `Bearer ${token}` } : {}
+    }).then(custRes => {
+      if (custRes.data?.success) {
+        setCustomers(custRes.data.customers || []);
+      }
+    }).catch(err => {
+      console.warn('[AddJob] Error fetching customers:', err);
+    }).finally(() => {
+      setIsFetchingCustomers(false);
+    });
+
+    // 3. Fetch managers independently
+    if (token) {
+      axios.get(`${apiUrl}/admin/users`, {
+        headers: { 'Authorization': `Bearer ${token}` }
+      }).then(mgrRes => {
+        if (mgrRes.data?.success) {
+          setManagers(mgrRes.data.users || []);
+        }
+      }).catch(err => {
+        console.warn('[AddJob] Error fetching managers:', err);
+      });
+    }
+
+    // 4. Fetch dynamic active offers independently
+    setIsFetchingOffers(true);
+    axios.get(`${apiUrl}/offers?activeOnly=true&platform=Website`)
+      .then(res => {
+        if (res.data?.success && Array.isArray(res.data.offers)) {
+          setDynamicOffers(res.data.offers);
+        }
+      })
+      .catch(err => console.warn('[AddJob] Error fetching active offers:', err))
+      .finally(() => setIsFetchingOffers(false));
+
+    // 5. Fetch dynamic daily/party charges configuration independently
+    axios.get(`${apiUrl}/settings`, {
+      headers: token ? { 'Authorization': `Bearer ${token}` } : {}
+    }).then(res => {
+      if (res.data?.success && res.data?.settings?.dailyCharges) {
+        setDailyChargesConfig(res.data.settings.dailyCharges);
+      }
+    }).catch(err => console.warn('[AddJob] Error fetching daily charges config:', err));
+
+    // 6. Dynamic master data across all 4 forms
+    const fetchMaster = async (category) => {
+      try {
+        const res = await axios.get(`${apiUrl}/masters/${category}`, {
+          headers: token ? { 'Authorization': `Bearer ${token}` } : {}
+        });
+        if (res.data && res.data.success && Array.isArray(res.data.masters) && res.data.masters.length > 0) {
+          return res.data.masters;
+        }
+      } catch (e) {
+        // fallback silently
+      }
+      return null;
     };
-    initFetch();
+
+    Promise.all([
+      fetchMaster('job-positions'),
+      fetchMaster('job-categories'),
+      fetchMaster('property-categories'),
+      fetchMaster('salaries'),
+      fetchMaster('experiences'),
+      fetchMaster('time-ranges'),
+      fetchMaster('leaves'),
+      fetchMaster('joining-types'),
+      fetchMaster('facilities'),
+      fetchMaster('benefits'),
+      fetchMaster('cook-preferences'),
+      fetchMaster('cooking-preferences'),
+      fetchMaster('food-preferences'),
+      fetchMaster('family-members'),
+      fetchMaster('gender-preferences'),
+      fetchMaster('service-durations'),
+      fetchMaster('events'),
+      fetchMaster('meal-types'),
+      fetchMaster('cuisines'),
+      fetchMaster('meal-categories'),
+      fetchMaster('states'),
+      (async () => {
+        try {
+          const pRes = await axios.get(`${apiUrl}/plans`);
+          if (pRes.data && pRes.data.success && Array.isArray(pRes.data.plans) && pRes.data.plans.length > 0) {
+            return pRes.data.plans;
+          }
+        } catch (pe) {}
+        return null;
+      })()
+    ]).then(([
+      positionsData,
+      jobCatData,
+      propCatData,
+      salaryData,
+      expData,
+      shiftData,
+      leaveData,
+      joiningData,
+      facilityData,
+      benefitData,
+      cookPrefData,
+      cookingPrefData,
+      foodPrefData,
+      familyData,
+      genderData,
+      durationData,
+      eventsData,
+      mealTypeData,
+      cuisinesData,
+      mealCategoriesData,
+      statesData,
+      plansData
+    ]) => {
+      setMasterStates(prev => {
+        const next = { ...prev };
+        if (positionsData && positionsData.length > 0) {
+          next.jobPositions = positionsData.map(p => p.name);
+          
+          // Build dynamic staff map by category from master positions
+          const dynamicStaffMap = {};
+          positionsData.forEach(pos => {
+            const parentName = pos.parentId?.name || 'Kitchen Staff';
+            if (!dynamicStaffMap[parentName]) {
+              dynamicStaffMap[parentName] = [];
+            }
+            if (!dynamicStaffMap[parentName].includes(pos.name)) {
+              dynamicStaffMap[parentName].push(pos.name);
+            }
+          });
+          next.staffMap = dynamicStaffMap;
+
+          // Domestic staff categories directly from positions
+          const domPositions = positionsData
+            .filter(p => p.parentId?.name?.toLowerCase().includes('domestic') || p.parentId?.name?.toLowerCase().includes('home') || ['home cook', 'maid', 'driver', 'baby sitter', 'caretaker'].some(k => p.name.toLowerCase().includes(k)))
+            .map(p => p.name);
+          next.domesticStaffCategories = domPositions.length > 0 ? Array.from(new Set(domPositions)) : positionsData.map(p => p.name);
+        }
+        if (jobCatData && jobCatData.length > 0) {
+          const commercialCats = jobCatData
+            .filter(c => !c.name.toLowerCase().includes('party') && !c.name.toLowerCase().includes('daily') && !c.name.toLowerCase().includes('domestic'))
+            .map(c => c.name);
+          next.commercialCategories = commercialCats.length > 0 ? commercialCats : jobCatData.map(c => c.name);
+        }
+        if (propCatData && propCatData.length > 0) {
+          next.propertyCategories = propCatData.map(p => p.name);
+        }
+        if (salaryData && salaryData.length > 0) {
+          next.commercialSalaries = salaryData.map(s => s.name);
+          next.domesticSalaries = salaryData.map(s => s.name);
+        }
+        if (expData && expData.length > 0) {
+          next.commercialExperiences = expData.map(e => e.name);
+        }
+        if (shiftData && shiftData.length > 0) {
+          next.commercialShifts = shiftData.map(s => s.name);
+        }
+        if (leaveData && leaveData.length > 0) {
+          next.commercialLeaves = leaveData.map(l => l.name);
+        }
+        if (joiningData && joiningData.length > 0) {
+          next.commercialJoining = joiningData.map(j => j.name);
+        }
+        if (facilityData && facilityData.length > 0) {
+          next.commercialFacilities = facilityData.map(f => f.name);
+        }
+        if (benefitData && benefitData.length > 0) {
+          next.commercialBenefits = benefitData.map(b => b.name);
+        }
+        if (cookPrefData && cookPrefData.length > 0) {
+          next.cookPreferences = cookPrefData.map(c => c.name);
+        }
+        if (cookingPrefData && cookingPrefData.length > 0) {
+          next.cookingPreferences = cookingPrefData.map(c => c.name);
+        }
+        if (foodPrefData && foodPrefData.length > 0) {
+          next.foodPreferences = foodPrefData.map(f => f.name);
+        } else if (cookingPrefData && cookingPrefData.length > 0) {
+          next.foodPreferences = cookingPrefData.map(c => c.name);
+        }
+        if (familyData && familyData.length > 0) {
+          next.familyMembers = familyData.map(f => f.name);
+        }
+        if (genderData && genderData.length > 0) {
+          next.genderPreferences = genderData.map(g => g.name);
+        }
+        if (durationData && durationData.length > 0) {
+          next.serviceDurations = durationData.map(d => d.name);
+        }
+        if (eventsData && eventsData.length > 0) {
+          next.occasionTypes = eventsData.map(e => e.name);
+        }
+        if (mealTypeData && mealTypeData.length > 0) {
+          next.mealTypes = mealTypeData.map(m => m.name);
+        }
+        if (cuisinesData && cuisinesData.length > 0) {
+          next.cuisines = cuisinesData.map(c => c.name);
+        }
+        if (mealCategoriesData && mealCategoriesData.length > 0) {
+          next.mealCategories = mealCategoriesData.map(c => c.name);
+        }
+        if (statesData && statesData.length > 0) {
+          next.states = statesData;
+        }
+        if (plansData && plansData.length > 0) {
+          const mappedDaily = plansData.map(p => ({
+            role: p.title || p.label || p.name || 'Staff',
+            rate: p.rate || p.price || 999,
+            category: p.category || 'Kitchen Staff',
+            desc: p.description || 'Verified staff member'
+          }));
+          if (mappedDaily.length > 0) next.dailyRoles = mappedDaily;
+        }
+        return next;
+      });
+    }).catch(err => {
+      console.warn('[AddJob] Error loading master states:', err);
+    });
   }, []);
 
   // Fetch Cities Dynamically when State Changes
@@ -2804,6 +2842,52 @@ const AddJob = () => {
                                   {/* IF MENU CHOICE IS "NOW": INTERACTIVE DISH SELECTOR */}
                                   {meal.menuChoice === 'now' && (
                                     <Box p="4" bg="white" border="1.5px solid #e9d5ff" borderRadius="xl">
+                                      {/* Live Dynamic Menu Status & Sync Banner */}
+                                      <Flex
+                                        justify="space-between"
+                                        align="center"
+                                        mb="3.5"
+                                        p="2.5"
+                                        bg="#f5f3ff"
+                                        borderRadius="xl"
+                                        border="1px solid #ddd6fe"
+                                        flexWrap="wrap"
+                                        gap="2"
+                                      >
+                                        <HStack spacing="2.5">
+                                          {isMenuLoading ? (
+                                            <>
+                                              <Spinner size="xs" color="purple.600" />
+                                              <Text fontSize="xs" fontWeight="700" color="purple.800">
+                                                Syncing live dishes from database...
+                                              </Text>
+                                            </>
+                                          ) : (
+                                            <>
+                                              <Badge colorScheme="purple" fontSize="11px" px="2.5" py="1" borderRadius="full">
+                                                ● Live Dynamic Menu: {menuCatalogItems.length} Dishes
+                                              </Badge>
+                                              <Text fontSize="10.5px" color="#6b21a8" fontWeight="600">
+                                                ({partyCategories.length} Categories, {Array.from(new Set(menuCatalogItems.map(d => d.cuisine).filter(Boolean))).length} Cuisines)
+                                              </Text>
+                                            </>
+                                          )}
+                                        </HStack>
+                                        <Button
+                                          size="xs"
+                                          leftIcon={<RotateCcw size={12} />}
+                                          variant="outline"
+                                          colorScheme="purple"
+                                          fontSize="10.5px"
+                                          fontWeight="700"
+                                          isLoading={isMenuLoading}
+                                          onClick={fetchMenuCatalog}
+                                          title="Sync live dishes from database"
+                                        >
+                                          Sync Live Menu
+                                        </Button>
+                                      </Flex>
+
                                       {/* Filter Bar: Food Pref + Select Cuisines + Search */}
                                       <Flex justify="space-between" align="center" mb="3" flexWrap="wrap" gap="2.5">
                                         {/* 1. Food Type Filter: All | Veg | Nonveg */}
