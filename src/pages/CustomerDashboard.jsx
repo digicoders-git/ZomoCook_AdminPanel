@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import {
   Box, Flex, Text, HStack, VStack, Icon, Spinner, useToast, Grid, Badge, Table, Thead, Tbody, Tr, Th, Td, Tabs, TabList, TabPanels, Tab, TabPanel, Button, IconButton, Divider, Input, useDisclosure, Modal, ModalOverlay, ModalContent, ModalHeader, ModalFooter, ModalBody, ModalCloseButton, Textarea, Switch, FormControl, FormLabel, SimpleGrid, Select
 } from '@chakra-ui/react';
@@ -504,11 +504,89 @@ const CustomerDashboard = () => {
     return date.toLocaleDateString('en-IN', { day: '2-digit', month: 'short', year: 'numeric', hour: '2-digit', minute: '2-digit' });
   };
 
-  if (isLoading || !data) {
+  // Sanitize dashboard data to strictly isolate this customer's data and prevent leakage of Admin creator jobs/transactions
+  const sanitized = useMemo(() => {
+    if (!data) return null;
+    const { customer, stats: rawStats, jobs: rawJobs = [], applications: rawApps = [], transactions: rawTxns = [], bookings: rawBookings = [], activeSubscriptions: rawSubs = [], recentActivity: rawActivity = [] } = data;
+    const custId = customer?._id?.toString() || id;
+    const adminCreatorId = (customer?.creatorModel === 'Admin' && customer?.createdBy) ? customer.createdBy.toString() : null;
+
+    // Filter jobs strictly belonging to this customer
+    const validJobs = rawJobs.filter(j => {
+      const jCust = (j.customer?._id || j.customer)?.toString();
+      if (jCust === custId) return true;
+      if (adminCreatorId && j.createdBy?.toString() === adminCreatorId && jCust !== custId) return false;
+      return jCust === custId;
+    });
+
+    const validJobIds = new Set(validJobs.map(j => j._id?.toString()));
+
+    // Filter applications strictly belonging to valid jobs
+    const validApps = rawApps.filter(app => {
+      const appJobId = (app.job?._id || app.job)?.toString();
+      return validJobIds.has(appJobId);
+    });
+
+    // Filter transactions strictly for this customer or their jobs
+    const validTxns = rawTxns.filter(t => {
+      const tCust = (t.customer?._id || t.customer)?.toString();
+      if (tCust === custId) return true;
+      const tJob = (t.relatedJob?._id || t.relatedJob)?.toString();
+      if (tJob && validJobIds.has(tJob)) return true;
+      if (adminCreatorId && t.user?.toString() === adminCreatorId) return false;
+      return false;
+    });
+
+    // Filter bookings strictly for valid jobs
+    const validBookings = rawBookings.filter(b => {
+      const bJob = (b.job?._id || b.job)?.toString();
+      return validJobIds.has(bJob);
+    });
+
+    // Filter active subscriptions strictly for this customer
+    const validSubs = rawSubs.filter(s => {
+      const sCust = (s.customer?._id || s.customer)?.toString();
+      if (sCust === custId) return true;
+      if (adminCreatorId && s.user?.toString() === adminCreatorId) return false;
+      return sCust === custId;
+    });
+
+    // Recompute safe stats
+    const totalSpent = validTxns.reduce((sum, t) => sum + (Number(t.amount) || 0), 0);
+    const safeStats = {
+      totalJobs: validJobs.length,
+      totalAssignedCandidates: validApps.length,
+      totalBookings: validBookings.length,
+      totalSpent
+    };
+
+    // Filter recent activity
+    const validActivity = rawActivity.filter(act => {
+      if (act.type === 'job_posted') return validJobIds.has(act.details?._id?.toString());
+      if (act.type === 'payment_received') return validTxns.some(t => t._id?.toString() === act.details?._id?.toString());
+      if (act.type === 'package_renewed') return validSubs.some(s => s._id?.toString() === act.details?._id?.toString());
+      if (act.type === 'candidate_hired' || act.type === 'demo_scheduled') return validApps.some(a => a._id?.toString() === act.details?._id?.toString());
+      return true;
+    });
+
+    return {
+      customer,
+      stats: safeStats,
+      jobs: validJobs,
+      applications: validApps,
+      transactions: validTxns,
+      bookings: validBookings,
+      activeSubscriptions: validSubs,
+      recentActivity: validActivity,
+      customPlans: data.customPlans || []
+    };
+  }, [data, id]);
+
+  if (isLoading || !data || !sanitized) {
     return <PageContentLoader />;
   }
 
-  const { customer, stats, jobs, applications, transactions, bookings, activeSubscriptions, recentActivity } = data;
+  const { customer, stats, jobs, applications, transactions, bookings, activeSubscriptions, recentActivity } = sanitized;
 
   const hiredCandidates = applications.filter(app => app.status === 'Hired');
   const demoScheduled = applications.filter(app => app.status === 'Demo Scheduled');
