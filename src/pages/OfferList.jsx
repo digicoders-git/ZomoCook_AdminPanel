@@ -33,8 +33,9 @@ const OfferList = () => {
   const [masterOfferTypes, setMasterOfferTypes] = useState(['FLAT', 'PERCENTAGE']);
   const [masterApplicableTypes, setMasterApplicableTypes] = useState([
     'All',
-    'Chef for Party',
+    'Daily Staff',
     'Daily Basis Staff',
+    'Chef for Party',
     'Home Cook Hiring',
     'Commercial Hiring',
     'Service Package',
@@ -71,7 +72,9 @@ const OfferList = () => {
         setMasterOfferTypes(typeRes.value.data.masters.map(m => m.name));
       }
       if (appRes.status === 'fulfilled' && appRes.value?.data?.success && Array.isArray(appRes.value.data.masters) && appRes.value.data.masters.length > 0) {
-        setMasterApplicableTypes(appRes.value.data.masters.map(m => m.name));
+        const fetched = appRes.value.data.masters.map(m => m.name);
+        const combined = Array.from(new Set(['All', ...fetched, 'Daily Staff', 'Daily Basis Staff', 'Chef for Party', 'Service Package', 'Hiring Processing Fee']));
+        setMasterApplicableTypes(combined);
       }
     } catch (e) {
       console.error('Error fetching offer masters:', e);
@@ -112,8 +115,15 @@ const OfferList = () => {
     if (filterType) {
       result = result.filter(o => o.offerType === filterType);
     }
-    if (filterApplicableOn) {
-      result = result.filter(o => o.applicableOn === filterApplicableOn);
+    if (filterApplicableOn && filterApplicableOn !== 'All') {
+      const fLower = filterApplicableOn.toLowerCase();
+      result = result.filter(o => {
+        if (!o.applicableOn) return false;
+        if (o.applicableOn === filterApplicableOn) return true;
+        if (fLower.includes('daily') && o.applicableOn.toLowerCase().includes('daily')) return true;
+        if (fLower.includes('party') && o.applicableOn.toLowerCase().includes('party')) return true;
+        return false;
+      });
     }
     if (filterStatus) {
       result = result.filter(o => o.status === filterStatus);
