@@ -69,7 +69,13 @@ const getAdminData = () => {
 export const checkUserHasPermission = (adminData, permToCheck) => {
   if (!permToCheck) return true;
   if (!adminData) return false;
-  if (adminData.type === 'admin') return true;
+  const roleName = (adminData?.role?.name || '').toLowerCase();
+  const isSuperAdmin =
+    adminData?.email?.toLowerCase() === 'zomocookadmin@gmail.com' ||
+    roleName === 'super admin' ||
+    (adminData?.type === 'admin' && !adminData?.role) ||
+    (adminData?.role?.permissions || []).includes('global:full_access');
+  if (isSuperAdmin) return true;
 
   const userPermissions = adminData?.role?.permissions || [];
   if (userPermissions.includes('global:full_access')) return true;
@@ -84,20 +90,20 @@ export const checkUserHasPermission = (adminData, permToCheck) => {
     'job_management:view': [
       'Jobs', 'Job List', 'Pending Jobs', 'job_management', 
       'Quick Bookings & Events', 'Booking Dashboard', 'Bookings', 'Bookings List', 
-      'Daily Basis Jobs', 'Chef for Party', 'Party Menu Catalog', 'Party Menu Items',
+      'Daily Basis Jobs', 'Chef for Party',
       'Staff Assignments', 'Replacements', 'Live / Ongoing Bookings', 'Live / Ongoing', 
+      'Completed Bookings', 'Cancelled & Refunds', 'Booking Reviews', 'Reviews', 
+      'Booking Reports', 'Reports'
+    ],
+    'job_management:add': ['Add Job', 'job_management'],
+    'quick_bookings:view': [
+      'Quick Bookings & Events', 'Booking Dashboard', 'Bookings', 'Bookings List', 
+      'Daily Basis Jobs', 'Chef for Party',
+      'Staff Assignments', 'Live / Ongoing Bookings', 'Live / Ongoing', 
       'Completed Bookings', 'Cancelled & Refunds', 'Booking Reviews', 'Reviews', 
       'Booking Reports', 'Reports', 'quick_bookings'
     ],
-    'job_management:add': ['Add Job', 'job_management', 'Add Menu Item'],
-    'quick_bookings:view': [
-      'Quick Bookings & Events', 'Booking Dashboard', 'Bookings', 'Bookings List', 
-      'Daily Basis Jobs', 'Chef for Party', 'Party Menu Catalog', 'Party Menu Items',
-      'Staff Assignments', 'Live / Ongoing Bookings', 'Live / Ongoing', 
-      'Completed Bookings', 'Cancelled & Refunds', 'Booking Reviews', 'Reviews', 
-      'Booking Reports', 'Reports', 'quick_bookings', 'job_management'
-    ],
-    'party_menu:view': ['Party Menu Catalog', 'Party Menu Items', 'Add Menu Item', 'Menu Item List', 'party_menu', 'job_management'],
+    'party_menu:view': ['Party Menu Catalog', 'Party Menu Items', 'Add Menu Item', 'Menu Item List', 'party_menu'],
     'candidates:view': [
       'Candidates', 'Candidate List', 'All Applications', 'Applied Candidates List', 
       'Applied Candidates', 'Shortlisted Candidate List', 'Shortlisted Candidates', 
@@ -476,13 +482,13 @@ function App() {
 
         {/* ── Party Menu Routes ────────────────────────────────────────── */}
         <Route path="/menu-items" element={
-          <PermissionRoute>
+          <PermissionRoute permission="party_menu:view">
             <Layout><MenuItemManagement /></Layout>
           </PermissionRoute>
         } />
         <Route path="/party-menu" element={<Navigate to="/menu-items" replace />} />
         <Route path="/masters/job-menu" element={
-          <PermissionRoute>
+          <PermissionRoute permission="party_menu:view">
             <Layout><MenuItemManagement /></Layout>
           </PermissionRoute>
         } />

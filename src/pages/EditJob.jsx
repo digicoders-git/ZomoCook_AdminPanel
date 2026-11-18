@@ -323,11 +323,15 @@ const EditJob = () => {
               <option value="Cancelled">Cancelled</option>
               <option value="Expired">Expired</option>
             </Select></FormControl>
-            <FormControl><FormLabel {...labelStyle}>Lead Manager</FormLabel><Select name="leadManager" value={formData.leadManager || ''} onChange={handleChange} {...selectStyle} placeholder="Select Lead Manager" isDisabled={!isSuperAdmin}>
-              {managers.map(mgr => (
-                <option key={mgr._id} value={mgr.name}>{mgr.name}</option>
-              ))}
-            </Select></FormControl>
+            {isSuperAdmin ? (
+              <FormControl><FormLabel {...labelStyle}>Lead Manager</FormLabel><Select name="leadManager" value={formData.leadManager || ''} onChange={handleChange} {...selectStyle} placeholder="Select Lead Manager">
+                {managers.map(mgr => (
+                  <option key={mgr._id} value={mgr.name}>{mgr.name}</option>
+                ))}
+              </Select></FormControl>
+            ) : (
+              <FormControl><FormLabel {...labelStyle}>Lead Manager</FormLabel><Input value={formData.leadManager || adminData.name || 'Assigned Manager'} isReadOnly bg="#f8fafc" borderColor="#e2e8f0" color="#475569" fontWeight="600" cursor="not-allowed" {...inputStyle} /></FormControl>
+            )}
           </SimpleGrid>
 
           <Box p="5" borderRadius="xl" border="1px solid #e8edf5" bg="#f8faff" mb="6">

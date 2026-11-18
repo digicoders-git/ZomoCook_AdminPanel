@@ -82,6 +82,19 @@ const DEFAULT_CATEGORY_OPTIONS = [
 ];
 
 export default function MenuItemManagement() {
+  const adminData = JSON.parse(localStorage.getItem('adminData') || '{}');
+  const roleName = (adminData?.role?.name || '').toLowerCase();
+  const isSuperAdmin =
+    adminData?.email?.toLowerCase() === 'zomocookadmin@gmail.com' ||
+    roleName === 'super admin' ||
+    (adminData?.type === 'admin' && !adminData?.role) ||
+    (adminData?.role?.permissions || []).includes('global:full_access');
+
+  const userPermissions = adminData?.role?.permissions || [];
+  const canAdd = isSuperAdmin || userPermissions.includes('party_menu:add') || userPermissions.includes('party_menu:manage') || userPermissions.includes('Add Menu Item');
+  const canEdit = isSuperAdmin || userPermissions.includes('party_menu:edit') || userPermissions.includes('party_menu:manage');
+  const canDelete = isSuperAdmin || userPermissions.includes('party_menu:delete') || userPermissions.includes('party_menu:manage');
+
   const [menuItems, setMenuItems] = useState([]);
   const [loading, setLoading] = useState(false);
   const [showAddModal, setShowAddModal] = useState(false);
@@ -448,37 +461,39 @@ export default function MenuItemManagement() {
           </Text>
         </Box>
 
-        <HStack spacing={3}>
-          <Button
-            leftIcon={<Icon as={RefreshCw} boxSize={4} boxColor="blue.500" />}
-            onClick={handleSyncDefaults}
-            variant="outline"
-            colorScheme="gray"
-            size="md"
-            borderRadius="xl"
-            fontWeight="bold"
-            bg="white"
-            _hover={{ bg: 'gray.50' }}
-          >
-            Sync Defaults ({menuItems.length})
-          </Button>
+        {canAdd && (
+          <HStack spacing={3}>
+            <Button
+              leftIcon={<Icon as={RefreshCw} boxSize={4} boxColor="blue.500" />}
+              onClick={handleSyncDefaults}
+              variant="outline"
+              colorScheme="gray"
+              size="md"
+              borderRadius="xl"
+              fontWeight="bold"
+              bg="white"
+              _hover={{ bg: 'gray.50' }}
+            >
+              Sync Defaults ({menuItems.length})
+            </Button>
 
-          <Button
-            leftIcon={<Icon as={Plus} boxSize={4} />}
-            colorScheme="blue"
-            bg="#0866ed"
-            _hover={{ bg: '#0652ba' }}
-            size="md"
-            borderRadius="xl"
-            fontWeight="bold"
-            onClick={() => {
-              resetForm();
-              setShowAddModal(true);
-            }}
-          >
-            Add New Menu Item
-          </Button>
-        </HStack>
+            <Button
+              leftIcon={<Icon as={Plus} boxSize={4} />}
+              colorScheme="blue"
+              bg="#0866ed"
+              _hover={{ bg: '#0652ba' }}
+              size="md"
+              borderRadius="xl"
+              fontWeight="bold"
+              onClick={() => {
+                resetForm();
+                setShowAddModal(true);
+              }}
+            >
+              Add New Menu Item
+            </Button>
+          </HStack>
+        )}
       </Flex>
 
       {/* Main Content Card */}
@@ -666,27 +681,31 @@ export default function MenuItemManagement() {
 
                       <Td textAlign="center" whiteSpace="nowrap">
                         <HStack spacing={1} justify="center">
-                          <Tooltip label="Edit Dish" hasArrow>
-                            <IconButton
-                              icon={<Icon as={Pencil} boxSize={4} />}
-                              size="sm"
-                              colorScheme="blue"
-                              variant="ghost"
-                              aria-label="Edit"
-                              onClick={() => handleEditClick(item)}
-                            />
-                          </Tooltip>
+                          {canEdit && (
+                            <Tooltip label="Edit Dish" hasArrow>
+                              <IconButton
+                                icon={<Icon as={Pencil} boxSize={4} />}
+                                size="sm"
+                                colorScheme="blue"
+                                variant="ghost"
+                                aria-label="Edit"
+                                onClick={() => handleEditClick(item)}
+                              />
+                            </Tooltip>
+                          )}
 
-                          <Tooltip label="Delete Dish" hasArrow>
-                            <IconButton
-                              icon={<Icon as={Trash2} boxSize={4} />}
-                              size="sm"
-                              colorScheme="red"
-                              variant="ghost"
-                              aria-label="Delete"
-                              onClick={() => item._id && handleDeleteItem(item._id, item.name)}
-                            />
-                          </Tooltip>
+                          {canDelete && (
+                            <Tooltip label="Delete Dish" hasArrow>
+                              <IconButton
+                                icon={<Icon as={Trash2} boxSize={4} />}
+                                size="sm"
+                                colorScheme="red"
+                                variant="ghost"
+                                aria-label="Delete"
+                                onClick={() => item._id && handleDeleteItem(item._id, item.name)}
+                              />
+                            </Tooltip>
+                          )}
                         </HStack>
                       </Td>
                     </Tr>

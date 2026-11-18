@@ -225,14 +225,21 @@ const EditCustomer = () => {
                 <option value="inactive">Inactive</option>
               </Select>
             </FormControl>
-            <FormControl>
-              <FormLabel {...labelStyle}>Lead Manager</FormLabel>
-              <Select name="leadManager" value={formData.leadManager || ''} onChange={handleChange} {...selectStyle} placeholder="Select Lead Manager" isDisabled={!isSuperAdmin}>
-                {leadManagers.map(lm => (
-                  <option key={lm._id} value={lm._id}>{lm.name} ({lm.role?.name || 'Staff'})</option>
-                ))}
-              </Select>
-            </FormControl>
+            {isSuperAdmin ? (
+              <FormControl>
+                <FormLabel {...labelStyle}>Lead Manager</FormLabel>
+                <Select name="leadManager" value={formData.leadManager || ''} onChange={handleChange} {...selectStyle} placeholder="Select Lead Manager">
+                  {leadManagers.map(lm => (
+                    <option key={lm._id} value={lm.name || lm._id}>{lm.name} ({lm.role?.name || 'Staff'})</option>
+                  ))}
+                </Select>
+              </FormControl>
+            ) : (
+              <FormControl>
+                <FormLabel {...labelStyle}>Lead Manager</FormLabel>
+                <Input value={formData.leadManager || adminData.name || 'Assigned Manager'} isReadOnly bg="#f8fafc" borderColor="#e2e8f0" color="#475569" fontWeight="600" cursor="not-allowed" {...inputStyle} />
+              </FormControl>
+            )}
           </SimpleGrid>
 
           <HStack justify="flex-end" mt="8" spacing="3">

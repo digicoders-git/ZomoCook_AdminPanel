@@ -341,13 +341,19 @@ const AddCandidate = () => {
                 <FormControl><FormLabel {...labelStyle}>Profile Image</FormLabel><Input type="file" onChange={(e) => handleFileChange('image', e)} p="1" {...inputStyle} /></FormControl>
                 <FormControl isRequired><FormLabel {...labelStyle}>KYC Status</FormLabel><Select name="kycStatus" value={formData.kycStatus} onChange={handleChange} {...selectStyle}><option value="pending">Pending</option><option value="approved">Approved</option></Select></FormControl>
                 <FormControl isRequired><FormLabel {...labelStyle}>Profile Status</FormLabel><Select name="profileStatus" value={formData.profileStatus} onChange={handleChange} {...selectStyle}><option value="active">Active</option><option value="inactive">Inactive</option></Select></FormControl>
-                <FormControl><FormLabel {...labelStyle}>Assign Lead Manager</FormLabel>
-                  <Select name="leadManager" value={formData.leadManager || ''} onChange={handleChange} {...selectStyle} placeholder="Select Lead Manager" isDisabled={!isSuperAdmin}>
-                    {leadManagers.map(lm => (
-                      <option key={lm._id} value={lm._id}>{lm.name} ({lm.role?.name || 'Staff'})</option>
-                    ))}
-                  </Select>
-                </FormControl>
+                {isSuperAdmin ? (
+                  <FormControl><FormLabel {...labelStyle}>Assign Lead Manager</FormLabel>
+                    <Select name="leadManager" value={formData.leadManager || ''} onChange={handleChange} {...selectStyle} placeholder="Select Lead Manager">
+                      {leadManagers.map(lm => (
+                        <option key={lm._id} value={lm._id}>{lm.name} ({lm.role?.name || 'Staff'})</option>
+                      ))}
+                    </Select>
+                  </FormControl>
+                ) : (
+                  <FormControl><FormLabel {...labelStyle}>Assign Lead Manager</FormLabel>
+                    <Input value={`${adminData.name || 'You'} (Assigned to You)`} isReadOnly bg="#f8fafc" borderColor="#e2e8f0" color="#475569" fontWeight="600" cursor="not-allowed" {...inputStyle} />
+                  </FormControl>
+                )}
               </SimpleGrid>
               <HStack justify="flex-end"><Button onClick={() => setActiveTab(1)} bg={BRAND} color="white" size="sm" px="6">Next</Button></HStack>
             </TabPanel>

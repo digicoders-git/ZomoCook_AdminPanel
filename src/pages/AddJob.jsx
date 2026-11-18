@@ -1312,7 +1312,11 @@ const AddJob = () => {
       payload.set('address', formData.address || selectedCustomer.address || '');
       if (formData.venueAddress) payload.set('venueAddress', formData.venueAddress);
       payload.set('status', formData.status || 'New');
-      if (formData.leadManager) payload.set('leadManager', formData.leadManager);
+      if (!isSuperAdmin) {
+        payload.set('leadManager', adminData.name || '');
+      } else if (formData.leadManager) {
+        payload.set('leadManager', formData.leadManager);
+      }
 
       // Category Specific Mapping
       if (serviceType === 'hotel') {
@@ -3462,22 +3466,28 @@ const AddJob = () => {
                 </Select>
               </FormControl>
 
-              <FormControl>
-                <FormLabel {...formLabelStyle}>ASSIGN LEAD MANAGER</FormLabel>
-                <Select
-                  name="leadManager"
-                  value={formData.leadManager}
-                  onChange={handleChange}
-                  {...selectStyle}
-                  h="42px"
-                  placeholder="Auto-assign or Select Manager"
-                  isDisabled={!isSuperAdmin}
-                >
-                  {managers.map(mgr => (
-                    <option key={mgr._id} value={mgr.name}>{mgr.name}</option>
-                  ))}
-                </Select>
-              </FormControl>
+              {isSuperAdmin ? (
+                <FormControl>
+                  <FormLabel {...formLabelStyle}>ASSIGN LEAD MANAGER</FormLabel>
+                  <Select
+                    name="leadManager"
+                    value={formData.leadManager}
+                    onChange={handleChange}
+                    {...selectStyle}
+                    h="42px"
+                    placeholder="Auto-assign or Select Manager"
+                  >
+                    {managers.map(mgr => (
+                      <option key={mgr._id} value={mgr.name}>{mgr.name}</option>
+                    ))}
+                  </Select>
+                </FormControl>
+              ) : (
+                <FormControl>
+                  <FormLabel {...formLabelStyle}>ASSIGN LEAD MANAGER</FormLabel>
+                  <Input value={`${adminData.name || 'You'} (Assigned to You)`} isReadOnly bg="#f8fafc" borderColor="#e2e8f0" color="#475569" fontWeight="600" cursor="not-allowed" h="42px" {...inputStyle} />
+                </FormControl>
+              )}
 
               <FormControl>
                 <FormLabel {...formLabelStyle}>BANNER / JOB IMAGE (OPTIONAL)</FormLabel>
