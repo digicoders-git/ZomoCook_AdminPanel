@@ -3,9 +3,8 @@ import {
   Modal, ModalOverlay, ModalContent, ModalHeader, ModalFooter, ModalBody, ModalCloseButton,
   Button, Flex, Text, HStack, Icon, Spinner, useToast
 } from '@chakra-ui/react';
-import { ImageIcon, FileText } from 'lucide-react';
+import { ImageIcon, FileText, Copy } from 'lucide-react';
 import html2canvas from 'html2canvas';
-import { jsPDF } from 'jspdf';
 import axios from 'axios';
 import CandidateCVPreview from './CandidateCVPreview';
 import API_BASE_URL from '../apiConfig';
@@ -58,19 +57,14 @@ const CandidateCVModal = ({ isOpen, onClose, candidateId, preloadedCandidate }) 
     if (!cvRef.current || !candidate) return;
     try {
       const element = cvRef.current;
-      const clonedElement = element.cloneNode(true);
-      clonedElement.style.position = 'absolute';
-      clonedElement.style.top = '-9999px';
-      clonedElement.style.left = '-9999px';
-      document.body.appendChild(clonedElement);
-      const canvas = await html2canvas(clonedElement, {
+      const canvas = await html2canvas(element, {
         scale: 2,
         useCORS: true,
+        allowTaint: true,
         backgroundColor: '#ffffff',
         logging: false,
-        imageTimeout: 0,
+        imageTimeout: 8000,
       });
-      document.body.removeChild(clonedElement);
 
       const imgData = canvas.toDataURL('image/png');
       const link = document.createElement('a');
@@ -84,69 +78,84 @@ const CandidateCVModal = ({ isOpen, onClose, candidateId, preloadedCandidate }) 
     }
   };
 
-  const handleDownloadPDF = async () => {
-    if (!cvRef.current || !candidate) return;
-    try {
-      const element = cvRef.current;
-      const clonedElement = element.cloneNode(true);
-      clonedElement.style.position = 'absolute';
-      clonedElement.style.top = '-9999px';
-      clonedElement.style.left = '-9999px';
-      document.body.appendChild(clonedElement);
-      const canvas = await html2canvas(clonedElement, {
-        scale: 1.5,
-        useCORS: true,
-        backgroundColor: '#ffffff',
-        logging: false,
-        imageTimeout: 0,
-      });
-      document.body.removeChild(clonedElement);
-      const imgData = canvas.toDataURL('image/jpeg', 0.7);
-
-      const pdf = new jsPDF({
-        orientation: 'portrait',
-        unit: 'px',
-        format: [canvas.width / 1.5, canvas.height / 1.5]
-      });
-      pdf.addImage(imgData, 'JPEG', 0, 0, canvas.width / 1.5, canvas.height / 1.5);
-      pdf.save(`Resume_${candidate.name.replace(/\s+/g, '_')}.pdf`);
-      toast({ title: 'PDF downloaded successfully', status: 'success', duration: 2000 });
-    } catch (error) {
-      console.error("Error generating PDF", error);
-      toast({ title: "Failed to generate PDF", status: "error", duration: 3000 });
+  const handleDownloadPDF = () => {
+    if (!candidate) return;
+    const cId = candidate._id || candidateId;
+    const downloadUrl = `${API_BASE_URL}/candidates/${cId}/resume-cv`;
+    
+    // Open official verified resume generator from backend (same as mobile app)
+    const win = window.open(downloadUrl, '_blank');
+    if (!win) {
+      window.location.href = downloadUrl;
     }
+    toast({ 
+      title: "Downloading Resume PDF", 
+      description: "Official ZomoCook verified PDF download started.",
+      status: "success", 
+      duration: 3000,
+      isClosable: true
+    });
+  };
+
+  const handleCopyLink = () => {
+    if (!candidate) return;
+    const cId = candidate._id || candidateId;
+    const shareUrl = `${API_BASE_URL}/candidates/${cId}/resume-cv`;
+    navigator.clipboard.writeText(shareUrl);
+    toast({
+      title: "Resume Link Copied!",
+      description: "Link copied to clipboard. You can share this link directly with customers on WhatsApp.",
+      status: "success",
+      duration: 3000,
+      isClosable: true,
+    });
   };
 
   return (
     <Modal isOpen={isOpen} onClose={onClose} size="4xl" scrollBehavior="inside">
       <ModalOverlay backdropFilter="blur(4px)" />
-      <ModalContent bg="#e2e8f0" maxW="850px">
+      <ModalContent bg="#e2e8f0" maxW="870px">
         <ModalHeader color={BRAND} bg="white" borderBottom="1px solid #e2e8f0" borderRadius="0.375rem 0.375rem 0 0">
-          Candidate Resume Preview
+          Candidate Resume Preview {candidate?.name ? `– ${candidate.name}` : ''}
         </ModalHeader>
         <ModalCloseButton mt="1" />
         
         <ModalBody pb={6} pt={6} minH="300px">
           {isLoading ? (
-            <Flex justify="center" align="center" h="full" direction="column">
+            <Flex justify="center" align="center" h="full" direction="column" py="16">
               <Spinner size="xl" color={BRAND} mb="4" />
               <Text color="#64748b" fontWeight="500">Fetching professional details...</Text>
             </Flex>
           ) : candidate ? (
-            <Flex justify="center" overflowX="auto" overflowY="hidden">
+            <Flex justify="center" overflowX="auto" overflowY="auto" maxH="72vh" py="2">
               <CandidateCVPreview candidate={candidate} ref={cvRef} />
             </Flex>
           ) : (
-            <Flex justify="center" align="center" h="full">
+            <Flex justify="center" align="center" h="full" py="16">
               <Text color="red.500">Failed to load candidate details.</Text>
             </Flex>
           )}
         </ModalBody>
 
         <ModalFooter borderTop="1px solid #e2e8f0" bg="white" borderRadius="0 0 0.375rem 0.375rem" py="4" px="6">
-          <Flex w="full" justify="space-between" align="center" gap="4">
-            <Text fontSize="sm" color="#64748b" whiteSpace="nowrap">Please wait a moment for images to load before downloading.</Text>
-            <Flex gap="3" align="center">
+          <Flex w="full" justify="space-between" align="center" gap="4" wrap="wrap">
+            <Text fontSize="xs" color="#64748b">
+              Please wait a moment for photo to load before downloading PNG.
+            </Text>
+            <Flex gap="3" align="center" wrap="wrap">
+              <Button 
+                onClick={handleCopyLink} 
+                variant="outline"
+                colorScheme="blue" 
+                isDisabled={isLoading || !candidate}
+                size="md"
+                display="flex"
+                alignItems="center"
+                gap="2"
+              >
+                <Icon as={Copy} boxSize={4} />
+                Copy Link
+              </Button>
               <Button 
                 onClick={handleDownloadPNG} 
                 colorScheme="blue" 

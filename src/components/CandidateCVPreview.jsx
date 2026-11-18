@@ -1,6 +1,7 @@
 import React, { forwardRef, useState } from 'react';
 import { Box, Flex, Text, HStack, VStack, Image, Grid, Divider, Icon } from '@chakra-ui/react';
 import { MapPin, Phone, Mail, User } from 'lucide-react';
+import API_BASE_URL, { UPLOAD_BASE_URL } from '../apiConfig';
 
 const CandidateCVPreview = forwardRef(({ candidate }, ref) => {
   const [imgError, setImgError] = useState(false);
@@ -20,36 +21,50 @@ const CandidateCVPreview = forwardRef(({ candidate }, ref) => {
   };
 
   const currentAddress = [candidate.city, candidate.state].filter(Boolean).join(', ') || candidate.address || 'N/A';
-  const languages = candidate.languages?.join(', ') || 'N/A';
+  const languages = candidate.languages?.join(', ') || 'Hindi, English';
   const skills = candidate.skills?.length > 0 ? candidate.skills : ['Table Service', 'Customer Handling', 'Food & Beverage Service', 'POS Basic', 'Hygiene & Cleanliness'];
 
-  const apiUrl = import.meta.env.VITE_API_URL || '';
-  const apiBase = apiUrl.replace('/api', '');
+  let profileImageSrc = null;
+  if (candidate.profileImage && !candidate.profileImage.includes('default') && !imgError) {
+    if (candidate.profileImage.startsWith('http') || candidate.profileImage.startsWith('data:')) {
+      profileImageSrc = candidate.profileImage;
+    } else {
+      const cleanPath = candidate.profileImage.replace(/^[/\\]+/, '');
+      profileImageSrc = `${UPLOAD_BASE_URL}/${cleanPath}`;
+    }
+  }
 
-  const profileImageSrc = candidate.profileImage && !candidate.profileImage.includes('default') && !imgError
-    ? `${apiBase}/${candidate.profileImage}` 
-    : null;
+  const formatDuration = (dur) => {
+    if (!dur) return 'Duration N/A';
+    const s = String(dur).trim();
+    if (!isNaN(parseInt(s, 10)) && !s.toLowerCase().includes('year') && !s.toLowerCase().includes('month')) {
+      return `${parseInt(s, 10)} ${parseInt(s, 10) === 1 ? 'Year' : 'Years'}`;
+    }
+    return s;
+  };
 
   const SectionHeading = ({ title }) => (
-    <Box mt="6" mb="3">
+    <Box mt="5" mb="2.5">
       <Text fontSize="sm" fontWeight="800" color={PRIMARY_TEXT} textTransform="uppercase" letterSpacing="wider">
         {title}
       </Text>
-      <Divider borderColor={LIGHT_BLUE} borderWidth="1.5px" mt="2" opacity={1} />
+      <Divider borderColor={LIGHT_BLUE} borderWidth="1.5px" mt="1.5" opacity={1} />
     </Box>
   );
 
   const SidebarHeading = ({ title }) => (
-    <Box mt="8" mb="4" w="full">
+    <Box mt="6" mb="3" w="full">
       <Text fontSize="sm" fontWeight="800" color={LIGHT_TEXT} textTransform="uppercase" letterSpacing="wider">
         {title}
       </Text>
-      <Divider borderColor="#3b82f6" borderWidth="1px" mt="2" opacity={0.6} />
+      <Divider borderColor="#3b82f6" borderWidth="1px" mt="1.5" opacity={0.6} />
     </Box>
   );
 
   const role = candidate.jobPreference?.jobPositions?.[0] || candidate.jobPreference?.jobCategory?.[0] || 'Professional Chef';
-  const expValueRaw = candidate.jobPreference?.experience?.value || '0';
+  const rawExp = candidate.jobPreference?.experience?.value ?? candidate.experience ?? '0';
+  const parsedExp = parseInt(rawExp, 10);
+  const expValueRaw = isNaN(parsedExp) ? rawExp : String(parsedExp);
   const expUnitRaw = candidate.jobPreference?.experience?.unit === 'months' ? 'Months' : 'Years';
   const expString = String(expValueRaw).toLowerCase().includes('year') ? expValueRaw : `${expValueRaw}+ ${expUnitRaw}`;
   const subtitle = `${role} - ${expString} Experience`;
@@ -69,16 +84,17 @@ const CandidateCVPreview = forwardRef(({ candidate }, ref) => {
       direction="column"
       color={PRIMARY_TEXT} 
       fontFamily="'Outfit', sans-serif" 
+      boxShadow="0 4px 20px rgba(0,0,0,0.08)"
       style={{ WebkitFontSmoothing: 'antialiased' }}
     >
       <Flex flex="1">
         
         {/* Left Main Column */}
-        <Box flex="6" p="10" pr="8" pt="12">
-          <Text fontSize="4xl" fontWeight="900" color={PRIMARY_TEXT} letterSpacing="tight" textTransform="uppercase" lineHeight="1.1">
+        <Box flex="6" p="8" pr="6" pt="10">
+          <Text fontSize="3xl" fontWeight="900" color={PRIMARY_TEXT} letterSpacing="tight" textTransform="uppercase" lineHeight="1.1">
             {candidate.name}
           </Text>
-          <Text fontSize="sm" fontWeight="800" color={PRIMARY_TEXT} mt="2" mb="6">
+          <Text fontSize="xs" fontWeight="800" color={PRIMARY_TEXT} mt="1.5" mb="5" letterSpacing="wide" textTransform="uppercase">
             {subtitle}
           </Text>
           
@@ -91,19 +107,19 @@ const CandidateCVPreview = forwardRef(({ candidate }, ref) => {
           
           {/* Last Company */}
           {candidate.workExperience?.lastCompany?.name && (
-            <Box mb="5">
+            <Box mb="4">
               <HStack justify="space-between" align="flex-end" mb="1">
-                <Text fontSize="sm" fontWeight="800" color={PRIMARY_TEXT}>
+                <Text fontSize="xs" fontWeight="800" color={PRIMARY_TEXT} textTransform="uppercase">
                   {candidate.workExperience.lastCompany.name}
                 </Text>
                 <Text fontSize="xs" fontWeight="800" color={PRIMARY_TEXT}>
-                  {candidate.workExperience.lastCompany.duration || 'Duration N/A'}
+                  {formatDuration(candidate.workExperience.lastCompany.duration)}
                 </Text>
               </HStack>
-              <Text fontSize="xs" fontWeight="700" color={PRIMARY_TEXT} mb="2">
+              <Text fontSize="xs" fontWeight="700" color={PRIMARY_TEXT} mb="1">
                 {candidate.workExperience.lastCompany.role || 'Job Position'}
               </Text>
-              <VStack align="start" spacing="2" pl="0" mt="2">
+              <VStack align="start" spacing="1.5" pl="0" mt="1.5">
                 <HStack align="start" spacing="2">
                   <Text color={SECONDARY_TEXT} fontSize="xs" mt="0.5">•</Text>
                   <Text fontSize="xs" color={SECONDARY_TEXT} fontWeight="500" lineHeight="tall">
@@ -122,17 +138,17 @@ const CandidateCVPreview = forwardRef(({ candidate }, ref) => {
 
           {/* Previous Experiences */}
           {candidate.workExperience?.experiences?.map((exp, idx) => (
-            <Box mb="4" key={idx}>
+            <Box mb="3.5" key={idx}>
               <HStack justify="space-between" align="flex-end" mb="1">
-                <Text fontSize="xs" fontWeight="800" color={PRIMARY_TEXT}>
-                  {exp.jobProfile || 'Job Position'}
+                <Text fontSize="xs" fontWeight="800" color={PRIMARY_TEXT} textTransform="uppercase">
+                  {exp.jobProfile || exp.position || 'Job Position'}
                 </Text>
                 <Text fontSize="xs" fontWeight="800" color={PRIMARY_TEXT}>
                   {exp.from} {exp.to ? `- ${exp.to}` : ''}
                 </Text>
               </HStack>
-              {exp.position && (
-                <Text fontSize="xs" fontWeight="700" color={PRIMARY_TEXT} mb="2">
+              {exp.position && exp.position !== exp.jobProfile && (
+                <Text fontSize="xs" fontWeight="700" color={PRIMARY_TEXT} mb="1">
                   {exp.position}
                 </Text>
               )}
@@ -149,9 +165,9 @@ const CandidateCVPreview = forwardRef(({ candidate }, ref) => {
             <>
               <SectionHeading title="Education" />
               {candidate.education.map((edu, idx) => (
-                <Box mb="4" key={idx}>
+                <Box mb="3.5" key={idx}>
                   <HStack justify="space-between" align="flex-end" mb="1">
-                    <Text fontSize="sm" fontWeight="800" color={PRIMARY_TEXT}>
+                    <Text fontSize="xs" fontWeight="800" color={PRIMARY_TEXT}>
                       {edu.title || 'Degree/Certificate'}
                     </Text>
                     <Text fontSize="xs" fontWeight="800" color={PRIMARY_TEXT}>
@@ -169,41 +185,42 @@ const CandidateCVPreview = forwardRef(({ candidate }, ref) => {
           )}
           
           <SectionHeading title="Additional Details" />
-          <Flex wrap="wrap" rowGap="4" columnGap="0">
+          <Flex wrap="wrap" rowGap="3" columnGap="0" pt="1">
             <Box w="50%">
-              <Text fontSize="xs" fontWeight="600" color={SECONDARY_TEXT} mb="1">Total Experience</Text>
-              <Text fontSize="sm" fontWeight="800" color={PRIMARY_TEXT}>{expString}</Text>
+              <Text fontSize="2xs" fontWeight="700" color={SECONDARY_TEXT} textTransform="uppercase" letterSpacing="wider" mb="0.5">Total Experience</Text>
+              <Text fontSize="xs" fontWeight="800" color={PRIMARY_TEXT}>{expString}</Text>
             </Box>
             <Box w="50%">
-              <Text fontSize="xs" fontWeight="600" color={SECONDARY_TEXT} mb="1">Expected Salary</Text>
-              <Text fontSize="sm" fontWeight="800" color={PRIMARY_TEXT}>{expectedSalaryText}</Text>
+              <Text fontSize="2xs" fontWeight="700" color={SECONDARY_TEXT} textTransform="uppercase" letterSpacing="wider" mb="0.5">Expected Salary</Text>
+              <Text fontSize="xs" fontWeight="800" color={PRIMARY_TEXT}>{expectedSalaryText}</Text>
             </Box>
             <Box w="50%">
-              <Text fontSize="xs" fontWeight="600" color={SECONDARY_TEXT} mb="1">Current Salary</Text>
-              <Text fontSize="sm" fontWeight="800" color={PRIMARY_TEXT}>{currentSalaryText}</Text>
+              <Text fontSize="2xs" fontWeight="700" color={SECONDARY_TEXT} textTransform="uppercase" letterSpacing="wider" mb="0.5">Current Salary</Text>
+              <Text fontSize="xs" fontWeight="800" color={PRIMARY_TEXT}>{currentSalaryText}</Text>
             </Box>
             <Box w="50%">
-              <Text fontSize="xs" fontWeight="600" color={SECONDARY_TEXT} mb="1">Ready to Relocate</Text>
-              <Text fontSize="sm" fontWeight="800" color={PRIMARY_TEXT}>Yes</Text>
+              <Text fontSize="2xs" fontWeight="700" color={SECONDARY_TEXT} textTransform="uppercase" letterSpacing="wider" mb="0.5">Ready to Relocate</Text>
+              <Text fontSize="xs" fontWeight="800" color={PRIMARY_TEXT}>Yes</Text>
             </Box>
           </Flex>
         </Box>
 
         {/* Right Sidebar Column */}
-        <Box flex="4" bg="linear-gradient(135deg, #004aad 0%, #0062e6 100%)" p="10" pl="8" color={LIGHT_TEXT}>
+        <Box flex="4" bg="linear-gradient(135deg, #004aad 0%, #0062e6 100%)" p="8" pl="6" color={LIGHT_TEXT}>
           
           {/* Profile Picture at Top Right */}
-          <Flex justify="center" mb="8" mt="2">
+          <Flex justify="center" mb="6" mt="1">
             <Box 
-              border="4px solid rgba(255, 255, 255, 0.2)" 
+              border="4px solid rgba(255, 255, 255, 0.3)" 
               borderRadius="full" 
               overflow="hidden"
-              w="150px"
-              h="150px"
+              w="130px"
+              h="130px"
               bg="white"
               display="flex"
               alignItems="center"
               justifyContent="center"
+              boxShadow="lg"
             >
               {profileImageSrc ? (
                 <Image 
@@ -216,37 +233,37 @@ const CandidateCVPreview = forwardRef(({ candidate }, ref) => {
                   onError={() => setImgError(true)}
                 />
               ) : (
-                <Icon as={User} boxSize="80px" color="#cbd5e1" />
+                <Icon as={User} boxSize="70px" color="#cbd5e1" />
               )}
             </Box>
           </Flex>
 
           {/* Contact Info */}
           <Box w="full">
-            <Box mb="4">
-              <Box bg="white" borderRadius="full" display="inline-block" verticalAlign="middle" mr="3" w="24px" h="24px" textAlign="center" lineHeight="22px">
-                <MapPin size={12} color={DARK_BLUE} style={{ display: 'inline-block', verticalAlign: 'middle' }} />
+            <Box mb="3.5">
+              <Box bg="white" borderRadius="full" display="inline-block" verticalAlign="middle" mr="2.5" w="22px" h="22px" textAlign="center" lineHeight="20px">
+                <MapPin size={11} color={DARK_BLUE} style={{ display: 'inline-block', verticalAlign: 'middle' }} />
               </Box>
               <Text as="span" fontSize="xs" fontWeight="600" display="inline-block" verticalAlign="middle">{currentAddress}</Text>
             </Box>
-            <Box mb="4">
-              <Box bg="white" borderRadius="full" display="inline-block" verticalAlign="middle" mr="3" w="24px" h="24px" textAlign="center" lineHeight="22px">
-                <Phone size={12} color={DARK_BLUE} style={{ display: 'inline-block', verticalAlign: 'middle' }} />
+            <Box mb="3.5">
+              <Box bg="white" borderRadius="full" display="inline-block" verticalAlign="middle" mr="2.5" w="22px" h="22px" textAlign="center" lineHeight="20px">
+                <Phone size={11} color={DARK_BLUE} style={{ display: 'inline-block', verticalAlign: 'middle' }} />
               </Box>
               <Text as="span" fontSize="xs" fontWeight="600" display="inline-block" verticalAlign="middle">{candidate.phone}</Text>
             </Box>
             <Box>
-              <Box bg="white" borderRadius="full" display="inline-block" verticalAlign="middle" mr="3" w="24px" h="24px" textAlign="center" lineHeight="22px">
-                <Mail size={12} color={DARK_BLUE} style={{ display: 'inline-block', verticalAlign: 'middle' }} />
+              <Box bg="white" borderRadius="full" display="inline-block" verticalAlign="middle" mr="2.5" w="22px" h="22px" textAlign="center" lineHeight="20px">
+                <Mail size={11} color={DARK_BLUE} style={{ display: 'inline-block', verticalAlign: 'middle' }} />
               </Box>
               <Text as="span" fontSize="xs" fontWeight="600" wordBreak="break-word" display="inline-block" verticalAlign="middle">{candidate.email || 'N/A'}</Text>
             </Box>
           </Box>
 
           <SidebarHeading title="Core Qualifications" />
-          <VStack align="start" spacing="2" pl="1" w="full">
-            {skills.map((skill, idx) => (
-              <HStack key={idx} align="start" spacing="3">
+          <VStack align="start" spacing="1.5" pl="1" w="full">
+            {skills.slice(0, 6).map((skill, idx) => (
+              <HStack key={idx} align="start" spacing="2.5">
                 <Text color="white" fontSize="xs" mt="0.5">•</Text>
                 <Text fontSize="xs" fontWeight="600">{skill}</Text>
               </HStack>
@@ -254,35 +271,35 @@ const CandidateCVPreview = forwardRef(({ candidate }, ref) => {
           </VStack>
 
           <SidebarHeading title="Personal Details" />
-          <Flex direction="column" gap="3" w="full">
+          <Flex direction="column" gap="2.5" w="full">
             <Flex w="full">
-              <Text fontSize="xs" fontWeight="500" color="whiteAlpha.800" w="100px">Age</Text>
+              <Text fontSize="xs" fontWeight="500" color="whiteAlpha.800" w="95px">Age</Text>
               <Text fontSize="xs" fontWeight="700" flex="1">{candidate.age ? `${candidate.age} Years` : calculateAge(candidate.dob)}</Text>
             </Flex>
 
             <Flex w="full">
-              <Text fontSize="xs" fontWeight="500" color="whiteAlpha.800" w="100px">Gender</Text>
+              <Text fontSize="xs" fontWeight="500" color="whiteAlpha.800" w="95px">Gender</Text>
               <Text fontSize="xs" fontWeight="700" flex="1">{candidate.gender ? candidate.gender.charAt(0).toUpperCase() + candidate.gender.slice(1) : 'N/A'}</Text>
             </Flex>
 
             <Flex w="full">
-              <Text fontSize="xs" fontWeight="500" color="whiteAlpha.800" w="100px">Marital Status</Text>
-              <Text fontSize="xs" fontWeight="700" flex="1">{candidate.maritalStatus ? candidate.maritalStatus.charAt(0).toUpperCase() + candidate.maritalStatus.slice(1) : 'N/A'}</Text>
+              <Text fontSize="xs" fontWeight="500" color="whiteAlpha.800" w="95px">Marital Status</Text>
+              <Text fontSize="xs" fontWeight="700" flex="1">{candidate.maritalStatus ? candidate.maritalStatus.charAt(0).toUpperCase() + candidate.maritalStatus.slice(1) : 'Single'}</Text>
             </Flex>
 
-            <Box w="full" mt="1">
-              <Text fontSize="xs" fontWeight="500" color="whiteAlpha.800" mb="1">Languages</Text>
+            <Box w="full" mt="0.5">
+              <Text fontSize="xs" fontWeight="500" color="whiteAlpha.800" mb="0.5">Languages</Text>
               <Text fontSize="xs" fontWeight="700">{languages}</Text>
             </Box>
           </Flex>
 
           <SidebarHeading title="Certifications" />
-          <VStack align="start" spacing="2" pl="1" w="full">
-            <HStack align="start" spacing="3">
+          <VStack align="start" spacing="1.5" pl="1" w="full">
+            <HStack align="start" spacing="2.5">
               <Text color="white" fontSize="xs" mt="0.5">•</Text>
               <Text fontSize="xs" fontWeight="600">Verified Profile – ZomoCook</Text>
             </HStack>
-            <HStack align="start" spacing="3">
+            <HStack align="start" spacing="2.5">
               <Text color="white" fontSize="xs" mt="0.5">•</Text>
               <Text fontSize="xs" fontWeight="600">Aadhaar & Mobile Verified</Text>
             </HStack>
@@ -293,49 +310,45 @@ const CandidateCVPreview = forwardRef(({ candidate }, ref) => {
 
       {/* Footer Section */}
       <Box w="full" bg="white" mt="auto">
-        <Box p="5" px="8" pt="3">
-          {/* <Box mb="3">
-            <Text fontSize="sm" fontWeight="bold">🛡️</Text>
-          </Box> */}
-          <Flex justify="space-between" align="center" mb="3" wrap="wrap" gap="2">
-            <Flex align="center" gap="2" minW="fit-content">
-              <Text fontSize="sm" color="#38a169" fontWeight="bold">✓</Text>
+        <Box p="4" px="7" pt="2.5" borderTop="1px solid" borderColor="gray.100">
+          <Flex justify="space-between" align="center" mb="2" wrap="wrap" gap="2">
+            <Flex align="center" gap="1.5" minW="fit-content">
+              <Text fontSize="sm" color="#16a34a" fontWeight="bold">✓</Text>
               <Text fontSize="xs" fontWeight="700" color="#334155" whiteSpace="nowrap">Aadhaar Verified</Text>
             </Flex>
-            <Flex align="center" gap="2" minW="fit-content">
-              <Text fontSize="sm" color="#38a169" fontWeight="bold">✓</Text>
+            <Flex align="center" gap="1.5" minW="fit-content">
+              <Text fontSize="sm" color="#16a34a" fontWeight="bold">✓</Text>
               <Text fontSize="xs" fontWeight="700" color="#334155" whiteSpace="nowrap">Mobile Verified</Text>
             </Flex>
-            <Flex align="center" gap="2" minW="fit-content">
-              <Text fontSize="sm" color="#38a169" fontWeight="bold">✓</Text>
+            <Flex align="center" gap="1.5" minW="fit-content">
+              <Text fontSize="sm" color="#16a34a" fontWeight="bold">✓</Text>
               <Text fontSize="xs" fontWeight="700" color="#334155" whiteSpace="nowrap">Address Verified</Text>
             </Flex>
-            <Flex align="center" gap="2" minW="fit-content">
-              <Text fontSize="sm" color="#38a169" fontWeight="bold">✓</Text>
+            <Flex align="center" gap="1.5" minW="fit-content">
+              <Text fontSize="sm" color="#16a34a" fontWeight="bold">✓</Text>
               <Text fontSize="xs" fontWeight="700" color="#334155" whiteSpace="nowrap">Experience Verified</Text>
             </Flex>
           </Flex>
 
-          <Flex justify="center" mt="4">
-            <div style={{ display: 'inline-flex', alignItems: 'flex-end', gap: '8px' }}>
-              {/* <div style={{ width: '14px', height: '14px', backgroundColor: '#16a34a', borderRadius: '50%', marginBottom: '3px', flexShrink: 0 }} /> */}
-              <div style={{ fontSize: '11px', fontWeight: '800', color: '#166534', whiteSpace: 'nowrap' }}>Profile Reviewed by ZomoCook</div>
-            </div>
+          <Flex justify="center" mt="2">
+            <Box px="3" py="0.5" borderRadius="full" border="1px solid #16a34a" bg="green.50">
+              <Text fontSize="10px" fontWeight="800" color="#166534" whiteSpace="nowrap">Profile Reviewed by ZomoCook</Text>
+            </Box>
           </Flex>
         </Box>
         
-        <div style={{ background: 'linear-gradient(135deg, #004aad 0%, #0062e6 100%)', padding: '12px 32px', display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: '12px' }}>
-          <div style={{ display: 'flex', flexDirection: 'row', alignItems: 'center', gap: '16px' }}>
-            <div style={{ backgroundColor: 'white', borderRadius: '6px', width: '28px', height: '28px', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0, position: 'relative', top: '2px' }}>
-              <img src="/logo.png" alt="ZomoCook" style={{ width: '22px', height: '22px', objectFit: 'contain' }} />
+        <div style={{ background: 'linear-gradient(135deg, #004aad 0%, #0062e6 100%)', padding: '10px 28px', display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: '10px' }}>
+          <div style={{ display: 'flex', flexDirection: 'row', alignItems: 'center', gap: '14px' }}>
+            <div style={{ backgroundColor: 'white', borderRadius: '6px', width: '28px', height: '28px', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0, position: 'relative', top: '1px' }}>
+              <img src="/logo.png" onError={(e) => { e.target.src = `${UPLOAD_BASE_URL}/uploads/logo.png`; }} alt="ZomoCook" style={{ width: '22px', height: '22px', objectFit: 'contain' }} />
             </div>
             <div style={{ display: 'flex', flexDirection: 'column' }}>
-              <div style={{ color: 'white', fontWeight: '700', fontSize: '11px', lineHeight: '1.5' }}>This profile has been verified by ZomoCook Recruitment Team.</div>
-              <div style={{ color: 'rgba(255,255,255,0.8)', fontWeight: '500', fontSize: '10px', lineHeight: '1.5' }}>We ensure trusted, skilled & professional staff for your business.</div>
+              <div style={{ color: 'white', fontWeight: '700', fontSize: '11px', lineHeight: '1.4' }}>This profile has been verified by ZomoCook Recruitment Team.</div>
+              <div style={{ color: 'rgba(255,255,255,0.85)', fontWeight: '500', fontSize: '10px', lineHeight: '1.4' }}>We ensure trusted, skilled & professional staff for your business.</div>
             </div>
           </div>
-          <div style={{ display: 'flex', flexDirection: 'row', alignItems: 'center', gap: '8px', whiteSpace: 'nowrap' }}>
-            <Text fontSize="sm" color="white" fontWeight="bold">🌐</Text>
+          <div style={{ display: 'flex', flexDirection: 'row', alignItems: 'center', gap: '6px', whiteSpace: 'nowrap' }}>
+            <span style={{ fontSize: '13px' }}>🌐</span>
             <div style={{ color: 'white', fontSize: '11px', fontWeight: '600' }}>www.zomocook.com</div>
           </div>
         </div>
