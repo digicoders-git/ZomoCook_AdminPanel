@@ -11,6 +11,13 @@ const EditCustomer = () => {
   const { id } = useParams();
   const navigate = useNavigate();
   const toast = useToast();
+  const adminData = JSON.parse(localStorage.getItem('adminData') || '{}');
+  const roleName = (adminData?.role?.name || '').toLowerCase();
+  const isSuperAdmin =
+    adminData?.email?.toLowerCase() === 'zomocookadmin@gmail.com' ||
+    roleName === 'super admin' ||
+    (adminData?.type === 'admin' && !adminData?.role);
+
   const [isLoading, setIsLoading] = useState(false);
   const [isFetching, setIsFetching] = useState(true);
 
@@ -220,7 +227,7 @@ const EditCustomer = () => {
             </FormControl>
             <FormControl>
               <FormLabel {...labelStyle}>Lead Manager</FormLabel>
-              <Select name="leadManager" value={formData.leadManager || ''} onChange={handleChange} {...selectStyle} placeholder="Select Lead Manager">
+              <Select name="leadManager" value={formData.leadManager || ''} onChange={handleChange} {...selectStyle} placeholder="Select Lead Manager" isDisabled={!isSuperAdmin}>
                 {leadManagers.map(lm => (
                   <option key={lm._id} value={lm._id}>{lm.name} ({lm.role?.name || 'Staff'})</option>
                 ))}

@@ -10,6 +10,14 @@ import API_BASE_URL from '../apiConfig';
 const AddCustomer = () => {
   const navigate = useNavigate();
   const toast = useToast();
+  const adminData = JSON.parse(localStorage.getItem('adminData') || '{}');
+  const roleName = (adminData?.role?.name || '').toLowerCase();
+  const isSuperAdmin =
+    adminData?.email?.toLowerCase() === 'zomocookadmin@gmail.com' ||
+    roleName === 'super admin' ||
+    (adminData?.type === 'admin' && !adminData?.role);
+  const isLeadManager = !isSuperAdmin && (adminData?.type === 'user' || (adminData?.type === 'admin' && !!adminData?.role && roleName !== 'super admin'));
+
   const [isLoading, setIsLoading] = useState(false);
 
   const [formData, setFormData] = useState({
@@ -22,7 +30,7 @@ const AddCustomer = () => {
     contactAddress: '',
     customerStatus: 'running',
     accountStatus: 'active',
-    leadManager: '',
+    leadManager: isLeadManager ? (adminData?._id || '') : '',
   });
   const [leadManagers, setLeadManagers] = useState([]);
   const [profilePic, setProfilePic] = useState(null);
@@ -166,7 +174,7 @@ const AddCustomer = () => {
             </FormControl>
             <FormControl>
               <FormLabel {...labelStyle}>Lead Manager</FormLabel>
-              <Select name="leadManager" value={formData.leadManager} onChange={handleChange} {...selectStyle} placeholder="Select Lead Manager">
+              <Select name="leadManager" value={formData.leadManager} onChange={handleChange} {...selectStyle} placeholder="Select Lead Manager" isDisabled={!isSuperAdmin}>
                 {leadManagers.map(lm => (
                   <option key={lm._id} value={lm._id}>{lm.name} ({lm.role?.name || 'Staff'})</option>
                 ))}

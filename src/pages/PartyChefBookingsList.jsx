@@ -694,22 +694,24 @@ const PartyChefBookingsList = () => {
                             </MenuItem>
 
                             {/* 4. Assign to Leads Manager */}
-                            <MenuItem
-                              icon={<UserPlus size={15} color="#2563eb" />}
-                              fontSize="xs"
-                              fontWeight="600"
-                              color="#1e293b"
-                              borderRadius="md"
-                              py="2"
-                              _hover={{ bg: '#eff6ff', color: '#2563eb' }}
-                              onClick={() => {
-                                setSelectedJobForAssign(job);
-                                setSelectedLeadManager(job.leadManager || '');
-                                onAssignOpen();
-                              }}
-                            >
-                              Assign to Leads Manager
-                            </MenuItem>
+                            {!isLeadManager && (
+                              <MenuItem
+                                icon={<UserPlus size={15} color="#2563eb" />}
+                                fontSize="xs"
+                                fontWeight="600"
+                                color="#1e293b"
+                                borderRadius="md"
+                                py="2"
+                                _hover={{ bg: '#eff6ff', color: '#2563eb' }}
+                                onClick={() => {
+                                  setSelectedJobForAssign(job);
+                                  setSelectedLeadManager(job.leadManager || '');
+                                  onAssignOpen();
+                                }}
+                              >
+                                Assign to Leads Manager
+                              </MenuItem>
+                            )}
 
                             {/* 5. Edit Order */}
                             <MenuItem

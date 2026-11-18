@@ -337,6 +337,13 @@ const AddJob = () => {
   const toast = useToast();
   const apiUrl = API_BASE_URL;
   const token = localStorage.getItem('adminToken');
+  const adminData = JSON.parse(localStorage.getItem('adminData') || '{}');
+  const roleName = (adminData?.role?.name || '').toLowerCase();
+  const isSuperAdmin =
+    adminData?.email?.toLowerCase() === 'zomocookadmin@gmail.com' ||
+    roleName === 'super admin' ||
+    (adminData?.type === 'admin' && !adminData?.role);
+  const isLeadManager = !isSuperAdmin && (adminData?.type === 'user' || (adminData?.type === 'admin' && !!adminData?.role && roleName !== 'super admin'));
 
   const [isLoading, setIsLoading] = useState(false);
   const [customers, setCustomers] = useState([]);
@@ -553,7 +560,7 @@ const AddJob = () => {
     address: '',
     venueAddress: '',
     status: 'New',
-    leadManager: '',
+    leadManager: isLeadManager ? (adminData?.name || '') : '',
     notes: ''
   });
 
@@ -3464,6 +3471,7 @@ const AddJob = () => {
                   {...selectStyle}
                   h="42px"
                   placeholder="Auto-assign or Select Manager"
+                  isDisabled={!isSuperAdmin}
                 >
                   {managers.map(mgr => (
                     <option key={mgr._id} value={mgr.name}>{mgr.name}</option>

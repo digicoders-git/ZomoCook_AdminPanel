@@ -33,6 +33,14 @@ const statusColors = {
 const statusWorkflow = Object.keys(statusColors);
 
 const QueryHistory = () => {
+  const adminData = JSON.parse(localStorage.getItem('adminData') || '{}');
+  const roleName = (adminData?.role?.name || '').toLowerCase();
+  const isSuperAdmin =
+    adminData?.email?.toLowerCase() === 'zomocookadmin@gmail.com' ||
+    roleName === 'super admin' ||
+    (adminData?.type === 'admin' && !adminData?.role);
+  const isLeadManager = !isSuperAdmin && (adminData?.type === 'user' || (adminData?.type === 'admin' && !!adminData?.role && roleName !== 'super admin'));
+
   const [queries, setQueries] = useState([]);
   const [systemUsers, setSystemUsers] = useState([]);
   const [isLoading, setIsLoading] = useState(true);
@@ -443,7 +451,9 @@ const QueryHistory = () => {
                             <Menu placement="bottom-end">
                               <MenuButton as={IconButton} icon={<MoreVertical size={14} />} size="xs" variant="ghost" color="#64748b" />
                               <MenuList minW="120px" fontSize="sm" boxShadow="lg" p="1" borderRadius="xl">
-                                <MenuItem borderRadius="md" color="#1e293b" _hover={{ bg: '#f1f5f9' }} onClick={() => handleOpenAssign(q)}>Assign to User</MenuItem>
+                                {!isLeadManager && (
+                                  <MenuItem borderRadius="md" color="#1e293b" _hover={{ bg: '#f1f5f9' }} onClick={() => handleOpenAssign(q)}>Assign to User</MenuItem>
+                                )}
                                 <MenuItem borderRadius="md" color="red.500" _hover={{ bg: 'red.50' }} onClick={() => handleDelete(q._id)}>Delete</MenuItem>
                               </MenuList>
                             </Menu>

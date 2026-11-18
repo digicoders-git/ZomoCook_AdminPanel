@@ -68,6 +68,12 @@ const EditJob = () => {
 
   const apiUrl = API_BASE_URL;
   const token = localStorage.getItem('adminToken');
+  const adminData = JSON.parse(localStorage.getItem('adminData') || '{}');
+  const roleName = (adminData?.role?.name || '').toLowerCase();
+  const isSuperAdmin =
+    adminData?.email?.toLowerCase() === 'zomocookadmin@gmail.com' ||
+    roleName === 'super admin' ||
+    (adminData?.type === 'admin' && !adminData?.role);
 
   const fetchMasterData = async (category, key) => {
     try {
@@ -317,7 +323,7 @@ const EditJob = () => {
               <option value="Cancelled">Cancelled</option>
               <option value="Expired">Expired</option>
             </Select></FormControl>
-            <FormControl><FormLabel {...labelStyle}>Lead Manager</FormLabel><Select name="leadManager" value={formData.leadManager || ''} onChange={handleChange} {...selectStyle} placeholder="Select Lead Manager">
+            <FormControl><FormLabel {...labelStyle}>Lead Manager</FormLabel><Select name="leadManager" value={formData.leadManager || ''} onChange={handleChange} {...selectStyle} placeholder="Select Lead Manager" isDisabled={!isSuperAdmin}>
               {managers.map(mgr => (
                 <option key={mgr._id} value={mgr.name}>{mgr.name}</option>
               ))}
