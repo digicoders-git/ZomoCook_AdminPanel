@@ -1408,6 +1408,37 @@ const AddJob = () => {
         payload.set('noOfGuests', partyTotals.totalGuests.toString());
         payload.set('dateOfEvent', partyDatesList[0]?.date || new Date().toISOString());
 
+        const allDishes = [];
+        const formattedDates = partyDatesList.map((d, dIdx) => ({
+          day: d.day || (dIdx + 1),
+          occasion: d.occasion || 'Event',
+          eventType: d.occasion || 'Event',
+          date: d.date,
+          meals: d.meals.map(m => {
+            const dishes = m.menuChoice === 'now' ? (Array.isArray(m.selectedMenu) ? m.selectedMenu : []) : [];
+            dishes.forEach(dish => {
+              if (dish && !allDishes.includes(dish)) allDishes.push(dish);
+            });
+            return {
+              mealType: m.mealType,
+              name: m.mealType,
+              guests: m.guests,
+              servingTime: m.servingTime,
+              time: m.servingTime,
+              foodPreference: m.foodPreference,
+              menuChoice: m.menuChoice,
+              selectedCuisines: m.selectedCuisines,
+              selectedMenu: dishes,
+              dishes: dishes,
+              categoryDishCounts: m.menuChoice === 'later' ? m.categoryDishCounts : {},
+              notes: m.notes
+            };
+          })
+        }));
+
+        const waiterChargeTotal = partyWaiterStaff ? (parseInt(partyWaiterCount, 10) || 1) * 600 : 0;
+        const remainingChefPayout = Math.max(0, partyTotals.finalAmount - partyTotals.advanceAmount - waiterChargeTotal);
+
         const partyReq = {
           city: formData.city,
           venueAddress: formData.venueAddress || formData.address || '',
@@ -1422,21 +1453,8 @@ const AddJob = () => {
             waiterCount: partyWaiterCount
           },
           appliedCoupon: partyAppliedCoupon,
-          eventDates: partyDatesList.map(d => ({
-            occasion: d.occasion,
-            date: d.date,
-            meals: d.meals.map(m => ({
-              mealType: m.mealType,
-              guests: m.guests,
-              servingTime: m.servingTime,
-              foodPreference: m.foodPreference,
-              menuChoice: m.menuChoice,
-              selectedCuisines: m.selectedCuisines,
-              selectedMenu: m.menuChoice === 'now' ? m.selectedMenu : [],
-              categoryDishCounts: m.menuChoice === 'later' ? m.categoryDishCounts : {},
-              notes: m.notes
-            }))
-          })),
+          dates: formattedDates,
+          eventDates: formattedDates,
           billingSummary: {
             baseChefFee: partyTotals.baseChefRate,
             guestCharges: partyTotals.guestRateTotal,
@@ -1445,12 +1463,20 @@ const AddJob = () => {
             discount: partyTotals.discountAmount,
             gst: partyTotals.gst,
             totalAmount: partyTotals.finalAmount,
-            advancePayable: partyTotals.advanceAmount
+            advancePayable: partyTotals.advanceAmount,
+            total: partyTotals.finalAmount,
+            advance: partyTotals.advanceAmount,
+            duePay: partyTotals.finalAmount - partyTotals.advanceAmount,
+            dueAmount: partyTotals.finalAmount - partyTotals.advanceAmount
           }
         };
 
         payload.set('partyRequirement', JSON.stringify(partyReq));
+        payload.set('eventDays', JSON.stringify(formattedDates));
+        payload.set('menuDetails', allDishes.join(', '));
         payload.set('pricing', JSON.stringify(partyReq.billingSummary));
+        payload.set('salaryRange', `₹${remainingChefPayout}`);
+        payload.set('salary', `₹${remainingChefPayout}`);
       }
 
       payload.set('overview', `Requirement for ${computedTitle}. Customer: ${selectedCustomer.name}.`);

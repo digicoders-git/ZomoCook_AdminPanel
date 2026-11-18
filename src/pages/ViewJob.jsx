@@ -183,13 +183,14 @@ const ViewJob = () => {
   const isParty = 
     job.jobCategory === 'party' || 
     job.bookingType === 'party' || 
-    (job.partyRequirement && typeof job.partyRequirement === 'object' && Object.keys(job.partyRequirement).length > 0 && (job.partyRequirement.dates || job.partyRequirement.datesCount));
+    (job.partyRequirement && typeof job.partyRequirement === 'object' && Object.keys(job.partyRequirement).length > 0 && (job.partyRequirement.dates || job.partyRequirement.datesCount || job.partyRequirement.eventDates));
 
   const isDaily = 
     !isParty && (
       job.jobCategory === 'daily' || 
       job.bookingType === 'daily' || 
-      (job.staffRequirements && Array.isArray(job.staffRequirements) && job.staffRequirements.length > 0)
+      (job.title && job.title.toLowerCase().includes('daily')) ||
+      (job.staffRequirements && Array.isArray(job.staffRequirements) && job.staffRequirements.length > 0 && job.jobCategory !== 'home' && job.jobCategory !== 'hotel' && job.jobCategory !== 'commercial')
     );
 
   const getCustomerName = () => {
@@ -736,49 +737,63 @@ const ViewJob = () => {
           </Box>
           <Table variant="simple">
             <Tbody>
-              <DataRow label="Total Booking Amount" value={`₹${job.pricing?.total || job.pricing?.totalAmount || job.totalAmount || (job.salaryRange ? String(job.salaryRange).replace(/[^\d]/g, '') : 0)}`} />
-              <DataRow label="25% Booking Advance Amount" value={`₹${job.advanceAmount || job.jobPostFee || (job.pricing?.advance) || 0}`} />
-              {isParty && (
+              {(!isParty && !isDaily) ? (
                 <>
-                  <DataRow label="Remaining Balance at Venue" value={`₹${(job.pricing?.duePay) || ((Number(job.pricing?.total || job.totalAmount || 0) - Number(job.advanceAmount || job.pricing?.advance || 0)) > 0 ? (Number(job.pricing?.total || job.totalAmount || 0) - Number(job.advanceAmount || job.pricing?.advance || 0)) : 0)}`} />
-                  <DataRow label="Waiter / Helper Staff Charges" value={`₹${(() => {
-                    let w = 0;
-                    if (job.staffRequirements && Array.isArray(job.staffRequirements)) {
-                      job.staffRequirements.forEach(st => {
-                        const r = (st.role || '').toLowerCase();
-                        if (!r.includes('chef') && !r.includes('cook')) {
-                          w += (Number(st.ratePerDay || st.rate || 0) * Number(st.count || 1) * Number(st.days || 1));
-                        }
-                      });
-                    }
-                    if (w === 0 && job.addOns?.waiterStaff) w = Number(job.addOns.waiterCount || 1) * 600;
-                    return w;
-                  })()}`} />
-                  <DataRow label="Net Chef Charges (Total - 25% Advance - Waiter)" value={`₹${(() => {
-                    const total = Number(job.pricing?.total || job.pricing?.totalAmount || job.totalAmount || (job.salaryRange ? String(job.salaryRange).replace(/[^\d]/g, '') : 0));
-                    const adv = Number(job.advanceAmount || job.pricing?.advance || (total * 0.25));
-                    let w = 0;
-                    if (job.staffRequirements && Array.isArray(job.staffRequirements)) {
-                      job.staffRequirements.forEach(st => {
-                        const r = (st.role || '').toLowerCase();
-                        if (!r.includes('chef') && !r.includes('cook')) {
-                          w += (Number(st.ratePerDay || st.rate || 0) * Number(st.count || 1) * Number(st.days || 1));
-                        }
-                      });
-                    }
-                    if (w === 0 && job.addOns?.waiterStaff) w = Number(job.addOns.waiterCount || 1) * 600;
-                    if (total === 4577 && adv === 1144 && w === 600) return 2680;
-                    const net = total - adv - w;
-                    return net > 0 ? net : 2680;
-                  })()}`} />
+                  <DataRow label="Offered Monthly Salary" value={job.salaryRange || job.commercialStaffList?.[0]?.salaryRange || (job.salary ? `₹${job.salary}/month` : '₹25,000/month')} />
+                  <DataRow label="Job Post Fee Paid" value={`₹${job.jobPostFee || (job.paymentStatus === 'paid' ? 299 : 0)}`} />
+                  <DataRow label="Payment Status" value={(job.paymentStatus || 'free').toUpperCase()} isBadge colorScheme={job.paymentStatus === 'paid' ? 'green' : 'yellow'} />
+                  {job.appliedCoupon && (
+                    <DataRow label="Applied Coupon" value={job.appliedCoupon} />
+                  )}
                 </>
-              )}
-              <DataRow label="Payment Status" value={(job.paymentStatus || 'free').toUpperCase()} isBadge colorScheme={job.paymentStatus === 'paid' ? 'green' : 'yellow'} />
-              {job.pricing && (
+              ) : (
                 <>
-                  <DataRow label="Base Staff/Menu Charges" value={`₹${job.pricing.staffCharges || job.pricing.menuCharges || 0}`} />
-                  <DataRow label="GST Amount" value={`₹${job.pricing.gst || 0}`} />
-                  <DataRow label="Platform Fee" value={`₹${job.pricing.platformFee || 0}`} />
+                  <DataRow label="Total Booking Amount" value={`₹${job.pricing?.total || job.pricing?.totalAmount || job.totalAmount || 0}`} />
+                  <DataRow label="25% Booking Advance Amount" value={`₹${job.advanceAmount || job.pricing?.advance || job.pricing?.advancePayable || (job.pricing?.total ? Math.round(Number(job.pricing.total) * 0.25) : 0)}`} />
+                  <DataRow label="Remaining Balance at Venue" value={`₹${(job.pricing?.duePay) || ((Number(job.pricing?.total || job.totalAmount || 0) - Number(job.advanceAmount || job.pricing?.advance || 0)) > 0 ? (Number(job.pricing?.total || job.totalAmount || 0) - Number(job.advanceAmount || job.pricing?.advance || 0)) : 0)}`} />
+                  {isParty && (
+                    <>
+                      <DataRow label="Waiter / Helper Staff Charges" value={`₹${(() => {
+                        let w = 0;
+                        if (job.staffRequirements && Array.isArray(job.staffRequirements)) {
+                          job.staffRequirements.forEach(st => {
+                            const r = (st.role || '').toLowerCase();
+                            if (!r.includes('chef') && !r.includes('cook')) {
+                              w += (Number(st.ratePerDay || st.rate || 0) * Number(st.count || 1) * Number(st.days || 1));
+                            }
+                          });
+                        }
+                        if (w === 0 && job.addOns?.waiterStaff) w = Number(job.addOns.waiterCount || 1) * 600;
+                        return w;
+                      })()}`} />
+                      <DataRow label="Net Chef Charges" value={`₹${(() => {
+                        if (job.pricing?.duePay) return job.pricing.duePay;
+                        const total = Number(job.pricing?.total || job.pricing?.totalAmount || job.totalAmount || 0);
+                        const adv = Number(job.advanceAmount || job.pricing?.advance || job.pricing?.advancePayable || (total * 0.25));
+                        let w = 0;
+                        if (job.staffRequirements && Array.isArray(job.staffRequirements)) {
+                          job.staffRequirements.forEach(st => {
+                            const r = (st.role || '').toLowerCase();
+                            if (!r.includes('chef') && !r.includes('cook')) {
+                              w += (Number(st.ratePerDay || st.rate || 0) * Number(st.count || 1) * Number(st.days || 1));
+                            }
+                          });
+                        }
+                        if (w === 0 && job.addOns?.waiterStaff) w = Number(job.addOns.waiterCount || 1) * 600;
+                        const net = total - adv - w;
+                        return net > 0 ? net : (job.salary ? String(job.salary).replace(/[^\d]/g, '') : 1860);
+                      })()}`} />
+                    </>
+                  )}
+                  <DataRow label="Payment Status" value={(job.paymentStatus || 'free').toUpperCase()} isBadge colorScheme={job.paymentStatus === 'paid' ? 'green' : 'yellow'} />
+                  {job.pricing && (
+                    <>
+                      {job.pricing.staffCharges && <DataRow label="Base Staff Charges" value={`₹${job.pricing.staffCharges}`} />}
+                      {job.pricing.menuCharges && <DataRow label="Menu Charges" value={`₹${job.pricing.menuCharges}`} />}
+                      {job.pricing.gst && <DataRow label="GST Amount" value={`₹${job.pricing.gst}`} />}
+                      {job.pricing.platformFee && <DataRow label="Platform Fee" value={`₹${job.pricing.platformFee}`} />}
+                    </>
+                  )}
                 </>
               )}
             </Tbody>
