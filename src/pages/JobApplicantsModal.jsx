@@ -600,17 +600,39 @@ const JobApplicantsModal = ({
     setLoading(true);
     try {
       const token = localStorage.getItem("adminToken");
-      const res = await axios.get(`${API_BASE_URL}/applications`, {
+      let res = await axios.get(`${API_BASE_URL}/applications`, {
         params: { jobId },
         headers: { Authorization: `Bearer ${token}` },
       });
-      if (res.data.success && Array.isArray(res.data.applications)) {
-        setApplications(res.data.applications);
-      } else {
-        setApplications([]);
+      let apps = (res.data.success && Array.isArray(res.data.applications)) ? res.data.applications : [];
+
+      // Fallback: if /applications returned empty, check /candidates/applications
+      if (apps.length === 0) {
+        try {
+          const fallbackRes = await axios.get(`${API_BASE_URL}/candidates/applications`, {
+            params: { jobId },
+            headers: { Authorization: `Bearer ${token}` },
+          });
+          if (fallbackRes.data.success && Array.isArray(fallbackRes.data.applications) && fallbackRes.data.applications.length > 0) {
+            apps = fallbackRes.data.applications;
+          }
+        } catch (_) {}
       }
+
+      setApplications(apps);
     } catch (err) {
       console.error("Error fetching applicants:", err);
+      try {
+        const token = localStorage.getItem("adminToken");
+        const fallbackRes = await axios.get(`${API_BASE_URL}/candidates/applications`, {
+          params: { jobId },
+          headers: { Authorization: `Bearer ${token}` },
+        });
+        if (fallbackRes.data.success && Array.isArray(fallbackRes.data.applications)) {
+          setApplications(fallbackRes.data.applications);
+          return;
+        }
+      } catch (_) {}
       toast({ title: "Error", description: "Failed to load applicants.", status: "error", duration: 3000 });
       setApplications([]);
     } finally {
