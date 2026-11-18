@@ -757,10 +757,13 @@ const Layout = ({ children }) => {
   const [isCollapsed, setIsCollapsed] = useState(false);
 
   const handleLogout = () => {
+    localStorage.removeItem('adminToken');
+    localStorage.removeItem('adminData');
     localStorage.clear();
     sessionStorage.clear();
+    delete axios.defaults.headers.common['Authorization'];
     onLogoutClose();
-    window.location.replace('/login');
+    window.location.href = '/login';
   };
 
   return (

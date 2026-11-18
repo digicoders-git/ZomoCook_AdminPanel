@@ -6,6 +6,7 @@ import {
 import { User, Lock, Save, RotateCcw, Camera } from 'lucide-react';
 import { PageHeader, PageFooter, BRAND, ACCENT, inputStyle, labelStyle } from '../components/ui';
 import axios from 'axios';
+import API_BASE_URL, { UPLOAD_BASE_URL } from '../apiConfig';
 
 const SectionHeader = ({ icon, title }) => (
   <HStack spacing="3" mb="5">
@@ -38,8 +39,8 @@ const Profile = () => {
   const [newProfilePic, setNewProfilePic] = useState(null);
   const [previewUrl, setPreviewUrl] = useState('');
 
-  const apiUrl = import.meta.env.VITE_API_URL;
-  const apiBase = apiUrl.replace('/api', '');
+  const apiUrl = API_BASE_URL;
+  const apiBase = UPLOAD_BASE_URL;
 
   useEffect(() => {
     fetchProfile();

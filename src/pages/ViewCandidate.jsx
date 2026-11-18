@@ -15,6 +15,7 @@ import {
 import { useNavigate, Link, useParams, useLocation } from 'react-router-dom';
 import { PageHeader, FormCard, PageFooter, BRAND, ACCENT, tableHeadStyle, thStyle, tdStyle, trHover } from '../components/ui';
 import axios from 'axios';
+import API_BASE_URL, { UPLOAD_BASE_URL } from '../apiConfig';
 
 const ViewCandidate = () => {
   const { id } = useParams();
@@ -39,9 +40,8 @@ const ViewCandidate = () => {
 
     const fetchCandidate = async () => {
       try {
-        const apiUrl = import.meta.env.VITE_API_URL;
         const token = localStorage.getItem('adminToken');
-        const response = await axios.get(`${apiUrl}/candidates/${id}`, { headers: { 'Authorization': `Bearer ${token}` } });
+        const response = await axios.get(`${API_BASE_URL}/candidates/${id}`, { headers: { 'Authorization': `Bearer ${token}` } });
         if (response.data.success) {
           setCandidate(response.data.candidate);
         }
@@ -62,8 +62,8 @@ const ViewCandidate = () => {
     return true;
   };
 
-  const apiUrl = import.meta.env.VITE_API_URL || 'https://api.zomocook.in/api';
-  const apiBase = apiUrl.replace('/api', '');
+  const apiUrl = API_BASE_URL;
+  const apiBase = UPLOAD_BASE_URL;
 
   const getMediaUrl = (path) => {
     if (!path || typeof path !== 'string') return '';

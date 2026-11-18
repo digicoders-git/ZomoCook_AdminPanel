@@ -17,6 +17,7 @@ import {
   tableHeadStyle, thStyle, trHover, ConfirmationModal
 } from '../components/ui';
 import axios from 'axios';
+import API_BASE_URL from '../apiConfig';
 
 const statusColors = {
   'New': 'yellow.400',
@@ -67,15 +68,14 @@ const QueryHistory = () => {
   const fetchData = async () => {
     setIsLoading(true);
     try {
-      const apiUrl = import.meta.env.VITE_API_URL;
       const token = localStorage.getItem('adminToken');
       
       const [queriesRes, usersRes] = await Promise.all([
-        axios.get(`${apiUrl}/queries`, {
+        axios.get(`${API_BASE_URL}/queries`, {
           params: { search: searchTerm },
           headers: { 'Authorization': `Bearer ${token}` }
         }),
-        axios.get(`${apiUrl}/admin/users`, {
+        axios.get(`${API_BASE_URL}/admin/users`, {
           headers: { 'Authorization': `Bearer ${token}` }
         })
       ]);
@@ -129,11 +129,10 @@ const QueryHistory = () => {
     }
     setIsAssigning(true);
     try {
-      const apiUrl = import.meta.env.VITE_API_URL;
       const token = localStorage.getItem('adminToken');
       
       // Update query assignment in backend
-      await axios.put(`${apiUrl}/queries/${selectedQuery._id}`, {
+      await axios.put(`${API_BASE_URL}/queries/${selectedQuery._id}`, {
         assignedTo: selectedAssignUser,
         status: 'Assigned' // Automatically update status
       }, {
@@ -173,9 +172,8 @@ const QueryHistory = () => {
       type: 'danger',
       onConfirm: async () => {
         try {
-          const apiUrl = import.meta.env.VITE_API_URL;
           const token = localStorage.getItem('adminToken');
-          await axios.delete(`${apiUrl}/queries/${id}`, {
+          await axios.delete(`${API_BASE_URL}/queries/${id}`, {
             headers: { 'Authorization': `Bearer ${token}` }
           });
           setQueries(prev => prev.filter(q => q._id !== id));

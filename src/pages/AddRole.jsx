@@ -7,6 +7,7 @@ import { useNavigate } from 'react-router-dom';
 import { useToast } from '@chakra-ui/react';
 import { PageHeader, FormCard, PageFooter, BRAND, inputStyle, selectStyle, labelStyle } from '../components/ui';
 import axios from 'axios';
+import API_BASE_URL from '../apiConfig';
 
 const AddRole = () => {
   const navigate = useNavigate();
@@ -21,9 +22,8 @@ const AddRole = () => {
     e.preventDefault();
     setIsLoading(true);
     try {
-      const apiUrl = import.meta.env.VITE_API_URL;
       const token = localStorage.getItem('adminToken');
-      const response = await axios.post(`${apiUrl}/roles`, formData, {
+      const response = await axios.post(`${API_BASE_URL}/roles`, formData, {
         headers: { 'Authorization': `Bearer ${token}` }
       });
       if (response.data.success) {

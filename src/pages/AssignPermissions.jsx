@@ -7,6 +7,7 @@ import { Save, X, Layers } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { PageHeader, FormCard, PageFooter, BRAND, ACCENT, selectStyle, Loading } from '../components/ui';
 import axios from 'axios';
+import API_BASE_URL from '../apiConfig';
 
 const PERMISSION_MODULES = [
   { name: 'Dashboard', permissions: ['Dashboard Analytics', 'Live Activity'] },
@@ -145,9 +146,8 @@ const AssignPermissions = () => {
 
   const fetchRoles = async () => {
     try {
-      const apiUrl = import.meta.env.VITE_API_URL;
       const token = localStorage.getItem('adminToken');
-      const response = await axios.get(`${apiUrl}/roles`, {
+      const response = await axios.get(`${API_BASE_URL}/roles`, {
         headers: { 'Authorization': `Bearer ${token}` }
       });
       if (response.data.success) {
@@ -166,9 +166,8 @@ const AssignPermissions = () => {
       return;
     }
     try {
-      const apiUrl = import.meta.env.VITE_API_URL;
       const token = localStorage.getItem('adminToken');
-      const response = await axios.get(`${apiUrl}/roles/${roleId}`, {
+      const response = await axios.get(`${API_BASE_URL}/roles/${roleId}`, {
         headers: { 'Authorization': `Bearer ${token}` }
       });
       if (response.data.success) {
@@ -226,9 +225,8 @@ const AssignPermissions = () => {
     
     setIsLoading(true);
     try {
-      const apiUrl = import.meta.env.VITE_API_URL;
       const token = localStorage.getItem('adminToken');
-      const response = await axios.put(`${apiUrl}/roles/${selectedRole}`, {
+      const response = await axios.put(`${API_BASE_URL}/roles/${selectedRole}`, {
         permissions: selectedPermissions
       }, {
         headers: { 'Authorization': `Bearer ${token}` }

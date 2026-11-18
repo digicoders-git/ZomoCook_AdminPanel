@@ -13,6 +13,7 @@ import ReactQuill from 'react-quill-new';
 import 'react-quill-new/dist/quill.snow.css';
 import { PageHeader, PageFooter, BRAND, ACCENT, inputStyle, selectStyle, labelStyle, thStyle, trHover, ConfirmationModal } from '../components/ui';
 import axios from 'axios';
+import API_BASE_URL from '../apiConfig';
 
 const MasterPage = () => {
   const { category, action } = useParams();
@@ -129,7 +130,7 @@ const MasterPage = () => {
     }
   };
 
-  const apiUrl = import.meta.env.VITE_API_URL;
+  const apiUrl = API_BASE_URL;
   const token = localStorage.getItem('adminToken');
 
   const fetchData = async () => {

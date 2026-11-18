@@ -32,6 +32,7 @@ import {
 } from '@chakra-ui/react';
 import axios from 'axios';
 import { CreditCard, Activity, AlertCircle, Clock, Eye } from 'lucide-react';
+import API_BASE_URL, { UPLOAD_BASE_URL } from '../apiConfig';
 
 const SubscriptionList = () => {
   const [subscriptionsData, setSubscriptionsData] = useState([]);
@@ -52,8 +53,7 @@ const SubscriptionList = () => {
   const fetchSubscriptions = async () => {
     try {
       const token = localStorage.getItem('adminToken');
-      const apiUrl = import.meta.env.VITE_API_URL;
-      const res = await axios.get(`${apiUrl}/admin/subscriptions`, {
+      const res = await axios.get(`${API_BASE_URL}/admin/subscriptions`, {
         headers: { Authorization: `Bearer ${token}` }
       });
       if (res.data.success) {
@@ -282,7 +282,7 @@ const SubscriptionList = () => {
                       <Tr key={sub._id} _hover={{ bg: 'gray.50' }}>
                         <Td>
                           <HStack spacing={3}>
-                            <Avatar size="sm" name={user.name} src={user.profilePic ? `${import.meta.env.VITE_API_URL.replace('/api', '')}/${user.profilePic}` : ''} />
+                            <Avatar size="sm" name={user.name} src={user.profilePic ? `${UPLOAD_BASE_URL}/${user.profilePic}` : ''} />
                             <Box>
                               <Text fontWeight="bold" fontSize="sm" color="gray.800">{user.name || 'Unknown'}</Text>
                               <Text fontSize="xs" color="gray.500">{user.phone || 'N/A'}</Text>
@@ -334,7 +334,7 @@ const SubscriptionList = () => {
         <ModalContent borderRadius="xl">
           <ModalHeader borderBottomWidth="1px">
             <Flex align="center" gap={3}>
-              <Avatar size="sm" name={selectedUser?.name} src={selectedUser?.profilePic ? `${import.meta.env.VITE_API_URL.replace('/api', '')}/${selectedUser.profilePic}` : ''} />
+              <Avatar size="sm" name={selectedUser?.name} src={selectedUser?.profilePic ? `${UPLOAD_BASE_URL}/${selectedUser.profilePic}` : ''} />
               <Box>
                 <Text fontWeight="bold" fontSize="md">{selectedUser?.name || 'User'}'s Subscription History</Text>
                 <Text fontSize="xs" color="gray.500" fontWeight="normal">{selectedUser?.phone || 'N/A'}</Text>

@@ -7,6 +7,7 @@ import { Send, RotateCcw, List, Upload, Save, Eye, EyeOff, RefreshCw } from 'luc
 import { useNavigate, Link } from 'react-router-dom';
 import { PageHeader, FormCard, PageFooter, BRAND, ACCENT, inputStyle, selectStyle, labelStyle } from '../components/ui';
 import axios from 'axios';
+import API_BASE_URL from '../apiConfig';
 
 const AddUser = () => {
   const navigate = useNavigate();
@@ -28,9 +29,8 @@ const AddUser = () => {
   useEffect(() => {
     const fetchRoles = async () => {
       try {
-        const apiUrl = import.meta.env.VITE_API_URL;
         const token = localStorage.getItem('adminToken');
-        const response = await axios.get(`${apiUrl}/roles`, {
+        const response = await axios.get(`${API_BASE_URL}/roles`, {
           headers: { 'Authorization': `Bearer ${token}` }
         });
         if (response.data.success) {
@@ -57,13 +57,12 @@ const AddUser = () => {
     
     setIsLoading(true);
     try {
-      const apiUrl = import.meta.env.VITE_API_URL;
       const token = localStorage.getItem('adminToken');
       const data = new FormData();
       Object.keys(formData).forEach(key => data.append(key, formData[key]));
       if (profilePic) data.append('profilePic', profilePic);
 
-      const response = await axios.post(`${apiUrl}/admin/users`, data, {
+      const response = await axios.post(`${API_BASE_URL}/admin/users`, data, {
         headers: { 'Authorization': `Bearer ${token}` }
       });
 

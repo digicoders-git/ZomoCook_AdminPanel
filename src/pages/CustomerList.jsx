@@ -14,7 +14,7 @@ import {
 } from '../components/ui';
 import PageContentLoader from '../components/PageContentLoader';
 import axios from 'axios';
-import API_BASE_URL from '../apiConfig';
+import API_BASE_URL, { UPLOAD_BASE_URL } from '../apiConfig';
 
 const CustomerList = () => {
   const navigate = useNavigate();
@@ -276,7 +276,7 @@ const CustomerList = () => {
   const getProfileImg = (path) => {
     if (!path || path === 'default-customer.png') return '';
     if (path.startsWith('http')) return path;
-    const apiBase = import.meta.env.VITE_API_URL.replace('/api', '');
+    const apiBase = UPLOAD_BASE_URL;
     return `${apiBase}/${path.replace(/\\/g, '/')}`;
   };
 

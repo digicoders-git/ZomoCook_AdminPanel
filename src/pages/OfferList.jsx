@@ -12,6 +12,7 @@ import {
 } from '@chakra-ui/react';
 import { Pencil, Trash2, Plus, Search, Copy, Info, CheckCircle2, ChevronLeft, ChevronRight } from 'lucide-react';
 import moment from 'moment';
+import API_BASE_URL from '../apiConfig';
 
 const OfferList = () => {
   const [offers, setOffers] = useState([]);
@@ -58,7 +59,7 @@ const OfferList = () => {
   
   const toast = useToast();
   const token = localStorage.getItem('adminToken');
-  const apiUrl = import.meta.env.VITE_API_URL;
+  const apiUrl = API_BASE_URL;
 
   const fetchMasters = async () => {
     try {

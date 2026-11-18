@@ -7,6 +7,7 @@ import { Save, RotateCcw, List, Upload, Eye, EyeOff, RefreshCw } from 'lucide-re
 import { useNavigate, Link, useParams } from 'react-router-dom';
 import { PageHeader, FormCard, PageFooter, BRAND, ACCENT, inputStyle, selectStyle, labelStyle, Loading } from '../components/ui';
 import axios from 'axios';
+import API_BASE_URL from '../apiConfig';
 
 const EditUser = () => {
   const { id } = useParams();
@@ -31,11 +32,10 @@ const EditUser = () => {
     const fetchData = async () => {
       setIsFetching(true);
       try {
-        const apiUrl = import.meta.env.VITE_API_URL;
         const token = localStorage.getItem('adminToken');
         
         // Fetch Roles
-        const rolesRes = await axios.get(`${apiUrl}/roles`, {
+        const rolesRes = await axios.get(`${API_BASE_URL}/roles`, {
           headers: { 'Authorization': `Bearer ${token}` }
         });
         if (rolesRes.data.success) {
@@ -46,7 +46,7 @@ const EditUser = () => {
         }
 
         // Fetch User details
-        const userRes = await axios.get(`${apiUrl}/admin/users/${id}`, {
+        const userRes = await axios.get(`${API_BASE_URL}/admin/users/${id}`, {
           headers: { 'Authorization': `Bearer ${token}` }
         });
         if (userRes.data.success) {
@@ -79,7 +79,6 @@ const EditUser = () => {
     e.preventDefault();
     setIsLoading(true);
     try {
-      const apiUrl = import.meta.env.VITE_API_URL;
       const token = localStorage.getItem('adminToken');
       const data = new FormData();
       Object.keys(formData).forEach(key => {
@@ -88,7 +87,7 @@ const EditUser = () => {
       });
       if (profilePic) data.append('profilePic', profilePic);
 
-      const response = await axios.put(`${apiUrl}/admin/users/${id}`, data, {
+      const response = await axios.put(`${API_BASE_URL}/admin/users/${id}`, data, {
         headers: { 'Authorization': `Bearer ${token}` }
       });
 

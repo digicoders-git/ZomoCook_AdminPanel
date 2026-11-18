@@ -13,6 +13,7 @@ import {
 } from '../components/ui';
 import CandidateCVModal from '../components/CandidateCVModal';
 import axios from 'axios';
+import API_BASE_URL from '../apiConfig';
 
 const RescheduleRequestsList = () => {
   const navigate = useNavigate();
@@ -25,9 +26,8 @@ const RescheduleRequestsList = () => {
   const fetchApplications = async () => {
     setIsLoading(true);
     try {
-      const apiUrl = import.meta.env.VITE_API_URL;
       const token = localStorage.getItem('adminToken');
-      const response = await axios.get(`${apiUrl}/candidates/applications`, {
+      const response = await axios.get(`${API_BASE_URL}/candidates/applications`, {
         params: { status: 'Reschedule Requested', search: searchTerm },
         headers: { 'Authorization': `Bearer ${token}` }
       });
@@ -45,7 +45,7 @@ const RescheduleRequestsList = () => {
     fetchApplications();
   }, [searchTerm]);
 
-  const apiUrl = import.meta.env.VITE_API_URL;
+  const apiUrl = API_BASE_URL;
 
   return (
     <Box pb="10">

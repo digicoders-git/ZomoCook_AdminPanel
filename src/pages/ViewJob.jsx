@@ -10,6 +10,7 @@ import { useParams, useNavigate } from 'react-router-dom';
 import axios from 'axios';
 import { PageHeader, PageFooter, BRAND, ACCENT, thStyle, tdStyle } from '../components/ui';
 import JobApplicantsModal, { CandidateReviewsModal } from './JobApplicantsModal';
+import API_BASE_URL, { UPLOAD_BASE_URL } from '../apiConfig';
 
 const ViewJob = () => {
   const { isOpen, onOpen, onClose } = useDisclosure();
@@ -41,12 +42,11 @@ const ViewJob = () => {
   const fetchJob = async () => {
     setIsLoading(true);
     try {
-      const apiUrl = import.meta.env.VITE_API_URL;
       const token = localStorage.getItem('adminToken');
-      const response = await axios.get(`${apiUrl}/jobs/${id}`, {
+      const response = await axios.get(`${API_BASE_URL}/jobs/${id}`, {
         headers: { 'Authorization': `Bearer ${token}` }
       });
-      const appsResponse = await axios.get(`${apiUrl}/applications`, {
+      const appsResponse = await axios.get(`${API_BASE_URL}/applications`, {
         params: { jobId: id },
         headers: { 'Authorization': `Bearer ${token}` }
       });
@@ -94,9 +94,8 @@ const ViewJob = () => {
     onAssignOpen();
     setIsLoadingCandidates(true);
     try {
-      const apiUrl = import.meta.env.VITE_API_URL;
       const token = localStorage.getItem('adminToken');
-      const res = await axios.get(`${apiUrl}/candidates?limit=200`, {
+      const res = await axios.get(`${API_BASE_URL}/candidates?limit=200`, {
         headers: { 'Authorization': `Bearer ${token}` }
       });
       if (res.data.success) {
@@ -128,12 +127,11 @@ const ViewJob = () => {
 
     setIsAssigningStaff(true);
     try {
-      const apiUrl = import.meta.env.VITE_API_URL;
       const token = localStorage.getItem('adminToken');
       const expStr = cand.jobPreference?.experience
         ? `${cand.jobPreference.experience.value || ''} ${cand.jobPreference.experience.unit || 'years'}`
         : '';
-      const res = await axios.post(`${apiUrl}/jobs/${id}/assign-staff`, {
+      const res = await axios.post(`${API_BASE_URL}/jobs/${id}/assign-staff`, {
         candidateId: cand._id,
         name: cand.name || 'Staff',
         role: roleToSend,
@@ -180,7 +178,7 @@ const ViewJob = () => {
     return <Flex h="80vh" align="center" justify="center"><Text>Job / Booking not found</Text></Flex>;
   }
 
-  const apiBase = import.meta.env.VITE_API_URL.replace('/api', '');
+  const apiBase = UPLOAD_BASE_URL;
 
   const isParty = 
     job.jobCategory === 'party' || 

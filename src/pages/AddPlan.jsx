@@ -19,6 +19,7 @@ import {
 import { ArrowLeft, Save } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import axios from 'axios';
+import API_BASE_URL from '../apiConfig';
 
 const AddPlan = () => {
   const navigate = useNavigate();
@@ -61,7 +62,7 @@ const AddPlan = () => {
     
     try {
       const token = localStorage.getItem('adminToken');
-      const apiUrl = import.meta.env.VITE_API_URL;
+      const apiUrl = API_BASE_URL;
       
       const payload = {
         ...formData,

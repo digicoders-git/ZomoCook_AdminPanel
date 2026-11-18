@@ -155,7 +155,7 @@ const Login = () => {
     
     try {
       const response = await axios.post(`${API_BASE_URL}/admin/login`, {
-        email,
+        email: email.trim(),
         password
       });
 
@@ -365,18 +365,18 @@ const Login = () => {
 
               <form onSubmit={handleLogin} autoComplete="off">
 
-                {/* Email */}
+                {/* Email or Phone */}
                 <Box mb="5">
                   <Text fontSize="xs" fontWeight="700" color="#475569" textTransform="uppercase" letterSpacing="0.8px" mb="2">
-                    Email Address
+                    Email Address / Mobile Number
                   </Text>
                   <Input
-                    type="email"
-                    placeholder="admin@zomocook.in"
+                    type="text"
+                    placeholder="admin@zomocook.in or 10-digit mobile"
                     value={email}
                     onChange={(e) => setEmail(e.target.value)}
                     required
-                    autoComplete="off"
+                    autoComplete="username"
                     h="44px"
                     fontSize="14px"
                     color="#1e293b"

@@ -282,7 +282,7 @@ function App() {
     <Router>
       <Routes>
         {/* ── Public ─────────────────────────────────────────────────── */}
-        <Route path="/login" element={<PublicRoute><Login /></PublicRoute>} />
+        <Route path="/login" element={<Login />} />
         <Route path="/unauthorized" element={<Unauthorized />} />
 
         {/* ── Dashboard ──────────────────────────────────────────────── */}

@@ -13,6 +13,7 @@ import {
 } from '../components/ui';
 import axios from 'axios';
 import { useNavigate } from 'react-router-dom';
+import API_BASE_URL from '../apiConfig';
 
 const PERMISSION_MODULES = [
   { name: 'Dashboard', permissions: ['Dashboard Analytics', 'Live Activity'] },
@@ -160,9 +161,8 @@ const RoleList = () => {
   const fetchRoles = async () => {
     setIsLoading(true);
     try {
-      const apiUrl = import.meta.env.VITE_API_URL;
       const token = localStorage.getItem('adminToken');
-      const response = await axios.get(`${apiUrl}/roles`, {
+      const response = await axios.get(`${API_BASE_URL}/roles`, {
         params: { search: searchTerm },
         headers: { 'Authorization': `Bearer ${token}` }
       });
@@ -183,10 +183,9 @@ const RoleList = () => {
       type: 'info',
       onConfirm: async () => {
         try {
-          const apiUrl = import.meta.env.VITE_API_URL;
           const token = localStorage.getItem('adminToken');
           const newStatus = currentStatus === 'active' ? 'inactive' : 'active';
-          await axios.put(`${apiUrl}/roles/${id}`, { status: newStatus }, {
+          await axios.put(`${API_BASE_URL}/roles/${id}`, { status: newStatus }, {
             headers: { 'Authorization': `Bearer ${token}` }
           });
           setRoles(prev => prev.map(r => r._id === id ? { ...r, status: newStatus } : r));
@@ -207,9 +206,8 @@ const RoleList = () => {
       type: 'danger',
       onConfirm: async () => {
         try {
-          const apiUrl = import.meta.env.VITE_API_URL;
           const token = localStorage.getItem('adminToken');
-          const response = await axios.delete(`${apiUrl}/roles/${id}`, {
+          const response = await axios.delete(`${API_BASE_URL}/roles/${id}`, {
             headers: { 'Authorization': `Bearer ${token}` }
           });
           if (response.data.success) {
@@ -274,9 +272,8 @@ const RoleList = () => {
     if (!selectedRole) return;
     setIsSaving(true);
     try {
-      const apiUrl = import.meta.env.VITE_API_URL;
       const token = localStorage.getItem('adminToken');
-      await axios.put(`${apiUrl}/roles/${selectedRole._id}`, {
+      await axios.put(`${API_BASE_URL}/roles/${selectedRole._id}`, {
         permissions: selectedPermissions
       }, { headers: { 'Authorization': `Bearer ${token}` } });
 

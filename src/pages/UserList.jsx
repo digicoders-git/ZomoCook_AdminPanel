@@ -12,6 +12,7 @@ import {
   thStyle, trHover, ConfirmationModal
 } from '../components/ui';
 import axios from 'axios';
+import API_BASE_URL, { UPLOAD_BASE_URL } from '../apiConfig';
 
 const UserList = () => {
   const navigate = useNavigate();
@@ -68,19 +69,18 @@ const UserList = () => {
 
     setIsResettingPassword(true);
     try {
-      const apiUrl = import.meta.env.VITE_API_URL;
       const token = localStorage.getItem('adminToken');
       
       let res;
       try {
-        res = await axios.put(`${apiUrl}/admin/users/${resetUserTarget._id}/reset-password`, {
+        res = await axios.put(`${API_BASE_URL}/admin/users/${resetUserTarget._id}/reset-password`, {
           password: newPassword
         }, {
           headers: { 'Authorization': `Bearer ${token}` }
         });
       } catch (firstErr) {
         // Fallback to standard user update route if dedicated route doesn't match
-        res = await axios.put(`${apiUrl}/admin/users/${resetUserTarget._id}`, {
+        res = await axios.put(`${API_BASE_URL}/admin/users/${resetUserTarget._id}`, {
           password: newPassword
         }, {
           headers: { 'Authorization': `Bearer ${token}` }
@@ -119,12 +119,11 @@ const UserList = () => {
   const fetchUsers = async () => {
     setIsLoading(true);
     try {
-      const apiUrl = import.meta.env.VITE_API_URL;
       const token = localStorage.getItem('adminToken');
       const params = { search: searchTerm, page: currentPage, limit: entriesPerPage };
       if (roleFilter) params.role = roleFilter;
       
-      const response = await axios.get(`${apiUrl}/admin/users`, {
+      const response = await axios.get(`${API_BASE_URL}/admin/users`, {
         params,
         headers: { 'Authorization': `Bearer ${token}` }
       });
@@ -156,10 +155,9 @@ const UserList = () => {
       type: 'info',
       onConfirm: async () => {
         try {
-          const apiUrl = import.meta.env.VITE_API_URL;
           const token = localStorage.getItem('adminToken');
           const newStatus = isCurrentlyActive ? 'Inactive' : 'Active';
-          await axios.put(`${apiUrl}/admin/users/${id}`, { status: newStatus }, {
+          await axios.put(`${API_BASE_URL}/admin/users/${id}`, { status: newStatus }, {
             headers: { 'Authorization': `Bearer ${token}` }
           });
           setUsers(prev => prev.map(u => u._id === id ? { ...u, status: newStatus } : u));
@@ -180,9 +178,8 @@ const UserList = () => {
       type: 'danger',
       onConfirm: async () => {
         try {
-          const apiUrl = import.meta.env.VITE_API_URL;
           const token = localStorage.getItem('adminToken');
-          await axios.delete(`${apiUrl}/admin/users/${id}`, {
+          await axios.delete(`${API_BASE_URL}/admin/users/${id}`, {
             headers: { 'Authorization': `Bearer ${token}` }
           });
           setUsers(prev => prev.filter(u => u._id !== id));
@@ -196,8 +193,7 @@ const UserList = () => {
     onOpen();
   };
 
-  const apiUrl = import.meta.env.VITE_API_URL;
-  const apiBase = apiUrl.replace('/api', '');
+  const apiBase = UPLOAD_BASE_URL;
 
   return (
     <Box pb="10">

@@ -10,6 +10,7 @@ import { Plus, Edit2, Trash2, Info, Send, Crown, Diamond, Receipt, ShieldCheck, 
 import { useNavigate, useLocation } from 'react-router-dom';
 import axios from 'axios';
 import Swal from 'sweetalert2';
+import API_BASE_URL from '../apiConfig';
 
 const PlanList = () => {
   const [plans, setPlans] = useState([]);
@@ -130,7 +131,7 @@ const PlanList = () => {
     setIsLoading(true);
     try {
       const token = localStorage.getItem('adminToken');
-      const apiUrl = import.meta.env.VITE_API_URL;
+      const apiUrl = API_BASE_URL;
       
       const [plansRes, settingsRes, servicePackagesRes] = await Promise.all([
         axios.get(`${apiUrl}/plans/admin/all`, { headers: { Authorization: `Bearer ${token}` } }),
@@ -221,7 +222,7 @@ const PlanList = () => {
     setIsUpdatingFee(true);
     try {
       const token = localStorage.getItem('adminToken');
-      const apiUrl = import.meta.env.VITE_API_URL;
+      const apiUrl = API_BASE_URL;
       
       const updateData = {
         jobPostFee: Number(feeForm.amount),
@@ -263,7 +264,7 @@ const PlanList = () => {
       if (result.isConfirmed) {
         try {
           const token = localStorage.getItem('adminToken');
-          const apiUrl = import.meta.env.VITE_API_URL;
+          const apiUrl = API_BASE_URL;
           const res = await axios.delete(`${apiUrl}/plans/${id}`, {
             headers: { Authorization: `Bearer ${token}` }
           });
@@ -287,7 +288,7 @@ const PlanList = () => {
   const togglePlanStatus = async (plan) => {
     try {
       const token = localStorage.getItem('adminToken');
-      const apiUrl = import.meta.env.VITE_API_URL;
+      const apiUrl = API_BASE_URL;
       await axios.put(`${apiUrl}/plans/${plan._id}`, { isActive: !plan.isActive }, {
         headers: { Authorization: `Bearer ${token}` }
       });
@@ -301,7 +302,7 @@ const PlanList = () => {
   const toggleServicePackageStatus = async (pkg) => {
     try {
       const token = localStorage.getItem('adminToken');
-      const apiUrl = import.meta.env.VITE_API_URL;
+      const apiUrl = API_BASE_URL;
       await axios.put(`${apiUrl}/payments/service-packages/${pkg._id}`, { isActive: !pkg.isActive }, {
         headers: { Authorization: `Bearer ${token}` }
       });
@@ -329,7 +330,7 @@ const PlanList = () => {
   const handleUpdateServicePackage = async () => {
     try {
       const token = localStorage.getItem('adminToken');
-      const apiUrl = import.meta.env.VITE_API_URL;
+      const apiUrl = API_BASE_URL;
       const payload = {
         price: Number(editPackageForm.price),
         replacementLimit: Number(editPackageForm.replacementLimit),
@@ -364,7 +365,7 @@ const PlanList = () => {
     setIsUpdatingDailyCharges(true);
     try {
       const token = localStorage.getItem('adminToken');
-      const apiUrl = import.meta.env.VITE_API_URL;
+      const apiUrl = API_BASE_URL;
       const res = await axios.put(`${apiUrl}/settings`, { dailyCharges: dailyChargesForm }, {
         headers: { Authorization: `Bearer ${token}` }
       });

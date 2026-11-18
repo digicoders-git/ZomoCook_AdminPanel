@@ -358,8 +358,6 @@ const CandidateList = () => {
            date.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit', hour12: true });
   };
 
-  const apiUrl = import.meta.env.VITE_API_URL;
-
   return (
     <Box pb="10">
       <PageHeader

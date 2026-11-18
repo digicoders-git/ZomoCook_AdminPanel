@@ -20,6 +20,7 @@ import {
 import { ArrowLeft, Save } from 'lucide-react';
 import { useNavigate, useParams } from 'react-router-dom';
 import axios from 'axios';
+import API_BASE_URL from '../apiConfig';
 
 const EditPlan = () => {
   const { id } = useParams();
@@ -46,7 +47,7 @@ const EditPlan = () => {
     const fetchPlan = async () => {
       try {
         const token = localStorage.getItem('adminToken');
-        const apiUrl = import.meta.env.VITE_API_URL;
+        const apiUrl = API_BASE_URL;
         
         // Debug logging
         console.log('Fetching plan with ID:', id);
@@ -142,7 +143,7 @@ const EditPlan = () => {
     
     try {
       const token = localStorage.getItem('adminToken');
-      const apiUrl = import.meta.env.VITE_API_URL;
+      const apiUrl = API_BASE_URL;
       
       const payload = {
         ...formData,

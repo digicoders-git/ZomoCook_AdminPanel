@@ -335,7 +335,7 @@ const DEFAULT_MENU_CATALOG = [
 const AddJob = () => {
   const navigate = useNavigate();
   const toast = useToast();
-  const apiUrl = API_BASE_URL || import.meta.env.VITE_API_URL || 'https://api.zomocook.in/api';
+  const apiUrl = API_BASE_URL;
   const token = localStorage.getItem('adminToken');
 
   const [isLoading, setIsLoading] = useState(false);

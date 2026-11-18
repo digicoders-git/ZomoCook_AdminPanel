@@ -5,6 +5,7 @@ import { useNavigate, Link, useParams } from 'react-router-dom';
 import { useToast } from '@chakra-ui/react';
 import { PageHeader, FormCard, PageFooter, BRAND, ACCENT, inputStyle, selectStyle, labelStyle, Loading } from '../components/ui';
 import axios from 'axios';
+import API_BASE_URL from '../apiConfig';
 
 const EditJob = () => {
   const { id } = useParams();
@@ -65,7 +66,7 @@ const EditJob = () => {
   const [jobImage, setJobImage] = useState(null);
   const [managers, setManagers] = useState([]);
 
-  const apiUrl = import.meta.env.VITE_API_URL;
+  const apiUrl = API_BASE_URL;
   const token = localStorage.getItem('adminToken');
 
   const fetchMasterData = async (category, key) => {
