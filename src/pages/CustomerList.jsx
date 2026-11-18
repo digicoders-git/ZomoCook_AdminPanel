@@ -6,7 +6,7 @@ import {
   Menu, MenuButton, MenuList, MenuItem, MenuDivider,
   Modal, ModalOverlay, ModalContent, ModalHeader, ModalCloseButton, ModalBody, ModalFooter
 } from '@chakra-ui/react';
-import { Edit3, Filter, Plus, Trash2, Search, RotateCcw, Eye, MoreVertical, LayoutDashboard, Package, CreditCard, Ban, CheckCircle, UserCheck, Sparkles } from 'lucide-react';
+import { Edit3, Filter, Plus, Trash2, Search, RotateCcw, Eye, MoreVertical, LayoutDashboard, Package, CreditCard, Ban, CheckCircle, UserCheck, Sparkles, LogOut } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import {
   PageHeader, TableCard, TableControls, TableFooter, PageFooter,
@@ -241,6 +241,40 @@ const CustomerList = () => {
           }
         } catch (error) {
           toast({ title: 'Error', description: 'Failed to update status.', status: 'error', duration: 2000, position: 'top-right' });
+        }
+        onClose();
+      }
+    });
+    onOpen();
+  };
+
+  const confirmForceLogout = (customer) => {
+    setConfirmConfig({
+      title: 'Force Logout Customer?',
+      description: `Are you sure you want to log out "${customer.name}"? Their active session will be terminated immediately on all devices.`,
+      confirmLabel: 'Logout User',
+      type: 'danger',
+      onConfirm: async () => {
+        try {
+          const token = localStorage.getItem('adminToken');
+          const response = await axios.post(`${API_BASE_URL}/customers/${customer._id}/logout`, {}, {
+            headers: { 'Authorization': `Bearer ${token}` }
+          });
+          toast({
+            title: 'Customer Logged Out',
+            description: response.data?.message || `Active session terminated for ${customer.name}.`,
+            status: 'success',
+            duration: 3500,
+            position: 'top-right'
+          });
+        } catch (error) {
+          toast({
+            title: 'Logout Failed',
+            description: error.response?.data?.message || 'Failed to logout customer.',
+            status: 'error',
+            duration: 4000,
+            position: 'top-right'
+          });
         }
         onClose();
       }
@@ -750,6 +784,12 @@ const CustomerList = () => {
                                 icon={row.accountStatus === 'active' ? <Ban size={16} /> : <CheckCircle size={16} />}
                                 onClick={() => confirmStatusToggle(row._id, row.accountStatus)}>
                                 {row.accountStatus === 'active' ? 'Block Client' : 'Unblock Client'}
+                              </MenuItem>
+
+                              <MenuItem borderRadius="md" py="2" fontSize="sm" fontWeight="600" color="#ea580c" _hover={{ bg: '#fff7ed', color: '#c2410c' }}
+                                icon={<LogOut size={16} />}
+                                onClick={() => confirmForceLogout(row)}>
+                                Force Logout User
                               </MenuItem>
                               
                               <MenuDivider my="1.5" borderColor="#f1f5f9" />

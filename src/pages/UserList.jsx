@@ -5,7 +5,7 @@ import {
   Modal, ModalOverlay, ModalContent, ModalHeader, ModalFooter, ModalBody, ModalCloseButton, Badge, Divider, VStack, SimpleGrid,
   Input, InputGroup, InputRightElement, FormControl, FormLabel, Tooltip
 } from '@chakra-ui/react';
-import { Edit3, Trash2, Filter, Plus, Eye, Key, EyeOff, Copy, Check, RefreshCw } from 'lucide-react';
+import { Edit3, Trash2, Filter, Plus, Eye, Key, EyeOff, Copy, Check, RefreshCw, LogOut } from 'lucide-react';
 import { Link, useNavigate, useSearchParams } from 'react-router-dom';
 import {
   PageHeader, TableCard, TableControls, TableFooter, PageFooter, BRAND, ACCENT,
@@ -171,6 +171,39 @@ const UserList = () => {
     onOpen();
   };
 
+  const handleForceLogout = (targetUser) => {
+    setConfirmConfig({
+      title: 'Force Logout User Session?',
+      description: `Are you sure you want to log out "${targetUser.name}"? Their active session will be terminated immediately on all devices.`,
+      type: 'danger',
+      onConfirm: async () => {
+        try {
+          const token = localStorage.getItem('adminToken');
+          const res = await axios.post(`${API_BASE_URL}/admin/users/${targetUser._id}/logout`, {}, {
+            headers: { 'Authorization': `Bearer ${token}` }
+          });
+          toast({
+            title: 'User Logged Out',
+            description: res.data.message || `Session invalidated for ${targetUser.name}.`,
+            status: 'success',
+            duration: 3500,
+            isClosable: true
+          });
+        } catch (error) {
+          toast({
+            title: 'Logout Failed',
+            description: error.response?.data?.message || 'Failed to force logout user.',
+            status: 'error',
+            duration: 4000,
+            isClosable: true
+          });
+        }
+        onClose();
+      }
+    });
+    onOpen();
+  };
+
   const handleDelete = (id) => {
     setConfirmConfig({
       title: 'Delete System User?',
@@ -288,6 +321,18 @@ const UserList = () => {
                             aria-label="reset-credentials"
                           />
                         </Tooltip>
+                        <Tooltip label="Force Logout User" hasArrow>
+                          <IconButton
+                            icon={<LogOut size={16} />}
+                            size="sm"
+                            bg="#ea580c"
+                            color="white"
+                            borderRadius="md"
+                            _hover={{ bg: '#c2410c' }}
+                            onClick={() => handleForceLogout(user)}
+                            aria-label="force-logout"
+                          />
+                        </Tooltip>
                         <Tooltip label="Edit User" hasArrow>
                           <IconButton
                             icon={<Edit3 size={16} />}
@@ -396,19 +441,34 @@ const UserList = () => {
           </ModalBody>
           <ModalFooter bg="#f8faff" borderTop="1px solid #edf2f7" py="3">
             <HStack spacing="3" justify="space-between" w="full">
-              <Button
-                leftIcon={<Key size={15} />}
-                size="sm"
-                bg="#8b5cf6"
-                color="white"
-                _hover={{ bg: '#7c3aed' }}
-                onClick={() => {
-                  onViewClose();
-                  handleOpenResetCredentials(selectedUser);
-                }}
-              >
-                Reset Credentials
-              </Button>
+              <HStack spacing="2">
+                <Button
+                  leftIcon={<Key size={15} />}
+                  size="sm"
+                  bg="#8b5cf6"
+                  color="white"
+                  _hover={{ bg: '#7c3aed' }}
+                  onClick={() => {
+                    onViewClose();
+                    handleOpenResetCredentials(selectedUser);
+                  }}
+                >
+                  Reset Credentials
+                </Button>
+                <Button
+                  leftIcon={<LogOut size={15} />}
+                  size="sm"
+                  bg="#ea580c"
+                  color="white"
+                  _hover={{ bg: '#c2410c' }}
+                  onClick={() => {
+                    onViewClose();
+                    handleForceLogout(selectedUser);
+                  }}
+                >
+                  Logout User
+                </Button>
+              </HStack>
               <Button size="sm" variant="ghost" onClick={onViewClose}>Close</Button>
             </HStack>
           </ModalFooter>

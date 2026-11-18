@@ -2,11 +2,12 @@ import React, { useState, useEffect, useMemo } from 'react';
 import {
   Box, Flex, Text, HStack, VStack, Icon, Spinner, useToast, Grid, Badge, Table, Thead, Tbody, Tr, Th, Td, Tabs, TabList, TabPanels, Tab, TabPanel, Button, IconButton, Divider, Input, useDisclosure, Modal, ModalOverlay, ModalContent, ModalHeader, ModalFooter, ModalBody, ModalCloseButton, Textarea, Switch, FormControl, FormLabel, SimpleGrid, Select
 } from '@chakra-ui/react';
-import { Briefcase, Users, CreditCard, Award, Calendar, CheckCircle, Clock, MapPin, Building, ArrowLeft, Phone, Mail, MoreVertical, LayoutDashboard, Ban, Trash2, Plus, Copy, Check, Sparkles, Eye, EyeOff, ShieldCheck, Zap, Edit3 } from 'lucide-react';
+import { Briefcase, Users, CreditCard, Award, Calendar, CheckCircle, Clock, MapPin, Building, ArrowLeft, Phone, Mail, MoreVertical, LayoutDashboard, Ban, Trash2, Plus, Copy, Check, Sparkles, Eye, EyeOff, ShieldCheck, Zap, Edit3, LogOut } from 'lucide-react';
 import { useParams, useNavigate, useLocation } from 'react-router-dom';
 import axios from 'axios';
 import API_BASE_URL from '../apiConfig';
 import PageContentLoader from '../components/PageContentLoader';
+import { ConfirmationModal } from '../components/ui';
 
 const BRAND = '#2D2B75';
 const ACCENT = '#ED1C24';
@@ -102,6 +103,7 @@ const CustomerDashboard = () => {
 
   // Edit/Collect Payment Modal state
   const { isOpen: isEditSubOpen, onOpen: onEditSubOpen, onClose: onEditSubClose } = useDisclosure();
+  const { isOpen: isLogoutOpen, onOpen: onLogoutOpen, onClose: onLogoutClose } = useDisclosure();
   const [selectedSubForEdit, setSelectedSubForEdit] = useState(null);
   const [editSubForm, setEditSubForm] = useState({
     newPaymentAmount: '',
@@ -173,6 +175,31 @@ const CustomerDashboard = () => {
     } finally {
       setIsLoading(false);
     }
+  };
+
+  const handleConfirmLogout = async () => {
+    try {
+      const token = localStorage.getItem('adminToken');
+      const response = await axios.post(`${API_BASE_URL}/customers/${id}/logout`, {}, {
+        headers: { Authorization: `Bearer ${token}` }
+      });
+      toast({
+        title: 'Customer Logged Out',
+        description: response.data?.message || 'Active session terminated on all devices.',
+        status: 'success',
+        duration: 3500,
+        position: 'top-right'
+      });
+    } catch (error) {
+      toast({
+        title: 'Logout Failed',
+        description: error.response?.data?.message || 'Failed to logout customer.',
+        status: 'error',
+        duration: 4000,
+        position: 'top-right'
+      });
+    }
+    onLogoutClose();
   };
 
   const handleAddNote = async () => {
@@ -629,6 +656,19 @@ const CustomerDashboard = () => {
             boxShadow="0 2px 8px rgba(124, 58, 237, 0.25)"
           >
             + Create Custom Package
+          </Button>
+          <Button
+            leftIcon={<LogOut size={16} />}
+            bg="#fff1f2"
+            color="#e11d48"
+            border="1px solid #fecdd3"
+            _hover={{ bg: '#ffe4e6' }}
+            size="sm"
+            borderRadius="lg"
+            fontWeight="700"
+            onClick={onLogoutOpen}
+          >
+            Force Logout
           </Button>
           <Button leftIcon={<ArrowLeft size={16} />} variant="outline" size="sm" onClick={() => navigate('/customers/list')} borderRadius="lg" bg="white">
             Back to Client List
@@ -2373,6 +2413,17 @@ const CustomerDashboard = () => {
           </ModalFooter>
         </ModalContent>
       </Modal>
+
+      <ConfirmationModal
+        isOpen={isLogoutOpen}
+        onClose={onLogoutClose}
+        onConfirm={handleConfirmLogout}
+        title="Force Logout Customer?"
+        description={`Are you sure you want to log out "${customer?.name || 'this customer'}"? Their active session will be terminated immediately on all devices.`}
+        confirmLabel="Logout User"
+        type="danger"
+        confirmColor="#ea580c"
+      />
 
     </Box>
   );
