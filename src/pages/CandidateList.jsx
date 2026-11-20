@@ -31,6 +31,21 @@ const CandidateList = () => {
   const [statusFilter, setStatusFilter] = useState('');
   const [leadManagerFilter, setLeadManagerFilter] = useState('');
 
+  // Filters State
+  const [kycFilter, setKycFilter] = useState('');
+  const [categoryFilter, setCategoryFilter] = useState('');
+  const [positionFilter, setPositionFilter] = useState('');
+  const [stateFilter, setStateFilter] = useState('');
+  const [cityFilter, setCityFilter] = useState('');
+
+  // Master Data State for Filters
+  const [masterJobCategories, setMasterJobCategories] = useState([]);
+  const [masterJobPositions, setMasterJobPositions] = useState([]);
+  const [masterStates, setMasterStates] = useState([]);
+  const [masterCities, setMasterCities] = useState([]);
+  const [stateCities, setStateCities] = useState([]);
+  const [masterKycStatuses, setMasterKycStatuses] = useState([]);
+
   // Admin role detection
   const adminData = JSON.parse(localStorage.getItem('adminData') || '{}');
   const roleName = (adminData?.role?.name || '').toLowerCase();
@@ -158,21 +173,6 @@ const CandidateList = () => {
     setSelectedLeadManager(found ? found._id : val);
     setIsAssignModalOpen(true);
   };
-
-  // Filters State
-  const [kycFilter, setKycFilter] = useState('');
-  const [categoryFilter, setCategoryFilter] = useState('');
-  const [positionFilter, setPositionFilter] = useState('');
-  const [stateFilter, setStateFilter] = useState('');
-  const [cityFilter, setCityFilter] = useState('');
-
-  // Master Data State for Filters
-  const [masterJobCategories, setMasterJobCategories] = useState([]);
-  const [masterJobPositions, setMasterJobPositions] = useState([]);
-  const [masterStates, setMasterStates] = useState([]);
-  const [masterCities, setMasterCities] = useState([]);
-  const [stateCities, setStateCities] = useState([]);
-  const [masterKycStatuses, setMasterKycStatuses] = useState([]);
 
   useEffect(() => {
     const fetchMasters = async () => {
