@@ -471,6 +471,105 @@ const AddJob = () => {
   // ==========================================
   // 3. DAILY STAFF STATE
   // ==========================================
+  const todayDateStr = new Date().toISOString().split('T')[0];
+  const [dailyStartDate, setDailyStartDate] = useState(todayDateStr);
+  const [dailyEndDate, setDailyEndDate] = useState(todayDateStr);
+  const [dailyTotalDays, setDailyTotalDays] = useState(1);
+  const [dailyShiftPreset, setDailyShiftPreset] = useState('10:00 AM – 06:00 PM (8 Hours)');
+  const [dailyStartTime, setDailyStartTime] = useState('10:00 AM');
+  const [dailyEndTime, setDailyEndTime] = useState('06:00 PM');
+
+  const addDaysToDate = (dateStr, daysToAdd) => {
+    if (!dateStr) return '';
+    try {
+      const parts = dateStr.split('-');
+      if (parts.length !== 3) return dateStr;
+      const d = new Date(parseInt(parts[0], 10), parseInt(parts[1], 10) - 1, parseInt(parts[2], 10));
+      d.setDate(d.getDate() + (Math.max(1, parseInt(daysToAdd, 10) || 1) - 1));
+      const year = d.getFullYear();
+      const month = String(d.getMonth() + 1).padStart(2, '0');
+      const day = String(d.getDate()).padStart(2, '0');
+      return `${year}-${month}-${day}`;
+    } catch {
+      return dateStr;
+    }
+  };
+
+  const calculateDaysBetween = (startStr, endStr) => {
+    if (!startStr || !endStr) return 1;
+    try {
+      const s = new Date(startStr);
+      const e = new Date(endStr);
+      if (isNaN(s.getTime()) || isNaN(e.getTime())) return 1;
+      const diffTime = e.getTime() - s.getTime();
+      const diffDays = Math.round(diffTime / (1000 * 60 * 60 * 24)) + 1;
+      return diffDays > 0 ? diffDays : 1;
+    } catch {
+      return 1;
+    }
+  };
+
+  const handleDailyStartDateChange = (newStartDate) => {
+    setDailyStartDate(newStartDate);
+    const newEnd = addDaysToDate(newStartDate, dailyTotalDays);
+    setDailyEndDate(newEnd);
+    setDailyStaffList(prev => prev.map(s => {
+      const rowDays = parseInt(s.days, 10) || dailyTotalDays;
+      return {
+        ...s,
+        startDate: newStartDate,
+        endDate: addDaysToDate(newStartDate, rowDays)
+      };
+    }));
+  };
+
+  const handleDailyEndDateChange = (newEndDate) => {
+    setDailyEndDate(newEndDate);
+    const newDays = calculateDaysBetween(dailyStartDate, newEndDate);
+    setDailyTotalDays(newDays);
+    setDailyStaffList(prev => prev.map(s => ({
+      ...s,
+      endDate: newEndDate,
+      days: newDays
+    })));
+  };
+
+  const handleDailyTotalDaysChange = (newDays) => {
+    const clamped = Math.max(1, parseInt(newDays, 10) || 1);
+    setDailyTotalDays(clamped);
+    const newEnd = addDaysToDate(dailyStartDate, clamped);
+    setDailyEndDate(newEnd);
+    setDailyStaffList(prev => prev.map(s => ({
+      ...s,
+      days: clamped,
+      endDate: newEnd
+    })));
+  };
+
+  const handleDailyShiftPresetChange = (preset) => {
+    setDailyShiftPreset(preset);
+    let sTime = dailyStartTime;
+    let eTime = dailyEndTime;
+    if (preset === '10:00 AM – 06:00 PM (8 Hours)') {
+      sTime = '10:00 AM'; eTime = '06:00 PM';
+    } else if (preset === '09:00 AM – 05:00 PM (8 Hours)') {
+      sTime = '09:00 AM'; eTime = '05:00 PM';
+    } else if (preset === '12:00 PM – 08:00 PM (8 Hours)') {
+      sTime = '12:00 PM'; eTime = '08:00 PM';
+    } else if (preset === '02:00 PM – 10:00 PM (8 Hours)') {
+      sTime = '02:00 PM'; eTime = '10:00 PM';
+    } else if (preset === '07:00 PM – 11:00 PM (4 Hours)') {
+      sTime = '07:00 PM'; eTime = '11:00 PM';
+    }
+    setDailyStartTime(sTime);
+    setDailyEndTime(eTime);
+    setDailyStaffList(prev => prev.map(s => ({
+      ...s,
+      startTime: sTime,
+      endTime: eTime
+    })));
+  };
+
   const [dailyHiringPurpose, setDailyHiringPurpose] = useState('commercial');
   const [dailyStaffList, setDailyStaffList] = useState([
     {
@@ -481,9 +580,10 @@ const AddJob = () => {
       genderPref: 'Any Gender',
       count: 1,
       days: 1,
-      startDate: new Date().toISOString().split('T')[0],
+      startDate: todayDateStr,
+      endDate: todayDateStr,
       startTime: '10:00 AM',
-      endTime: '08:00 PM'
+      endTime: '06:00 PM'
     }
   ]);
   const [dailyCouponInput, setDailyCouponInput] = useState('');
@@ -1386,12 +1486,41 @@ const AddJob = () => {
         payload.set('leavePerMonth', dLeave);
         payload.set('travelCharges', dFare === 'Custom' ? dFareCustomVal : dFare);
       } else if (serviceType === 'daily') {
+        const startDates = dailyStaffList.map(s => s.startDate).filter(Boolean).sort();
+        const earliestStartDate = startDates.length > 0 ? startDates[0] : dailyStartDate;
+        const endDates = dailyStaffList.map(s => s.endDate).filter(Boolean).sort();
+        const latestEndDate = endDates.length > 0 ? endDates[endDates.length - 1] : (dailyEndDate || earliestStartDate);
+        const timingStr = `${dailyStartTime} – ${dailyEndTime}`;
+
         payload.set('dailyHiringPurpose', dailyHiringPurpose);
+        payload.set('hiringPurpose', dailyHiringPurpose);
         payload.set('category', 'daily');
+        payload.set('jobCategory', 'daily');
+        payload.set('bookingType', 'daily');
+        payload.set('hiringType', 'Daily Basis Staff');
         payload.set('jobPosition', dailyStaffList[0]?.role || 'Chef / Main Cook');
         const totalCount = dailyStaffList.reduce((acc, s) => acc + (parseInt(s.count, 10) || 1), 0);
         payload.set('packageOrGuestOrVacancy', totalCount.toString());
-        payload.set('staffRequirements', JSON.stringify(dailyStaffList));
+        payload.set('startDate', earliestStartDate);
+        payload.set('endDate', latestEndDate);
+        payload.set('dateOfEvent', earliestStartDate);
+        payload.set('noOfDays', dailyTotalDays.toString());
+        payload.set('timing', timingStr);
+        payload.set('workingHours', timingStr);
+        payload.set('shiftTime', timingStr);
+        payload.set('timeSlot', timingStr);
+
+        const enrichedStaffList = dailyStaffList.map(s => ({
+          ...s,
+          startDate: s.startDate || earliestStartDate,
+          endDate: s.endDate || latestEndDate,
+          days: parseInt(s.days, 10) || dailyTotalDays,
+          startTime: s.startTime || dailyStartTime,
+          endTime: s.endTime || dailyEndTime,
+          timing: `${s.startTime || dailyStartTime} – ${s.endTime || dailyEndTime}`,
+          workingHours: `${s.startTime || dailyStartTime} – ${s.endTime || dailyEndTime}`
+        }));
+        payload.set('staffRequirements', JSON.stringify(enrichedStaffList));
         payload.set('appliedCoupon', dailyAppliedCoupon || '');
         payload.set('pricing', JSON.stringify({
           staffCost: dailyTotals.staffCost,
@@ -2317,6 +2446,144 @@ const AddJob = () => {
                   </SimpleGrid>
                 </Box>
 
+                {/* Booking Schedule & Shift Timings */}
+                <Box p="4" bg="white" border="1.5px solid #10b981" borderRadius="xl" boxShadow="sm">
+                  <Flex justify="space-between" align="center" mb="3.5" flexWrap="wrap" gap="2">
+                    <HStack spacing="2.5">
+                      <Flex w="34px" h="34px" borderRadius="lg" bg="#d1fae5" color="#059669" align="center" justify="center">
+                        <Calendar size={18} />
+                      </Flex>
+                      <Box>
+                        <Text fontWeight="800" fontSize="sm" color="#0f172a">
+                          Booking Schedule & Duty Timings *
+                        </Text>
+                        <Text fontSize="xs" color="#64748b">
+                          Select the booking start & end dates and standard shift duty timings
+                        </Text>
+                      </Box>
+                    </HStack>
+                    <HStack spacing="2">
+                      <Badge colorScheme="green" px="3" py="1.5" borderRadius="md" fontSize="xs" fontWeight="700">
+                        📅 {dailyStartDate} to {dailyEndDate} ({dailyTotalDays} {dailyTotalDays > 1 ? 'Days' : 'Day'})
+                      </Badge>
+                      <Badge colorScheme="blue" px="3" py="1.5" borderRadius="md" fontSize="xs" fontWeight="700">
+                        ⏰ {dailyStartTime} – {dailyEndTime}
+                      </Badge>
+                    </HStack>
+                  </Flex>
+
+                  <SimpleGrid columns={{ base: 1, sm: 2, md: 4 }} spacing="3.5">
+                    <Box>
+                      <FormLabel {...formLabelStyle}>BOOKING START DATE *</FormLabel>
+                      <Input
+                        type="date"
+                        size="sm"
+                        h="38px"
+                        borderRadius="md"
+                        value={dailyStartDate}
+                        onChange={(e) => handleDailyStartDateChange(e.target.value)}
+                      />
+                    </Box>
+
+                    <Box>
+                      <FormLabel {...formLabelStyle}>BOOKING END DATE *</FormLabel>
+                      <Input
+                        type="date"
+                        size="sm"
+                        h="38px"
+                        borderRadius="md"
+                        min={dailyStartDate}
+                        value={dailyEndDate}
+                        onChange={(e) => handleDailyEndDateChange(e.target.value)}
+                      />
+                    </Box>
+
+                    <Box>
+                      <FormLabel {...formLabelStyle}>TOTAL DURATION (DAYS) *</FormLabel>
+                      <HStack spacing="1">
+                        <IconButton
+                          size="sm"
+                          h="38px"
+                          icon={<Minus size={14} />}
+                          onClick={() => handleDailyTotalDaysChange(Math.max(1, dailyTotalDays - 1))}
+                          aria-label="Decrease days"
+                        />
+                        <Input
+                          type="number"
+                          size="sm"
+                          h="38px"
+                          min="1"
+                          textAlign="center"
+                          fontWeight="700"
+                          value={dailyTotalDays}
+                          onChange={(e) => handleDailyTotalDaysChange(parseInt(e.target.value, 10) || 1)}
+                        />
+                        <IconButton
+                          size="sm"
+                          h="38px"
+                          icon={<Plus size={14} />}
+                          onClick={() => handleDailyTotalDaysChange(dailyTotalDays + 1)}
+                          aria-label="Increase days"
+                        />
+                      </HStack>
+                    </Box>
+
+                    <Box>
+                      <FormLabel {...formLabelStyle}>SHIFT / DUTY TIMING *</FormLabel>
+                      <Select
+                        size="sm"
+                        h="38px"
+                        borderRadius="md"
+                        value={dailyShiftPreset}
+                        onChange={(e) => handleDailyShiftPresetChange(e.target.value)}
+                      >
+                        <option value="10:00 AM – 06:00 PM (8 Hours)">10:00 AM – 06:00 PM (8 Hrs Day Shift)</option>
+                        <option value="09:00 AM – 05:00 PM (8 Hours)">09:00 AM – 05:00 PM (8 Hrs Morning Shift)</option>
+                        <option value="12:00 PM – 08:00 PM (8 Hours)">12:00 PM – 08:00 PM (8 Hrs Mid Shift)</option>
+                        <option value="02:00 PM – 10:00 PM (8 Hours)">02:00 PM – 10:00 PM (8 Hrs Evening Shift)</option>
+                        <option value="07:00 PM – 11:00 PM (4 Hours)">07:00 PM – 11:00 PM (4 Hrs Event Shift)</option>
+                        <option value="Custom">Custom Working Hours</option>
+                      </Select>
+                    </Box>
+                  </SimpleGrid>
+
+                  {/* Custom Time Picker if selected */}
+                  {dailyShiftPreset === 'Custom' && (
+                    <HStack spacing="3" mt="3" p="3" bg="#f0fdf4" borderRadius="md" border="1px dashed #86efac">
+                      <Box flex="1">
+                        <FormLabel fontSize="10px" fontWeight="700" color="#166534" mb="1">Custom Start Time</FormLabel>
+                        <Input
+                          size="sm"
+                          h="34px"
+                          bg="white"
+                          placeholder="e.g. 10:00 AM"
+                          value={dailyStartTime}
+                          onChange={(e) => {
+                            const val = e.target.value;
+                            setDailyStartTime(val);
+                            setDailyStaffList(prev => prev.map(s => ({ ...s, startTime: val })));
+                          }}
+                        />
+                      </Box>
+                      <Box flex="1">
+                        <FormLabel fontSize="10px" fontWeight="700" color="#166534" mb="1">Custom End Time</FormLabel>
+                        <Input
+                          size="sm"
+                          h="34px"
+                          bg="white"
+                          placeholder="e.g. 06:00 PM"
+                          value={dailyEndTime}
+                          onChange={(e) => {
+                            const val = e.target.value;
+                            setDailyEndTime(val);
+                            setDailyStaffList(prev => prev.map(s => ({ ...s, endTime: val })));
+                          }}
+                        />
+                      </Box>
+                    </HStack>
+                  )}
+                </Box>
+
                 {/* Daily Staff List */}
                 <Box p="4" bg="#f8fafc" border="1.5px solid #e2e8f0" borderRadius="xl">
                   <Flex justify="space-between" align="center" mb="3" flexWrap="wrap" gap="2">
@@ -2344,10 +2611,11 @@ const AddJob = () => {
                             ratePerDay: 1499,
                             genderPref: 'Any Gender',
                             count: 1,
-                            days: 1,
-                            startDate: new Date().toISOString().split('T')[0],
-                            startTime: '10:00 AM',
-                            endTime: '08:00 PM'
+                            days: dailyTotalDays,
+                            startDate: dailyStartDate,
+                            endDate: dailyEndDate,
+                            startTime: dailyStartTime,
+                            endTime: dailyEndTime
                           }
                         ]);
                       }}
@@ -2380,10 +2648,11 @@ const AddJob = () => {
                                 ratePerDay: preset.rate,
                                 genderPref: 'Any Gender',
                                 count: 1,
-                                days: 1,
-                                startDate: new Date().toISOString().split('T')[0],
-                                startTime: '10:00 AM',
-                                endTime: '08:00 PM'
+                                days: dailyTotalDays,
+                                startDate: dailyStartDate,
+                                endDate: dailyEndDate,
+                                startTime: dailyStartTime,
+                                endTime: dailyEndTime
                               }
                             ]);
                           }}
@@ -2398,130 +2667,254 @@ const AddJob = () => {
                   {/* Staff List Rows */}
                   <VStack spacing="3" align="stretch">
                     {dailyStaffList.map((item, idx) => (
-                      <Flex
+                      <Box
                         key={item.id}
-                        p="3"
+                        p="3.5"
                         bg="white"
                         border="1px solid #e2e8f0"
                         borderRadius="lg"
-                        gap="3"
-                        align="center"
-                        flexWrap="wrap"
+                        boxShadow="xs"
                       >
-                        <Box minW="160px" flex="1.5">
-                          <FormLabel fontSize="11px" fontWeight="700" color="#64748b" mb="1">Staff Role</FormLabel>
-                          <Select
+                        <Flex
+                          gap="3"
+                          align="center"
+                          flexWrap="wrap"
+                        >
+                          <Box minW="160px" flex="1.5">
+                            <FormLabel fontSize="11px" fontWeight="700" color="#64748b" mb="1">Staff Role</FormLabel>
+                            <Select
+                              size="sm"
+                              h="36px"
+                              value={item.role}
+                              onChange={(e) => {
+                                const roles = masterStates.dailyRoles && masterStates.dailyRoles.length > 0 ? masterStates.dailyRoles : dailyRolesList;
+                                const match = roles.find(r => r.role === e.target.value);
+                                setDailyStaffList(prev => prev.map(s => s.id === item.id ? { ...s, role: e.target.value, ratePerDay: match?.rate || s.ratePerDay } : s));
+                              }}
+                            >
+                              {Array.from(new Set([
+                                item.role,
+                                ...(masterStates.dailyRoles && masterStates.dailyRoles.length > 0 ? masterStates.dailyRoles.map(r => r.role) : dailyRolesList.map(r => r.role)),
+                                ...(masterStates.jobPositions || [])
+                              ])).map(role => (
+                                <option key={role} value={role}>{role}</option>
+                              ))}
+                            </Select>
+                          </Box>
+
+                          <Box minW="110px" flex="1">
+                            <FormLabel fontSize="11px" fontWeight="700" color="#64748b" mb="1">Rate/Day (₹)</FormLabel>
+                            <Input
+                              size="sm"
+                              h="36px"
+                              type="number"
+                              value={item.ratePerDay}
+                              onChange={(e) => setDailyStaffList(prev => prev.map(s => s.id === item.id ? { ...s, ratePerDay: parseInt(e.target.value, 10) || 0 } : s))}
+                            />
+                          </Box>
+
+                          <Box minW="110px" flex="1">
+                            <FormLabel fontSize="11px" fontWeight="700" color="#64748b" mb="1">Gender</FormLabel>
+                            <Select
+                              size="sm"
+                              h="36px"
+                              value={item.genderPref}
+                              onChange={(e) => setDailyStaffList(prev => prev.map(s => s.id === item.id ? { ...s, genderPref: e.target.value } : s))}
+                            >
+                              {(masterStates.genderPreferences && masterStates.genderPreferences.length > 0
+                                ? masterStates.genderPreferences
+                                : ['Any Gender', 'Male', 'Female']).map(g => (
+                                <option key={g} value={g}>{g}</option>
+                              ))}
+                            </Select>
+                          </Box>
+
+                          <Box w="100px">
+                            <FormLabel fontSize="11px" fontWeight="700" color="#64748b" mb="1">Staff Count</FormLabel>
+                            <HStack spacing="1">
+                              <IconButton
+                                size="xs"
+                                icon={<Minus size={12} />}
+                                onClick={() => setDailyStaffList(prev => prev.map(s => s.id === item.id ? { ...s, count: Math.max(1, s.count - 1) } : s))}
+                              />
+                              <Input
+                                size="sm"
+                                h="36px"
+                                textAlign="center"
+                                type="number"
+                                min="1"
+                                value={item.count}
+                                onChange={(e) => setDailyStaffList(prev => prev.map(s => s.id === item.id ? { ...s, count: parseInt(e.target.value, 10) || 1 } : s))}
+                              />
+                              <IconButton
+                                size="xs"
+                                icon={<Plus size={12} />}
+                                onClick={() => setDailyStaffList(prev => prev.map(s => s.id === item.id ? { ...s, count: s.count + 1 } : s))}
+                              />
+                            </HStack>
+                          </Box>
+
+                          <Box w="100px">
+                            <FormLabel fontSize="11px" fontWeight="700" color="#64748b" mb="1">Days</FormLabel>
+                            <HStack spacing="1">
+                              <IconButton
+                                size="xs"
+                                icon={<Minus size={12} />}
+                                onClick={() => {
+                                  setDailyStaffList(prev => prev.map(s => {
+                                    if (s.id !== item.id) return s;
+                                    const nextDays = Math.max(1, s.days - 1);
+                                    return {
+                                      ...s,
+                                      days: nextDays,
+                                      endDate: addDaysToDate(s.startDate || dailyStartDate, nextDays)
+                                    };
+                                  }));
+                                }}
+                              />
+                              <Input
+                                size="sm"
+                                h="36px"
+                                textAlign="center"
+                                type="number"
+                                min="1"
+                                value={item.days}
+                                onChange={(e) => {
+                                  const nextDays = Math.max(1, parseInt(e.target.value, 10) || 1);
+                                  setDailyStaffList(prev => prev.map(s => {
+                                    if (s.id !== item.id) return s;
+                                    return {
+                                      ...s,
+                                      days: nextDays,
+                                      endDate: addDaysToDate(s.startDate || dailyStartDate, nextDays)
+                                    };
+                                  }));
+                                }}
+                              />
+                              <IconButton
+                                size="xs"
+                                icon={<Plus size={12} />}
+                                onClick={() => {
+                                  setDailyStaffList(prev => prev.map(s => {
+                                    if (s.id !== item.id) return s;
+                                    const nextDays = s.days + 1;
+                                    return {
+                                      ...s,
+                                      days: nextDays,
+                                      endDate: addDaysToDate(s.startDate || dailyStartDate, nextDays)
+                                    };
+                                  }));
+                                }}
+                              />
+                            </HStack>
+                          </Box>
+
+                          <IconButton
+                            type="button"
                             size="sm"
-                            h="36px"
-                            value={item.role}
-                            onChange={(e) => {
-                              const roles = masterStates.dailyRoles && masterStates.dailyRoles.length > 0 ? masterStates.dailyRoles : dailyRolesList;
-                              const match = roles.find(r => r.role === e.target.value);
-                              setDailyStaffList(prev => prev.map(s => s.id === item.id ? { ...s, role: e.target.value, ratePerDay: match?.rate || s.ratePerDay } : s));
+                            mt="4"
+                            variant="ghost"
+                            colorScheme="red"
+                            icon={<Trash2 size={16} />}
+                            onClick={(e) => {
+                              e.preventDefault();
+                              e.stopPropagation();
+                              setDailyStaffList(prev => prev.length > 1 ? prev.filter((s, sIdx) => s.id ? s.id !== item.id : sIdx !== idx) : prev);
                             }}
-                          >
-                            {Array.from(new Set([
-                              item.role,
-                              ...(masterStates.dailyRoles && masterStates.dailyRoles.length > 0 ? masterStates.dailyRoles.map(r => r.role) : dailyRolesList.map(r => r.role)),
-                              ...(masterStates.jobPositions || [])
-                            ])).map(role => (
-                              <option key={role} value={role}>{role}</option>
-                            ))}
-                          </Select>
-                        </Box>
-
-                        <Box minW="110px" flex="1">
-                          <FormLabel fontSize="11px" fontWeight="700" color="#64748b" mb="1">Rate/Day (₹)</FormLabel>
-                          <Input
-                            size="sm"
-                            h="36px"
-                            type="number"
-                            value={item.ratePerDay}
-                            onChange={(e) => setDailyStaffList(prev => prev.map(s => s.id === item.id ? { ...s, ratePerDay: parseInt(e.target.value, 10) || 0 } : s))}
+                            aria-label="Remove staff"
                           />
-                        </Box>
+                        </Flex>
 
-                        <Box minW="110px" flex="1">
-                          <FormLabel fontSize="11px" fontWeight="700" color="#64748b" mb="1">Gender</FormLabel>
-                          <Select
-                            size="sm"
-                            h="36px"
-                            value={item.genderPref}
-                            onChange={(e) => setDailyStaffList(prev => prev.map(s => s.id === item.id ? { ...s, genderPref: e.target.value } : s))}
-                          >
-                            {(masterStates.genderPreferences && masterStates.genderPreferences.length > 0
-                              ? masterStates.genderPreferences
-                              : ['Any Gender', 'Male', 'Female']).map(g => (
-                              <option key={g} value={g}>{g}</option>
-                            ))}
-                          </Select>
-                        </Box>
-
-                        <Box w="100px">
-                          <FormLabel fontSize="11px" fontWeight="700" color="#64748b" mb="1">Staff Count</FormLabel>
-                          <HStack spacing="1">
-                            <IconButton
-                              size="xs"
-                              icon={<Minus size={12} />}
-                              onClick={() => setDailyStaffList(prev => prev.map(s => s.id === item.id ? { ...s, count: Math.max(1, s.count - 1) } : s))}
-                            />
+                        {/* Staff Specific Dates & Duty Timing Row */}
+                        <Flex
+                          mt="2.5"
+                          pt="2.5"
+                          borderTop="1px dashed #e2e8f0"
+                          gap="3"
+                          align="center"
+                          flexWrap="wrap"
+                          fontSize="xs"
+                          color="#475569"
+                        >
+                          <HStack spacing="2" flex="1" minW="270px">
+                            <Text fontWeight="700" color="#64748b" fontSize="11px">Dates:</Text>
                             <Input
-                              size="sm"
-                              h="36px"
-                              textAlign="center"
-                              type="number"
-                              min="1"
-                              value={item.count}
-                              onChange={(e) => setDailyStaffList(prev => prev.map(s => s.id === item.id ? { ...s, count: parseInt(e.target.value, 10) || 1 } : s))}
-                            />
-                            <IconButton
+                              type="date"
                               size="xs"
-                              icon={<Plus size={12} />}
-                              onClick={() => setDailyStaffList(prev => prev.map(s => s.id === item.id ? { ...s, count: s.count + 1 } : s))}
+                              h="28px"
+                              w="130px"
+                              borderRadius="md"
+                              value={item.startDate || dailyStartDate}
+                              onChange={(e) => {
+                                const newS = e.target.value;
+                                setDailyStaffList(prev => prev.map(s => {
+                                  if (s.id !== item.id) return s;
+                                  return {
+                                    ...s,
+                                    startDate: newS,
+                                    endDate: addDaysToDate(newS, s.days || 1)
+                                  };
+                                }));
+                              }}
+                            />
+                            <Text color="#94a3b8">to</Text>
+                            <Input
+                              type="date"
+                              size="xs"
+                              h="28px"
+                              w="130px"
+                              borderRadius="md"
+                              min={item.startDate || dailyStartDate}
+                              value={item.endDate || dailyEndDate}
+                              onChange={(e) => {
+                                const newE = e.target.value;
+                                setDailyStaffList(prev => prev.map(s => {
+                                  if (s.id !== item.id) return s;
+                                  const d = calculateDaysBetween(s.startDate || dailyStartDate, newE);
+                                  return {
+                                    ...s,
+                                    endDate: newE,
+                                    days: d
+                                  };
+                                }));
+                              }}
                             />
                           </HStack>
-                        </Box>
 
-                        <Box w="100px">
-                          <FormLabel fontSize="11px" fontWeight="700" color="#64748b" mb="1">Days</FormLabel>
-                          <HStack spacing="1">
-                            <IconButton
-                              size="xs"
-                              icon={<Minus size={12} />}
-                              onClick={() => setDailyStaffList(prev => prev.map(s => s.id === item.id ? { ...s, days: Math.max(1, s.days - 1) } : s))}
-                            />
+                          <HStack spacing="2" minW="230px">
+                            <Text fontWeight="700" color="#64748b" fontSize="11px">Shift Hours:</Text>
                             <Input
-                              size="sm"
-                              h="36px"
-                              textAlign="center"
-                              type="number"
-                              min="1"
-                              value={item.days}
-                              onChange={(e) => setDailyStaffList(prev => prev.map(s => s.id === item.id ? { ...s, days: parseInt(e.target.value, 10) || 1 } : s))}
-                            />
-                            <IconButton
                               size="xs"
-                              icon={<Plus size={12} />}
-                              onClick={() => setDailyStaffList(prev => prev.map(s => s.id === item.id ? { ...s, days: s.days + 1 } : s))}
+                              h="28px"
+                              w="95px"
+                              borderRadius="md"
+                              value={item.startTime || dailyStartTime}
+                              placeholder="10:00 AM"
+                              onChange={(e) => {
+                                const val = e.target.value;
+                                setDailyStaffList(prev => prev.map(s => s.id === item.id ? { ...s, startTime: val } : s));
+                              }}
+                            />
+                            <Text color="#94a3b8">–</Text>
+                            <Input
+                              size="xs"
+                              h="28px"
+                              w="95px"
+                              borderRadius="md"
+                              value={item.endTime || dailyEndTime}
+                              placeholder="06:00 PM"
+                              onChange={(e) => {
+                                const val = e.target.value;
+                                setDailyStaffList(prev => prev.map(s => s.id === item.id ? { ...s, endTime: val } : s));
+                              }}
                             />
                           </HStack>
-                        </Box>
 
-                        <IconButton
-                          type="button"
-                          size="sm"
-                          mt="4"
-                          variant="ghost"
-                          colorScheme="red"
-                          icon={<Trash2 size={16} />}
-                          onClick={(e) => {
-                            e.preventDefault();
-                            e.stopPropagation();
-                            setDailyStaffList(prev => prev.length > 1 ? prev.filter((s, sIdx) => s.id ? s.id !== item.id : sIdx !== idx) : prev);
-                          }}
-                          aria-label="Remove staff"
-                        />
-                      </Flex>
+                          <Badge ml="auto" colorScheme="green" px="2.5" py="1" borderRadius="md" fontSize="xs" fontWeight="700">
+                            Total: ₹{((item.ratePerDay || 0) * (item.count || 1) * (item.days || 1)).toLocaleString('en-IN')}
+                          </Badge>
+                        </Flex>
+                      </Box>
                     ))}
                   </VStack>
                 </Box>
