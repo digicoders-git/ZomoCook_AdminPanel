@@ -57,16 +57,25 @@ const CandidateList = () => {
   const [currentPage, setCurrentPage] = useState(1);
   const [entriesPerPage, setEntriesPerPage] = useState(10);
 
-  const fetchCandidates = async () => {
+  // Debounce search term to prevent rapid network requests while typing
+  const [debouncedSearch, setDebouncedSearch] = useState(searchTerm);
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      setDebouncedSearch(searchTerm);
+    }, 300);
+    return () => clearTimeout(timer);
+  }, [searchTerm]);
+
+  const fetchCandidates = async (searchQuery = debouncedSearch) => {
     setIsLoading(true);
     try {
       const token = localStorage.getItem('adminToken');
       const response = await axios.get(`${API_BASE_URL}/candidates`, {
-        params: { search: searchTerm, profileStatus: statusFilter },
+        params: { search: searchQuery, profileStatus: statusFilter },
         headers: { 'Authorization': `Bearer ${token}` }
       });
       if (response.data.success) {
-        setCandidates(response.data.candidates);
+        setCandidates(response.data.candidates || []);
       }
     } catch (error) {
       toast({ title: 'Error', status: 'error' });
@@ -97,9 +106,14 @@ const CandidateList = () => {
   };
 
   useEffect(() => {
-    fetchCandidates();
+    fetchCandidates(debouncedSearch);
     fetchLeadManagers();
-  }, [searchTerm, statusFilter]);
+  }, [debouncedSearch, statusFilter]);
+
+  // Always reset to page 1 whenever any search or filter criteria changes
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [searchTerm, statusFilter, kycFilter, categoryFilter, positionFilter, stateFilter, cityFilter, leadManagerFilter, entriesPerPage]);
 
   const getLeadManagerName = (candidate) => {
     if (!candidate || !candidate.leadManager) return 'Not Assigned';
@@ -294,15 +308,46 @@ const CandidateList = () => {
       if (!hasMatch) return false;
     }
     if (positionFilter && !(c.jobPreference?.jobPositions || []).some(pos => String(pos).toLowerCase() === positionFilter.toLowerCase())) return false;
-    if (stateFilter && String(c.state || '').toLowerCase() !== stateFilter.toLowerCase()) return false;
-    if (cityFilter && String(c.city || '').toLowerCase() !== cityFilter.toLowerCase()) return false;
+    if (stateFilter) {
+      const sf = stateFilter.trim().toLowerCase();
+      const candState = String(c.state || '').trim().toLowerCase();
+      const candAddress = String(c.address || '').toLowerCase();
+      if (candState !== sf && !candState.includes(sf) && !candAddress.includes(sf)) return false;
+    }
+    if (cityFilter) {
+      const cf = cityFilter.trim().toLowerCase();
+      const candCity = String(c.city || '').trim().toLowerCase();
+      const candPrefCities = (c.jobPreference?.preferredCities || []).map(pc => String(pc).trim().toLowerCase());
+      const candAddress = String(c.address || '').toLowerCase();
+      const isMatch = candCity === cf || candCity.includes(cf) || candPrefCities.includes(cf) || candAddress.includes(cf);
+      if (!isMatch) return false;
+    }
+    if (searchTerm && searchTerm.trim()) {
+      const q = searchTerm.trim().toLowerCase();
+      const matchName = String(c.name || '').toLowerCase().includes(q);
+      const matchPhone = String(c.phone || '').toLowerCase().includes(q);
+      const matchAltPhone = String(c.altPhone || '').toLowerCase().includes(q);
+      const matchEmail = String(c.email || '').toLowerCase().includes(q);
+      const matchCity = String(c.city || '').toLowerCase().includes(q);
+      const matchState = String(c.state || '').toLowerCase().includes(q);
+      const matchAddress = String(c.address || '').toLowerCase().includes(q);
+      const matchPrefCities = (c.jobPreference?.preferredCities || []).some(pc => String(pc).toLowerCase().includes(q));
+      const matchWorkLocations = (c.jobPreference?.workLocations || []).some(wl => String(wl).toLowerCase().includes(q));
+      const matchPositions = (c.jobPreference?.jobPositions || []).some(pos => String(pos).toLowerCase().includes(q));
+      const matchCategories = (c.jobPreference?.jobCategory || []).some(cat => String(cat).toLowerCase().includes(q));
+
+      if (!matchName && !matchPhone && !matchAltPhone && !matchEmail && !matchCity && !matchState && !matchAddress && !matchPrefCities && !matchWorkLocations && !matchPositions && !matchCategories) {
+        return false;
+      }
+    }
     return true;
   });
 
-  const indexOfLastRecord = currentPage * entriesPerPage;
-  const indexOfFirstRecord = indexOfLastRecord - entriesPerPage;
+  const totalPages = Math.max(1, Math.ceil(filteredCandidates.length / entriesPerPage));
+  const safeCurrentPage = Math.min(Math.max(1, currentPage), totalPages);
+  const indexOfLastRecord = safeCurrentPage * entriesPerPage;
+  const indexOfFirstRecord = Math.max(0, indexOfLastRecord - entriesPerPage);
   const currentRecords = filteredCandidates.slice(indexOfFirstRecord, indexOfLastRecord);
-  const totalPages = Math.ceil(filteredCandidates.length / entriesPerPage);
 
   const handleDeleteCandidate = (id) => {
     setConfirmConfig({
@@ -468,9 +513,15 @@ const CandidateList = () => {
             </Select>
             <TableControls
               search={searchTerm}
-              onSearch={setSearchTerm}
+              onSearch={(val) => {
+                setSearchTerm(val);
+                setCurrentPage(1);
+              }}
               entries={entriesPerPage}
-              onEntriesChange={setEntriesPerPage}
+              onEntriesChange={(val) => {
+                setEntriesPerPage(Number(val));
+                setCurrentPage(1);
+              }}
               searchPlaceholder="Search by name, mobile, city..."
             />
           </HStack>
@@ -651,7 +702,13 @@ const CandidateList = () => {
             </Table>
           )}
         </Box>
-        <TableFooter showing={`${indexOfFirstRecord + 1} to ${Math.min(indexOfLastRecord, filteredCandidates.length)}`} total={filteredCandidates.length} onPageChange={setCurrentPage} currentPage={currentPage} totalPages={totalPages} />
+        <TableFooter
+          showing={filteredCandidates.length === 0 ? "0 to 0" : `${indexOfFirstRecord + 1} to ${Math.min(indexOfLastRecord, filteredCandidates.length)}`}
+          total={filteredCandidates.length}
+          onPageChange={setCurrentPage}
+          currentPage={safeCurrentPage}
+          totalPages={totalPages}
+        />
       </TableCard>
 
       <ConfirmationModal
