@@ -10,7 +10,7 @@ import {
 } from '@chakra-ui/react';
 import {
   UtensilsCrossed, Filter, RotateCcw, Clock, Calendar, Eye,
-  UserPlus, MoreVertical, CheckCircle2, Edit3, Trash2, UserCheck, ShieldCheck
+  UserPlus, MoreVertical, CheckCircle2, Edit3, Trash2, UserCheck, ShieldCheck, Send
 } from 'lucide-react';
 import {
   PageHeader, PageFooter, BRAND, TableCard, TableControls
@@ -275,6 +275,48 @@ const PartyChefBookingsList = () => {
       });
     } finally {
       setIsAssigning(false);
+    }
+  };
+
+  // Resend Notification via Backend API
+  const [resendingJobId, setResendingJobId] = useState(null);
+  const handleResendNotification = async (job) => {
+    if (!job?._id) return;
+    setResendingJobId(job._id);
+    try {
+      const response = await axios.post(`${API_BASE_URL}/jobs/${job._id}/resend-notification`, {}, {
+        headers: { 'Authorization': `Bearer ${token}` }
+      });
+      if (response.data.success) {
+        toast({
+          title: 'Notification Sent',
+          description: response.data.message || 'Push notification resent successfully to all cooks.',
+          status: 'success',
+          duration: 3500,
+          position: 'top-right',
+          isClosable: true
+        });
+      } else {
+        toast({
+          title: 'Notification Alert',
+          description: response.data.message || 'Failed to resend notification.',
+          status: 'warning',
+          duration: 3500,
+          position: 'top-right',
+          isClosable: true
+        });
+      }
+    } catch (error) {
+      toast({
+        title: 'Error',
+        description: error.response?.data?.message || 'Failed to resend notification.',
+        status: 'error',
+        duration: 3500,
+        position: 'top-right',
+        isClosable: true
+      });
+    } finally {
+      setResendingJobId(null);
     }
   };
 
@@ -645,6 +687,21 @@ const PartyChefBookingsList = () => {
                               onClick={() => navigate(`/jobs/view/${job._id}`)}
                             >
                               View Order
+                            </MenuItem>
+
+                            {/* Resend Notification to Cooks */}
+                            <MenuItem
+                              icon={<Send size={15} color="#059669" />}
+                              fontSize="xs"
+                              fontWeight="600"
+                              color="#1e293b"
+                              borderRadius="md"
+                              py="2"
+                              _hover={{ bg: '#ecfdf5', color: '#059669' }}
+                              onClick={() => handleResendNotification(job)}
+                              isDisabled={resendingJobId === job._id}
+                            >
+                              {resendingJobId === job._id ? 'Sending...' : 'Resend Notification'}
                             </MenuItem>
 
                             {/* 2. Assign Cook / Staff */}

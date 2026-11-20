@@ -5,7 +5,7 @@ import {
   useDisclosure, SimpleGrid, Modal, ModalOverlay, ModalContent, ModalHeader,
   ModalFooter, ModalBody, ModalCloseButton, Input, Select, FormControl, FormLabel
 } from '@chakra-ui/react';
-import { ArrowLeft, LayoutList, FileText, CheckCircle2, Users, Calendar, Clock, MapPin, Building2, Phone, Mail, UtensilsCrossed, Zap, CreditCard, ShieldCheck, UserPlus, Key, Search, Star } from 'lucide-react';
+import { ArrowLeft, LayoutList, FileText, CheckCircle2, Users, Calendar, Clock, MapPin, Building2, Phone, Mail, UtensilsCrossed, Zap, CreditCard, ShieldCheck, UserPlus, Key, Search, Star, Send } from 'lucide-react';
 import { useParams, useNavigate } from 'react-router-dom';
 import axios from 'axios';
 import { PageHeader, PageFooter, BRAND, ACCENT, thStyle, tdStyle } from '../components/ui';
@@ -38,6 +38,48 @@ const ViewJob = () => {
   const [staffRole, setStaffRole] = useState('Cook');
   const [isAssigningStaff, setIsAssigningStaff] = useState(false);
   const [isLoadingCandidates, setIsLoadingCandidates] = useState(false);
+  const [isResending, setIsResending] = useState(false);
+
+  const handleResendNotification = async () => {
+    if (!job?._id) return;
+    setIsResending(true);
+    try {
+      const token = localStorage.getItem('adminToken');
+      const response = await axios.post(`${API_BASE_URL}/jobs/${job._id}/resend-notification`, {}, {
+        headers: { 'Authorization': `Bearer ${token}` }
+      });
+      if (response.data.success) {
+        toast({
+          title: 'Notification Sent',
+          description: response.data.message || 'Push notification resent successfully to all cooks.',
+          status: 'success',
+          duration: 3500,
+          position: 'top-right',
+          isClosable: true
+        });
+      } else {
+        toast({
+          title: 'Notification Alert',
+          description: response.data.message || 'Failed to resend notification.',
+          status: 'warning',
+          duration: 3500,
+          position: 'top-right',
+          isClosable: true
+        });
+      }
+    } catch (error) {
+      toast({
+        title: 'Error',
+        description: error.response?.data?.message || 'Failed to resend notification.',
+        status: 'error',
+        duration: 3500,
+        position: 'top-right',
+        isClosable: true
+      });
+    } finally {
+      setIsResending(false);
+    }
+  };
 
   const fetchJob = async () => {
     setIsLoading(true);
@@ -232,6 +274,20 @@ const ViewJob = () => {
       <PageHeader
         title={isParty ? "Chef for Party Booking Details" : isDaily ? "Daily Basis Staff Booking Details" : "Job Details"}
         actions={[
+          <Button
+            key="resend"
+            onClick={handleResendNotification}
+            leftIcon={<Send size={15} />}
+            size="sm"
+            bg="#059669"
+            color="white"
+            borderRadius="md"
+            px="4"
+            isLoading={isResending}
+            _hover={{ bg: '#047857' }}
+          >
+            Resend Notification
+          </Button>,
           <Button
             key="back"
             onClick={() => navigate(-1)}
