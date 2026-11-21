@@ -1028,8 +1028,9 @@ const AddJob = () => {
     }
     if (totalGuests === 0) totalGuests = 30;
 
-    const baseChefRate = 1999.0 * (partyDatesList.length || 1);
-    const guestRateTotal = totalGuests * 55.0;
+    const baseChefRate = 0;
+    const perPersonCookingCharge = Number(dailyChargesConfig?.partyCharges?.perPersonCookingCharge) || 65.0;
+    const guestRateTotal = totalGuests * perPersonCookingCharge;
     const perDishRate = Number(dailyChargesConfig?.partyCharges?.perDishCookingCharge) || 250.0;
     const menuItemsTotal = totalDishes * perDishRate;
 
@@ -1039,7 +1040,7 @@ const AddJob = () => {
     if (partyKitchenCleaner) addOnsTotal += 400;
     if (partyWaiterStaff) addOnsTotal += (partyWaiterCount * 600);
 
-    const grossSubtotal = baseChefRate + guestRateTotal + menuItemsTotal + addOnsTotal;
+    const grossSubtotal = guestRateTotal + menuItemsTotal + addOnsTotal;
     let discountAmount = 0;
     if (partyAppliedOffer) {
       if (partyAppliedOffer.discountAmount !== undefined && partyAppliedOffer.discountAmount > 0) {
@@ -3746,11 +3747,6 @@ const AddJob = () => {
                   </Text>
                   <VStack spacing="2" align="stretch" fontSize="xs">
                     <Flex justify="space-between">
-                      <Text color="#475569">Base Chef Fee ({partyDatesList.length} {partyDatesList.length === 1 ? 'Day' : 'Days'})</Text>
-                      <Text fontWeight="bold">₹{partyTotals.baseChefRate.toFixed(0)}</Text>
-                    </Flex>
-
-                    <Flex justify="space-between">
                       <Text color="#475569">Guest &amp; Menu Rate ({partyTotals.totalGuests} Guests • {partyTotals.totalDishes} Dishes)</Text>
                       <Text fontWeight="bold">₹{(partyTotals.guestRateTotal + partyTotals.menuItemsTotal).toFixed(0)}</Text>
                     </Flex>
@@ -4023,7 +4019,6 @@ const AddJob = () => {
               <Box p="4" bg="#f8fafc" border="1px solid #e2e8f0" borderRadius="xl">
                 <Text fontWeight="800" fontSize="xs" color="#1e293b" mb="2" textTransform="uppercase">Billing Estimate</Text>
                 <VStack spacing="1.5" align="stretch" fontSize="xs">
-                  <Flex justify="space-between"><Text color="#64748b">Base Chef Fee ({partyDatesList.length} Days)</Text><Text fontWeight="bold">₹{partyTotals.baseChefRate}</Text></Flex>
                   <Flex justify="space-between"><Text color="#64748b">Guest &amp; Menu Charges</Text><Text fontWeight="bold">₹{partyTotals.guestRateTotal + partyTotals.menuItemsTotal}</Text></Flex>
                   {partyTotals.addOnsTotal > 0 && <Flex justify="space-between"><Text color="#64748b">Add-ons Total</Text><Text fontWeight="bold">₹{partyTotals.addOnsTotal}</Text></Flex>}
                   {partyTotals.discountAmount > 0 && <Flex justify="space-between" color="green.700"><Text fontWeight="bold">Discount ({partyAppliedCoupon})</Text><Text fontWeight="bold">-₹{partyTotals.discountAmount}</Text></Flex>}
