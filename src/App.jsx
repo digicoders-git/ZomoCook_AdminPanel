@@ -215,7 +215,22 @@ const PublicRoute = ({ children }) => {
   return children;
 };
 
-// ─── Axios Interceptor: auto-logout on 401 ───────────────────────────────────
+// ─── Axios Request Interceptor: Attach Admin Token ──────────────────────────
+axios.interceptors.request.use(
+  (config) => {
+    const token = localStorage.getItem('adminToken');
+    if (token) {
+      config.headers = config.headers || {};
+      if (!config.headers.Authorization && !config.headers.authorization) {
+        config.headers.Authorization = `Bearer ${token}`;
+      }
+    }
+    return config;
+  },
+  (error) => Promise.reject(error)
+);
+
+// ─── Axios Response Interceptor: auto-logout on 401 ─────────────────────────
 axios.interceptors.response.use(
   (response) => response,
   (error) => {

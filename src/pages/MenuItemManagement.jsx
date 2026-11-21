@@ -91,9 +91,9 @@ export default function MenuItemManagement() {
     (adminData?.role?.permissions || []).includes('global:full_access');
 
   const userPermissions = adminData?.role?.permissions || [];
-  const canAdd = isSuperAdmin || userPermissions.includes('party_menu:add') || userPermissions.includes('party_menu:manage') || userPermissions.includes('Add Menu Item');
-  const canEdit = isSuperAdmin || userPermissions.includes('party_menu:edit') || userPermissions.includes('party_menu:manage');
-  const canDelete = isSuperAdmin || userPermissions.includes('party_menu:delete') || userPermissions.includes('party_menu:manage');
+  const canAdd = isSuperAdmin || userPermissions.includes('party_menu:add') || userPermissions.includes('party_menu:manage') || userPermissions.includes('Add Menu Item') || userPermissions.includes('party_menu') || userPermissions.includes('Party Menu Catalog') || userPermissions.includes('Party Menu Items');
+  const canEdit = isSuperAdmin || userPermissions.includes('party_menu:edit') || userPermissions.includes('party_menu:manage') || userPermissions.includes('party_menu') || userPermissions.includes('Party Menu Catalog') || userPermissions.includes('Party Menu Items');
+  const canDelete = isSuperAdmin || userPermissions.includes('party_menu:delete') || userPermissions.includes('party_menu:manage') || userPermissions.includes('party_menu') || userPermissions.includes('Party Menu Catalog') || userPermissions.includes('Party Menu Items');
 
   const [menuItems, setMenuItems] = useState([]);
   const [loading, setLoading] = useState(false);
@@ -181,7 +181,9 @@ export default function MenuItemManagement() {
   const fetchMenuItems = async () => {
     setLoading(true);
     try {
-      const res = await axios.get(`${API_BASE_URL}/menu-items`);
+      const token = localStorage.getItem('adminToken');
+      const config = token ? { headers: { Authorization: `Bearer ${token}` } } : {};
+      const res = await axios.get(`${API_BASE_URL}/menu-items`, config);
       if (res.data && res.data.success) {
         setMenuItems(res.data.data || []);
       }
@@ -355,7 +357,9 @@ export default function MenuItemManagement() {
     setMenuItems(prev => prev.map(m => m._id === item._id ? { ...m, isActive: newStatus } : m));
 
     try {
-      await axios.put(`${API_BASE_URL}/menu-items/${item._id}`, { isActive: newStatus });
+      const token = localStorage.getItem('adminToken');
+      const config = token ? { headers: { Authorization: `Bearer ${token}` } } : {};
+      await axios.put(`${API_BASE_URL}/menu-items/${item._id}`, { isActive: newStatus }, config);
       toast({
         title: `Status set to ${newStatus ? 'Active' : 'Inactive'}`,
         status: newStatus ? 'success' : 'info',
@@ -381,18 +385,29 @@ export default function MenuItemManagement() {
 
     if (!res.isConfirmed) return;
 
-    setMenuItems(prev => prev.filter(m => m._id !== id));
     try {
-      await axios.delete(`${API_BASE_URL}/menu-items/${id}`);
-      toast({
-        title: 'Deleted!',
-        description: `"${name}" removed from catalog.`,
-        status: 'success',
-        duration: 3000,
-        isClosable: true
-      });
+      const token = localStorage.getItem('adminToken');
+      const config = token ? { headers: { Authorization: `Bearer ${token}` } } : {};
+      const resp = await axios.delete(`${API_BASE_URL}/menu-items/${id}`, config);
+      if (resp.data && resp.data.success) {
+        setMenuItems(prev => prev.filter(m => m._id !== id));
+        toast({
+          title: 'Deleted!',
+          description: `"${name}" removed from catalog.`,
+          status: 'success',
+          duration: 3000,
+          isClosable: true
+        });
+      }
     } catch (err) {
       console.error(err);
+      toast({
+        title: 'Delete Failed',
+        description: err.response?.data?.message || 'Could not delete menu item',
+        status: 'error',
+        duration: 4000,
+        isClosable: true
+      });
       fetchMenuItems();
     }
   };
@@ -411,13 +426,16 @@ export default function MenuItemManagement() {
     if (!res.isConfirmed) return;
 
     try {
-      const resp = await axios.post(`${API_BASE_URL}/menu-items/seed`);
+      const token = localStorage.getItem('adminToken');
+      const config = token ? { headers: { Authorization: `Bearer ${token}` } } : {};
+      const resp = await axios.post(`${API_BASE_URL}/menu-items/seed`, {}, config);
       if (resp.data && resp.data.success) {
         Swal.fire({ icon: 'success', title: 'Synced!', text: resp.data.message });
         fetchMenuItems();
       }
     } catch (err) {
       console.error(err);
+      Swal.fire({ icon: 'error', title: 'Sync Failed', text: err.response?.data?.message || 'Could not sync defaults' });
     }
   };
 
