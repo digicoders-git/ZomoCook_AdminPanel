@@ -5,7 +5,7 @@ import {
   Menu, MenuButton, MenuList, MenuItem,
   Modal, ModalOverlay, ModalContent, ModalHeader, ModalFooter, ModalBody, ModalCloseButton,
   SimpleGrid, FormControl, Icon, IconButton, AlertDialog, AlertDialogOverlay,
-  AlertDialogContent, AlertDialogHeader, AlertDialogBody, AlertDialogFooter
+  AlertDialogContent, AlertDialogHeader, AlertDialogBody, AlertDialogFooter, Tooltip
 } from '@chakra-ui/react';
 import {
   Zap, Clock, UtensilsCrossed, Filter, RotateCcw, Search, Eye, Calendar,
@@ -362,10 +362,12 @@ const QuickBookingsDashboard = () => {
     if (filters.bookingType === 'daily' && !isDailyBooking(job)) return false;
     if (filters.bookingType === 'party' && !isPartyBooking(job)) return false;
 
+    const eventDatesInfo = getEventDatesInfo(job);
     const matchesSearch =
       (job.title || '').toLowerCase().includes(search.toLowerCase()) ||
       (job.city || '').toLowerCase().includes(search.toLowerCase()) ||
       (job.jobCode || '').toLowerCase().includes(search.toLowerCase()) ||
+      (eventDatesInfo?.display || '').toLowerCase().includes(search.toLowerCase()) ||
       getCustomerName(job).toLowerCase().includes(search.toLowerCase());
 
     const matchesCity = !filters.city || (job.city || '').toLowerCase() === filters.city.toLowerCase();
@@ -382,6 +384,129 @@ const QuickBookingsDashboard = () => {
   const totalPages = Math.ceil(filteredJobs.length / parseInt(entries));
   const startIndex = (currentPage - 1) * parseInt(entries);
   const paginatedJobs = filteredJobs.slice(startIndex, startIndex + parseInt(entries));
+
+  const formatSingleDate = (d) => {
+    if (!d) return '';
+    const dt = new Date(d);
+    if (isNaN(dt.getTime())) return String(d).trim();
+    return dt.toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' });
+  };
+
+  const formatShortDate = (d) => {
+    if (!d) return '';
+    const dt = new Date(d);
+    if (isNaN(dt.getTime())) return String(d).trim();
+    return dt.toLocaleDateString('en-GB', { day: '2-digit', month: 'short' });
+  };
+
+  const getEventDatesInfo = (job) => {
+    if (!job) return null;
+
+    let partyReq = job.partyRequirement;
+    if (typeof partyReq === 'string' && partyReq.trim().startsWith('{')) {
+      try { partyReq = JSON.parse(partyReq); } catch (e) {}
+    }
+
+    let eventDays = job.eventDays;
+    if (typeof eventDays === 'string' && eventDays.trim().startsWith('[')) {
+      try { eventDays = JSON.parse(eventDays); } catch (e) {}
+    }
+
+    let staffReqs = job.staffRequirements;
+    if (typeof staffReqs === 'string' && staffReqs.trim().startsWith('[')) {
+      try { staffReqs = JSON.parse(staffReqs); } catch (e) {}
+    }
+
+    const rawDates = [];
+    const addDate = (val) => {
+      if (!val) return;
+      if (typeof val === 'object') {
+        const d = val.date || val.startDate || val.eventDate;
+        if (d && typeof d === 'string' && d.trim()) rawDates.push(d.trim());
+        else if (d instanceof Date) rawDates.push(d.toISOString().split('T')[0]);
+      } else if (typeof val === 'string' && val.trim()) {
+        rawDates.push(val.trim());
+      }
+    };
+
+    if (partyReq) {
+      if (Array.isArray(partyReq.dates)) partyReq.dates.forEach(addDate);
+      if (Array.isArray(partyReq.eventDates)) partyReq.eventDates.forEach(addDate);
+      if (partyReq.date) addDate(partyReq.date);
+      if (partyReq.startDate) addDate(partyReq.startDate);
+    }
+    if (Array.isArray(eventDays)) eventDays.forEach(addDate);
+
+    const uniqueDates = Array.from(new Set(rawDates)).sort((a, b) => new Date(a) - new Date(b));
+
+    if (uniqueDates.length > 0) {
+      if (uniqueDates.length === 1) {
+        return {
+          display: formatSingleDate(uniqueDates[0]),
+          fullRange: formatSingleDate(uniqueDates[0]),
+          count: 1
+        };
+      } else {
+        const first = uniqueDates[0];
+        const last = uniqueDates[uniqueDates.length - 1];
+        const d1 = new Date(first);
+        const d2 = new Date(last);
+        const sameYear = !isNaN(d1.getTime()) && !isNaN(d2.getTime()) && d1.getFullYear() === d2.getFullYear();
+        const firstStr = sameYear ? formatShortDate(first) : formatSingleDate(first);
+        const lastStr = formatSingleDate(last);
+        return {
+          display: `${firstStr} – ${lastStr}`,
+          fullRange: `${formatSingleDate(first)} to ${formatSingleDate(last)} (${uniqueDates.length} Days)`,
+          count: uniqueDates.length
+        };
+      }
+    }
+
+    let staffStart = '';
+    let staffEnd = '';
+    let staffMaxDays = 0;
+    if (Array.isArray(staffReqs) && staffReqs.length > 0) {
+      staffReqs.forEach(s => {
+        if (s.startDate && (!staffStart || new Date(s.startDate) < new Date(staffStart))) staffStart = s.startDate;
+        if (s.endDate && (!staffEnd || new Date(s.endDate) > new Date(staffEnd))) staffEnd = s.endDate;
+        if (s.days && s.days > staffMaxDays) staffMaxDays = s.days;
+      });
+    }
+
+    const sDate = job.startDate || staffStart || (job.dateOfEvent ? (job.dateOfEvent instanceof Date ? job.dateOfEvent.toISOString().split('T')[0] : String(job.dateOfEvent).split('T')[0]) : null);
+    const eDate = job.endDate || staffEnd;
+
+    if (sDate && eDate && sDate !== eDate) {
+      const d1 = new Date(sDate);
+      const d2 = new Date(eDate);
+      const sameYear = !isNaN(d1.getTime()) && !isNaN(d2.getTime()) && d1.getFullYear() === d2.getFullYear();
+      const firstStr = sameYear ? formatShortDate(sDate) : formatSingleDate(sDate);
+      const lastStr = formatSingleDate(eDate);
+      return {
+        display: `${firstStr} – ${lastStr}`,
+        fullRange: `${formatSingleDate(sDate)} to ${formatSingleDate(eDate)}`,
+        count: staffMaxDays || null
+      };
+    }
+
+    if (sDate) {
+      return {
+        display: formatSingleDate(sDate),
+        fullRange: formatSingleDate(sDate),
+        count: staffMaxDays || 1
+      };
+    }
+
+    if (job.dateOfEvent) {
+      return {
+        display: formatSingleDate(job.dateOfEvent),
+        fullRange: formatSingleDate(job.dateOfEvent),
+        count: 1
+      };
+    }
+
+    return null;
+  };
 
   const formatDate = (d) => {
     if (!d) return 'N/A';
@@ -521,7 +646,7 @@ const QuickBookingsDashboard = () => {
                 <Tr>
                   <Th {...darkThStyle}>Sr.No.</Th>
                   <Th {...darkThStyle}>Booking Code & Date</Th>
-                  <Th {...darkThStyle}>Booking Category</Th>
+                  <Th {...darkThStyle}>Category &amp; Event Date</Th>
                   <Th {...darkThStyle}>Customer Details</Th>
                   <Th {...darkThStyle}>Requirement / Event</Th>
                   <Th {...darkThStyle}>Location / Venue</Th>
@@ -565,9 +690,46 @@ const QuickBookingsDashboard = () => {
                         </VStack>
                       </Td>
                       <Td {...customTdStyle}>
-                        <Badge px="2.5" py="1" borderRadius="full" fontSize="10px" fontWeight="800" bg={party ? "#fff7ed" : "#eff6ff"} color={party ? "#c2410c" : "#1d4ed8"} border="1px solid" borderColor={party ? "#ffedd5" : "#dbeafe"}>
-                          {party ? '🎉 Chef for Party' : '⏱️ Daily Basis'}
-                        </Badge>
+                        <VStack align="center" spacing="1.5">
+                          <Badge px="2.5" py="0.5" borderRadius="full" fontSize="10px" fontWeight="800" bg={party ? "#fff7ed" : "#eff6ff"} color={party ? "#c2410c" : "#1d4ed8"} border="1px solid" borderColor={party ? "#ffedd5" : "#dbeafe"}>
+                            {party ? '🎉 Chef for Party' : '⏱️ Daily Basis'}
+                          </Badge>
+                          {(() => {
+                            const eventInfo = getEventDatesInfo(job);
+                            if (eventInfo) {
+                              return (
+                                <Tooltip label={`Event Date(s): ${eventInfo.fullRange}`} hasArrow placement="top">
+                                  <HStack
+                                    spacing="1"
+                                    bg={party ? "#fff7ed" : "#eff6ff"}
+                                    border="1px solid"
+                                    borderColor={party ? "#fed7aa" : "#bfdbfe"}
+                                    px="2"
+                                    py="0.5"
+                                    borderRadius="md"
+                                    maxW="165px"
+                                    justify="center"
+                                    cursor="default"
+                                    boxShadow="2xs"
+                                  >
+                                    <Icon as={Calendar} boxSize="11px" color={party ? "#ea580c" : "#1d4ed8"} />
+                                    <Text
+                                      fontSize="10px"
+                                      fontWeight="700"
+                                      color={party ? "#9a3412" : "#1e40af"}
+                                      whiteSpace="nowrap"
+                                    >
+                                      {eventInfo.display}
+                                    </Text>
+                                  </HStack>
+                                </Tooltip>
+                              );
+                            }
+                            return (
+                              <Text fontSize="10px" color="#94a3b8" fontStyle="italic">Date Not Set</Text>
+                            );
+                          })()}
+                        </VStack>
                       </Td>
                       <Td {...customTdStyle}>
                         <VStack align="center" spacing="0.5">
