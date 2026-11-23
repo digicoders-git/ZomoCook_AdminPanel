@@ -5,7 +5,7 @@ import {
   Menu, MenuButton, MenuList, MenuItem,
   Modal, ModalOverlay, ModalContent, ModalHeader, ModalFooter, ModalBody, ModalCloseButton,
   SimpleGrid, FormControl, Icon, IconButton, AlertDialog, AlertDialogOverlay,
-  AlertDialogContent, AlertDialogHeader, AlertDialogBody, AlertDialogFooter, Tooltip
+  AlertDialogContent, AlertDialogHeader, AlertDialogBody, AlertDialogFooter, Tooltip, Input
 } from '@chakra-ui/react';
 import {
   Zap, Clock, UtensilsCrossed, Filter, RotateCcw, Search, Eye, Calendar,
@@ -166,6 +166,147 @@ const getEventDatesInfo = (job) => {
   return null;
 };
 
+const toLocalDateStr = (d) => {
+  if (!d) return null;
+  if (typeof d === 'string') {
+    const trimmed = d.trim();
+    if (/^\d{4}-\d{2}-\d{2}$/.test(trimmed)) return trimmed;
+    if (/^\d{4}-\d{2}-\d{2}/.test(trimmed) && !trimmed.includes('T')) return trimmed.substring(0, 10);
+  }
+  const dt = new Date(d);
+  if (isNaN(dt.getTime())) return null;
+  const year = dt.getFullYear();
+  const month = String(dt.getMonth() + 1).padStart(2, '0');
+  const day = String(dt.getDate()).padStart(2, '0');
+  return `${year}-${month}-${day}`;
+};
+
+const getPresetDateRange = (preset) => {
+  const now = new Date();
+  const formatYMD = (dt) => {
+    const y = dt.getFullYear();
+    const m = String(dt.getMonth() + 1).padStart(2, '0');
+    const d = String(dt.getDate()).padStart(2, '0');
+    return `${y}-${m}-${d}`;
+  };
+
+  const todayStr = formatYMD(now);
+
+  if (preset === 'today') {
+    return { start: todayStr, end: todayStr };
+  }
+  if (preset === 'yesterday') {
+    const yest = new Date(now);
+    yest.setDate(now.getDate() - 1);
+    const yestStr = formatYMD(yest);
+    return { start: yestStr, end: yestStr };
+  }
+  if (preset === 'this_week') {
+    const day = now.getDay();
+    const diffToMon = day === 0 ? -6 : 1 - day;
+    const mon = new Date(now);
+    mon.setDate(now.getDate() + diffToMon);
+    const sun = new Date(mon);
+    sun.setDate(mon.getDate() + 6);
+    return { start: formatYMD(mon), end: formatYMD(sun) };
+  }
+  if (preset === 'this_month') {
+    const firstDay = new Date(now.getFullYear(), now.getMonth(), 1);
+    const lastDay = new Date(now.getFullYear(), now.getMonth() + 1, 0);
+    return { start: formatYMD(firstDay), end: formatYMD(lastDay) };
+  }
+  return null;
+};
+
+const jobMatchesDateFilter = (job, datePreset, customStartDate, customEndDate) => {
+  if (!datePreset || datePreset === 'all') return true;
+
+  let filterRange = null;
+  if (datePreset === 'custom') {
+    if (!customStartDate && !customEndDate) return true;
+    filterRange = {
+      start: customStartDate || '1970-01-01',
+      end: customEndDate || '2099-12-31'
+    };
+  } else {
+    filterRange = getPresetDateRange(datePreset);
+  }
+
+  if (!filterRange) return true;
+  const { start, end } = filterRange;
+
+  // 1. Check createdAt (Booking date)
+  const createdDate = toLocalDateStr(job.createdAt);
+  if (createdDate && createdDate >= start && createdDate <= end) {
+    return true;
+  }
+
+  // 2. Check event dates
+  let partyReq = job.partyRequirement;
+  if (typeof partyReq === 'string' && partyReq.trim().startsWith('{')) {
+    try { partyReq = JSON.parse(partyReq); } catch (e) {}
+  }
+  let eventDays = job.eventDays;
+  if (typeof eventDays === 'string' && eventDays.trim().startsWith('[')) {
+    try { eventDays = JSON.parse(eventDays); } catch (e) {}
+  }
+  let staffReqs = job.staffRequirements;
+  if (typeof staffReqs === 'string' && staffReqs.trim().startsWith('[')) {
+    try { staffReqs = JSON.parse(staffReqs); } catch (e) {}
+  }
+
+  const rawDates = [];
+  const addDate = (val) => {
+    if (!val) return;
+    if (typeof val === 'object') {
+      const d = val.date || val.startDate || val.eventDate;
+      if (d) rawDates.push(d);
+    } else {
+      rawDates.push(val);
+    }
+  };
+
+  if (partyReq) {
+    if (Array.isArray(partyReq.dates)) partyReq.dates.forEach(addDate);
+    if (Array.isArray(partyReq.eventDates)) partyReq.eventDates.forEach(addDate);
+    if (partyReq.date) addDate(partyReq.date);
+    if (partyReq.startDate) addDate(partyReq.startDate);
+  }
+  if (Array.isArray(eventDays)) eventDays.forEach(addDate);
+
+  for (const rd of rawDates) {
+    const dStr = toLocalDateStr(rd);
+    if (dStr && dStr >= start && dStr <= end) {
+      return true;
+    }
+  }
+
+  if (job.dateOfEvent) {
+    const dStr = toLocalDateStr(job.dateOfEvent);
+    if (dStr && dStr >= start && dStr <= end) return true;
+  }
+
+  // Overlap check for job.startDate / job.endDate
+  const sDate = toLocalDateStr(job.startDate);
+  const eDate = toLocalDateStr(job.endDate) || sDate;
+  if (sDate && eDate && sDate <= end && eDate >= start) {
+    return true;
+  }
+
+  // Overlap check for staffRequirements
+  if (Array.isArray(staffReqs)) {
+    for (const s of staffReqs) {
+      const staffStart = toLocalDateStr(s.startDate);
+      const staffEnd = toLocalDateStr(s.endDate) || staffStart;
+      if (staffStart && staffEnd && staffStart <= end && staffEnd >= start) {
+        return true;
+      }
+    }
+  }
+
+  return false;
+};
+
 const QuickBookingsDashboard = () => {
   const navigate = useNavigate();
   const toast = useToast();
@@ -205,12 +346,30 @@ const QuickBookingsDashboard = () => {
   const [search, setSearch] = useState('');
   const [entries, setEntries] = useState('10');
   const [currentPage, setCurrentPage] = useState(1);
+  const [datePreset, setDatePreset] = useState('all'); // 'all', 'today', 'yesterday', 'this_week', 'this_month', 'custom'
+  const [customStartDate, setCustomStartDate] = useState('');
+  const [customEndDate, setCustomEndDate] = useState('');
+  const [showCustomDate, setShowCustomDate] = useState(false);
   const [filters, setFilters] = useState({
     bookingType: '', // 'daily' or 'party'
     city: '',
     status: '',
     leadManager: ''
   });
+
+  const handleSelectDatePreset = (preset) => {
+    if (preset === 'custom') {
+      setDatePreset('custom');
+      setShowCustomDate(true);
+    } else if (datePreset === preset) {
+      setDatePreset('all');
+      setShowCustomDate(false);
+    } else {
+      setDatePreset(preset);
+      setShowCustomDate(false);
+    }
+    setCurrentPage(1);
+  };
 
   const isPartyBooking = (job) => {
     if (!job) return false;
@@ -496,8 +655,9 @@ const QuickBookingsDashboard = () => {
     const matchesCity = !filters.city || (job.city || '').toLowerCase() === filters.city.toLowerCase();
     const matchesStatus = !filters.status || (job.status || '').toLowerCase() === filters.status.toLowerCase();
     const matchesLeadManager = !filters.leadManager || job.leadManager === filters.leadManager;
+    const matchesDate = jobMatchesDateFilter(job, datePreset, customStartDate, customEndDate);
 
-    return matchesSearch && matchesCity && matchesStatus && matchesLeadManager;
+    return matchesSearch && matchesCity && matchesStatus && matchesLeadManager && matchesDate;
   });
 
   const totalDaily = jobs.filter(isDailyBooking).length;
@@ -525,6 +685,185 @@ const QuickBookingsDashboard = () => {
           <Text fontSize="sm" color="#64748b">View and manage all Daily Basis Staff and Chef for Party booking requests</Text>
         </VStack>
       </Flex>
+
+      {/* Date Filter Bar */}
+      <Box
+        bg="white"
+        p="3"
+        px="5"
+        borderRadius="xl"
+        border="1px solid #e8edf5"
+        boxShadow="0 2px 10px rgba(0,74,173,0.03)"
+        mb="5"
+      >
+        <Flex align="center" justify="space-between" wrap="wrap" gap="3">
+          <HStack spacing="3" wrap="wrap" align="center">
+            <HStack spacing="2" mr="2">
+              <Icon as={Calendar} color="#0B1A30" boxSize={4} />
+              <Text fontSize="sm" fontWeight="800" color="#0B1A30">Date:</Text>
+            </HStack>
+
+            <Button
+              size="sm"
+              h="36px"
+              px="4"
+              borderRadius="lg"
+              fontSize="xs"
+              fontWeight="600"
+              transition="all 0.2s"
+              bg={datePreset === 'all' ? '#0f62fe' : 'white'}
+              color={datePreset === 'all' ? 'white' : '#475569'}
+              border={datePreset === 'all' ? 'none' : '1px solid #e2e8f0'}
+              _hover={{ bg: datePreset === 'all' ? '#0d56db' : '#f8fafc', borderColor: '#cbd5e1' }}
+              onClick={() => handleSelectDatePreset('all')}
+            >
+              All
+            </Button>
+
+            <Button
+              size="sm"
+              h="36px"
+              px="4"
+              borderRadius="lg"
+              fontSize="xs"
+              fontWeight="600"
+              transition="all 0.2s"
+              bg={datePreset === 'today' ? '#0f62fe' : 'white'}
+              color={datePreset === 'today' ? 'white' : '#475569'}
+              border={datePreset === 'today' ? 'none' : '1px solid #e2e8f0'}
+              _hover={{ bg: datePreset === 'today' ? '#0d56db' : '#f8fafc', borderColor: '#cbd5e1' }}
+              onClick={() => handleSelectDatePreset('today')}
+            >
+              Today
+            </Button>
+
+            <Button
+              size="sm"
+              h="36px"
+              px="4"
+              borderRadius="lg"
+              fontSize="xs"
+              fontWeight="600"
+              transition="all 0.2s"
+              bg={datePreset === 'yesterday' ? '#0f62fe' : 'white'}
+              color={datePreset === 'yesterday' ? 'white' : '#475569'}
+              border={datePreset === 'yesterday' ? 'none' : '1px solid #e2e8f0'}
+              _hover={{ bg: datePreset === 'yesterday' ? '#0d56db' : '#f8fafc', borderColor: '#cbd5e1' }}
+              onClick={() => handleSelectDatePreset('yesterday')}
+            >
+              Yesterday
+            </Button>
+
+            <Button
+              size="sm"
+              h="36px"
+              px="4"
+              borderRadius="lg"
+              fontSize="xs"
+              fontWeight="600"
+              transition="all 0.2s"
+              bg={datePreset === 'this_week' ? '#0f62fe' : 'white'}
+              color={datePreset === 'this_week' ? 'white' : '#475569'}
+              border={datePreset === 'this_week' ? 'none' : '1px solid #e2e8f0'}
+              _hover={{ bg: datePreset === 'this_week' ? '#0d56db' : '#f8fafc', borderColor: '#cbd5e1' }}
+              onClick={() => handleSelectDatePreset('this_week')}
+            >
+              This Week
+            </Button>
+
+            <Button
+              size="sm"
+              h="36px"
+              px="4"
+              borderRadius="lg"
+              fontSize="xs"
+              fontWeight="600"
+              transition="all 0.2s"
+              bg={datePreset === 'this_month' ? '#0f62fe' : 'white'}
+              color={datePreset === 'this_month' ? 'white' : '#475569'}
+              border={datePreset === 'this_month' ? 'none' : '1px solid #e2e8f0'}
+              _hover={{ bg: datePreset === 'this_month' ? '#0d56db' : '#f8fafc', borderColor: '#cbd5e1' }}
+              onClick={() => handleSelectDatePreset('this_month')}
+            >
+              This Month
+            </Button>
+
+            <Button
+              size="sm"
+              h="36px"
+              px="4"
+              borderRadius="lg"
+              fontSize="xs"
+              fontWeight="600"
+              leftIcon={<Icon as={Calendar} boxSize={3.5} />}
+              transition="all 0.2s"
+              bg={datePreset === 'custom' ? '#0f62fe' : 'white'}
+              color={datePreset === 'custom' ? 'white' : '#475569'}
+              border={datePreset === 'custom' ? 'none' : '1px solid #e2e8f0'}
+              _hover={{ bg: datePreset === 'custom' ? '#0d56db' : '#f8fafc', borderColor: '#cbd5e1' }}
+              onClick={() => handleSelectDatePreset('custom')}
+            >
+              Custom Date Range
+            </Button>
+          </HStack>
+
+          {/* Custom Date Pickers - shown when Custom Date Range is active */}
+          {(showCustomDate || datePreset === 'custom') && (
+            <HStack spacing="2" align="center" bg="#f8faff" p="1.5" px="3" borderRadius="lg" border="1.5px solid #dde6f5" wrap="wrap">
+              <Text fontSize="xs" fontWeight="700" color="#475569">From:</Text>
+              <Input
+                type="date"
+                size="sm"
+                h="32px"
+                w="145px"
+                bg="white"
+                borderRadius="md"
+                border="1px solid #cbd5e1"
+                fontSize="xs"
+                value={customStartDate}
+                onChange={(e) => {
+                  setCustomStartDate(e.target.value);
+                  setDatePreset('custom');
+                  setCurrentPage(1);
+                }}
+              />
+              <Text fontSize="xs" fontWeight="700" color="#475569">To:</Text>
+              <Input
+                type="date"
+                size="sm"
+                h="32px"
+                w="145px"
+                bg="white"
+                borderRadius="md"
+                border="1px solid #cbd5e1"
+                fontSize="xs"
+                value={customEndDate}
+                onChange={(e) => {
+                  setCustomEndDate(e.target.value);
+                  setDatePreset('custom');
+                  setCurrentPage(1);
+                }}
+              />
+              {(customStartDate || customEndDate) && (
+                <IconButton
+                  size="xs"
+                  variant="ghost"
+                  color="#dc2626"
+                  icon={<RotateCcw size={13} />}
+                  title="Clear custom dates"
+                  onClick={() => {
+                    setCustomStartDate('');
+                    setCustomEndDate('');
+                    setDatePreset('all');
+                    setShowCustomDate(false);
+                    setCurrentPage(1);
+                  }}
+                />
+              )}
+            </HStack>
+          )}
+        </Flex>
+      </Box>
 
       {/* Overview Stat Cards */}
       <SimpleGrid columns={{ base: 1, sm: 2, md: 4 }} spacing="4" mb="6">
@@ -623,7 +962,15 @@ const QuickBookingsDashboard = () => {
             </Select>
           </FormControl>
           <Flex align="flex-end" gap="2">
-            <Button size="sm" h="38px" flex="1" variant="outline" onClick={() => { setFilters({ bookingType: '', city: '', status: '', leadManager: '' }); setSearch(''); }}>
+            <Button size="sm" h="38px" flex="1" variant="outline" onClick={() => {
+              setFilters({ bookingType: '', city: '', status: '', leadManager: '' });
+              setSearch('');
+              setDatePreset('all');
+              setCustomStartDate('');
+              setCustomEndDate('');
+              setShowCustomDate(false);
+              setCurrentPage(1);
+            }}>
               Reset
             </Button>
           </Flex>
