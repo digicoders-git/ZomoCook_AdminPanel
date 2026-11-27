@@ -4,11 +4,12 @@ import {
   Button, Menu, MenuButton, MenuList, MenuItem, Icon, Spinner, useToast,
   Select, Avatar, useDisclosure, MenuDivider, IconButton,
   Modal, ModalOverlay, ModalContent, ModalHeader, ModalCloseButton, ModalBody, ModalFooter,
-  FormControl, FormLabel
+  FormControl, FormLabel, Checkbox, Input, Textarea
 } from '@chakra-ui/react';
 import {
   Plus, Settings, ChevronDown,
-  Briefcase, CalendarDays, FileType, Edit3, CheckCircle, UserCircle, Trash2, UserCheck
+  Briefcase, CalendarDays, FileType, Edit3, CheckCircle, UserCircle, Trash2, UserCheck,
+  Bell, Send
 } from 'lucide-react';
 import { Link, useNavigate } from 'react-router-dom';
 import {
@@ -71,6 +72,14 @@ const CandidateList = () => {
   // Pagination
   const [currentPage, setCurrentPage] = useState(1);
   const [entriesPerPage, setEntriesPerPage] = useState(10);
+
+  // Notification Modal & Bulk Selection State
+  const [selectedCandidateIds, setSelectedCandidateIds] = useState([]);
+  const [isNotificationModalOpen, setIsNotificationModalOpen] = useState(false);
+  const [targetCandidateForNotification, setTargetCandidateForNotification] = useState(null);
+  const [notificationTitle, setNotificationTitle] = useState('Complete Your Profile to Get Hired!');
+  const [notificationMessage, setNotificationMessage] = useState('Aapki Zomocook profile abhi incomplete hai. Employers dwara shortlist hone aur zyada job opportunities paane ke liye aaj hi apni profile complete karein.');
+  const [isSendingNotification, setIsSendingNotification] = useState(false);
 
   // Debounce search term to prevent rapid network requests while typing
   const [debouncedSearch, setDebouncedSearch] = useState(searchTerm);
@@ -349,6 +358,112 @@ const CandidateList = () => {
   const indexOfFirstRecord = Math.max(0, indexOfLastRecord - entriesPerPage);
   const currentRecords = filteredCandidates.slice(indexOfFirstRecord, indexOfLastRecord);
 
+  // Candidate Selection Logic
+  const handleToggleSelectCandidate = (candidateId) => {
+    setSelectedCandidateIds(prev =>
+      prev.includes(candidateId) ? prev.filter(id => id !== candidateId) : [...prev, candidateId]
+    );
+  };
+
+  const isAllCurrentSelected = currentRecords.length > 0 && currentRecords.every(c => selectedCandidateIds.includes(c._id));
+
+  const handleToggleSelectAll = () => {
+    if (isAllCurrentSelected) {
+      setSelectedCandidateIds(prev => prev.filter(id => !currentRecords.some(c => c._id === id)));
+    } else {
+      const currentIds = currentRecords.map(c => c._id);
+      setSelectedCandidateIds(prev => Array.from(new Set([...prev, ...currentIds])));
+    }
+  };
+
+  const openSingleNotificationModal = (candidate) => {
+    setTargetCandidateForNotification(candidate);
+    setNotificationTitle('Complete Your Profile to Get Hired!');
+    setNotificationMessage('Aapki Zomocook profile abhi incomplete hai. Employers dwara shortlist hone aur zyada job opportunities paane ke liye aaj hi apni profile complete karein.');
+    setIsNotificationModalOpen(true);
+  };
+
+  const openBulkNotificationModal = () => {
+    if (!selectedCandidateIds.length) {
+      toast({
+        title: 'No Candidates Selected',
+        description: 'Please select at least one candidate using the checkboxes.',
+        status: 'warning',
+        duration: 3500,
+        position: 'top-right',
+        isClosable: true
+      });
+      return;
+    }
+    setTargetCandidateForNotification(null);
+    setNotificationTitle('Complete Your Profile to Get Hired!');
+    setNotificationMessage('Aapki Zomocook profile abhi incomplete hai. Employers dwara shortlist hone aur zyada job opportunities paane ke liye aaj hi apni profile complete karein.');
+    setIsNotificationModalOpen(true);
+  };
+
+  const handleSendNotificationSubmit = async () => {
+    if (!notificationTitle.trim()) {
+      toast({ title: 'Title Required', description: 'Please enter notification title.', status: 'warning', duration: 3000, position: 'top-right' });
+      return;
+    }
+    if (!notificationMessage.trim()) {
+      toast({ title: 'Message Required', description: 'Please enter notification message.', status: 'warning', duration: 3000, position: 'top-right' });
+      return;
+    }
+
+    const ids = targetCandidateForNotification ? [targetCandidateForNotification._id] : selectedCandidateIds;
+    if (!ids.length) {
+      toast({ title: 'No Candidates Selected', status: 'warning', duration: 3000, position: 'top-right' });
+      return;
+    }
+
+    setIsSendingNotification(true);
+    try {
+      const token = localStorage.getItem('adminToken');
+      const response = await axios.post(`${API_BASE_URL}/candidates/send-notification`, {
+        candidateIds: ids,
+        title: notificationTitle.trim(),
+        message: notificationMessage.trim(),
+        actionUrl: '/profile'
+      }, {
+        headers: { 'Authorization': `Bearer ${token}` }
+      });
+
+      if (response.data.success) {
+        toast({
+          title: 'Notification Sent! 🚀',
+          description: response.data.message || `Push notification successfully sent to ${ids.length} cook(s).`,
+          status: 'success',
+          duration: 4000,
+          position: 'top-right',
+          isClosable: true
+        });
+        setIsNotificationModalOpen(false);
+        if (!targetCandidateForNotification) {
+          setSelectedCandidateIds([]);
+        }
+      } else {
+        toast({
+          title: 'Failed to Send',
+          description: response.data.message || 'Something went wrong.',
+          status: 'error',
+          duration: 4000,
+          position: 'top-right'
+        });
+      }
+    } catch (err) {
+      toast({
+        title: 'Error',
+        description: err.response?.data?.message || err.message || 'Failed to send notification.',
+        status: 'error',
+        duration: 4000,
+        position: 'top-right'
+      });
+    } finally {
+      setIsSendingNotification(false);
+    }
+  };
+
   const handleDeleteCandidate = (id) => {
     setConfirmConfig({
       title: 'Delete Candidate?',
@@ -496,7 +611,53 @@ const CandidateList = () => {
 
       <TableCard>
         <Flex px="5" py="4" borderBottom="1px solid #f1f5f9" align="center" justify="space-between" flexWrap="wrap" gap="4">
-          <HStack><Box w="3px" h="18px" bg={BRAND} borderRadius="full" mr="2" /><Text fontSize="sm" fontWeight="700" color="#1e293b">Candidate Record List</Text></HStack>
+          <HStack spacing="3" flexWrap="wrap" align="center">
+            <HStack><Box w="3px" h="18px" bg={BRAND} borderRadius="full" mr="2" /><Text fontSize="sm" fontWeight="700" color="#1e293b">Candidate Record List</Text></HStack>
+            
+            <HStack spacing="2" pl="2" borderLeft="1.5px solid #e2e8f0" flexWrap="wrap" align="center">
+              <Checkbox
+                isChecked={isAllCurrentSelected}
+                onChange={handleToggleSelectAll}
+                colorScheme="blue"
+                size="sm"
+              >
+                <Text fontSize="xs" fontWeight="700" color="#475569">Select All</Text>
+              </Checkbox>
+
+              <Select
+                size="sm"
+                w="125px"
+                h="32px"
+                borderRadius="md"
+                fontSize="xs"
+                placeholder="Bulk Actions"
+                value=""
+                onChange={(e) => {
+                  if (e.target.value === 'notify') openBulkNotificationModal();
+                }}
+              >
+                <option value="notify">Send Notification</option>
+              </Select>
+
+              <Button
+                size="sm"
+                bg="#0f62fe"
+                color="white"
+                _hover={{ bg: "#0d56db" }}
+                leftIcon={<Icon as={Bell} size={14} />}
+                fontSize="xs"
+                fontWeight="700"
+                borderRadius="md"
+                h="32px"
+                px="3.5"
+                boxShadow="0 1px 3px rgba(15,98,254,0.3)"
+                onClick={openBulkNotificationModal}
+              >
+                Send Notification{selectedCandidateIds.length > 0 ? ` (${selectedCandidateIds.length})` : ''}
+              </Button>
+            </HStack>
+          </HStack>
+
           <HStack spacing="3" flexWrap="wrap">
             {!isLeadManager && (
               <Select size="sm" w="170px" borderRadius="lg" value={leadManagerFilter} onChange={(e) => setLeadManagerFilter(e.target.value)} fontSize="xs">
@@ -534,6 +695,14 @@ const CandidateList = () => {
             <Table variant="simple" size="sm" border="1px solid #edf2f7">
               <Thead bg="#f8faff">
                 <Tr>
+                  <Th {...thStyle} border="1px solid #edf2f7" w="45px" textAlign="center">
+                    <Checkbox
+                      isChecked={isAllCurrentSelected}
+                      onChange={handleToggleSelectAll}
+                      colorScheme="blue"
+                      size="sm"
+                    />
+                  </Th>
                   <Th {...thStyle} border="1px solid #edf2f7">Sr.No.</Th>
                   <Th {...thStyle} border="1px solid #edf2f7">Profile Image</Th>
                   <Th {...thStyle} border="1px solid #edf2f7">Basic Details</Th>
@@ -547,7 +716,15 @@ const CandidateList = () => {
               </Thead>
               <Tbody>
                 {currentRecords.map((c, index) => (
-                  <Tr key={c._id} _hover={{ bg: '#fcfdfe' }}>
+                  <Tr key={c._id} _hover={{ bg: '#fcfdfe' }} bg={selectedCandidateIds.includes(c._id) ? '#f0f7ff' : 'transparent'}>
+                    <Td py="4" border="1px solid #edf2f7" textAlign="center" verticalAlign="middle">
+                      <Checkbox
+                        isChecked={selectedCandidateIds.includes(c._id)}
+                        onChange={() => handleToggleSelectCandidate(c._id)}
+                        colorScheme="blue"
+                        size="sm"
+                      />
+                    </Td>
                     <Td py="4" border="1px solid #edf2f7" verticalAlign="top" fontSize="xs" color="#475569">{indexOfFirstRecord + index + 1}</Td>
                     <Td py="4" border="1px solid #edf2f7" verticalAlign="middle" textAlign="center">
                       <VStack spacing="3">
@@ -688,6 +865,20 @@ const CandidateList = () => {
                           <MenuItem icon={<UserCircle size={16} color="#6366f1" />} borderRadius="lg" fontSize="sm" fontWeight="600" color="#475569" _hover={{ bg: '#f5f3ff', color: '#6366f1' }} onClick={() => navigate(`/candidates/view/${c._id}`)}>
                             Candidate Details
                           </MenuItem>
+                          <MenuItem
+                            icon={<Bell size={16} color="#0f62fe" />}
+                            borderRadius="lg"
+                            fontSize="sm"
+                            fontWeight="600"
+                            color="#475569"
+                            _hover={{ bg: '#f0f7ff', color: '#0f62fe' }}
+                            onClick={() => openSingleNotificationModal(c)}
+                          >
+                            <HStack justify="space-between" w="100%">
+                              <Text>Send Notification</Text>
+                              <Badge bg="#10b981" color="white" fontSize="9px" px="1.5" py="0.5" borderRadius="md" fontWeight="800">NEW</Badge>
+                            </HStack>
+                          </MenuItem>
                           <MenuDivider />
                           <MenuItem icon={<Trash2 size={16} color={ACCENT} />} borderRadius="lg" fontSize="sm" fontWeight="600" color={ACCENT} _hover={{ bg: '#fff0f0', color: ACCENT }} onClick={() => handleDeleteCandidate(c._id)}>
                             Delete Candidate
@@ -697,7 +888,7 @@ const CandidateList = () => {
                     </Td>
                   </Tr>
                 ))}
-                {!isLoading && filteredCandidates.length === 0 && <Tr><Td colSpan={8} py="10" textAlign="center" color="#94a3b8">No records found.</Td></Tr>}
+                {!isLoading && filteredCandidates.length === 0 && <Tr><Td colSpan={10} py="10" textAlign="center" color="#94a3b8">No records found.</Td></Tr>}
               </Tbody>
             </Table>
           )}
@@ -776,6 +967,180 @@ const CandidateList = () => {
             >
               Save Assignment
             </Button>
+          </ModalFooter>
+        </ModalContent>
+      </Modal>
+
+      {/* Send Notification to Cook Modal */}
+      <Modal isOpen={isNotificationModalOpen} onClose={() => setIsNotificationModalOpen(false)} isCentered size="md">
+        <ModalOverlay bg="blackAlpha.400" backdropFilter="blur(3px)" />
+        <ModalContent borderRadius="xl" overflow="hidden" boxShadow="0 20px 40px rgba(0,0,0,0.15)">
+          <ModalHeader py="4" px="5" borderBottom="1px solid #f1f5f9">
+            <HStack spacing="2.5">
+              <Flex w="34px" h="34px" borderRadius="lg" bg="#eff6ff" align="center" justify="center">
+                <Icon as={Bell} color="#0f62fe" boxSize={5} />
+              </Flex>
+              <Text fontSize="md" fontWeight="800" color="#0B1A30">Send Notification to Cook</Text>
+            </HStack>
+          </ModalHeader>
+          <ModalCloseButton top="4" right="4" />
+
+          <ModalBody py="5" px="5">
+            <VStack spacing="4" align="stretch">
+              <FormControl>
+                <FormLabel fontSize="xs" fontWeight="700" color="#475569" mb="1.5">Candidate Name</FormLabel>
+                <Box
+                  p="2.5"
+                  px="3.5"
+                  bg="#f1f5f9"
+                  borderRadius="md"
+                  border="1px solid #e2e8f0"
+                  fontSize="sm"
+                  fontWeight="600"
+                  color="#1e293b"
+                >
+                  {targetCandidateForNotification
+                    ? (targetCandidateForNotification.name || 'Cook')
+                    : `Multiple Candidates (${selectedCandidateIds.length} selected)`}
+                </Box>
+              </FormControl>
+
+              <FormControl isRequired>
+                <FormLabel fontSize="xs" fontWeight="700" color="#475569" mb="1.5">Notification Title *</FormLabel>
+                <Input
+                  size="sm"
+                  h="40px"
+                  borderRadius="md"
+                  border="1.5px solid #dde6f5"
+                  _focus={{ borderColor: '#0f62fe', boxShadow: '0 0 0 1px #0f62fe' }}
+                  value={notificationTitle}
+                  onChange={(e) => setNotificationTitle(e.target.value)}
+                  placeholder="Complete Your Profile to Get Hired!"
+                  fontSize="sm"
+                  fontWeight="500"
+                />
+              </FormControl>
+
+              {/* Quick Template Selector */}
+              <Box>
+                <Text fontSize="11px" fontWeight="700" color="#64748b" mb="1.5">Quick Templates:</Text>
+                <HStack spacing="2" wrap="wrap">
+                  <Badge
+                    as="button"
+                    type="button"
+                    px="2"
+                    py="1"
+                    borderRadius="md"
+                    bg="#f0f7ff"
+                    color="#0f62fe"
+                    border="1px solid #bfdbfe"
+                    fontSize="10px"
+                    fontWeight="700"
+                    cursor="pointer"
+                    _hover={{ bg: "#dbeafe" }}
+                    onClick={() => {
+                      setNotificationTitle('Complete Your Profile to Get Hired!');
+                      setNotificationMessage('Aapki Zomocook profile abhi incomplete hai. Employers dwara shortlist hone aur zyada job opportunities paane ke liye aaj hi apni profile complete karein.');
+                    }}
+                  >
+                    Profile Incomplete (Hindi)
+                  </Badge>
+                  <Badge
+                    as="button"
+                    type="button"
+                    px="2"
+                    py="1"
+                    borderRadius="md"
+                    bg="#f0fdf4"
+                    color="#059669"
+                    border="1px solid #bbf7d0"
+                    fontSize="10px"
+                    fontWeight="700"
+                    cursor="pointer"
+                    _hover={{ bg: "#dcfce7" }}
+                    onClick={() => {
+                      setNotificationTitle('⚠️ Complete Your Profile to Get Hired!');
+                      setNotificationMessage('Your profile is incomplete! Employers shortlist only candidates with 70%+ complete score profiles. Complete it now to get hired!');
+                    }}
+                  >
+                    70%+ Score Alert (English)
+                  </Badge>
+                  <Badge
+                    as="button"
+                    type="button"
+                    px="2"
+                    py="1"
+                    borderRadius="md"
+                    bg="#fff7ed"
+                    color="#c2410c"
+                    border="1px solid #fed7aa"
+                    fontSize="10px"
+                    fontWeight="700"
+                    cursor="pointer"
+                    _hover={{ bg: "#ffedd5" }}
+                    onClick={() => {
+                      setNotificationTitle('🔥 Urgent: New Cooking Jobs Available!');
+                      setNotificationMessage('Naye jobs post huye hain! Employers shortlist kar rahe hain. Turant apni profile 100% complete karein aur job paayein.');
+                    }}
+                  >
+                    Urgent Job Alert
+                  </Badge>
+                </HStack>
+              </Box>
+
+              <FormControl isRequired>
+                <FormLabel fontSize="xs" fontWeight="700" color="#475569" mb="1.5">Notification Message *</FormLabel>
+                <Textarea
+                  size="sm"
+                  rows={4}
+                  borderRadius="md"
+                  border="1.5px solid #dde6f5"
+                  _focus={{ borderColor: '#0f62fe', boxShadow: '0 0 0 1px #0f62fe' }}
+                  value={notificationMessage}
+                  onChange={(e) => setNotificationMessage(e.target.value.slice(0, 200))}
+                  placeholder="Enter notification message..."
+                  fontSize="sm"
+                />
+                <Flex justify="flex-end" mt="1.5">
+                  <Text fontSize="xs" color="#94a3b8" fontWeight="600">
+                    {notificationMessage.length} / 200
+                  </Text>
+                </Flex>
+              </FormControl>
+            </VStack>
+          </ModalBody>
+
+          <ModalFooter py="3.5" px="5" bg="#f8faff" borderTop="1px solid #f1f5f9" justify="flex-end">
+            <HStack spacing="3">
+              <Button
+                variant="outline"
+                size="sm"
+                h="38px"
+                px="5"
+                borderRadius="md"
+                fontSize="xs"
+                fontWeight="600"
+                onClick={() => setIsNotificationModalOpen(false)}
+              >
+                Cancel
+              </Button>
+              <Button
+                bg="#0f62fe"
+                color="white"
+                _hover={{ bg: "#0d56db" }}
+                size="sm"
+                h="38px"
+                px="5"
+                borderRadius="md"
+                fontSize="xs"
+                fontWeight="700"
+                leftIcon={<Send size={15} />}
+                isLoading={isSendingNotification}
+                onClick={handleSendNotificationSubmit}
+              >
+                Send Notification
+              </Button>
+            </HStack>
           </ModalFooter>
         </ModalContent>
       </Modal>
