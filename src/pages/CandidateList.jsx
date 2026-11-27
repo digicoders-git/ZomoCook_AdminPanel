@@ -303,6 +303,7 @@ const CandidateList = () => {
     }
     if (leadManagerFilter && c.leadManager !== leadManagerFilter) return false;
     if (kycFilter && (c.kycStatus || 'pending').toLowerCase() !== kycFilter.toLowerCase()) return false;
+    if (statusFilter && (c.profileStatus || 'active').toLowerCase() !== statusFilter.toLowerCase()) return false;
     if (categoryFilter) {
       const matchCat = categoryFilter.toLowerCase();
       const candCategories = (c.jobPreference?.jobCategory || []).map(cat => String(cat).toLowerCase());
@@ -531,11 +532,11 @@ const CandidateList = () => {
         <Flex gap="4" flexWrap="wrap" align="flex-end">
           <Box flex="1" minW="140px">
             <Text fontSize="11px" fontWeight="700" color="#475569" mb="1.5">KYC Status</Text>
-            <Select size="sm" h="38px" borderRadius="lg" bg="#f8faff" border="1.5px solid #dde6f5" value={kycFilter} onChange={(e) => setKycFilter(e.target.value)} fontSize="xs">
+            <Select size="sm" h="38px" borderRadius="lg" bg="#f8faff" border="1.5px solid #dde6f5" value={kycFilter} onChange={(e) => { setKycFilter(e.target.value); setCurrentPage(1); }} fontSize="xs">
               <option value="">All KYC Status</option>
-              {displayKycStatuses.map(status => (
-                <option key={status} value={status.toLowerCase()}>{status}</option>
-              ))}
+              <option value="pending">Pending</option>
+              <option value="approved">Approved</option>
+              <option value="rejected">Rejected</option>
             </Select>
           </Box>
 
@@ -585,7 +586,7 @@ const CandidateList = () => {
             </Select>
           </Box>
 
-          {(kycFilter || categoryFilter || positionFilter || stateFilter || cityFilter) && (
+          {(kycFilter || statusFilter || leadManagerFilter || categoryFilter || positionFilter || stateFilter || cityFilter) && (
             <Button
               size="sm"
               h="38px"
@@ -597,10 +598,13 @@ const CandidateList = () => {
               fontWeight="600"
               onClick={() => {
                 setKycFilter('');
+                setStatusFilter('');
+                setLeadManagerFilter('');
                 setCategoryFilter('');
                 setPositionFilter('');
                 setStateFilter('');
                 setCityFilter('');
+                setCurrentPage(1);
               }}
             >
               Clear Filters
@@ -660,14 +664,46 @@ const CandidateList = () => {
 
           <HStack spacing="3" flexWrap="wrap">
             {!isLeadManager && (
-              <Select size="sm" w="170px" borderRadius="lg" value={leadManagerFilter} onChange={(e) => setLeadManagerFilter(e.target.value)} fontSize="xs">
+              <Select size="sm" w="160px" borderRadius="lg" bg="#f8faff" border="1.5px solid #dde6f5" value={leadManagerFilter} onChange={(e) => { setLeadManagerFilter(e.target.value); setCurrentPage(1); }} fontSize="xs" fontWeight="600">
                 <option value="">All Lead Managers</option>
                 {leadManagers.map(lm => (
                   <option key={lm._id} value={lm._id}>{lm.name}</option>
                 ))}
               </Select>
             )}
-            <Select size="sm" w="130px" borderRadius="lg" value={statusFilter} onChange={(e) => setStatusFilter(e.target.value)} fontSize="xs">
+            <Select
+              size="sm"
+              w="140px"
+              borderRadius="lg"
+              bg="#f8faff"
+              border="1.5px solid #dde6f5"
+              value={kycFilter}
+              onChange={(e) => {
+                setKycFilter(e.target.value);
+                setCurrentPage(1);
+              }}
+              fontSize="xs"
+              fontWeight="600"
+            >
+              <option value="">All KYC Status</option>
+              <option value="pending">Pending</option>
+              <option value="approved">Approved</option>
+              <option value="rejected">Rejected</option>
+            </Select>
+            <Select
+              size="sm"
+              w="135px"
+              borderRadius="lg"
+              bg="#f8faff"
+              border="1.5px solid #dde6f5"
+              value={statusFilter}
+              onChange={(e) => {
+                setStatusFilter(e.target.value);
+                setCurrentPage(1);
+              }}
+              fontSize="xs"
+              fontWeight="600"
+            >
               <option value="">All Profile Status</option>
               <option value="active">Active</option>
               <option value="inactive">Inactive</option>
@@ -709,7 +745,7 @@ const CandidateList = () => {
                   <Th {...thStyle} border="1px solid #edf2f7">Job Preference</Th>
                   <Th {...thStyle} border="1px solid #edf2f7">Lead Manager</Th>
                   <Th {...thStyle} border="1px solid #edf2f7">Job History</Th>
-                  <Th {...thStyle} border="1px solid #edf2f7">Status</Th>
+                  <Th {...thStyle} border="1px solid #edf2f7" minW="135px">Status</Th>
                   <Th {...thStyle} border="1px solid #edf2f7">Latest Activity</Th>
                   <Th {...thStyle} border="1px solid #edf2f7" textAlign="center">Action</Th>
                 </Tr>
@@ -806,26 +842,34 @@ const CandidateList = () => {
                         ) : 'N/A'}
                       </Text>
                     </Td>
-                    <Td py="4" border="1px solid #edf2f7" verticalAlign="top">
-                      <VStack align="start" spacing="1">
-                        <Text fontSize="11px" fontWeight="600" color="#64748b" mb="-1">KYC Status:</Text>
+                    <Td py="4" border="1px solid #edf2f7" verticalAlign="top" minW="135px">
+                      <VStack align="start" spacing="1.5">
+                        <Text fontSize="11px" fontWeight="700" color="#64748b" mb="-1">KYC Status:</Text>
                         <Select
-                          size="sm"
+                          size="xs"
+                          h="28px"
+                          w="115px"
+                          minW="115px"
                           bg={getKycColor(c.kycStatus)}
                           color="white"
                           borderColor="transparent"
-                          borderRadius="4px"
+                          borderRadius="md"
                           fontWeight="700"
+                          fontSize="xs"
+                          cursor="pointer"
                           value={c.kycStatus?.toLowerCase() || 'pending'}
                           onChange={(e) => handleKycStatusChange(c._id, e.target.value)}
-                          sx={{ '& option': { color: '#1e293b', bg: 'white' } }}
+                          _hover={{ opacity: 0.9 }}
+                          sx={{ '& option': { color: '#1e293b', bg: 'white', fontWeight: '600' } }}
                         >
                           <option value="pending">Pending</option>
                           <option value="approved">Approved</option>
                           <option value="rejected">Rejected</option>
                         </Select>
-                        <Text fontSize="11px" fontWeight="600" color="#64748b" mb="-1" mt="2">Profile Status:</Text>
-                        <Badge bg={c.profileStatus === 'active' ? '#10b981' : '#ef4444'} color="white" borderRadius="4px" px="2" py="1" fontSize="11px">{c.profileStatus}</Badge>
+                        <Text fontSize="11px" fontWeight="700" color="#64748b" mb="-1" mt="1.5">Profile Status:</Text>
+                        <Badge bg={c.profileStatus === 'active' ? '#10b981' : '#ef4444'} color="white" borderRadius="md" px="2.5" py="1" fontSize="11px" fontWeight="700">
+                          {c.profileStatus?.toUpperCase()}
+                        </Badge>
                       </VStack>
                     </Td>
                     <Td py="4" border="1px solid #edf2f7" verticalAlign="top">

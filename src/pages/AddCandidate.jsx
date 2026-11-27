@@ -339,7 +339,7 @@ const AddCandidate = () => {
               <FormControl mb="5"><FormLabel {...labelStyle}>Languages (Comma separated)</FormLabel><Input name="languages" value={formData.languages} onChange={handleChange} placeholder="e.g. Hindi, English" {...inputStyle} /></FormControl>
               <SimpleGrid columns={{ base: 1, md: 2, lg: 4 }} spacing="6" mb="6">
                 <FormControl><FormLabel {...labelStyle}>Profile Image</FormLabel><Input type="file" onChange={(e) => handleFileChange('image', e)} p="1" {...inputStyle} /></FormControl>
-                <FormControl isRequired><FormLabel {...labelStyle}>KYC Status</FormLabel><Select name="kycStatus" value={formData.kycStatus} onChange={handleChange} {...selectStyle}><option value="pending">Pending</option><option value="approved">Approved</option></Select></FormControl>
+                <FormControl isRequired><FormLabel {...labelStyle}>KYC Status</FormLabel><Select name="kycStatus" value={formData.kycStatus} onChange={handleChange} {...selectStyle}><option value="pending">Pending</option><option value="approved">Approved</option><option value="rejected">Rejected</option></Select></FormControl>
                 <FormControl isRequired><FormLabel {...labelStyle}>Profile Status</FormLabel><Select name="profileStatus" value={formData.profileStatus} onChange={handleChange} {...selectStyle}><option value="active">Active</option><option value="inactive">Inactive</option></Select></FormControl>
                 {isSuperAdmin ? (
                   <FormControl><FormLabel {...labelStyle}>Assign Lead Manager</FormLabel>
